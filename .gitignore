@@ -1,11 +1,46 @@
-# IDE
+# Unity generated directories
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Bb]uild/
+[Bb]uilds/
+
+# IDE and generated project files
 .vscode/
 .idea/
+.vs/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.opendb
+*.VC.db
+
+# Unity/OS crash and temporary files
+sysinfo.txt
+*.stackdump
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
 
 # Gradle cache directory
 .gradle/
 
-# Environment variables
+# Python test artifacts
+__pycache__/
+*.py[cod]
+
+# Environment variables and local secrets
 .env
 .env.local
 .env*.local

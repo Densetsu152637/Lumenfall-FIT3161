@@ -1,0 +1,87 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-integrity:
+    name: Repository integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Test the validation harness
+        run: python3 -m unittest discover --start-directory scripts/tests --verbose
+
+      - name: Validate Unity project structure
+        run: python3 scripts/validate_unity_project.py Lumenfall
+
+  unity-edit-mode:
+    name: Unity EditMode tests
+    needs: repository-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Restore Unity Library cache
+        uses: actions/cache@v5
+        with:
+          path: Lumenfall/Library
+          key: unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}
+          restore-keys: |
+            unity-library-${{ runner.os }}-
+
+      - name: Verify Unity license secrets
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -z "$UNITY_LICENSE" ]] && missing+=(UNITY_LICENSE)
+          [[ -z "$UNITY_EMAIL" ]] && missing+=(UNITY_EMAIL)
+          [[ -z "$UNITY_PASSWORD" ]] && missing+=(UNITY_PASSWORD)
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing repository secrets: ${missing[*]}. See .github/CI.md."
+            exit 1
+          fi
+
+      - name: Run Unity EditMode tests
+        id: unity-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Lumenfall
+          unityVersion: auto
+          testMode: editmode
+          artifactsPath: artifacts/editmode
+
+      - name: Upload Unity test results
+        if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: unity-editmode-results
+          path: ${{ steps.unity-tests.outputs.artifactsPath }}
+          if-no-files-found: warn
+          retention-days: 14
