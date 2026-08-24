@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "quests": [
+    {
+      "id": "moonpetal_remedy",
+      "title": "A Moonpetal Remedy",
+      "description": "Collect three moonpetals and return to Elara.",
+      "onStartedEventId": "moonpetal_remedy_started",
+      "onCompletedEventId": "moonpetal_remedy_completed",
+      "metadata": [
+        { "key": "journalCategory", "value": "village" },
+        { "key": "requiredMoonpetals", "value": "3" }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "elara_conversation",
+      "startNodeId": "greeting",
+      "metadata": [
+        { "key": "portrait", "value": "elara" }
+      ],
+      "nodes": [
+        {
+          "id": "greeting",
+          "speaker": "Elara",
+          "text": "The forest is restless tonight. What did you need?",
+          "choices": [
+            {
+              "id": "accept_quest",
+              "text": "Can I help?",
+              "nextNodeId": "quest_accepted",
+              "conditions": [
+                { "type": "QuestStatus", "key": "moonpetal_remedy", "value": "NotStarted" }
+              ],
+              "actions": [
+                { "type": "StartQuest", "key": "moonpetal_remedy" }
+              ]
+            },
+            {
+              "id": "active_reminder",
+              "text": "Remind me what you need.",
+              "nextNodeId": "quest_reminder",
+              "conditions": [
+                { "type": "QuestStatus", "key": "moonpetal_remedy", "value": "Active" }
+              ]
+            },
+            {
+              "id": "completed_response",
+              "text": "How is the remedy?",
+              "nextNodeId": "quest_thanks",
+              "conditions": [
+                { "type": "QuestStatus", "key": "moonpetal_remedy", "value": "Completed" }
+              ]
+            },
+            {
+              "id": "leave",
+              "text": "Goodbye.",
+              "nextNodeId": ""
+            }
+          ]
+        },
+        {
+          "id": "quest_accepted",
+          "speaker": "Elara",
+          "text": "Bring me three moonpetals. They glow beside the old stones.",
+          "nextNodeId": ""
+        },
+        {
+          "id": "quest_reminder",
+          "speaker": "Elara",
+          "text": "Three moonpetals, from beside the old stones.",
+          "nextNodeId": ""
+        },
+        {
+          "id": "quest_thanks",
+          "speaker": "Elara",
+          "text": "The remedy worked. Lumenfall owes you a kindness.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "elara_quest_complete",
+      "startNodeId": "thanks",
+      "nodes": [
+        {
+          "id": "thanks",
+          "speaker": "Elara",
+          "text": "These are perfect. I can finish the remedy now.",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "talk_to_elara",
+      "description": "Starts Elara's state-aware NPC dialogue tree.",
+      "repeatable": true,
+      "actions": [
+        { "type": "StartDialogue", "key": "elara_conversation" }
+      ],
+      "metadata": [
+        { "key": "npcId", "value": "elara" }
+      ]
+    },
+    {
+      "id": "collect_moonpetal",
+      "description": "Call after adding a moonpetal to the player's inventory.",
+      "repeatable": true,
+      "conditions": [
+        { "type": "QuestStatus", "key": "moonpetal_remedy", "value": "Active" }
+      ],
+      "actions": [
+        { "type": "AddCounter", "key": "moonpetals", "intValue": 1 }
+      ]
+    },
+    {
+      "id": "turn_in_moonpetals",
+      "description": "Completes the quest once all three moonpetals have been collected.",
+      "repeatable": false,
+      "conditions": [
+        { "type": "QuestStatus", "key": "moonpetal_remedy", "value": "Active" },
+        { "type": "Counter", "key": "moonpetals", "comparison": "greaterOrEqual", "intValue": 3 }
+      ],
+      "actions": [
+        { "type": "CompleteQuest", "key": "moonpetal_remedy" }
+      ]
+    },
+    {
+      "id": "moonpetal_remedy_started",
+      "description": "Quest lifecycle hook fired automatically when the quest starts.",
+      "repeatable": false,
+      "actions": [
+        { "type": "SetFlag", "key": "has_active_quest", "boolValue": true }
+      ]
+    },
+    {
+      "id": "moonpetal_remedy_completed",
+      "description": "Quest lifecycle hook fired automatically when the quest completes.",
+      "repeatable": false,
+      "actions": [
+        { "type": "SetFlag", "key": "has_active_quest", "boolValue": false },
+        { "type": "StartDialogue", "key": "elara_quest_complete" }
+      ]
+    }
+  ]
+}

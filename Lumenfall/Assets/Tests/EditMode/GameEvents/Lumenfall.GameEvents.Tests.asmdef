@@ -1,0 +1,13 @@
+{
+    "name": "Lumenfall.GameEvents.Tests",
+    "rootNamespace": "Lumenfall.Tests.GameEvents",
+    "references": [
+        "Lumenfall.GameEvents"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
