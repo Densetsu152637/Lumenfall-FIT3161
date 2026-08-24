@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b127a8de428860b40ae3c1e71f417f04
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/Materials/Mat_Eyes_BuiltIn.mat
+  uploadId: 924550

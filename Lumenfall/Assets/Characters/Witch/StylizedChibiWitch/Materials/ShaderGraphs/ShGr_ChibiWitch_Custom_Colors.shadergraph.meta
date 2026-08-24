@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 15fc72c4c3e9e1348a3bf9995a9bc4a2
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/Materials/ShaderGraphs/ShGr_ChibiWitch_Custom_Colors.shadergraph
+  uploadId: 924550

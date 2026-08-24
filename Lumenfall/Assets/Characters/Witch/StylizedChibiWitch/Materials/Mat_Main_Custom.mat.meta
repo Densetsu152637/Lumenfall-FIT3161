@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3bd3d5d5ffa28fb478b1e065a1b60cb3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/Materials/Mat_Main_Custom.mat
+  uploadId: 924550

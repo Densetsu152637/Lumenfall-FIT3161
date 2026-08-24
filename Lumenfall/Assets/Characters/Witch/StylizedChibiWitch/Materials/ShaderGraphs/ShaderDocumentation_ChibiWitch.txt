@@ -1,0 +1,57 @@
+Shader Compatibility
+
+The included Shader Graphs are compatible with both rendering pipelines:
+
+Universal Render Pipeline (URP)
+Built-in Render Pipeline
+
+Separate versions of the shaders are provided where required to ensure proper functionality and visual consistency across supported Unity rendering pipelines.
+
+All material customization features, including color customization and mouth expression switching, are available in both pipeline versions.
+
+
+ShGr_ChibiWitch_Mouth
+
+This Shader Graph is used to control the character's mouth expression by switching between different mouth textures stored in a texture atlas.
+
+Properties: 
+
+Mouth_Index - Mouth_Index changes the UV coordinates of the mouth texture atlas to display different mouth expressions.
+
+Type: Float (Integer values only)
+Minimum Value:0
+Maximum Value: 9
+Default Value: 0
+
+The property is intended to be used with whole-number values only. Each integer value selects a specific mouth texture from the atlas: ChibiWitch\_MouthAtlas
+
+Usage Notes:
+
+-Use integer values only.
+-Values outside the supported range are not intended for use.
+-The property works by offsetting the UV coordinates within the mouth texture atlas.
+
+_________________________________________________________________________________
+
+ShGr_ChibiWitch_Custom_Colors
+
+This Shader Graph allows customization of the character's color palette through multiple color properties.
+
+Properties:
+
+MainCloth Color - Controls the primary color of the character's clothing.
+ClothDetails Color - Controls the color of decorative cloth details and fabric trims located along the edges of the outfit (Decorative fabric edging).
+Нair Color - Controls the color of the character's hair.
+Skin Color - Controls the color of the character's skin.
+AdditionalCloth Color - Controls the color of secondary clothing elements (Boots, The two stitched fabric details on the blouse)
+Skirt Color - Controls the color of the character's skirt.
+
+
+Usage Notes:
+
+-All color properties can be adjusted independently.
+-Changes are applied in real time through the material instance.
+-Multiple color combinations can be created without modifying the original textures.
+
+
+
