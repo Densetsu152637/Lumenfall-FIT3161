@@ -21,7 +21,7 @@ offset is preserved while it walks across the grid.
 2. Add `GridMover` and `GridPlayerInput` to the player. Place the player near a cell centre;
    `GridMover` snaps it precisely when enabled.
 3. Optionally drag `Player/Move` and `Player/Sprint` from
-   `Assets/InputSystem_Actions.inputactions` into their action fields. If left empty,
+   `Assets/_Project/Input/InputSystem_Actions.inputactions` into their action fields. If left empty,
    `GridPlayerInput` supplies WASD, arrows, gamepad movement, Left Shift sprint, and gamepad
    stick-click sprint automatically.
 4. Tune Walk Move Duration and Sprint Move Duration on `GridMover`. Sprint has no stamina logic;

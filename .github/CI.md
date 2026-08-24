@@ -10,8 +10,9 @@ The workflow contains two checks:
 1. `Repository integrity` runs the Python harness tests and validates Unity metadata,
    JSON files, build scenes, case-safe paths, merge markers, and generated-file hygiene.
    It requires no third-party packages or secrets.
-2. `Unity EditMode tests` runs the NUnit tests under `Lumenfall/Assets/Tests` with
-   GameCI and uploads the XML test results for 14 days.
+2. `Unity EditMode tests` runs the NUnit tests colocated with their systems under
+   `Lumenfall/Assets/_Project/Systems/*/Tests` with GameCI and uploads the XML test
+   results for 14 days.
 
 ## One-time Unity license setup
 

@@ -12,9 +12,9 @@ namespace Lumenfall.GridMovement
     public sealed class GridPlayerInput : MonoBehaviour
     {
         [Header("Input Actions")]
-        [Tooltip("Usually Player/Move from Assets/InputSystem_Actions.inputactions.")]
+        [Tooltip("Usually Player/Move from Assets/_Project/Input/InputSystem_Actions.inputactions.")]
         [SerializeField] private InputActionReference moveAction;
-        [Tooltip("Usually Player/Sprint from Assets/InputSystem_Actions.inputactions.")]
+        [Tooltip("Usually Player/Sprint from Assets/_Project/Input/InputSystem_Actions.inputactions.")]
         [SerializeField] private InputActionReference sprintAction;
         [SerializeField] private PlayerInput playerInput;
         [SerializeField] private string moveActionName = "Move";

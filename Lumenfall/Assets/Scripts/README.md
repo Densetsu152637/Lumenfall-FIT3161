@@ -1,1 +1,0 @@
-﻿This folder is the script folder, so all game scripts should live here and no where else
