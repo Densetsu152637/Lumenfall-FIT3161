@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 97f8e2f191c88004bb8e771a01594a0e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/AnimatorControllers/ChibiWitch_AnimatorController.controller
+  uploadId: 924550

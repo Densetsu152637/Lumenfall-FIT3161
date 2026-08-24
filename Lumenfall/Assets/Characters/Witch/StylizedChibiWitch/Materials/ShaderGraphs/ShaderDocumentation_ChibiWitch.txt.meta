@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a348c6d98fe70bd44ab0804ff8e8d739
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/Materials/ShaderGraphs/ShaderDocumentation_ChibiWitch.txt
+  uploadId: 924550

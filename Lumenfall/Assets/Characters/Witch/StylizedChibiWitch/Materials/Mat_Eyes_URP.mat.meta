@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2be8c97715db6de43a6a36f813913954
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 379418
+  packageName: Stylized Chibi Witch Character
+  packageVersion: 1.0
+  assetPath: Assets/StylizedChibiWitch/Materials/Mat_Eyes_URP.mat
+  uploadId: 924550
