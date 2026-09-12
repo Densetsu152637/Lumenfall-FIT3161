@@ -45,4 +45,4 @@ __pycache__/
 .env.local
 .env*.local
 .env.*
-
+agents.md
