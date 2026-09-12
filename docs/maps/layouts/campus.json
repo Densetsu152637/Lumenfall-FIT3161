@@ -1,0 +1,153 @@
+{
+  "width": 100,
+  "height": 80,
+  "regions": [
+    {
+      "id": "A01",
+      "name": "East gate forecourt",
+      "rect": {
+        "x": 43,
+        "y": 35,
+        "width": 14,
+        "height": 10
+      },
+      "walkable": true
+    },
+    {
+      "id": "C01",
+      "name": "Campus commons",
+      "rect": {
+        "x": 30,
+        "y": 28,
+        "width": 40,
+        "height": 28
+      },
+      "walkable": true
+    },
+    {
+      "id": "C02",
+      "name": "Orientation terrace",
+      "rect": {
+        "x": 34,
+        "y": 18,
+        "width": 18,
+        "height": 8
+      },
+      "walkable": true
+    },
+    {
+      "id": "C03",
+      "name": "Orientation trial strip",
+      "rect": {
+        "x": 15,
+        "y": 30,
+        "width": 12,
+        "height": 8
+      },
+      "walkable": true
+    },
+    {
+      "id": "C04",
+      "name": "Garden walk",
+      "rect": {
+        "x": 60,
+        "y": 55,
+        "width": 18,
+        "height": 10
+      },
+      "walkable": true
+    },
+    {
+      "id": "C05",
+      "name": "Campus path loop",
+      "rect": {
+        "x": 25,
+        "y": 25,
+        "width": 50,
+        "height": 40
+      },
+      "walkable": true
+    },
+    {
+      "id": "B01",
+      "name": "B01",
+      "rect": {
+        "x": 12,
+        "y": 56,
+        "width": 20,
+        "height": 14
+      },
+      "walkable": true
+    },
+    {
+      "id": "B02",
+      "name": "B02",
+      "rect": {
+        "x": 10,
+        "y": 12,
+        "width": 26,
+        "height": 20
+      },
+      "walkable": true
+    },
+    {
+      "id": "B03",
+      "name": "B03",
+      "rect": {
+        "x": 40,
+        "y": 8,
+        "width": 30,
+        "height": 18
+      },
+      "walkable": true
+    },
+    {
+      "id": "B04",
+      "name": "B04",
+      "rect": {
+        "x": 72,
+        "y": 48,
+        "width": 20,
+        "height": 24
+      },
+      "walkable": true
+    }
+  ],
+  "spawn": {
+    "x": 1,
+    "y": 1
+  },
+  "buildingPlacements": {
+    "B01": {
+      "x": 12,
+      "y": 56,
+      "width": 20,
+      "height": 14
+    },
+    "B02": {
+      "x": 10,
+      "y": 12,
+      "width": 26,
+      "height": 20
+    },
+    "B03": {
+      "x": 40,
+      "y": 8,
+      "width": 30,
+      "height": 18
+    },
+    "B04": {
+      "x": 72,
+      "y": 48,
+      "width": 20,
+      "height": 24
+    }
+  },
+  "gateStates": {
+    "north": "locked",
+    "south": "locked",
+    "west": "locked",
+    "east": "open"
+  },
+  "tileFile": "campus.txt"
+}

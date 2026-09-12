@@ -20,16 +20,16 @@ North is up on the map. A walled academy campus contains separate buildings, pat
 
 The starting forest lies immediately beyond the east wall. Its trail reaches the east gate and forest threshold, making the forest a distinct neighbouring area rather than a route running through the campus. The north, south, and west gates are visible but reserved for future map expansion. There are no enclosed castle ranges or required corridors between buildings.
 
-Each building has its own ground floor and, where listed, an upper floor. Sirius bedrooms occupy its upper floor; the other buildings use upper floors for reserved facilities. No basement, additional dormitory tower, or separate service building is necessary for this map.
+Each building is single-storey. Interiors use open halls with activity zones; Sirius keeps the player's sleeping area as the only separated private space. No basement, additional dormitory tower, or separate service building is necessary for this map.
 
 ## Building inventory
 
 | ID  | Building or range     | Position and orientation                                               | Function and entrances                                                                                                                   |
 | --- | --------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | B01 | Arrival building      | Southwest campus; public entrance faces the campus commons             | Reception and student services. Its doors open to A01 and the campus paths.                                                             |
-| B02 | Teaching building    | Northwest campus; classrooms face the commons                          | First-year teaching and engineering assignments. A west door opens to campus paths; internal gallery and stairs serve its rooms.         |
+| B02 | Teaching building    | Northwest campus; classrooms face the commons                          | First-year teaching and engineering assignments in one open hall with puzzle zones. A west door opens to campus paths.         |
 | B03 | Shared facilities    | North-central campus; public doors face the commons                     | Dining, library, practice, and administration. Rooms are reached through its own internal hall.                                           |
-| B04 | Sirius dormitory     | Southeast campus near the east gate; public entrance faces the commons  | Student accommodation and social space. Its lobby opens to campus paths; internal stairs reach the residential floor.                    |
+| B04 | Sirius dormitory     | Southeast campus near the east gate; public entrance faces the commons  | Student accommodation and social space in one open common/group-living hall, with a ground-floor player sleeping room. Its lobby opens to campus paths.                    |
 
 These are four separate buildings inside the same academy wall. Their entrances remain independently readable, and no building-to-building corridor is required.
 
@@ -76,10 +76,10 @@ Reception remains accessible throughout Chapter 1. The initial conversation open
 | W05 | Teaching equipment store      | Ground, between W03 and W04, on the outer wall        | Door from W01. Logical storage for movable relics and classroom supplies.                                    | Reserved  |
 | W06 | Campus-side vestibule         | Ground, west-facing exit to campus paths | Connects W01 to C01. The building has no direct forest entrance; the east gate is the forest route.            | Chapter 1 |
 | W07 | Classroom waypoint alcove     | Ground, recessed into W01 beside W02                  | Optional destination paired with D03. A recess keeps arriving players out of the gallery's main path.        | Optional  |
-| W08 | West stair                    | Ground to upper floor, north end of W01               | Connects W01 to W09; upper access stays closed in Chapter 1.                                                 | Reserved  |
-| W09 | Upper teaching landing        | Upper, above north end of W01                         | Connects W08, W10, and W11.                                                                                  | Reserved  |
-| W10 | Advanced seminar room         | Upper, west of W09                                    | Door from W09. Architectural allowance for later lessons only.                                               | Reserved  |
-| W11 | Faculty preparation room      | Upper, south of W09                                   | Door from W09. Staff workspace; no assigned story content.                                                   | Reserved  |
+| W08 | Teaching support zone                    | Ground-floor open hall, north end of W01               | Connects W01 to W09; reserved for later content.                                                 | Reserved  |
+| W09 | Seminar zone        | Ground-floor above north end of W01                         | Connects W08, W10, and W11.                                                                                  | Reserved  |
+| W10 | Advanced seminar zone         | Ground-floor west of W09                                    | Door from W09. Architectural allowance for later lessons only.                                               | Reserved  |
+| W11 | Faculty preparation zone      | Ground-floor south of W09                                   | Door from W09. Staff workspace; no assigned story content.                                                   | Reserved  |
 
 For a compact build, both Stella assignments can use W02 at different quest stages. W03 then remains closed. The second assignment is not a prerequisite for reaching Cinna Cirra unless the quest design explicitly adopts that requirement.
 
@@ -95,10 +95,10 @@ For a compact build, both Stella assignments can use W02 at different quest stag
 | N06 | Spell-practice hall       | Ground, northeast bay                       | Door from N01. Self-contained practice floor with room for reset controls if practice activities are approved.                | Optional  |
 | N07 | Academy common room       | Ground, southeast corner of range           | Door from N01, near D02. Larger mixed-student gathering room, distinct from Sirius's residential lounge.                      | Optional  |
 | N08 | Shared washroom           | Ground, beside N07                          | Door from N01. Supports the dining and study facilities.                                                                      | Reserved  |
-| N09 | Administration stair      | Ground to upper floor, northwest end of N01 | Connects N01 to N10; upper access stays closed in Chapter 1.                                                                  | Reserved  |
-| N10 | Administration landing    | Upper, above western half of N01            | Connects N09, N11, and N12.                                                                                                   | Reserved  |
-| N11 | Head's office             | Upper, northwest corner                     | Door from N10. Establishes an administrative destination without adding an opening-chapter scene.                             | Reserved  |
-| N12 | Staff meeting room        | Upper, north-central bay                    | Door from N10. Reserved institutional space.                                                                                  | Reserved  |
+| N09 | Administration zone      | Ground-floor open hall, northwest end of N01 | Connects N01 to N10; reserved for later content.                                                                  | Reserved  |
+| N10 | Administration landing zone    | Ground-floor above western half of N01            | Connects N09, N11, and N12.                                                                                                   | Reserved  |
+| N11 | Head's office zone             | Ground-floor northwest corner                     | Door from N10. Establishes an administrative destination without adding an opening-chapter scene.                             | Reserved  |
+| N12 | Staff meeting zone        | Ground-floor north-central bay                    | Door from N10. Reserved institutional space.                                                                                  | Reserved  |
 
 None of N02-N12 is required for the key quest. The cross-hall may therefore operate as a simple connection between the teaching and dormitory wings while these interiors remain unbuilt.
 
@@ -111,17 +111,17 @@ The reference describes both a room shared by five students and the player's pri
 | D01 | Sirius entrance lobby               | Ground, west-facing centre of building | Links C04, C05, and D02. House signage clearly distinguishes residence from classrooms.                                                     | Chapter 1 |
 | D02 | Sirius common area                  | Ground, centre and north of wing   | Connects D01, N01, D03, D04, D05, and D06. Comfortable seating for informal conversations and the group's reaction after receiving the key. | Chapter 1 |
 | D03 | Dormitory waypoint alcove           | Ground, east wall of D02           | Doorless recess from D02. Proposed travel link to W07; may appear dormant if teleportation is outside scope.                                | Optional  |
-| D04 | Residential stair and upper landing | Ground to upper, southeast of D02  | Links D02 to D07 and D14. The landing's suite door is locked until the key is received.                                                     | Chapter 1 |
+| D04 | Residential key door zone | Ground-floor, southeast of D02  | Links D02 to D07 and D14. The landing's suite door is locked until the key is received.                                                     | Chapter 1 |
 | D05 | Laundry and utility room            | Ground, northeast service corner   | Door from D02. Possible future setting for the optional dormitory power-restoration activity.                                               | Reserved  |
 | D06 | Common-area washroom                | Ground, beside D05                 | Door from D02.                                                                                                                              | Reserved  |
-| D07 | Five-student group room             | Upper, above D02                   | Entrance from D04; doors to D08-D13. Shared suite sitting room reached when a friend guides the player upstairs.                            | Chapter 1 |
-| D08 | Player bedroom                      | Upper, southwest corner of suite   | Door from D07. Bed, storage, and a west-facing courtyard window support the sleep transition and bright awakening.                          | Chapter 1 |
-| D09 | Stella's bedroom                    | Upper, northwest corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
-| D10 | Cinna Cirra's bedroom               | Upper, north-central side of suite | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
-| D11 | Orio's bedroom                      | Upper, northeast corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
-| D12 | Katrina's bedroom                   | Upper, southeast corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
-| D13 | Suite bathroom                      | Upper, south-central side of suite | Door from D07. Shared amenity, with no required interaction.                                                                                | Reserved  |
-| D14 | Linen cupboard                      | Upper, beside D04 landing          | Door from D04. Small service space that can be represented by a closed cupboard.                                                            | Reserved  |
+| D07 | Group living zone             | Ground-floor within the open hall                   | Entrance from D04; doors to D08-D13. Shared suite sitting room reached when a friend guides the player across the hall.                            | Chapter 1 |
+| D08 | Player sleeping room                      | Ground-floor southwest corner of suite   | Door from D07. Bed, storage, and a west-facing courtyard window support the sleep transition and bright awakening.                          | Chapter 1 |
+| D09 | Stella's sleeping zone                    | Ground-floor northwest corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
+| D10 | Cinna Cirra's sleeping zone               | Ground-floor north-central side of suite | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
+| D11 | Orio's sleeping zone                      | Ground-floor northeast corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
+| D12 | Katrina's sleeping zone                   | Ground-floor southeast corner of suite   | Door from D07. Private room reserved for later character content.                                                                           | Reserved  |
+| D13 | Shared washroom zone                      | Ground-floor south-central side of suite | Door from D07. Shared amenity, with no required interaction.                                                                                | Reserved  |
+| D14 | Linen storage zone                      | Ground-floor beside D04 landing          | Door from D04. Small service space that can be represented by a closed cupboard.                                                            | Reserved  |
 
 Only D08 needs an accessible private bedroom in Chapter 1. D07 is the group's shared space, not an additional private room. The proposal assumes the player and the four principal friends are the suite's five residents.
 

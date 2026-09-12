@@ -1,0 +1,176 @@
+{
+  "width": 36,
+  "height": 24,
+  "regions": [
+    {
+      "id": "B04",
+      "name": "B04",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "width": 34,
+        "height": 22
+      },
+      "walkable": true
+    },
+    {
+      "id": "D01",
+      "name": "D01",
+      "rect": {
+        "x": 2,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D02",
+      "name": "D02",
+      "rect": {
+        "x": 10,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D03",
+      "name": "D03",
+      "rect": {
+        "x": 18,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D04",
+      "name": "D04",
+      "rect": {
+        "x": 26,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D05",
+      "name": "D05",
+      "rect": {
+        "x": 2,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D06",
+      "name": "D06",
+      "rect": {
+        "x": 10,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D07",
+      "name": "D07",
+      "rect": {
+        "x": 18,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D08",
+      "name": "D08",
+      "rect": {
+        "x": 26,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D09",
+      "name": "D09",
+      "rect": {
+        "x": 2,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D10",
+      "name": "D10",
+      "rect": {
+        "x": 10,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D11",
+      "name": "D11",
+      "rect": {
+        "x": 18,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D12",
+      "name": "D12",
+      "rect": {
+        "x": 26,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D13",
+      "name": "D13",
+      "rect": {
+        "x": 2,
+        "y": 17,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "D14",
+      "name": "D14",
+      "rect": {
+        "x": 10,
+        "y": 17,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    }
+  ],
+  "spawn": {
+    "x": 2,
+    "y": 2
+  },
+  "tileFile": "B04.Ground.txt"
+}

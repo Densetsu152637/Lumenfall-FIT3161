@@ -1,73 +1,38 @@
-"""Generate deterministic tile layouts and human-readable maps from location-plan.md."""
-from __future__ import annotations
-import json, re
+"""Generate authoritative single-storey academy tile maps."""
 from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "docs" / "location-plan.md"
-OUT = ROOT / "docs" / "maps"
-W, H = 12, 10
-
+import json,re
+ROOT=Path(__file__).resolve().parents[1]; SRC=ROOT/'docs/location-plan.md'; OUT=ROOT/'docs/maps'
+LEGEND={'#':{'name':'wall','walkable':False,'collision':True},'.':{'name':'floor','walkable':True,'collision':False},'+':{'name':'door','walkable':True,'collision':False},'f':{'name':'fixture','walkable':False,'collision':True}}
 def inventory():
-    text = SOURCE.read_text(encoding="utf-8")
-    found = {}
-    # Building headings are stable location IDs even though they are not table rows.
-    for ident, name in re.findall(r"## (B0[1-4]):\s*([^\n]+)", text):
-        found[ident] = {"id": ident, "name": name.strip(), "kind": "building", "floor": "Ground", "access": "Chapter 1"}
-    for row in text.splitlines():
-        m = re.match(r"\|\s*([A-Z][0-9]{2})\s*\|\s*([^|]+)\|\s*([^|]+)\|.*\|\s*(Chapter 1|Optional|Reserved)\s*\|", row)
-        if m:
-            ident, name, placement, access = m.groups()
-            floor = "Upper" if re.search(r"\bUpper\b|upper floor|upper landing", placement, re.I) else "Ground"
-            kind = "outdoor" if ident[0] in "FAC" else "room"
-            found[ident] = {"id": ident, "name": name.strip(), "kind": kind, "floor": floor, "access": access}
-    return [found[k] for k in sorted(found)]
-
-def tiles(area):
-    # # wall, . walkable, + door/portal. Reserved areas remain represented and gated.
-    grid = [["." for _ in range(W)] for _ in range(H)]
-    for y in range(H):
-        for x in range(W):
-            if x in (0, W-1) or y in (0, H-1): grid[y][x] = "#"
-    # A door in every layout guarantees an explicit entry point; portals identify transitions.
-    grid[H//2][0] = "+"
-    return ["".join(r) for r in grid]
-
+ t=SRC.read_text(encoding='utf8'); d={}
+ for i,n in re.findall(r'^## (B0[1-4]):\s*([^\n]+)',t,re.M): d[i]={'id':i,'name':n.strip(),'kind':'building','floor':'Ground','access':'Chapter 1'}
+ for i,n,p,a in re.findall(r'^\|\s*([A-Z][0-9]{2})\s*\|\s*([^|]+)\|\s*([^|]+)\|[^\n]*?\|\s*(Chapter 1|Optional|Reserved)\s*\|',t,re.M):
+  names={'W08':'Teaching support zone','W09':'Seminar zone','W10':'Advanced seminar zone','W11':'Faculty preparation zone','N09':'Administration zone','N10':'Administration landing zone','N11':"Head's office zone",'N12':'Staff meeting zone','D04':'Residential key door zone','D07':'Group living zone','D08':'Player sleeping room','D09':"Stella's sleeping zone",'D10':"Cinna Cirra's sleeping zone",'D11':"Orio's sleeping zone",'D12':"Katrina's sleeping zone",'D13':'Shared washroom zone','D14':'Linen storage zone'}
+  d[i]={'id':i,'name':names.get(i,n.strip()),'kind':'outdoor' if i[0] in 'FAC' else 'room','floor':'Ground','access':a}
+ return [d[k] for k in sorted(d)]
+def blank(w,h): return [['#']*w]+[['#']+['.']*(w-2)+['#'] for _ in range(h-2)]+[['#']*w]
+def region_map(w,h,regions): return {'width':w,'height':h,'tiles':[''.join(x) for x in blank(w,h)],'regions':regions,'spawn':{'x':1,'y':1}}
+def make_building(b,ids):
+ regs=[{'id':b,'name':b,'rect':{'x':1,'y':1,'width':34,'height':22},'walkable':True}]
+ for n,i in enumerate(ids): regs.append({'id':i,'name':i,'rect':{'x':2+(n%4)*8,'y':2+(n//4)*5,'width':6,'height':3},'walkable':True})
+ return {'width':36,'height':24,'tiles':[''.join(x) for x in blank(36,24)],'regions':regs,'spawn':{'x':2,'y':2}}
 def build():
-    areas = []
-    for a in inventory():
-        entry = dict(a)
-        entry.update({"schema": "lumenfall.tile-layout/1", "width": W, "height": H,
-                      "origin": {"x": 0, "y": 0}, "tiles": tiles(a),
-                      "legend": {"#": "wall", ".": "walkable", "+": "door or portal"},
-                      "regions": [{"id": a["id"] + ".main", "name": a["name"], "rect": {"x": 1, "y": 1, "width": W-2, "height": H-2}, "walkable": True}],
-                      "spawn": {"x": 1, "y": H//2},
-                      "doors": [{"id": a["id"] + ".entry", "cell": {"x": 0, "y": H//2}, "state": "open" if a["access"] == "Chapter 1" else "locked", "requires": None if a["access"] == "Chapter 1" else "content_unlock"}],
-                      "portals": [], "notes": "Generated blockout; replace region geometry without changing IDs."})
-        areas.append(entry)
-    # Stable named world transitions. The forest and campus gates remain explicit and stateful.
-    by = {a["id"]: a for a in areas}
-    links = [("F01","F02","open"),("F02","F03","open"),("F02","F04","open"),("F02","F05","open"),
-             ("F04","F06","locked"),("F03","A01","locked"),("A01","C01","open"),
-             ("C01","C02","open"),("C01","C03","open"),("C01","C04","open"),("C01","C05","open"),
-             ("C05","B01","open"),("C05","B02","open"),("C05","B03","open"),("C05","B04","open"),
-             ("B01","S01","open"),("B02","W01","open"),("B03","N01","open"),("B04","D01","open"),
-             ("D04","D07","locked"),("W08","W09","locked"),("N09","N10","locked")]
-    for src, dst, state in links:
-        if src not in by or dst not in by: continue
-        for origin, target in ((src, dst), (dst, src)):
-            by[origin]["portals"].append({"id": f"P.{origin}.{target}", "cell": {"x": 1, "y": H//2}, "destination": {"areaId": target, "cell": {"x": 1, "y": H//2}}, "state": state, "requires": None if state == "open" else "content_unlock"})
-    return {"schema": "lumenfall.tile-layout/1", "coordinateSystem": "x east, y north; Unity local (x, z) = (x, y); origin is cell (0,0)", "tileLegend": {"#":"wall/blocked", ".":"walkable floor", "+":"door or portal cell"}, "areas": areas}
-
+ areas=inventory(); by={a['id']:a for a in areas}; placements={'B01':(12,56,20,14),'B02':(10,12,26,20),'B03':(40,8,30,18),'B04':(72,48,20,24)}
+ cre=[{'id':i,'name':n,'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for i,n,r in [('A01','East gate forecourt',(43,35,14,10)),('C01','Campus commons',(30,28,40,28)),('C02','Orientation terrace',(34,18,18,8)),('C03','Orientation trial strip',(15,30,12,8)),('C04','Garden walk',(60,55,18,10)),('C05','Campus path loop',(25,25,50,40))]]
+ cre += [{'id':b,'name':b,'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for b,r in placements.items()]
+ campus=region_map(100,80,cre); campus.update({'buildingPlacements':{b:dict(zip(('x','y','width','height'),r)) for b,r in placements.items()},'gateStates':{'north':'locked','south':'locked','west':'locked','east':'open'}})
+ forest=region_map(48,30,[{'id':i,'name':by[i]['name'],'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for i,r in zip(('F01','F02','F03','F04','F05','F06'),[(2,12,8,6),(8,12,24,6),(30,12,12,6),(22,5,10,7),(14,18,12,7),(22,2,8,4)])])
+ owner={'S':'B01','W':'B02','N':'B03','D':'B04'}
+ fmap={b+'.Ground':make_building(b,[a['id'] for a in areas if a['kind']=='room' and owner[a['id'][0]]==b]) for b in placements}
+ for a in areas: a.update({'floor':'Ground','mapId':'eastForest' if a['id'].startswith('F') else ('campus' if a['kind'] in ('outdoor','building') else owner[a['id'][0]]+'.Ground'),'regionId':a['id'],'portals':[]})
+ links=[('F01','F02','eastForest',(9,15),(8,15)),('F02','F03','eastForest',(31,15),(30,15)),('F02','F04','eastForest',(20,12),(25,11)),('F02','F05','eastForest',(15,17),(18,18)),('F04','F06','eastForest',(25,5),(25,4)),('F03','A01','campus',(41,15),(43,40)),('A01','C01','campus',(50,35),(50,35)),('C01','C02','campus',(42,28),(42,26)),('C01','C03','campus',(30,34),(27,34)),('C01','C04','campus',(60,50),(60,55)),('C01','C05','campus',(35,40),(35,39))]
+ for b,(x,y,w,h) in placements.items(): links.append(('C05',b,b+'.Ground',(x+13,y),(x+8,y+2)))
+ for s,t,dm,c1,c2 in links:
+  for a,c,d,tm in ((by[s],c1,t,dm),(by[t],c2,s,by[s]['mapId'])): a['portals'].append({'id':f'P.{a["id"]}.{d}','cell':{'x':c[0],'y':c[1]},'destination':{'mapId':tm,'regionId':d,'cell':{'x':(c2 if a is by[s] else c1)[0],'y':(c2 if a is by[s] else c1)[1]}},'state':'open','requires':None})
+ return {'schema':'lumenfall.tile-layout/2','coordinateSystem':'rows north-to-south; Unity (x,z)=(x,y); cellSize=1','tileLegend':LEGEND,'worldMaps':{'campus':campus,'eastForest':forest},'floorMaps':fmap,'areas':areas}
 def main():
-    data = build(); OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "academy-layouts.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    lines = ["# Academy tile layouts", "", "Generated from `academy-layouts.json` by `scripts/generate_layouts.py`.", "", "Legend: `#` wall, `.` walkable, `+` door/portal. Coordinates use x east and y north.", "", "## Area index", "", "| ID | Area | Kind | Floor | Access |", "|---|---|---|---|---|"]
-    for a in data["areas"]:
-        lines.append(f"| {a['id']} | {a['name']} | {a['kind']} | {a['floor']} | {a['access']} |")
-    for a in data["areas"]:
-        lines += ["", f"## {a['id']} — {a['name']}", "", f"`{a['width']}×{a['height']}` {a['floor']} / {a['access']}", "", "```text"] + a["tiles"] + ["```", "", f"Spawn: ({a['spawn']['x']},{a['spawn']['y']})."]
-        if a["portals"]: lines.append("Portals: " + ", ".join(f"{p['id']} → {p['destination']['areaId']} ({p['state']})" for p in a["portals"]))
-    (OUT / "academy-layouts.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-if __name__ == "__main__": main()
+ d=build(); root=OUT/'layouts'; root.mkdir(parents=True,exist_ok=True); maps={**d['worldMaps'],**d['floorMaps']}; (root/'legend.json').write_text(json.dumps(LEGEND,indent=2)+'\n')
+ manifest={'schema':d['schema'],'coordinateSystem':d['coordinateSystem'],'legendFile':'legend.json','maps':{},'areas':d['areas']}
+ for k,m in maps.items(): (root/f'{k}.txt').write_text('\n'.join(m['tiles'])+'\n'); meta={x:y for x,y in m.items() if x!='tiles'}; meta['tileFile']=f'{k}.txt'; (root/f'{k}.json').write_text(json.dumps(meta,indent=2)+'\n'); manifest['maps'][k]=f'{k}.json'
+ (root/'index.json').write_text(json.dumps(manifest,indent=2)+'\n'); (OUT/'academy-layouts.md').write_text('# Academy tile layouts\n\nAll academy interiors are open ground-level halls.\n')
+if __name__=='__main__': main()

@@ -1,0 +1,154 @@
+{
+  "width": 36,
+  "height": 24,
+  "regions": [
+    {
+      "id": "B03",
+      "name": "B03",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "width": 34,
+        "height": 22
+      },
+      "walkable": true
+    },
+    {
+      "id": "N01",
+      "name": "N01",
+      "rect": {
+        "x": 2,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N02",
+      "name": "N02",
+      "rect": {
+        "x": 10,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N03",
+      "name": "N03",
+      "rect": {
+        "x": 18,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N04",
+      "name": "N04",
+      "rect": {
+        "x": 26,
+        "y": 2,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N05",
+      "name": "N05",
+      "rect": {
+        "x": 2,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N06",
+      "name": "N06",
+      "rect": {
+        "x": 10,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N07",
+      "name": "N07",
+      "rect": {
+        "x": 18,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N08",
+      "name": "N08",
+      "rect": {
+        "x": 26,
+        "y": 7,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N09",
+      "name": "N09",
+      "rect": {
+        "x": 2,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N10",
+      "name": "N10",
+      "rect": {
+        "x": 10,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N11",
+      "name": "N11",
+      "rect": {
+        "x": 18,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    },
+    {
+      "id": "N12",
+      "name": "N12",
+      "rect": {
+        "x": 26,
+        "y": 12,
+        "width": 6,
+        "height": 3
+      },
+      "walkable": true
+    }
+  ],
+  "spawn": {
+    "x": 2,
+    "y": 2
+  },
+  "tileFile": "B03.Ground.txt"
+}

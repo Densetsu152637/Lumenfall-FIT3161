@@ -70,38 +70,9 @@ Each row describes a continuous walking route; repeated identifiers refer to the
 
 The F03 east gate and campus grounds become available after the first reception conversation. For the narrative order rather than all available connections, see the Chapter 1 route table in the inventory.
 
-## Upper floor
+## Single-storey interiors
 
-The following door diagrams show connectivity. The inventory specifies compass positions; these diagrams are not scaled floor plans.
-
-```text
-WEST TEACHING                     NORTH ADMINISTRATION
-
-W01 Ground gallery                N01 Ground hall
-  |
-W08 Stair                         N09 Stair (from N01)
-  |                                 |
-W09 Landing                       N10 Landing
-  +-- W10 Seminar room              +-- N11 Head's office
-  +-- W11 Faculty preparation        +-- N12 Staff meeting room
-
-SIRIUS RESIDENTIAL FLOOR
-
-D02 Ground common area
-  |
-D04 Stair and upper landing
-  +-- D14 Linen cupboard
-  |
-  +-- [Residential key door] -- D07 Group room
-                                 +-- D08 Player bedroom (southwest)
-                                 +-- D09 Stella's bedroom (northwest)
-                                 +-- D10 Cinna Cirra's bedroom (north-central)
-                                 +-- D11 Orio's bedroom (northeast)
-                                 +-- D12 Katrina's bedroom (southeast)
-                                 +-- D13 Suite bathroom (south-central)
-```
-
-The D04-to-D07 door is the residential key boundary. Only D07 and D08 require playable upstairs interiors in Chapter 1. The other upper-floor ranges are reserved and have no proposed upstairs cross-connection; travel between ranges uses the ground floor.
+All four buildings are ground-floor maps. B01 is one open reception and student-services hall; B02 is one teaching hall with puzzle zones; B03 is one large dining, study, and practice hall; and B04 is one shared common/group-living hall. The player's sleeping area is a ground-floor private room whose door can use the residential key. All travel stays on the ground level.
 
 ## Creative explanation
 

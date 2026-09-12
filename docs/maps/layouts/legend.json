@@ -1,0 +1,22 @@
+{
+  "#": {
+    "name": "wall",
+    "walkable": false,
+    "collision": true
+  },
+  ".": {
+    "name": "floor",
+    "walkable": true,
+    "collision": false
+  },
+  "+": {
+    "name": "door",
+    "walkable": true,
+    "collision": false
+  },
+  "f": {
+    "name": "fixture",
+    "walkable": false,
+    "collision": true
+  }
+}
