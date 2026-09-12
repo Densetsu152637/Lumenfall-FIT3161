@@ -116,7 +116,12 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            targetAnimationSpeed = 0f;
+            // Held input can chain the next tile from another MoveCompleted
+            // subscriber before this callback runs. Keep the locomotion animation
+            // active when that next step has already started.
+            targetAnimationSpeed = movingActor.IsMoving
+                ? GetMovementAnimationSpeed()
+                : 0f;
         }
 
         private void HandleTeleported(GridMover movingActor, Vector2Int destination)
