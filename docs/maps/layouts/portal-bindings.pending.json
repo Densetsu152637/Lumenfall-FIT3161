@@ -1,0 +1,9 @@
+{
+  "coordinateSystem": "top-left, x right, y down",
+  "status": "pending user destination mapping",
+  "maps": {
+    "campus": [[45,20],[46,20],[68,24],[86,26],[86,27]],
+    "eastForest": [[0,35],[1,35],[0,36],[1,36]]
+  },
+  "destinations": null
+}

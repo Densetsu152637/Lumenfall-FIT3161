@@ -1,6 +1,6 @@
 {
-  "width": 100,
-  "height": 80,
+  "width": 92,
+  "height": 54,
   "regions": [
     {
       "id": "A01",
@@ -150,6 +150,7 @@
     "east": "open"
   },
   "tileFile": "campus.txt",
+  "portalGlyph": "X",
   "portals": [
     {
       "id": "P.A01.F03",

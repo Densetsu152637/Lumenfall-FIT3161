@@ -1,14 +1,259 @@
 {
+  "layers": [
+    {
+      "mapId": "campus",
+      "tileFile": "campus.npcs.txt",
+      "width": 92,
+      "height": 54
+    },
+    {
+      "mapId": "eastForest",
+      "tileFile": "eastForest.npcs.txt",
+      "width": 50,
+      "height": 38
+    },
+    {
+      "mapId": "B02.Ground",
+      "tileFile": "B02.Ground.npcs.txt",
+      "width": 36,
+      "height": 24
+    }
+  ],
   "npcs": [
     {
-      "id": "elara",
-      "displayName": "Elara", "mapId": "campus", "asset": "NPCs/Elara.prefab",
-      "x": 35,
-      "y": 40,
+      "id": "stella",
+      "displayName": "Stella",
+      "mapId": "B02.Ground",
+      "asset": "NPCs/Elara.prefab",
+      "x": 19,
+      "y": 14,
+      "layerSymbol": "s",
       "dialogue": [
-        { "dialogueId": "elara_conversation", "questId": "moonpetal_remedy", "requiredQuestStatus": "NotStarted", "weight": 2 },
-        { "dialogueId": "elara_conversation", "questId": "moonpetal_remedy", "requiredQuestStatus": "Active", "weight": 3 },
-        { "dialogueId": "elara_quest_complete", "questId": "moonpetal_remedy", "requiredQuestStatus": "Completed", "weight": 1 }
+        {
+          "dialogueId": "stella_first_light_dialogue",
+          "questId": "stella_first_light",
+          "requiredQuestStatus": "NotStarted",
+          "weight": 5
+        },
+        {
+          "dialogueId": "stella_first_light_dialogue",
+          "questId": "stella_first_light",
+          "requiredQuestStatus": "Active",
+          "weight": 5
+        },
+        {
+          "dialogueId": "stella_first_light_dialogue",
+          "questId": "stella_first_light",
+          "requiredQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "stella_string_them_together_dialogue",
+          "questId": "stella_string_them_together",
+          "requiredQuestStatus": "NotStarted",
+          "prerequisiteQuestId": "stella_first_light",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "stella_string_them_together_dialogue",
+          "questId": "stella_string_them_together",
+          "requiredQuestStatus": "Active",
+          "prerequisiteQuestId": "stella_first_light",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "stella_string_them_together_dialogue",
+          "questId": "stella_string_them_together",
+          "requiredQuestStatus": "Completed",
+          "prerequisiteQuestId": "stella_first_light",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        }
+      ]
+    },
+    {
+      "id": "cinna_cirra_orientation",
+      "displayName": "Cinna Cirra",
+      "mapId": "campus",
+      "asset": "NPCs/Elara.prefab",
+      "x": 40,
+      "y": 22,
+      "layerSymbol": "c",
+      "dialogue": [
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "NotStarted",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "Active",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "NotStarted",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "Active",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "Completed",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        }
+      ],
+      "hideWhenQuestCompleted": "cinna_out_of_alignment"
+    },
+    {
+      "id": "cinna_cirra_trial",
+      "displayName": "Cinna Cirra",
+      "mapId": "campus",
+      "asset": "NPCs/Elara.prefab",
+      "x": 20,
+      "y": 34,
+      "layerSymbol": "c",
+      "dialogue": [
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "NotStarted",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "Active",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_out_of_alignment_dialogue",
+          "questId": "cinna_out_of_alignment",
+          "requiredQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "NotStarted",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "Active",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        },
+        {
+          "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
+          "questId": "cinna_cold_feet_warm_idea",
+          "requiredQuestStatus": "Completed",
+          "prerequisiteQuestId": "cinna_out_of_alignment",
+          "prerequisiteQuestStatus": "Completed",
+          "weight": 5
+        }
+      ],
+      "showWhenQuestCompleted": "cinna_out_of_alignment"
+    },
+    {
+      "id": "orio",
+      "displayName": "Orio",
+      "mapId": "eastForest",
+      "asset": "NPCs/Elara.prefab",
+      "x": 26,
+      "y": 8,
+      "layerSymbol": "o",
+      "dialogue": [
+        {
+          "dialogueId": "orio_patch_notes_dialogue",
+          "questId": "orio_patch_notes",
+          "requiredQuestStatus": "NotStarted",
+          "weight": 5
+        },
+        {
+          "dialogueId": "orio_patch_notes_dialogue",
+          "questId": "orio_patch_notes",
+          "requiredQuestStatus": "Active",
+          "weight": 5
+        },
+        {
+          "dialogueId": "orio_patch_notes_dialogue",
+          "questId": "orio_patch_notes",
+          "requiredQuestStatus": "Completed",
+          "weight": 5
+        }
+      ]
+    },
+    {
+      "id": "campus_student",
+      "displayName": "Campus student",
+      "mapId": "campus",
+      "asset": "NPCs/Elara.prefab",
+      "x": 70,
+      "y": 32,
+      "layerSymbol": "a",
+      "dialogue": [
+        {
+          "dialogueId": "ambient_courtyard_student",
+          "weight": 1
+        },
+        {
+          "dialogueId": "ambient_courtyard_student_2",
+          "weight": 1
+        },
+        {
+          "dialogueId": "ambient_courtyard_student_3",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "forest_student",
+      "displayName": "Forest student",
+      "mapId": "eastForest",
+      "asset": "NPCs/Elara.prefab",
+      "x": 12,
+      "y": 16,
+      "layerSymbol": "f",
+      "dialogue": [
+        {
+          "dialogueId": "ambient_forest_student",
+          "weight": 1
+        },
+        {
+          "dialogueId": "ambient_forest_student_2",
+          "weight": 1
+        },
+        {
+          "dialogueId": "ambient_forest_student_3",
+          "weight": 1
+        }
       ]
     }
   ]

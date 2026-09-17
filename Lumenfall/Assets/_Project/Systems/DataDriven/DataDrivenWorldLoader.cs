@@ -18,11 +18,13 @@ namespace Lumenfall.DataDriven
         [SerializeField] private GameObject defaultNpc;
         [SerializeField] private GridWorld world;
         private readonly List<GameObject> spawned = new List<GameObject>();
+        private string npcStateSignature;
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
 
         private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); }
         private void Start() { if (world == null) world = FindAnyObjectByType<GridWorld>(); if (map == null) map = Resources.Load<TextAsset>("Maps/campus") ?? Resources.Load<TextAsset>("Maps/map"); if (npcs == null) npcs = Resources.Load<TextAsset>("NPCs/npcs"); Load(map, npcs); }
+        private void Update() { if (LoadedNpcs == null || GameEventManager.Instance == null) return; System.Text.StringBuilder state = new System.Text.StringBuilder(); foreach (NpcDefinition n in LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>()) state.Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.showWhenQuestCompleted)).Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.hideWhenQuestCompleted)); string current = state.ToString(); if (npcStateSignature != current) { npcStateSignature = current; RebuildNpcs(); } }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap() { if (FindAnyObjectByType<DataDrivenWorldLoader>() == null) { GameObject go = new GameObject("[DataDrivenWorldLoader]"); go.AddComponent<DataDrivenWorldLoader>(); go.AddComponent<DialogueOverlay>(); } }
         public void Load(TextAsset mapAsset, TextAsset npcAsset)
@@ -31,12 +33,12 @@ namespace Lumenfall.DataDriven
             Clear(); map = mapAsset; npcs = npcAsset;
             if (map != null)
             {
-                if (TryParseMap(map, out MapDefinition parsedMap, out string mapError)) { LoadedMap = parsedMap; if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height); ApplySpawn(LoadedMap); BuildMap(LoadedMap); }
+                if (TryParseMap(map, out MapDefinition parsedMap, out string mapError)) { LoadedMap = parsedMap; if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height); BuildMap(LoadedMap); ApplySpawn(LoadedMap); ValidatePortals(LoadedMap); }
                 else Debug.LogError(mapError, this);
             }
             if (npcAsset != null)
             {
-                if (TryParseNpcs(npcAsset, out NpcDatabaseDefinition parsedNpcs, out string npcError)) { LoadedNpcs = parsedNpcs; BuildNpcs(LoadedNpcs); }
+                if (TryParseNpcs(npcAsset, out NpcDatabaseDefinition parsedNpcs, out string npcError)) { LoadedNpcs = parsedNpcs; ValidateNpcLayers(LoadedNpcs); BuildNpcs(LoadedNpcs); }
                 else Debug.LogError(npcError, this);
             }
         }
@@ -73,7 +75,24 @@ namespace Lumenfall.DataDriven
             foreach (MapObjectDefinition item in definition.objects ?? Array.Empty<MapObjectDefinition>())
             { GameObject prefab = LoadPrefab(item.asset, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y), item.elevation) : transform.position, Quaternion.Euler(0, item.rotation, 0), root); go.name = string.IsNullOrWhiteSpace(item.id) ? item.type : item.id; if (item.blocks && world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } spawned.Add(go); }
             foreach (PortalDefinition item in definition.portals ?? Array.Empty<PortalDefinition>())
-            { GameObject go = new GameObject(string.IsNullOrWhiteSpace(item.id) ? "Portal" : item.id); go.transform.SetParent(root); go.transform.position = world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position; GridPortal portal = go.AddComponent<GridPortal>(); portal.Configure(item.id, item.width, item.height, item.destinationScene, item.destinationPortalId, new Vector2Int(item.arrivalOffsetX, item.arrivalOffsetY)); spawned.Add(go); }
+            { if (!string.IsNullOrEmpty(definition.portalGlyph) && !HasTileGlyph(definition, item.x, item.y, definition.portalGlyph[0])) { Debug.LogWarning($"Map '{definition.id}' portal '{item.id}' does not bind to glyph '{definition.portalGlyph}' at ({item.x},{item.y}); skipped.", this); continue; } GameObject go = new GameObject(string.IsNullOrWhiteSpace(item.id) ? "Portal" : item.id); go.transform.SetParent(root); go.transform.position = world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position; GridPortal portal = go.AddComponent<GridPortal>(); portal.Configure(item.id, item.width, item.height, item.destinationScene, item.destinationPortalId, new Vector2Int(item.arrivalOffsetX, item.arrivalOffsetY)); spawned.Add(go); }
+        }
+        private bool HasTileGlyph(MapDefinition definition, int x, int y, char glyph)
+        { string key = definition.tileFile ?? definition.id; if (key.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) key = key.Substring(0, key.Length - 4); TextAsset asset = Resources.Load<TextAsset>("Maps/" + key); if (asset == null) return false; string[] rows = (asset.text ?? string.Empty).Replace("\r", "").Split('\n'); return y >= 0 && y < rows.Length && x >= 0 && x < rows[y].Length && rows[y][x] == glyph; }
+        private void ValidatePortals(MapDefinition definition)
+        {
+            if (definition == null || world == null) return;
+            if (!string.IsNullOrEmpty(definition.portalGlyph)) Debug.LogWarning($"Map '{definition.id}' declares portal glyph '{definition.portalGlyph}'; unresolved glyph cells are reported by the pending portal manifest.", this);
+            foreach (PortalDefinition item in definition.portals ?? Array.Empty<PortalDefinition>())
+            {
+                Vector2Int cell = new Vector2Int(item.x, item.y);
+                if (!world.IsWithinBounds(cell))
+                    Debug.LogError($"Map '{definition.id}' portal '{item.id}' is outside bounds at {cell}.", this);
+                else if (world.IsCellBlocked(cell))
+                    Debug.LogWarning($"Map '{definition.id}' portal '{item.id}' is on a blocked cell at {cell}.", this);
+                if (string.IsNullOrWhiteSpace(item.destinationScene) || string.IsNullOrWhiteSpace(item.destinationPortalId))
+                    Debug.LogError($"Map '{definition.id}' portal '{item.id}' has an incomplete destination.", this);
+            }
         }
         private void ApplySpawn(MapDefinition definition)
         {
@@ -87,8 +106,24 @@ namespace Lumenfall.DataDriven
         private static IEnumerable<MapObjectDefinition> ParseTileObjects(TextAsset asset, int width, int height)
         { string[] rows = (asset.text ?? string.Empty).Replace("\r", "").Split('\n'); for (int y = 0; y < rows.Length && y < height; y++) { if (rows[y].Length != width) Debug.LogWarning($"Tile file '{asset.name}' row {y} has length {rows[y].Length}; expected {width}; clamping safely."); int limit = Mathf.Min(width, rows[y].Length); for (int x = 0; x < limit; x++) if (rows[y][x] == 'W' || rows[y][x] == 'B' || rows[y][x] == 'T') yield return new MapObjectDefinition { type = rows[y][x].ToString(), x = x, y = y, blocks = true }; } }
         private void AddBuilding(BuildingPlacementDefinition item, string id, Transform root) { if (item == null) return; GameObject prefab = LoadPrefab(id, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position, Quaternion.identity, root); go.name = id; if (world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } spawned.Add(go); }
+        private void RebuildNpcs() { for (int i = spawned.Count - 1; i >= 0; i--) { if (spawned[i] != null && spawned[i].GetComponent<DynamicNpc>() != null) { Destroy(spawned[i]); spawned.RemoveAt(i); } } BuildNpcs(LoadedNpcs); }
         private void BuildNpcs(NpcDatabaseDefinition definition)
-        { Transform root = contentRoot == null ? transform : contentRoot; foreach (NpcDefinition item in definition.npcs ?? Array.Empty<NpcDefinition>()) { if (!string.IsNullOrWhiteSpace(item.mapId) && !string.Equals(item.mapId, LoadedMap == null ? null : LoadedMap.id, StringComparison.OrdinalIgnoreCase)) continue; GameObject prefab = LoadPrefab(item.asset, defaultNpc); Vector3 position = world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position; GameObject go = Instantiate(prefab, position, Quaternion.identity, root); go.name = string.IsNullOrWhiteSpace(item.displayName) ? item.id : item.displayName; DynamicNpc npc = go.GetComponent<DynamicNpc>() ?? go.AddComponent<DynamicNpc>(); npc.Configure(item, SelectDialogue(item)); spawned.Add(go); } }
+        { Transform root = contentRoot == null ? transform : contentRoot; foreach (NpcDefinition item in definition.npcs ?? Array.Empty<NpcDefinition>()) { if (!string.IsNullOrWhiteSpace(item.mapId) && !string.Equals(item.mapId, LoadedMap == null ? null : LoadedMap.id, StringComparison.OrdinalIgnoreCase)) continue; if (!NpcIsVisible(item)) continue; Vector2Int cell = ResolveLayerCell(item); GameObject prefab = LoadPrefab(item.asset, defaultNpc); Vector3 position = world != null ? world.CellToWorld(cell) : transform.position; GameObject go = Instantiate(prefab, position, Quaternion.identity, root); go.name = string.IsNullOrWhiteSpace(item.displayName) ? item.id : item.displayName; DynamicNpc npc = go.GetComponent<DynamicNpc>() ?? go.AddComponent<DynamicNpc>(); npc.Configure(item, SelectDialogue(item)); spawned.Add(go); } }
+        private bool NpcIsVisible(NpcDefinition item) { if (GameEventManager.Instance == null) return true; if (!string.IsNullOrWhiteSpace(item.showWhenQuestCompleted) && GameEventManager.Instance.Runtime.GetQuestStatus(item.showWhenQuestCompleted) != QuestStatus.Completed) return false; return string.IsNullOrWhiteSpace(item.hideWhenQuestCompleted) || GameEventManager.Instance.Runtime.GetQuestStatus(item.hideWhenQuestCompleted) != QuestStatus.Completed; }
+        private Vector2Int ResolveLayerCell(NpcDefinition item)
+        {
+            Vector2Int fallback = new Vector2Int(item.x, item.y);
+            if (string.IsNullOrWhiteSpace(item.layerSymbol) || LoadedNpcs == null || LoadedMap == null) return fallback;
+            foreach (NpcLayerDefinition layer in LoadedNpcs.layers ?? Array.Empty<NpcLayerDefinition>())
+            {
+                if (!string.Equals(layer.mapId, LoadedMap.id, StringComparison.OrdinalIgnoreCase)) continue;
+                string key = layer.tileFile.Replace("\\", "/"); if (key.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) key = key.Substring(0, key.Length - 4); int slash = key.LastIndexOf('/'); if (slash >= 0) key = key.Substring(slash + 1);
+                TextAsset asset = Resources.Load<TextAsset>("NPCs/" + key); if (asset == null) continue;
+                string[] rows = (asset.text ?? string.Empty).Replace("\r", "").Split('\n');
+                for (int y = 0; y < rows.Length; y++) { int x = rows[y].IndexOf(item.layerSymbol, StringComparison.Ordinal); if (x >= 0) return new Vector2Int(x, y); }
+            }
+            return fallback;
+        }
         private static GameObject LoadPrefab(string path, GameObject fallback) {
             if (string.IsNullOrWhiteSpace(path)) return fallback ?? CreateRuntimeFallback("unresolved");
             GameObject found = Resources.Load<GameObject>(path);
@@ -98,12 +133,29 @@ namespace Lumenfall.DataDriven
             string key = path.Replace("\\", "/");
             return Resources.Load<GameObject>(key.TrimStart('/')) ?? fallback ?? CreateRuntimeFallback(path);
         }
+        private void ValidateNpcLayers(NpcDatabaseDefinition definition)
+        {
+            foreach (NpcLayerDefinition layer in definition.layers ?? Array.Empty<NpcLayerDefinition>())
+            {
+                if (string.IsNullOrWhiteSpace(layer.mapId) || string.IsNullOrWhiteSpace(layer.tileFile)) continue;
+                string layerKey = layer.tileFile.Replace("\\", "/");
+                if (layerKey.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)) layerKey = layerKey.Substring(0, layerKey.Length - 4);
+                int slash = layerKey.LastIndexOf('/'); if (slash >= 0) layerKey = layerKey.Substring(slash + 1);
+                TextAsset asset = Resources.Load<TextAsset>("NPCs/" + layerKey);
+                if (asset == null) { Debug.LogError($"NPC layer '{layer.tileFile}' for map '{layer.mapId}' is missing.", this); continue; }
+                string[] rows = (asset.text ?? string.Empty).Replace("\r", "").Split('\n');
+                int expectedWidth = layer.width > 0 ? layer.width : (LoadedMap != null && layer.mapId == LoadedMap.id ? LoadedMap.width : 0);
+                int expectedHeight = layer.height > 0 ? layer.height : (LoadedMap != null && layer.mapId == LoadedMap.id ? LoadedMap.height : 0);
+                if (expectedWidth > 0 && expectedHeight > 0 && (rows.Length < expectedHeight || rows[0].Length != expectedWidth))
+                    Debug.LogError($"NPC layer '{layer.tileFile}' shape {rows[0].Length}x{rows.Length} does not match {expectedWidth}x{expectedHeight}.", this);
+            }
+        }
         private static GameObject CreateRuntimeFallback(string key)
         { GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube); go.name = "RuntimeAsset_" + key; go.transform.localScale = new Vector3(1f, 0.5f, 1f); return go; }
         public static bool TryParseMap(TextAsset asset, out MapDefinition result, out string error) { result = null; error = null; if (asset == null) { error = "Map asset is null."; return false; } try { string source = asset.text ?? string.Empty; bool manifest = source.IndexOf("lumenfall.tile-layout", StringComparison.OrdinalIgnoreCase) >= 0 || source.IndexOf("\"maps\"", StringComparison.OrdinalIgnoreCase) >= 0; if (manifest) { MapManifestDefinition parsedManifest = JsonUtility.FromJson<MapManifestDefinition>(source); result = ManifestToMap(parsedManifest); return result != null; } result = JsonUtility.FromJson<MapDefinition>(source); if (result == null) throw new Exception("empty definition"); return true; } catch { try { result = ParseTextMap(asset.text); } catch (Exception ex) { error = $"Could not parse map '{asset.name}': {ex.Message}"; return false; } return result != null || (error = $"Could not parse map '{asset.name}'.") == null; } }
         private static MapDefinition ManifestToMap(MapManifestDefinition manifest) { if (manifest == null) return null; MapDefinition map = new MapDefinition { id = "manifest" }; List<PortalDefinition> portals = new List<PortalDefinition>(); foreach (MapAreaDefinition area in manifest.areas ?? Array.Empty<MapAreaDefinition>()) foreach (ManifestPortalDefinition item in area.portals ?? Array.Empty<ManifestPortalDefinition>()) if (item.cell != null) portals.Add(new PortalDefinition { id = item.id, x = item.cell.x, y = item.cell.y, destinationScene = item.destination == null ? "" : item.destination.mapId, destinationPortalId = item.destination == null ? "" : item.destination.regionId, arrivalOffsetX = item.destination == null || item.destination.cell == null ? 0 : item.destination.cell.x, arrivalOffsetY = item.destination == null || item.destination.cell == null ? 0 : item.destination.cell.y }); map.portals = portals.ToArray(); return map; }
         private static MapDefinition ParseTextMap(string text) { MapDefinition map = new MapDefinition(); List<MapObjectDefinition> objects = new List<MapObjectDefinition>(); List<PortalDefinition> portals = new List<PortalDefinition>(); string[] lines = (text ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries); for (int y = 0; y < lines.Length; y++) { string raw = lines[y]; string[] p = raw.Split(','); if (p.Length >= 3 && !raw.TrimStart().StartsWith("#")) { if (p[0].Trim().Equals("portal", StringComparison.OrdinalIgnoreCase)) portals.Add(new PortalDefinition { id = p.Length > 5 ? p[5].Trim() : "", x = int.Parse(p[1]), y = int.Parse(p[2]), destinationScene = p.Length > 3 ? p[3].Trim() : "", destinationPortalId = p.Length > 4 ? p[4].Trim() : "" }); else objects.Add(new MapObjectDefinition { type = p[0].Trim(), x = int.Parse(p[1]), y = int.Parse(p[2]), width = p.Length > 3 ? int.Parse(p[3]) : 1, height = p.Length > 4 ? int.Parse(p[4]) : 1, asset = p.Length > 5 ? p[5].Trim() : "" }); continue; } for (int x = 0; x < raw.Length; x++) if (raw[x] == 'W' || raw[x] == 'B' || raw[x] == 'T') objects.Add(new MapObjectDefinition { type = raw[x].ToString(), x = x, y = y, asset = "", blocks = true }); } map.width = lines.Length == 0 ? 0 : lines[0].Length; map.height = lines.Length; map.objects = objects.ToArray(); map.portals = portals.ToArray(); return objects.Count == 0 && portals.Count == 0 ? null : map; }
         public static bool TryParseNpcs(TextAsset asset, out NpcDatabaseDefinition result, out string error) { result = null; error = null; try { result = JsonUtility.FromJson<NpcDatabaseDefinition>(asset.text); return result != null; } catch (Exception ex) { error = $"Could not parse NPC asset '{asset.name}': {ex.Message}"; return false; } }
-        private static string SelectDialogue(NpcDefinition npc) { List<string> options = new List<string>(npc.dialogueIds ?? Array.Empty<string>()); foreach (NpcDialogueDefinition item in npc.dialogue ?? Array.Empty<NpcDialogueDefinition>()) { bool questOk = string.IsNullOrWhiteSpace(item.questId) || (GameEventManager.Instance != null && GameEventManager.Instance.Runtime.GetQuestStatus(item.questId).ToString().Equals(item.requiredQuestStatus, StringComparison.OrdinalIgnoreCase)); if (questOk) for (int i = 0; i < Mathf.Max(1, item.weight); i++) options.Add(item.dialogueId); } return options.Count == 0 ? null : options[UnityEngine.Random.Range(0, options.Count)]; }
+        private static string SelectDialogue(NpcDefinition npc) { List<string> options = new List<string>(npc.dialogueIds ?? Array.Empty<string>()); foreach (NpcDialogueDefinition item in npc.dialogue ?? Array.Empty<NpcDialogueDefinition>()) { bool questOk = string.IsNullOrWhiteSpace(item.questId) || (GameEventManager.Instance != null && GameEventManager.Instance.Runtime.GetQuestStatus(item.questId).ToString().Equals(item.requiredQuestStatus, StringComparison.OrdinalIgnoreCase)); bool prerequisiteOk = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) || (GameEventManager.Instance != null && GameEventManager.Instance.Runtime.GetQuestStatus(item.prerequisiteQuestId).ToString().Equals(item.prerequisiteQuestStatus, StringComparison.OrdinalIgnoreCase)); if (questOk && prerequisiteOk) for (int i = 0; i < Mathf.Max(1, item.weight); i++) options.Add(item.dialogueId); } return options.Count == 0 ? null : options[UnityEngine.Random.Range(0, options.Count)]; }
     }
 }
