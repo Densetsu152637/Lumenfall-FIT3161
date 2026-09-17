@@ -1,0 +1,37 @@
+{
+  "W": {
+    "name": "wall",
+    "walkable": true,
+    "collision": true
+  },
+  "g": {
+    "name": "grass",
+    "walkable": true,
+    "collision": false
+  },
+  "G": {
+    "name": "tall grass",
+    "walkable": true,
+    "collision": false
+  },
+  "p": {
+    "name": "path",
+    "walkable": true,
+    "collision": false
+  },
+  "T": {
+    "name": "tree",
+    "walkable": true,
+    "collision": true,
+    "footprint": {
+      "width": 2,
+      "height": 2
+    }
+  },
+  "B": {
+    "name": "building",
+    "walkable": true,
+    "collision": true,
+    "metaprogrammed": true
+  }
+}

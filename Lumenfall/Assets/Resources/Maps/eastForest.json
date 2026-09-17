@@ -1,0 +1,178 @@
+{
+  "width": 48,
+  "height": 30,
+  "regions": [
+    {
+      "id": "F01",
+      "name": "Forest arrival clearing",
+      "rect": {
+        "x": 2,
+        "y": 12,
+        "width": 8,
+        "height": 6
+      },
+      "walkable": true
+    },
+    {
+      "id": "F02",
+      "name": "Lantern trail",
+      "rect": {
+        "x": 8,
+        "y": 12,
+        "width": 24,
+        "height": 6
+      },
+      "walkable": true
+    },
+    {
+      "id": "F03",
+      "name": "Forest threshold",
+      "rect": {
+        "x": 30,
+        "y": 12,
+        "width": 12,
+        "height": 6
+      },
+      "walkable": true
+    },
+    {
+      "id": "F04",
+      "name": "Orio's mechanism glade",
+      "rect": {
+        "x": 22,
+        "y": 5,
+        "width": 10,
+        "height": 7
+      },
+      "walkable": true
+    },
+    {
+      "id": "F05",
+      "name": "Brook overlook",
+      "rect": {
+        "x": 14,
+        "y": 18,
+        "width": 12,
+        "height": 7
+      },
+      "walkable": true
+    },
+    {
+      "id": "F06",
+      "name": "Deep forest boundary",
+      "rect": {
+        "x": 22,
+        "y": 2,
+        "width": 8,
+        "height": 4
+      },
+      "walkable": true
+    }
+  ],
+  "spawn": {
+    "x": 1,
+    "y": 1
+  },
+  "tileFile": "eastForest.txt",
+  "portals": [
+    {
+      "id": "P.F01.F02",
+      "x": 9,
+      "y": 15,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F02.F01",
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 15
+    },
+    {
+      "id": "P.F02.F01",
+      "x": 8,
+      "y": 15,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F01.F02",
+      "arrivalOffsetX": 9,
+      "arrivalOffsetY": 15
+    },
+    {
+      "id": "P.F02.F03",
+      "x": 31,
+      "y": 15,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F03.F02",
+      "arrivalOffsetX": 30,
+      "arrivalOffsetY": 15
+    },
+    {
+      "id": "P.F02.F04",
+      "x": 20,
+      "y": 12,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F04.F02",
+      "arrivalOffsetX": 25,
+      "arrivalOffsetY": 11
+    },
+    {
+      "id": "P.F02.F05",
+      "x": 15,
+      "y": 17,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F05.F02",
+      "arrivalOffsetX": 18,
+      "arrivalOffsetY": 18
+    },
+    {
+      "id": "P.F03.F02",
+      "x": 30,
+      "y": 15,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F02.F03",
+      "arrivalOffsetX": 31,
+      "arrivalOffsetY": 15
+    },
+    {
+      "id": "P.F03.A01",
+      "x": 41,
+      "y": 15,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 43,
+      "arrivalOffsetY": 40
+    },
+    {
+      "id": "P.F04.F02",
+      "x": 25,
+      "y": 11,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F02.F04",
+      "arrivalOffsetX": 20,
+      "arrivalOffsetY": 12
+    },
+    {
+      "id": "P.F04.F06",
+      "x": 25,
+      "y": 5,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F06.F04",
+      "arrivalOffsetX": 25,
+      "arrivalOffsetY": 4
+    },
+    {
+      "id": "P.F05.F02",
+      "x": 18,
+      "y": 18,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F02.F05",
+      "arrivalOffsetX": 15,
+      "arrivalOffsetY": 17
+    },
+    {
+      "id": "P.F06.F04",
+      "x": 25,
+      "y": 4,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F04.F06",
+      "arrivalOffsetX": 25,
+      "arrivalOffsetY": 5
+    }
+  ]
+}

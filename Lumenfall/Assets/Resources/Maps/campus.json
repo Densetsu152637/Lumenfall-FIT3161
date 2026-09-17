@@ -1,0 +1,326 @@
+{
+  "width": 100,
+  "height": 80,
+  "regions": [
+    {
+      "id": "A01",
+      "name": "East gate forecourt",
+      "rect": {
+        "x": 43,
+        "y": 35,
+        "width": 14,
+        "height": 10
+      },
+      "walkable": true
+    },
+    {
+      "id": "C01",
+      "name": "Campus commons",
+      "rect": {
+        "x": 30,
+        "y": 28,
+        "width": 40,
+        "height": 28
+      },
+      "walkable": true
+    },
+    {
+      "id": "C02",
+      "name": "Orientation terrace",
+      "rect": {
+        "x": 34,
+        "y": 18,
+        "width": 18,
+        "height": 8
+      },
+      "walkable": true
+    },
+    {
+      "id": "C03",
+      "name": "Orientation trial strip",
+      "rect": {
+        "x": 15,
+        "y": 30,
+        "width": 12,
+        "height": 8
+      },
+      "walkable": true
+    },
+    {
+      "id": "C04",
+      "name": "Garden walk",
+      "rect": {
+        "x": 60,
+        "y": 55,
+        "width": 18,
+        "height": 10
+      },
+      "walkable": true
+    },
+    {
+      "id": "C05",
+      "name": "Campus path loop",
+      "rect": {
+        "x": 25,
+        "y": 25,
+        "width": 50,
+        "height": 40
+      },
+      "walkable": true
+    },
+    {
+      "id": "B01",
+      "name": "B01",
+      "rect": {
+        "x": 12,
+        "y": 56,
+        "width": 20,
+        "height": 14
+      },
+      "walkable": true
+    },
+    {
+      "id": "B02",
+      "name": "B02",
+      "rect": {
+        "x": 10,
+        "y": 12,
+        "width": 26,
+        "height": 20
+      },
+      "walkable": true
+    },
+    {
+      "id": "B03",
+      "name": "B03",
+      "rect": {
+        "x": 40,
+        "y": 8,
+        "width": 30,
+        "height": 18
+      },
+      "walkable": true
+    },
+    {
+      "id": "B04",
+      "name": "B04",
+      "rect": {
+        "x": 72,
+        "y": 48,
+        "width": 20,
+        "height": 24
+      },
+      "walkable": true
+    }
+  ],
+  "spawn": {
+    "x": 1,
+    "y": 1
+  },
+  "buildingPlacements": {
+    "B01": {
+      "x": 12,
+      "y": 56,
+      "width": 20,
+      "height": 14
+    },
+    "B02": {
+      "x": 10,
+      "y": 12,
+      "width": 26,
+      "height": 20
+    },
+    "B03": {
+      "x": 40,
+      "y": 8,
+      "width": 30,
+      "height": 18
+    },
+    "B04": {
+      "x": 72,
+      "y": 48,
+      "width": 20,
+      "height": 24
+    }
+  },
+  "gateStates": {
+    "north": "locked",
+    "south": "locked",
+    "west": "locked",
+    "east": "open"
+  },
+  "tileFile": "campus.txt",
+  "portals": [
+    {
+      "id": "P.A01.F03",
+      "x": 43,
+      "y": 40,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F03.A01",
+      "arrivalOffsetX": 41,
+      "arrivalOffsetY": 15
+    },
+    {
+      "id": "P.A01.C01",
+      "x": 50,
+      "y": 35,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C01.A01",
+      "arrivalOffsetX": 50,
+      "arrivalOffsetY": 35
+    },
+    {
+      "id": "P.B01.C05",
+      "x": 20,
+      "y": 58,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C05.B01",
+      "arrivalOffsetX": 25,
+      "arrivalOffsetY": 56
+    },
+    {
+      "id": "P.B02.C05",
+      "x": 18,
+      "y": 14,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C05.B02",
+      "arrivalOffsetX": 23,
+      "arrivalOffsetY": 12
+    },
+    {
+      "id": "P.B03.C05",
+      "x": 48,
+      "y": 10,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C05.B03",
+      "arrivalOffsetX": 53,
+      "arrivalOffsetY": 8
+    },
+    {
+      "id": "P.B04.C05",
+      "x": 80,
+      "y": 50,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C05.B04",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 48
+    },
+    {
+      "id": "P.C01.A01",
+      "x": 50,
+      "y": 35,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.C01",
+      "arrivalOffsetX": 50,
+      "arrivalOffsetY": 35
+    },
+    {
+      "id": "P.C01.C02",
+      "x": 42,
+      "y": 28,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C02.C01",
+      "arrivalOffsetX": 42,
+      "arrivalOffsetY": 26
+    },
+    {
+      "id": "P.C01.C03",
+      "x": 30,
+      "y": 34,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C03.C01",
+      "arrivalOffsetX": 27,
+      "arrivalOffsetY": 34
+    },
+    {
+      "id": "P.C01.C04",
+      "x": 60,
+      "y": 50,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C04.C01",
+      "arrivalOffsetX": 60,
+      "arrivalOffsetY": 55
+    },
+    {
+      "id": "P.C01.C05",
+      "x": 35,
+      "y": 40,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C05.C01",
+      "arrivalOffsetX": 35,
+      "arrivalOffsetY": 39
+    },
+    {
+      "id": "P.C02.C01",
+      "x": 42,
+      "y": 26,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C01.C02",
+      "arrivalOffsetX": 42,
+      "arrivalOffsetY": 28
+    },
+    {
+      "id": "P.C03.C01",
+      "x": 27,
+      "y": 34,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C01.C03",
+      "arrivalOffsetX": 30,
+      "arrivalOffsetY": 34
+    },
+    {
+      "id": "P.C04.C01",
+      "x": 60,
+      "y": 55,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C01.C04",
+      "arrivalOffsetX": 60,
+      "arrivalOffsetY": 50
+    },
+    {
+      "id": "P.C05.C01",
+      "x": 35,
+      "y": 39,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.C01.C05",
+      "arrivalOffsetX": 35,
+      "arrivalOffsetY": 40
+    },
+    {
+      "id": "P.C05.B01",
+      "x": 25,
+      "y": 56,
+      "destinationScene": "B01.Ground",
+      "destinationPortalId": "P.B01.C05",
+      "arrivalOffsetX": 20,
+      "arrivalOffsetY": 58
+    },
+    {
+      "id": "P.C05.B02",
+      "x": 23,
+      "y": 12,
+      "destinationScene": "B02.Ground",
+      "destinationPortalId": "P.B02.C05",
+      "arrivalOffsetX": 18,
+      "arrivalOffsetY": 14
+    },
+    {
+      "id": "P.C05.B03",
+      "x": 53,
+      "y": 8,
+      "destinationScene": "B03.Ground",
+      "destinationPortalId": "P.B03.C05",
+      "arrivalOffsetX": 48,
+      "arrivalOffsetY": 10
+    },
+    {
+      "id": "P.C05.B04",
+      "x": 85,
+      "y": 48,
+      "destinationScene": "B04.Ground",
+      "destinationPortalId": "P.B04.C05",
+      "arrivalOffsetX": 80,
+      "arrivalOffsetY": 50
+    }
+  ]
+}

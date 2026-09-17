@@ -24,6 +24,8 @@ namespace Lumenfall.GridMovement
             : anchorCell;
         public Vector2Int FootprintOffset => footprintOffset;
         public Vector2Int FootprintSize => footprintSize;
+        public void Configure(GridWorld targetWorld, Vector2Int size)
+        { world = targetWorld; footprintSize = new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y)); useTransformAsAnchor = true; RefreshFootprint(); }
 
         private void Reset()
         {

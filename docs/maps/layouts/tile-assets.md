@@ -1,0 +1,14 @@
+# ASCII tile asset reference
+
+The layout files use the symbols defined in [legend.json](legend.json). This is the implementation tracking table: art paths and atlas coordinates can be filled in when the corresponding tile assets are implemented.
+
+| Symbol | Layout meaning                       | Footprint / collision                                                 | Actual asset assignment                                                                                                                                                            |
+| ------ | ------------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `g`    | Grass ground tile                    | 1×1; walkable                                                         | Pending implementation — asset path/atlas coordinate TBD.                                                                                                                          |
+| `G`    | Tall-grass ground tile               | 1×1; walkable                                                         | Pending implementation — asset path/atlas coordinate TBD.                                                                                                                          |
+| `p`    | Paved campus/forest path tile        | 1×1; walkable                                                         | Pending implementation — asset path/atlas coordinate TBD.                                                                                                                          |
+| `W`    | Academy perimeter/interior wall tile | 1×1; collision layer                                                  | Pending implementation — asset path/atlas coordinate TBD.                                                                                                                          |
+| `T`    | 2×2 tree prop footprint              | Exact 2×2 cells; collision layer                                      | Pending implementation — tree prefab/sprite path TBD. Every generated `T` component is validated as a 2×2 footprint.                                                               |
+| `B`    | Building footprint marker            | Placement-sized; collision layer; generated from `buildingPlacements` | Pending implementation — building generator/prefab reference TBD. `B` is a metaprogrammed footprint, not a sprite; campus placements are recorded in [`campus.json`](campus.json). |
+
+Asset paths and atlas coordinates are intentionally left TBD until the map art implementation is added; this does not block the ASCII layout format or its validation.

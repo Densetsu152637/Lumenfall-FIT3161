@@ -1,0 +1,15 @@
+{
+  "npcs": [
+    {
+      "id": "elara",
+      "displayName": "Elara", "mapId": "campus", "asset": "NPCs/Elara.prefab",
+      "x": 35,
+      "y": 40,
+      "dialogue": [
+        { "dialogueId": "elara_conversation", "questId": "moonpetal_remedy", "requiredQuestStatus": "NotStarted", "weight": 2 },
+        { "dialogueId": "elara_conversation", "questId": "moonpetal_remedy", "requiredQuestStatus": "Active", "weight": 3 },
+        { "dialogueId": "elara_quest_complete", "questId": "moonpetal_remedy", "requiredQuestStatus": "Completed", "weight": 1 }
+      ]
+    }
+  ]
+}
