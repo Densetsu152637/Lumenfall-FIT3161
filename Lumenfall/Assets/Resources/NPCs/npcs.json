@@ -255,6 +255,20 @@
           "weight": 1
         }
       ]
+    },
+    {
+      "id": "katrina",
+      "displayName": "Katrina",
+      "mapId": "campus",
+      "asset": "NPCs/Elara.prefab",
+      "x": 23,
+      "y": 40,
+      "layerSymbol": "k",
+      "dialogue": [
+        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "NotStarted", "weight": 5 },
+        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "Active", "weight": 5 },
+        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "Completed", "weight": 5 }
+      ]
     }
   ]
 }

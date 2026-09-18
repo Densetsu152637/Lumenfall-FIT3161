@@ -131,15 +131,6 @@
       "arrivalOffsetY": 15
     },
     {
-      "id": "P.F03.A01",
-      "x": 41,
-      "y": 15,
-      "destinationScene": "campus",
-      "destinationPortalId": "P.A01.F03",
-      "arrivalOffsetX": 43,
-      "arrivalOffsetY": 40
-    },
-    {
       "id": "P.F04.F02",
       "x": 25,
       "y": 11,
@@ -174,6 +165,51 @@
       "destinationPortalId": "P.F04.F06",
       "arrivalOffsetX": 25,
       "arrivalOffsetY": 5
+    },
+    {
+      "id": "P.F03.A01.0_34",
+      "x": 0,
+      "y": 34,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 25
+    },
+    {
+      "id": "P.F03.A01.1_34",
+      "x": 1,
+      "y": 34,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 25
+    },
+    {
+      "id": "P.F03.A01.0_35",
+      "x": 0,
+      "y": 35,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 25
+    },
+    {
+      "id": "P.F03.A01.1_35",
+      "x": 1,
+      "y": 35,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 25
+    },
+    {
+      "id": "P.F03.A01",
+      "x": 0,
+      "y": 34,
+      "destinationScene": "campus",
+      "destinationPortalId": "P.A01.F03",
+      "arrivalOffsetX": 85,
+      "arrivalOffsetY": 25
     }
   ]
 }

@@ -41,6 +41,8 @@ for map_id, (path, data) in maps.items():
                 row_error_count[map_id] = row_error_count.get(map_id, 0) + 1
                 break
     for portal in data.get("portals", []):
+        if portal.get("reserved"):
+            continue
         dest = portal.get("destinationScene")
         target = portal.get("destinationPortalId")
         if dest not in maps:
@@ -79,6 +81,8 @@ for area in catalog.get("areas", []):
     if source_map not in maps:
         continue
     for portal in area.get("portals", []):
+        if portal.get("state") == "reserved":
+            continue
         dest = portal.get("destination") or {}
         dest_map = dest.get("mapId")
         cell = dest.get("cell") or {}

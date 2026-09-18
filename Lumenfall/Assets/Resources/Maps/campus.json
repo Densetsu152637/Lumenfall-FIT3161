@@ -50,10 +50,10 @@
       "id": "C04",
       "name": "Garden walk",
       "rect": {
-        "x": 60,
-        "y": 55,
-        "width": 18,
-        "height": 10
+        "x": 10,
+        "y": 32,
+        "width": 26,
+        "height": 18
       },
       "walkable": true
     },
@@ -153,15 +153,6 @@
   "portalGlyph": "X",
   "portals": [
     {
-      "id": "P.A01.F03",
-      "x": 43,
-      "y": 40,
-      "destinationScene": "eastForest",
-      "destinationPortalId": "P.F03.A01",
-      "arrivalOffsetX": 41,
-      "arrivalOffsetY": 15
-    },
-    {
       "id": "P.A01.C01",
       "x": 50,
       "y": 35,
@@ -177,7 +168,8 @@
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B01",
       "arrivalOffsetX": 25,
-      "arrivalOffsetY": 56
+      "arrivalOffsetY": 56,
+      "reserved": true
     },
     {
       "id": "P.B02.C05",
@@ -240,7 +232,8 @@
       "destinationScene": "campus",
       "destinationPortalId": "P.C04.C01",
       "arrivalOffsetX": 60,
-      "arrivalOffsetY": 55
+      "arrivalOffsetY": 55,
+      "reserved": true
     },
     {
       "id": "P.C01.C05",
@@ -322,6 +315,54 @@
       "destinationPortalId": "P.B04.C05",
       "arrivalOffsetX": 80,
       "arrivalOffsetY": 50
+    },
+    {
+      "id": "P.A01.F03",
+      "x": 86,
+      "y": 25,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F03.A01",
+      "arrivalOffsetX": 2,
+      "arrivalOffsetY": 34
+    },
+    {
+      "id": "P.A01.F03.86_26",
+      "x": 86,
+      "y": 26,
+      "destinationScene": "eastForest",
+      "destinationPortalId": "P.F03.A01",
+      "arrivalOffsetX": 2,
+      "arrivalOffsetY": 34
+    },
+    {
+      "id": "reserved.X.45_19",
+      "x": 45,
+      "y": 19,
+      "reserved": true,
+      "destinationScene": "",
+      "destinationPortalId": "",
+      "arrivalOffsetX": 0,
+      "arrivalOffsetY": 0
+    },
+    {
+      "id": "reserved.X.46_19",
+      "x": 46,
+      "y": 19,
+      "reserved": true,
+      "destinationScene": "",
+      "destinationPortalId": "",
+      "arrivalOffsetX": 0,
+      "arrivalOffsetY": 0
+    },
+    {
+      "id": "reserved.X.68_23",
+      "x": 68,
+      "y": 23,
+      "reserved": true,
+      "destinationScene": "",
+      "destinationPortalId": "",
+      "arrivalOffsetX": 0,
+      "arrivalOffsetY": 0
     }
   ]
 }
