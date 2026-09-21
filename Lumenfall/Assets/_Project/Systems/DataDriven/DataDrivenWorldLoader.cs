@@ -8,7 +8,7 @@ namespace Lumenfall.DataDriven
 {
     /// Loads a map and NPC TextAsset at runtime. JSON is preferred; text maps use one object per line:
     /// `building,x,y,width,height,asset` and `portal,x,y,destinationScene,destinationPortalId`.
-    public sealed class DataDrivenWorldLoader : MonoBehaviour
+    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider
     {
         public static DataDrivenWorldLoader Instance { get; private set; }
         [SerializeField] private TextAsset map;
@@ -22,7 +22,8 @@ namespace Lumenfall.DataDriven
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
 
-        private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); }
+        public string SaveKey => "data-driven-world";
+        private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; DontDestroyOnLoad(gameObject); GameSaveManager.Instance.RegisterProvider(this); }
         private void Start() { if (world == null) world = FindAnyObjectByType<GridWorld>(); if (map == null) map = Resources.Load<TextAsset>("Maps/campus") ?? Resources.Load<TextAsset>("Maps/map"); if (npcs == null) npcs = Resources.Load<TextAsset>("NPCs/npcs"); Load(map, npcs); }
         private void Update() { if (LoadedNpcs == null || GameEventManager.Instance == null) return; System.Text.StringBuilder state = new System.Text.StringBuilder(); foreach (NpcDefinition n in LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>()) state.Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.showWhenQuestCompleted)).Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.hideWhenQuestCompleted)); string current = state.ToString(); if (npcStateSignature != current) { npcStateSignature = current; RebuildNpcs(); } }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -43,6 +44,36 @@ namespace Lumenfall.DataDriven
             }
         }
         public void Clear() { foreach (GameObject item in spawned) if (item != null) { item.SetActive(false); Destroy(item); } spawned.Clear(); LoadedMap = null; LoadedNpcs = null; }
+
+        public string CaptureStateJson()
+        {
+            GridMover player = FindAnyObjectByType<GridMover>();
+            return JsonUtility.ToJson(new SavedWorldState
+            {
+                mapId = LoadedMap == null ? string.Empty : LoadedMap.id,
+                playerX = player == null ? 0 : player.CurrentCell.x,
+                playerY = player == null ? 0 : player.CurrentCell.y
+            });
+        }
+
+        public bool RestoreStateJson(string json)
+        {
+            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+            if (state == null || string.IsNullOrWhiteSpace(state.mapId)) return false;
+            TextAsset savedMap = Resources.Load<TextAsset>("Maps/" + state.mapId) ?? Resources.Load<TextAsset>("Maps/" + state.mapId + ".json");
+            if (savedMap == null) return false;
+            Load(savedMap, npcs == null ? Resources.Load<TextAsset>("NPCs/npcs") : npcs);
+            GridMover player = FindAnyObjectByType<GridMover>();
+            return player == null || world == null || player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
+        }
+
+        [Serializable]
+        private sealed class SavedWorldState
+        {
+            public string mapId;
+            public int playerX;
+            public int playerY;
+        }
         /// Switches an area in the current scene. The player remains alive while generated content is rebuilt.
         public bool SwitchArea(string mapId, string portalId, Vector2Int arrivalCell)
         {

@@ -109,9 +109,69 @@ event. The runtime also exposes events for flags, counters, global events and di
 
 ## Saving and extensions
 
-Store `GameEventManager.Instance.Runtime.ExportStateJson()` with the rest of the save file and pass
-it back to `ImportStateJson(json)` when loading. This preserves flags, counters, quest states, and
-non-repeatable event history. Active conversations are intentionally not saved.
+`GameSaveManager` provides versioned, file-backed save slots. Slots are JSON files in
+`Application.persistentDataPath`; writes use a temporary file and replace the previous slot only
+after the new file has been written. Invalid slot names, missing files, unsupported schema versions,
+and provider failures return `false` and raise `SaveFailed`. Loads snapshot the current event and
+provider state and roll it back when a provider rejects its payload, avoiding an intentionally
+partial restore. `SaveCompleted` and `LoadCompleted` can be used to update a save-menu UI.
+
+```csharp
+GameSaveManager saves = GameSaveManager.Instance;
+saves.Save("slot-1");
+// Later, after systems have registered their providers:
+saves.Load("slot-1");
+```
+
+The sample game creates `GameSaveOverlay` automatically. Its Save and Load buttons operate on
+`save-1`; a larger menu can replace the overlay and call the same manager methods. The generated
+`DataDrivenWorldLoader` registers a provider that restores the active map and player grid cell.
+
+The current file schema is version `1`. It contains the event runtime JSON plus a sorted array of
+keyed provider payloads. Providers must be registered before `Load`; known payloads are restored in
+file order, while unknown keys are skipped for forward compatibility. Event state preserves flags,
+counters, quest states, and non-repeatable event history. Active conversations are intentionally not
+saved. A future schema change should add a migration before increasing the version, rather than
+silently accepting incompatible data.
+
+Systems that own mutable world state register an `ISaveStateProvider` with a stable key. Provider
+payloads are opaque JSON strings, so a quest, inventory, or world-object system can evolve its own
+data without changing the save manager:
+
+```csharp
+public sealed class WorldState : ISaveStateProvider
+{
+    public string SaveKey => "world";
+
+    public string CaptureStateJson() => JsonUtility.ToJson(new State
+    {
+        openedChestIds = openedChestIds.ToArray()
+    });
+
+    public bool RestoreStateJson(string json)
+    {
+        State state = JsonUtility.FromJson<State>(json);
+        if (state == null) return false;
+        openedChestIds = new HashSet<string>(state.openedChestIds ?? Array.Empty<string>());
+        return true;
+    }
+
+    [Serializable]
+    private sealed class State
+    {
+        public string[] openedChestIds;
+    }
+}
+
+// Register once during bootstrap, before loading a slot.
+GameSaveManager.Instance.RegisterProvider(worldState);
+```
+
+Use stable IDs for provider keys and world objects. A provider missing from a later build is
+skipped so saves remain loadable as systems are added; a registered provider that rejects its
+payload fails the load and reports the key. For quest progress, prefer the built-in event runtime
+(`StartQuest`, `CompleteQuest`, and `QuestStatus`) unless the quest also owns custom world data such
+as spawned objects or a puzzle layout, which belongs in its own provider.
 
 Project-specific condition/action types can be registered without editing the runtime:
 
