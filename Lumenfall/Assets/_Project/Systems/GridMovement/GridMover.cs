@@ -232,6 +232,15 @@ namespace Lumenfall.GridMovement
             Vector3 to = world.CellToWorld(destination, elevation);
             float stepDuration = CurrentStepDuration;
 
+            // A diagonal crosses sqrt(2) times the distance of a cardinal step.
+            // Scale its duration by the same amount so both directions have the
+            // same world-space speed instead of diagonals moving faster.
+            Vector2Int step = destination - origin;
+            if (step.x != 0 && step.y != 0)
+            {
+                stepDuration *= Mathf.Sqrt(2f);
+            }
+
             if (stepDuration > 0f)
             {
                 float elapsed = 0f;

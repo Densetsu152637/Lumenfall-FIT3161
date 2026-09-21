@@ -23,7 +23,7 @@ namespace Lumenfall.GridMovement
         [Header("Tile Repeat")]
         [SerializeField, Range(0.1f, 0.95f)] private float directionThreshold = 0.5f;
         [SerializeField] private bool repeatWhileHeld = true;
-        [SerializeField, Min(0f)] private float initialRepeatDelay = 0.25f;
+        [Tooltip("Delay before retrying a held direction when movement is blocked.")]
         [SerializeField, Min(0.01f)] private float repeatInterval = 0.12f;
 
         private GridMover mover;
@@ -49,6 +49,7 @@ namespace Lumenfall.GridMovement
 
         private void OnEnable()
         {
+            mover.MoveCompleted += HandleMoveCompleted;
             ResolveActions();
             if (activeMoveAction == null)
             {
@@ -72,6 +73,8 @@ namespace Lumenfall.GridMovement
 
         private void OnDisable()
         {
+            mover.MoveCompleted -= HandleMoveCompleted;
+
             if (enabledMoveActionHere && activeMoveAction != null)
             {
                 activeMoveAction.Disable();
@@ -123,8 +126,7 @@ namespace Lumenfall.GridMovement
             if (direction != heldDirection)
             {
                 heldDirection = direction;
-                nextRepeatTime = Time.unscaledTime + initialRepeatDelay;
-                mover.TryMove(direction);
+                TryMoveHeldDirection();
                 return;
             }
 
@@ -134,8 +136,37 @@ namespace Lumenfall.GridMovement
                 return;
             }
 
-            mover.TryMove(direction);
-            nextRepeatTime = Time.unscaledTime + repeatInterval;
+            TryMoveHeldDirection();
+        }
+
+        private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
+        {
+            if (!repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked)
+            {
+                return;
+            }
+
+            // Start the next tile in the completion frame so held movement has no
+            // stop/start frame for the follow camera to expose as visible jitter.
+            Vector2Int direction = QuantiseDirection(activeMoveAction.ReadValue<Vector2>());
+            if (direction == Vector2Int.zero)
+            {
+                heldDirection = Vector2Int.zero;
+                return;
+            }
+
+            heldDirection = direction;
+            bool sprinting = activeSprintAction != null && activeSprintAction.IsPressed();
+            mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
+            TryMoveHeldDirection();
+        }
+
+        private void TryMoveHeldDirection()
+        {
+            if (!mover.TryMove(heldDirection))
+            {
+                nextRepeatTime = Time.unscaledTime + repeatInterval;
+            }
         }
 
         private Vector2Int QuantiseDirection(Vector2 value)
@@ -206,7 +237,6 @@ namespace Lumenfall.GridMovement
         private void OnValidate()
         {
             directionThreshold = Mathf.Clamp(directionThreshold, 0.1f, 0.95f);
-            initialRepeatDelay = Mathf.Max(0f, initialRepeatDelay);
             repeatInterval = Mathf.Max(0.01f, repeatInterval);
         }
     }
