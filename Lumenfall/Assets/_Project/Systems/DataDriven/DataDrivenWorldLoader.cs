@@ -45,6 +45,14 @@ namespace Lumenfall.DataDriven
         }
         public void Clear() { foreach (GameObject item in spawned) if (item != null) { item.SetActive(false); Destroy(item); } spawned.Clear(); LoadedMap = null; LoadedNpcs = null; }
 
+        /// <summary>Restores the authored starting map and NPC set for a new game.</summary>
+        public void ResetToStartingState()
+        {
+            TextAsset startingMap = Resources.Load<TextAsset>("Maps/campus") ?? Resources.Load<TextAsset>("Maps/map");
+            TextAsset startingNpcs = Resources.Load<TextAsset>("NPCs/npcs");
+            Load(startingMap, startingNpcs);
+        }
+
         public string CaptureStateJson()
         {
             GridMover player = FindAnyObjectByType<GridMover>();

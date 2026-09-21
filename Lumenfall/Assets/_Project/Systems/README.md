@@ -10,5 +10,7 @@ Current systems:
 - `GameEvents` — event, quest, dialogue, persistence, resource data, and EditMode tests.
 - `GridMovement` — grid world, movement, pathfinding, portals, input, and presentation.
 
+Startup menu behavior is documented in [`Startup/README.md`](Startup/README.md).
+
 Create a new system folder when a feature has a distinct responsibility. Shared utilities
 should only be introduced once at least two systems genuinely need them.

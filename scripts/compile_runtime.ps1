@@ -13,7 +13,7 @@ $lines = [System.Collections.Generic.List[string]]::new()
 $refs = Get-ChildItem $dag -File -Filter '*.ref.dll' | Where-Object Name -notmatch 'Assembly-CSharp|Lumenfall.GameEvents|GameEvents.Tests'
 $refs | ForEach-Object { $lines.Add('-r:"' + $_.FullName + '"') }
 $managed = Join-Path $UnityEditorPath 'Data/Managed/UnityEngine'
-@('UnityEngine.CoreModule.dll','UnityEngine.InputModule.dll','UnityEngine.InputLegacyModule.dll','UnityEngine.AnimationModule.dll','UnityEngine.IMGUIModule.dll','UnityEngine.PhysicsModule.dll','UnityEngine.Physics2DModule.dll','UnityEngine.UIModule.dll','UnityEngine.JSONSerializeModule.dll') | ForEach-Object { $lines.Add('-r:"' + (Join-Path $managed $_) + '"') }
+@('UnityEngine.CoreModule.dll','UnityEngine.InputModule.dll','UnityEngine.InputLegacyModule.dll','UnityEngine.AnimationModule.dll','UnityEngine.IMGUIModule.dll','UnityEngine.PhysicsModule.dll','UnityEngine.Physics2DModule.dll','UnityEngine.UIModule.dll','UnityEngine.JSONSerializeModule.dll','UnityEngine.AudioModule.dll','UnityEngine.ImageConversionModule.dll','UnityEngine.TextRenderingModule.dll') | ForEach-Object { $lines.Add('-r:"' + (Join-Path $managed $_) + '"') }
 $lines.Add('-r:"' + (Join-Path $UnityEditorPath 'Data/NetStandard/ref/2.1.0/netstandard.dll') + '"')
 Get-ChildItem (Join-Path $project 'Assets') -Recurse -File -Filter '*.cs' | Where-Object FullName -notmatch '\\Tests\\|\\Editor\\' | ForEach-Object { $lines.Add('"' + $_.FullName + '"') }
 [IO.File]::WriteAllLines($rsp, $lines, (New-Object Text.UTF8Encoding($false)))

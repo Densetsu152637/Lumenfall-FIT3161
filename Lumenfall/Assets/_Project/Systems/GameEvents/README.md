@@ -123,8 +123,9 @@ saves.Save("slot-1");
 saves.Load("slot-1");
 ```
 
-The sample game creates `GameSaveOverlay` automatically. Its Save and Load buttons operate on
-`save-1`; a larger menu can replace the overlay and call the same manager methods. The generated
+The sample game creates `GameSaveOverlay` automatically. Its Save and Load buttons operate on the
+currently selected slot (defaulting to `save-1`); the startup menu updates that selection when a
+slot is loaded or a new game starts. A larger menu can replace the overlay and call the same manager methods. The generated
 `DataDrivenWorldLoader` registers a provider that restores the active map and player grid cell.
 
 The current file schema is version `1`. It contains the event runtime JSON plus a sorted array of

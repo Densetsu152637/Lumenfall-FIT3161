@@ -5,9 +5,14 @@ namespace Lumenfall.GameEvents
     /// <summary>Small IMGUI bridge for the sample game; production menus can call GameSaveManager directly.</summary>
     public sealed class GameSaveOverlay : MonoBehaviour
     {
-        private const string Slot = "save-1";
+        public static string CurrentSlot { get; private set; } = "save-1";
         private string status = "";
         private GUIStyle statusStyle;
+
+        public static void SetCurrentSlot(string slot)
+        {
+            if (!string.IsNullOrWhiteSpace(slot)) CurrentSlot = slot;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -51,8 +56,8 @@ namespace Lumenfall.GameEvents
 
             GUILayout.BeginArea(new Rect(Screen.width - 190f, 12f, 178f, 90f), GUI.skin.box);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Save")) GameSaveManager.Instance.Save(Slot);
-            if (GUILayout.Button("Load")) GameSaveManager.Instance.Load(Slot);
+            if (GUILayout.Button("Save")) GameSaveManager.Instance.Save(CurrentSlot);
+            if (GUILayout.Button("Load")) GameSaveManager.Instance.Load(CurrentSlot);
             GUILayout.EndHorizontal();
             GUILayout.Label(status, statusStyle);
             GUILayout.EndArea();

@@ -13,6 +13,7 @@ namespace Lumenfall.GameEvents
     {
         private const int CurrentSchemaVersion = 1;
         private const string DefaultSlot = "save-1";
+        private const string LastPlayedFileName = "last-played.json";
         private static GameSaveManager instance;
         private readonly Dictionary<string, ISaveStateProvider> providers =
             new Dictionary<string, ISaveStateProvider>(StringComparer.Ordinal);
@@ -41,6 +42,74 @@ namespace Lumenfall.GameEvents
         public event Action<string> SaveFailed;
 
         public string SaveDirectory => Application.persistentDataPath;
+
+        /// <summary>Returns the newest valid save among the supplied slots, or null when none exist.</summary>
+        public string FindMostRecentSlot(IList<string> slots)
+        {
+            if (slots == null) return null;
+            string markedSlot = ReadLastPlayedSlot(slots);
+            Dictionary<string, DateTime> validSaveTimes = new Dictionary<string, DateTime>(StringComparer.Ordinal);
+            for (int i = 0; i < slots.Count; i++)
+            {
+                string slot = slots[i];
+                if (!TryGetSlotPath(slot, out string path, out _) || !File.Exists(path)) continue;
+                DateTime timestamp = File.GetLastWriteTimeUtc(path);
+                try
+                {
+                    SaveFile file = JsonUtility.FromJson<SaveFile>(File.ReadAllText(path, Encoding.UTF8));
+                    if (file == null || file.schemaVersion != CurrentSchemaVersion ||
+                        string.IsNullOrWhiteSpace(file.eventStateJson)) continue;
+                    if (DateTime.TryParse(file.savedAtUtc, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime savedAt))
+                    {
+                        timestamp = savedAt.ToUniversalTime();
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+
+                validSaveTimes[slot] = timestamp;
+            }
+
+            return GameSaveSlotPolicy.SelectMostRecent(
+                slots,
+                markedSlot,
+                validSaveTimes.ContainsKey,
+                slot => validSaveTimes[slot]);
+        }
+
+        /// <summary>Records a successful player-selected load or new-game start separately from save timestamps.</summary>
+        public bool MarkPlayed(string slot)
+        {
+            if (!TryGetSlotPath(slot, out string savePath, out string error) || !File.Exists(savePath))
+            {
+                SaveFailed?.Invoke(error ?? $"Save slot '{slot}' does not exist.");
+                return false;
+            }
+
+            string path = Path.Combine(SaveDirectory, LastPlayedFileName);
+            string temporaryPath = path + ".tmp";
+            try
+            {
+                Directory.CreateDirectory(SaveDirectory);
+                LastPlayedMarker marker = new LastPlayedMarker
+                {
+                    slot = slot,
+                    playedAtUtc = DateTime.UtcNow.ToString("O")
+                };
+                File.WriteAllText(temporaryPath, JsonUtility.ToJson(marker, true), Encoding.UTF8);
+                if (File.Exists(path)) File.Replace(temporaryPath, path, null);
+                else File.Move(temporaryPath, path);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                TryDelete(temporaryPath);
+                Debug.LogWarning($"Could not record last-played slot '{slot}': {exception.Message}");
+                return false;
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -130,7 +199,7 @@ namespace Lumenfall.GameEvents
             }
         }
 
-        public bool Load(string slot = DefaultSlot)
+        public bool Load(string slot = DefaultSlot, bool markPlayed = true)
         {
             if (!TryGetSlotPath(slot, out string path, out string error))
             {
@@ -200,8 +269,43 @@ namespace Lumenfall.GameEvents
                 }
             }
 
+            if (markPlayed) MarkPlayed(slot);
             LoadCompleted?.Invoke(slot);
             return true;
+        }
+
+        private string ReadLastPlayedSlot(IList<string> slots)
+        {
+            string path = Path.Combine(SaveDirectory, LastPlayedFileName);
+            if (!File.Exists(path)) return null;
+            try
+            {
+                LastPlayedMarker marker = JsonUtility.FromJson<LastPlayedMarker>(File.ReadAllText(path, Encoding.UTF8));
+                if (marker == null || string.IsNullOrWhiteSpace(marker.slot) || string.IsNullOrWhiteSpace(marker.playedAtUtc)) return null;
+                if (!DateTime.TryParse(marker.playedAtUtc, null, System.Globalization.DateTimeStyles.RoundtripKind, out _)) return null;
+                for (int i = 0; i < slots.Count; i++)
+                    if (string.Equals(slots[i], marker.slot, StringComparison.Ordinal) && IsValidSaveSlot(marker.slot)) return marker.slot;
+            }
+            catch
+            {
+                // An invalid marker should not prevent recovery through save timestamps.
+            }
+            return null;
+        }
+
+        private bool IsValidSaveSlot(string slot)
+        {
+            if (!TryGetSlotPath(slot, out string path, out _) || !File.Exists(path)) return false;
+            try
+            {
+                SaveFile file = JsonUtility.FromJson<SaveFile>(File.ReadAllText(path, Encoding.UTF8));
+                return file != null && file.schemaVersion == CurrentSchemaVersion &&
+                    !string.IsNullOrWhiteSpace(file.eventStateJson);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void Rollback(GameEventRuntime runtime, string eventState, ProviderState[] providerStates)
@@ -313,6 +417,13 @@ namespace Lumenfall.GameEvents
             public string savedAtUtc;
             public string eventStateJson;
             public ProviderState[] providers = Array.Empty<ProviderState>();
+        }
+
+        [Serializable]
+        private sealed class LastPlayedMarker
+        {
+            public string slot;
+            public string playedAtUtc;
         }
 
         [Serializable]
