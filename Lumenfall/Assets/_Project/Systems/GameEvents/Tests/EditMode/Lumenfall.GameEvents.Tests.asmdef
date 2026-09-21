@@ -2,7 +2,8 @@
     "name": "Lumenfall.GameEvents.Tests",
     "rootNamespace": "Lumenfall.Tests.GameEvents",
     "references": [
-        "Lumenfall.GameEvents"
+        "Lumenfall.GameEvents",
+        "Lumenfall.Runtime"
     ],
     "includePlatforms": [
         "Editor"

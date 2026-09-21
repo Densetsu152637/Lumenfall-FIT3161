@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Spells;
 
 namespace Lumenfall.DataDriven
 {
@@ -34,7 +35,7 @@ namespace Lumenfall.DataDriven
             Clear(); map = mapAsset; npcs = npcAsset;
             if (map != null)
             {
-                if (TryParseMap(map, out MapDefinition parsedMap, out string mapError)) { LoadedMap = parsedMap; if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height); BuildMap(LoadedMap); ApplySpawn(LoadedMap); ValidatePortals(LoadedMap); }
+                if (TryParseMap(map, out MapDefinition parsedMap, out string mapError)) { LoadedMap = parsedMap; WorldStateService.Instance?.BeginMapRebuild(LoadedMap.id); WorldStateService.Instance?.RegisterPuzzleTargets(LoadedMap.puzzleTargets); if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height); BuildMap(LoadedMap); ApplySpawn(LoadedMap); ValidatePortals(LoadedMap); WorldStateService.Instance?.EndMapRebuild(); }
                 else Debug.LogError(mapError, this);
             }
             if (npcAsset != null)
@@ -48,6 +49,7 @@ namespace Lumenfall.DataDriven
         /// <summary>Restores the authored starting map and NPC set for a new game.</summary>
         public void ResetToStartingState()
         {
+            WorldStateService.Instance?.ResetAllState();
             TextAsset startingMap = Resources.Load<TextAsset>("Maps/campus") ?? Resources.Load<TextAsset>("Maps/map");
             TextAsset startingNpcs = Resources.Load<TextAsset>("NPCs/npcs");
             Load(startingMap, startingNpcs);
@@ -112,7 +114,7 @@ namespace Lumenfall.DataDriven
             }
             AddBuilding(definition.B01, "B01", root); AddBuilding(definition.B02, "B02", root); AddBuilding(definition.B03, "B03", root); AddBuilding(definition.B04, "B04", root);
             foreach (MapObjectDefinition item in definition.objects ?? Array.Empty<MapObjectDefinition>())
-            { GameObject prefab = LoadPrefab(item.asset, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y), item.elevation) : transform.position, Quaternion.Euler(0, item.rotation, 0), root); go.name = string.IsNullOrWhiteSpace(item.id) ? item.type : item.id; if (item.blocks && world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } spawned.Add(go); }
+            { GameObject prefab = LoadPrefab(item.asset, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y), item.elevation) : transform.position, Quaternion.Euler(0, item.rotation, 0), root); go.name = string.IsNullOrWhiteSpace(item.id) ? item.type + "_" + item.x + "_" + item.y : item.id; if (item.blocks && world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } WorldStateService.Instance?.RegisterObject(go.name, go, new Vector2Int(item.x, item.y), new Vector2Int(item.width, item.height), item.compatibleWithSpells, item.tags); spawned.Add(go); }
             foreach (PortalDefinition item in definition.portals ?? Array.Empty<PortalDefinition>())
             { if (item.reserved) continue; if (!string.IsNullOrEmpty(definition.portalGlyph) && !HasTileGlyph(definition, item.x, item.y, definition.portalGlyph[0])) { Debug.LogWarning($"Map '{definition.id}' portal '{item.id}' does not bind to glyph '{definition.portalGlyph}' at ({item.x},{item.y}); skipped.", this); continue; } GameObject go = new GameObject(string.IsNullOrWhiteSpace(item.id) ? "Portal" : item.id); go.transform.SetParent(root); go.transform.position = world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position; GridPortal portal = go.AddComponent<GridPortal>(); portal.Configure(item.id, item.width, item.height, item.destinationScene, item.destinationPortalId, new Vector2Int(item.arrivalOffsetX, item.arrivalOffsetY)); spawned.Add(go); }
         }
@@ -137,14 +139,15 @@ namespace Lumenfall.DataDriven
         {
             if (world == null || definition == null || definition.spawn == null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
+            if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>();
             if (player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
                 Debug.LogWarning($"Map '{definition.id}' spawn ({definition.spawn.x},{definition.spawn.y}) is unavailable; keeping player position.", this);
         }
         private void AddTileObjects(IEnumerable<MapObjectDefinition> items, Transform root)
-        { foreach (MapObjectDefinition item in items) { GameObject prefab = LoadPrefab(item.asset, defaultBuilding); if (prefab == null) continue; GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position, Quaternion.identity, root); go.name = item.type + "_tile_" + item.x + "_" + item.y; if (world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(Mathf.Max(1, item.width), Mathf.Max(1, item.height))); } spawned.Add(go); } }
+        { foreach (MapObjectDefinition item in items) { GameObject prefab = LoadPrefab(item.asset, defaultBuilding); if (prefab == null) continue; GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position, Quaternion.identity, root); go.name = item.type + "_tile_" + item.x + "_" + item.y; if (world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(Mathf.Max(1, item.width), Mathf.Max(1, item.height))); } WorldStateService.Instance?.RegisterObject(go.name, go, new Vector2Int(item.x, item.y), new Vector2Int(item.width, item.height), item.compatibleWithSpells, item.tags); spawned.Add(go); } }
         private static IEnumerable<MapObjectDefinition> ParseTileObjects(TextAsset asset, int width, int height)
         { string[] rows = (asset.text ?? string.Empty).Replace("\r", "").Split('\n'); bool[,] used = new bool[Mathf.Max(1, width), Mathf.Max(1, height)]; for (int y = 0; y < rows.Length && y < height; y++) { if (rows[y].Length != width) Debug.LogWarning($"Tile file '{asset.name}' row {y} has length {rows[y].Length}; expected {width}; clamping safely."); int limit = Mathf.Min(width, rows[y].Length); for (int x = 0; x < limit; x++) if (!used[x,y] && (rows[y][x] == 'W' || rows[y][x] == 'B' || rows[y][x] == 'T')) { int w = 1, h = 1; if (rows[y][x] == 'T' && x + 1 < limit && y + 1 < rows.Length && x + 1 < rows[y + 1].Length && rows[y][x + 1] == 'T' && rows[y + 1][x] == 'T' && rows[y + 1][x + 1] == 'T') { w = h = 2; used[x,y] = used[x+1,y] = used[x,y+1] = used[x+1,y+1] = true; } yield return new MapObjectDefinition { type = rows[y][x].ToString(), x = x, y = y, width = w, height = h, blocks = true }; } } }
-        private void AddBuilding(BuildingPlacementDefinition item, string id, Transform root) { if (item == null) return; GameObject prefab = LoadPrefab(id, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position, Quaternion.identity, root); go.name = id; if (world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } spawned.Add(go); }
+        private void AddBuilding(BuildingPlacementDefinition item, string id, Transform root) { if (item == null) return; GameObject prefab = LoadPrefab(id, defaultBuilding); GameObject go = Instantiate(prefab, world != null ? world.CellToWorld(new Vector2Int(item.x, item.y)) : transform.position, Quaternion.identity, root); go.name = id; if (world != null) { GridObstacle obstacle = go.GetComponent<GridObstacle>() ?? go.AddComponent<GridObstacle>(); obstacle.Configure(world, new Vector2Int(item.width, item.height)); } WorldStateService.Instance?.RegisterObject(id, go, new Vector2Int(item.x, item.y), new Vector2Int(item.width, item.height), true, Array.Empty<string>()); spawned.Add(go); }
         private void RebuildNpcs() { for (int i = spawned.Count - 1; i >= 0; i--) { if (spawned[i] != null && spawned[i].GetComponent<DynamicNpc>() != null) { Destroy(spawned[i]); spawned.RemoveAt(i); } } BuildNpcs(LoadedNpcs); }
         private void BuildNpcs(NpcDatabaseDefinition definition)
         { Transform root = contentRoot == null ? transform : contentRoot; foreach (NpcDefinition item in definition.npcs ?? Array.Empty<NpcDefinition>()) { if (!string.IsNullOrWhiteSpace(item.mapId) && !string.Equals(item.mapId, LoadedMap == null ? null : LoadedMap.id, StringComparison.OrdinalIgnoreCase)) continue; if (!NpcIsVisible(item)) continue; Vector2Int cell = ResolveLayerCell(item); GameObject prefab = LoadPrefab(item.asset, defaultNpc); Vector3 position = world != null ? world.CellToWorld(cell) : transform.position; GameObject go = Instantiate(prefab, position, Quaternion.identity, root); go.name = string.IsNullOrWhiteSpace(item.displayName) ? item.id : item.displayName; DynamicNpc npc = go.GetComponent<DynamicNpc>() ?? go.AddComponent<DynamicNpc>(); npc.Configure(item, SelectDialogue(item)); spawned.Add(go); } }

@@ -29,3 +29,11 @@ Vis aligns or reorients designated objects. The exact object category and alignm
 ## Lost Echoes
 
 Lost Echoes reveals points of interest and hidden sections. It can also identify items separated from their intended purpose or owner, supporting investigation quests and item recovery.
+
+## Runtime defaults
+
+The runtime exposes these spells through `Lumenfall.Spells.SpellCaster`: number keys 1-7 select Ampere, Weave, Gravitate, Rotara, Glaciate, Vis, and Lost Echoes; `F` casts at the nearest compatible authored map object within two grid cells. Direct integrations call `SpellCaster.Cast` with a stable object id and direction.
+
+Ampere marks the target powered and queues a durable `lightning:{objectId}` effect. Weave connects the target to the nearest powered object. Gravitate moves one tile after checking bounds, blockers, and mover occupancy. Rotara advances orientation by 90 degrees. Glaciate marks the target frozen and slides it in the supplied direction until blocked or the map boundary. Vis marks the target aligned at its nearest quarter turn. Lost Echoes reveals the target and all objects tagged `hidden`.
+
+Map object ids come from `MapObjectDefinition.id`; generated tile objects use `{type}_{x}_{y}`. Puzzle targets use `puzzleTargets` and can require powered, connected, revealed, frozen, aligned, rotation, position, and exact `requiredConnections` conditions. A Glaciate object can carry `slide-goal:x,y`; it slides until that destination, a blocker, or a boundary. `WorldStateService` publishes `StateChanged` and `MapRebuilt`, and persists object transforms and properties, connections, reveals, and unacknowledged effects through the save provider key `spell-world-state`.

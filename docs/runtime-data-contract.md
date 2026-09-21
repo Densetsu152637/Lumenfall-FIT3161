@@ -4,4 +4,6 @@ Maps are TextAssets at `Assets/Resources/Maps/{mapId}.json`; `tileFile` names a 
 
 Walk within roughly two grid cells of a loaded NPC and press `E` to open dialogue. The runtime overlay displays speaker/text, choices, and Continue/Close controls. Choice and node actions execute through the existing `GameEventRuntime`, preserving quest state.
 
+Map JSON may add `objects[].id`, `objects[].tags`, and `objects[].compatibleWithSpells`, plus `puzzleTargets[]`. Object ids are stable within a map and are exposed by `WorldStateService`. A map rebuild emits `MapRebuilt` only after all objects are registered and `IsReady` is true. The spell world save provider persists object cells, elevation, rotation, powered/frozen/revealed/aligned properties, wire connections, and pending effect requests under `spell-world-state`.
+
 For a licensed-editor-independent compile check, run `powershell -ExecutionPolicy Bypass -File scripts/compile_runtime.ps1` from the repository root. This compiles all non-test C# sources against the installed Unity 6000.4 reference assemblies; it does not execute Unity scenes, render assets, or prove play-mode travel and interaction.

@@ -1,0 +1,8 @@
+{
+    "name": "Lumenfall.Runtime",
+    "rootNamespace": "Lumenfall",
+    "references": [
+        "Lumenfall.GameEvents",
+        "Unity.InputSystem"
+    ]
+}

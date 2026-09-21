@@ -75,6 +75,12 @@
   },
   "tileFile": "eastForest.txt",
   "portalGlyph": "X",
+  "objects": [
+    { "id": "mechanism.orio.rotate", "type": "mechanism", "x": 28, "y": 8, "blocks": false, "tags": ["rotara"] }
+  ],
+  "puzzleTargets": [
+    { "id": "quest.orio.patch-notes", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
+  ],
   "portals": [
     {
       "id": "P.F01.F02",
