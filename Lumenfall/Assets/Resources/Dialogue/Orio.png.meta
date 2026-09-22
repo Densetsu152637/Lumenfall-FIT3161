@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: a4a4b1d2387f4ca2a6479ad6b172a304
+TextureImporter:
+  serializedVersion: 12
+  mipmaps: {mipMapMode: 0, enableMipMap: 0, sRGBTexture: 1}
+  textureType: 0
+  textureShape: 1
+  alphaIsTransparency: 1
+  spriteMode: 1
+  isReadable: 0
+  streamingMipmaps: 0
+  platformSettings: []
