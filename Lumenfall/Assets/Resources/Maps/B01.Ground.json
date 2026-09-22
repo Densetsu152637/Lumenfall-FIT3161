@@ -1,0 +1,104 @@
+{
+    "width":  36,
+    "height":  24,
+    "regions":  [
+                    {
+                        "id":  "B01",
+                        "name":  "B01",
+                        "rect":  {
+                                     "x":  1,
+                                     "y":  1,
+                                     "width":  34,
+                                     "height":  22
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S01",
+                        "name":  "S01",
+                        "rect":  {
+                                     "x":  2,
+                                     "y":  2,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S02",
+                        "name":  "S02",
+                        "rect":  {
+                                     "x":  10,
+                                     "y":  2,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S03",
+                        "name":  "S03",
+                        "rect":  {
+                                     "x":  18,
+                                     "y":  2,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S04",
+                        "name":  "S04",
+                        "rect":  {
+                                     "x":  26,
+                                     "y":  2,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S05",
+                        "name":  "S05",
+                        "rect":  {
+                                     "x":  2,
+                                     "y":  7,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    },
+                    {
+                        "id":  "S06",
+                        "name":  "S06",
+                        "rect":  {
+                                     "x":  10,
+                                     "y":  7,
+                                     "width":  6,
+                                     "height":  3
+                                 },
+                        "walkable":  true
+                    }
+                ],
+    "spawn":  {
+                  "x":  2,
+                  "y":  2
+              },
+    "tileFile":  "B01.Ground.txt",
+    "portals":  [
+                    {
+                        "id":  "P.B01.C05",
+                        "x":  8,
+                        "y":  2,
+                        "destinationScene":  "campus",
+                        "destinationPortalId":  "P.C05.B01",
+                        "arrivalOffsetX":  20,
+                        "arrivalOffsetY":  58,
+                        "reserved":  true
+                    }
+                ],
+    "coordinateOffset":  {
+                             "x":  12,
+                             "y":  56
+                         }
+}

@@ -14,3 +14,5 @@ Open this directory as the project root in Unity `6000.4.10f1`.
 See [`Assets/_Project/README.md`](Assets/_Project/README.md) for the detailed conventions.
 The tile-grid movement system is documented in
 [`Assets/_Project/Systems/GridMovement/README.md`](Assets/_Project/Systems/GridMovement/README.md).
+The startup flow is documented in
+[`Assets/_Project/Systems/Startup/README.md`](Assets/_Project/Systems/Startup/README.md).

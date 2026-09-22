@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Lumenfall.DataDriven;
 
 namespace Lumenfall.GridMovement
 {
@@ -54,6 +55,14 @@ namespace Lumenfall.GridMovement
         public string PortalId => portalId;
         public GridPortalDestinationMode DestinationMode => destinationMode;
 
+        public void Configure(string id, int width, int height, string scene, string targetId, Vector2Int offset)
+        {
+            portalId = id; footprintSize = new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height));
+            destinationMode = GridPortalDestinationMode.ScenePortalId; destinationScene = scene;
+            destinationPortalId = targetId; arrivalOffset = offset; ResolveWorld();
+            if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
+        }
+
         private void Reset()
         {
             world = GetComponentInParent<GridWorld>();
@@ -96,16 +105,19 @@ namespace Lumenfall.GridMovement
                     return EnterWorldCell(mover);
 
                 case GridPortalDestinationMode.ScenePortalId:
+                    Vector2Int entryOffset = preserveEntryOffset
+                        ? mover.CurrentCell - FirstCell
+                        : Vector2Int.zero;
+                    // Data-driven area ids (campus/eastForest) are virtual areas within this scene.
+                    // Keep the legacy scene transition for actual Build Settings scene names.
+                    if (DataDrivenWorldLoader.Instance != null && DataDrivenWorldLoader.Instance.HasArea(destinationScene))
+                        return DataDrivenWorldLoader.Instance.SwitchArea(destinationScene, destinationPortalId, arrivalOffset + (preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero));
                     if (string.IsNullOrWhiteSpace(destinationScene) ||
                         string.IsNullOrWhiteSpace(destinationPortalId))
                     {
                         Debug.LogError($"{name} needs both a destination scene and portal id.", this);
                         return false;
                     }
-
-                    Vector2Int entryOffset = preserveEntryOffset
-                        ? mover.CurrentCell - FirstCell
-                        : Vector2Int.zero;
                     mover.BeginSceneTransition(
                         destinationScene,
                         destinationPortalId,

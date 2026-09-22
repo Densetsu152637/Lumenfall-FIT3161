@@ -23,6 +23,8 @@ namespace Lumenfall.GameEvents
         public DialogueNodeDefinition CurrentNode { get; private set; }
         public IReadOnlyList<DialogueChoiceDefinition> AvailableChoices => availableChoices;
         public bool IsActive { get; private set; } = true;
+        /// <summary>True only when the player advanced beyond the terminal node.</summary>
+        public bool IsCompleted { get; private set; }
 
         public event Action<DialogueSession, DialogueNodeDefinition> NodeChanged;
         public event Action<DialogueSession> Ended;
@@ -36,6 +38,7 @@ namespace Lumenfall.GameEvents
 
             if (string.IsNullOrWhiteSpace(CurrentNode.nextNodeId))
             {
+                IsCompleted = true;
                 End();
                 return true;
             }

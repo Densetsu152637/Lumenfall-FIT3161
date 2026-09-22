@@ -1,1131 +1,1217 @@
 {
-  "schema": "lumenfall.tile-layout/2",
-  "coordinateSystem": "rows north-to-south; Unity (x,z)=(x,y); cellSize=1",
-  "legendFile": "legend.json",
-  "maps": {
-    "campus": "campus.json",
-    "eastForest": "eastForest.json",
-    "B01.Ground": "B01.Ground.json",
-    "B02.Ground": "B02.Ground.json",
-    "B03.Ground": "B03.Ground.json",
-    "B04.Ground": "B04.Ground.json"
-  },
-  "areas": [
-    {
-      "id": "A01",
-      "name": "East gate forecourt",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "A01",
-      "portals": [
-        {
-          "id": "P.A01.F03",
-          "cell": {
-            "x": 43,
-            "y": 40
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F03",
-            "cell": {
-              "x": 41,
-              "y": 15
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.A01.C01",
-          "cell": {
-            "x": 50,
-            "y": 35
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C01",
-            "cell": {
-              "x": 50,
-              "y": 35
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "B01",
-      "name": "South arrival range",
-      "kind": "building",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "B01",
-      "portals": [
-        {
-          "id": "P.B01.C05",
-          "cell": {
-            "x": 20,
-            "y": 58
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C05",
-            "cell": {
-              "x": 25,
-              "y": 56
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "B02",
-      "name": "West teaching range",
-      "kind": "building",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "B02",
-      "portals": [
-        {
-          "id": "P.B02.C05",
-          "cell": {
-            "x": 18,
-            "y": 14
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C05",
-            "cell": {
-              "x": 23,
-              "y": 12
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "B03",
-      "name": "North shared range",
-      "kind": "building",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "B03",
-      "portals": [
-        {
-          "id": "P.B03.C05",
-          "cell": {
-            "x": 48,
-            "y": 10
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C05",
-            "cell": {
-              "x": 53,
-              "y": 8
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "B04",
-      "name": "Sirius dormitory wing",
-      "kind": "building",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "B04",
-      "portals": [
-        {
-          "id": "P.B04.C05",
-          "cell": {
-            "x": 80,
-            "y": 50
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C05",
-            "cell": {
-              "x": 85,
-              "y": 48
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "C01",
-      "name": "Campus commons",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "C01",
-      "portals": [
-        {
-          "id": "P.C01.A01",
-          "cell": {
-            "x": 50,
-            "y": 35
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "A01",
-            "cell": {
-              "x": 50,
-              "y": 35
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C01.C02",
-          "cell": {
-            "x": 42,
-            "y": 28
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C02",
-            "cell": {
-              "x": 42,
-              "y": 26
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C01.C03",
-          "cell": {
-            "x": 30,
-            "y": 34
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C03",
-            "cell": {
-              "x": 27,
-              "y": 34
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C01.C04",
-          "cell": {
-            "x": 60,
-            "y": 50
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C04",
-            "cell": {
-              "x": 60,
-              "y": 55
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C01.C05",
-          "cell": {
-            "x": 35,
-            "y": 40
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C05",
-            "cell": {
-              "x": 35,
-              "y": 39
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "C02",
-      "name": "Orientation terrace",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "C02",
-      "portals": [
-        {
-          "id": "P.C02.C01",
-          "cell": {
-            "x": 42,
-            "y": 26
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C01",
-            "cell": {
-              "x": 42,
-              "y": 28
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "C03",
-      "name": "Orientation trial strip",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "C03",
-      "portals": [
-        {
-          "id": "P.C03.C01",
-          "cell": {
-            "x": 27,
-            "y": 34
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C01",
-            "cell": {
-              "x": 30,
-              "y": 34
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "C04",
-      "name": "Garden walk",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "C04",
-      "portals": [
-        {
-          "id": "P.C04.C01",
-          "cell": {
-            "x": 60,
-            "y": 55
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C01",
-            "cell": {
-              "x": 60,
-              "y": 50
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "C05",
-      "name": "Campus path loop",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "campus",
-      "regionId": "C05",
-      "portals": [
-        {
-          "id": "P.C05.C01",
-          "cell": {
-            "x": 35,
-            "y": 39
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "C01",
-            "cell": {
-              "x": 35,
-              "y": 40
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C05.B01",
-          "cell": {
-            "x": 25,
-            "y": 56
-          },
-          "destination": {
-            "mapId": "B01.Ground",
-            "regionId": "B01",
-            "cell": {
-              "x": 20,
-              "y": 58
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C05.B02",
-          "cell": {
-            "x": 23,
-            "y": 12
-          },
-          "destination": {
-            "mapId": "B02.Ground",
-            "regionId": "B02",
-            "cell": {
-              "x": 18,
-              "y": 14
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C05.B03",
-          "cell": {
-            "x": 53,
-            "y": 8
-          },
-          "destination": {
-            "mapId": "B03.Ground",
-            "regionId": "B03",
-            "cell": {
-              "x": 48,
-              "y": 10
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.C05.B04",
-          "cell": {
-            "x": 85,
-            "y": 48
-          },
-          "destination": {
-            "mapId": "B04.Ground",
-            "regionId": "B04",
-            "cell": {
-              "x": 80,
-              "y": 50
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "D01",
-      "name": "Sirius entrance lobby",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B04.Ground",
-      "regionId": "D01",
-      "portals": []
-    },
-    {
-      "id": "D02",
-      "name": "Sirius common area",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B04.Ground",
-      "regionId": "D02",
-      "portals": []
-    },
-    {
-      "id": "D03",
-      "name": "Dormitory waypoint alcove",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B04.Ground",
-      "regionId": "D03",
-      "portals": []
-    },
-    {
-      "id": "D04",
-      "name": "Residential key door zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B04.Ground",
-      "regionId": "D04",
-      "portals": []
-    },
-    {
-      "id": "D05",
-      "name": "Laundry and utility room",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D05",
-      "portals": []
-    },
-    {
-      "id": "D06",
-      "name": "Common-area washroom",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D06",
-      "portals": []
-    },
-    {
-      "id": "D07",
-      "name": "Group living zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B04.Ground",
-      "regionId": "D07",
-      "portals": []
-    },
-    {
-      "id": "D08",
-      "name": "Player sleeping room",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B04.Ground",
-      "regionId": "D08",
-      "portals": []
-    },
-    {
-      "id": "D09",
-      "name": "Stella's sleeping zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D09",
-      "portals": []
-    },
-    {
-      "id": "D10",
-      "name": "Cinna Cirra's sleeping zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D10",
-      "portals": []
-    },
-    {
-      "id": "D11",
-      "name": "Orio's sleeping zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D11",
-      "portals": []
-    },
-    {
-      "id": "D12",
-      "name": "Katrina's sleeping zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D12",
-      "portals": []
-    },
-    {
-      "id": "D13",
-      "name": "Shared washroom zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D13",
-      "portals": []
-    },
-    {
-      "id": "D14",
-      "name": "Linen storage zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B04.Ground",
-      "regionId": "D14",
-      "portals": []
-    },
-    {
-      "id": "F01",
-      "name": "Forest arrival clearing",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "eastForest",
-      "regionId": "F01",
-      "portals": [
-        {
-          "id": "P.F01.F02",
-          "cell": {
-            "x": 9,
-            "y": 15
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F02",
-            "cell": {
-              "x": 8,
-              "y": 15
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "F02",
-      "name": "Lantern trail",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "eastForest",
-      "regionId": "F02",
-      "portals": [
-        {
-          "id": "P.F02.F01",
-          "cell": {
-            "x": 8,
-            "y": 15
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F01",
-            "cell": {
-              "x": 9,
-              "y": 15
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.F02.F03",
-          "cell": {
-            "x": 31,
-            "y": 15
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F03",
-            "cell": {
-              "x": 30,
-              "y": 15
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.F02.F04",
-          "cell": {
-            "x": 20,
-            "y": 12
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F04",
-            "cell": {
-              "x": 25,
-              "y": 11
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.F02.F05",
-          "cell": {
-            "x": 15,
-            "y": 17
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F05",
-            "cell": {
-              "x": 18,
-              "y": 18
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "F03",
-      "name": "Forest threshold",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "eastForest",
-      "regionId": "F03",
-      "portals": [
-        {
-          "id": "P.F03.F02",
-          "cell": {
-            "x": 30,
-            "y": 15
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F02",
-            "cell": {
-              "x": 31,
-              "y": 15
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.F03.A01",
-          "cell": {
-            "x": 41,
-            "y": 15
-          },
-          "destination": {
-            "mapId": "campus",
-            "regionId": "A01",
-            "cell": {
-              "x": 43,
-              "y": 40
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "F04",
-      "name": "Orio's mechanism glade",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "eastForest",
-      "regionId": "F04",
-      "portals": [
-        {
-          "id": "P.F04.F02",
-          "cell": {
-            "x": 25,
-            "y": 11
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F02",
-            "cell": {
-              "x": 20,
-              "y": 12
-            }
-          },
-          "state": "open",
-          "requires": null
-        },
-        {
-          "id": "P.F04.F06",
-          "cell": {
-            "x": 25,
-            "y": 5
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F06",
-            "cell": {
-              "x": 25,
-              "y": 4
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "F05",
-      "name": "Brook overlook",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "eastForest",
-      "regionId": "F05",
-      "portals": [
-        {
-          "id": "P.F05.F02",
-          "cell": {
-            "x": 18,
-            "y": 18
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F02",
-            "cell": {
-              "x": 15,
-              "y": 17
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "F06",
-      "name": "Deep forest boundary",
-      "kind": "outdoor",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "eastForest",
-      "regionId": "F06",
-      "portals": [
-        {
-          "id": "P.F06.F04",
-          "cell": {
-            "x": 25,
-            "y": 4
-          },
-          "destination": {
-            "mapId": "eastForest",
-            "regionId": "F04",
-            "cell": {
-              "x": 25,
-              "y": 5
-            }
-          },
-          "state": "open",
-          "requires": null
-        }
-      ]
-    },
-    {
-      "id": "N01",
-      "name": "Shared-building hall",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B03.Ground",
-      "regionId": "N01",
-      "portals": []
-    },
-    {
-      "id": "N02",
-      "name": "Student dining hall",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B03.Ground",
-      "regionId": "N02",
-      "portals": []
-    },
-    {
-      "id": "N03",
-      "name": "Kitchen and pantry",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N03",
-      "portals": []
-    },
-    {
-      "id": "N04",
-      "name": "Library reading room",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B03.Ground",
-      "regionId": "N04",
-      "portals": []
-    },
-    {
-      "id": "N05",
-      "name": "Restricted archive",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N05",
-      "portals": []
-    },
-    {
-      "id": "N06",
-      "name": "Spell-practice hall",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B03.Ground",
-      "regionId": "N06",
-      "portals": []
-    },
-    {
-      "id": "N07",
-      "name": "Academy common room",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B03.Ground",
-      "regionId": "N07",
-      "portals": []
-    },
-    {
-      "id": "N08",
-      "name": "Shared washroom",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N08",
-      "portals": []
-    },
-    {
-      "id": "N09",
-      "name": "Administration zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N09",
-      "portals": []
-    },
-    {
-      "id": "N10",
-      "name": "Administration landing zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N10",
-      "portals": []
-    },
-    {
-      "id": "N11",
-      "name": "Head's office zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N11",
-      "portals": []
-    },
-    {
-      "id": "N12",
-      "name": "Staff meeting zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B03.Ground",
-      "regionId": "N12",
-      "portals": []
-    },
-    {
-      "id": "S01",
-      "name": "Entrance vestibule",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B01.Ground",
-      "regionId": "S01",
-      "portals": []
-    },
-    {
-      "id": "S02",
-      "name": "Reception hall",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B01.Ground",
-      "regionId": "S02",
-      "portals": []
-    },
-    {
-      "id": "S03",
-      "name": "Inner entrance passage",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B01.Ground",
-      "regionId": "S03",
-      "portals": []
-    },
-    {
-      "id": "S04",
-      "name": "Student services office",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B01.Ground",
-      "regionId": "S04",
-      "portals": []
-    },
-    {
-      "id": "S05",
-      "name": "Infirmary",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B01.Ground",
-      "regionId": "S05",
-      "portals": []
-    },
-    {
-      "id": "S06",
-      "name": "Public washroom",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B01.Ground",
-      "regionId": "S06",
-      "portals": []
-    },
-    {
-      "id": "W01",
-      "name": "Teaching gallery",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B02.Ground",
-      "regionId": "W01",
-      "portals": []
-    },
-    {
-      "id": "W02",
-      "name": "Magical engineering classroom",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B02.Ground",
-      "regionId": "W02",
-      "portals": []
-    },
-    {
-      "id": "W03",
-      "name": "Circuit project room",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B02.Ground",
-      "regionId": "W03",
-      "portals": []
-    },
-    {
-      "id": "W04",
-      "name": "Foundations classroom",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B02.Ground",
-      "regionId": "W04",
-      "portals": []
-    },
-    {
-      "id": "W05",
-      "name": "Teaching equipment store",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B02.Ground",
-      "regionId": "W05",
-      "portals": []
-    },
-    {
-      "id": "W06",
-      "name": "Campus-side vestibule",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Chapter 1",
-      "mapId": "B02.Ground",
-      "regionId": "W06",
-      "portals": []
-    },
-    {
-      "id": "W07",
-      "name": "Classroom waypoint alcove",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Optional",
-      "mapId": "B02.Ground",
-      "regionId": "W07",
-      "portals": []
-    },
-    {
-      "id": "W08",
-      "name": "Teaching support zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B02.Ground",
-      "regionId": "W08",
-      "portals": []
-    },
-    {
-      "id": "W09",
-      "name": "Seminar zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B02.Ground",
-      "regionId": "W09",
-      "portals": []
-    },
-    {
-      "id": "W10",
-      "name": "Advanced seminar zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B02.Ground",
-      "regionId": "W10",
-      "portals": []
-    },
-    {
-      "id": "W11",
-      "name": "Faculty preparation zone",
-      "kind": "room",
-      "floor": "Ground",
-      "access": "Reserved",
-      "mapId": "B02.Ground",
-      "regionId": "W11",
-      "portals": []
-    }
-  ]
+    "schema":  "lumenfall.tile-layout/2",
+    "coordinateSystem":  "rows north-to-south; Unity (x,z)=(x,y); cellSize=1",
+    "legendFile":  "legend.json",
+    "maps":  {
+                 "campus":  "campus.json",
+                 "eastForest":  "eastForest.json",
+                 "B01.Ground":  "B01.Ground.json",
+                 "B02.Ground":  "B02.Ground.json",
+                 "B03.Ground":  "B03.Ground.json",
+                 "B04.Ground":  "B04.Ground.json"
+             },
+    "areas":  [
+                  {
+                      "id":  "A01",
+                      "name":  "East gate forecourt",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "A01",
+                      "portals":  [
+                                      {
+                                          "id":  "P.A01.F03",
+                                          "cell":  {
+                                                       "x":  43,
+                                                       "y":  40
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F03",
+                                                              "cell":  {
+                                                                           "x":  41,
+                                                                           "y":  15
+                                                                       }
+                                                          },
+                                          "requires":  null,
+                                          "state":  "reserved"
+                                      },
+                                      {
+                                          "id":  "P.A01.C01",
+                                          "cell":  {
+                                                       "x":  50,
+                                                       "y":  35
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C01",
+                                                              "cell":  {
+                                                                           "x":  50,
+                                                                           "y":  35
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "B01",
+                      "name":  "South arrival range",
+                      "kind":  "building",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "B01",
+                      "portals":  [
+                                      {
+                                          "id":  "P.B01.C05",
+                                          "cell":  {
+                                                       "x":  20,
+                                                       "y":  58
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C05",
+                                                              "cell":  {
+                                                                           "x":  25,
+                                                                           "y":  56
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "B02",
+                      "name":  "West teaching range",
+                      "kind":  "building",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "B02",
+                      "portals":  [
+                                      {
+                                          "id":  "P.B02.C05",
+                                          "cell":  {
+                                                       "x":  18,
+                                                       "y":  14
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C05",
+                                                              "cell":  {
+                                                                           "x":  23,
+                                                                           "y":  12
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "B03",
+                      "name":  "North shared range",
+                      "kind":  "building",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "B03",
+                      "portals":  [
+                                      {
+                                          "id":  "P.B03.C05",
+                                          "cell":  {
+                                                       "x":  48,
+                                                       "y":  10
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C05",
+                                                              "cell":  {
+                                                                           "x":  53,
+                                                                           "y":  8
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "B04",
+                      "name":  "Sirius dormitory wing",
+                      "kind":  "building",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "B04",
+                      "portals":  [
+                                      {
+                                          "id":  "P.B04.C05",
+                                          "cell":  {
+                                                       "x":  80,
+                                                       "y":  50
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C05",
+                                                              "cell":  {
+                                                                           "x":  85,
+                                                                           "y":  48
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "C01",
+                      "name":  "Campus commons",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "C01",
+                      "portals":  [
+                                      {
+                                          "id":  "P.C01.A01",
+                                          "cell":  {
+                                                       "x":  50,
+                                                       "y":  35
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "A01",
+                                                              "cell":  {
+                                                                           "x":  50,
+                                                                           "y":  35
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C01.C02",
+                                          "cell":  {
+                                                       "x":  42,
+                                                       "y":  28
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C02",
+                                                              "cell":  {
+                                                                           "x":  42,
+                                                                           "y":  26
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C01.C03",
+                                          "cell":  {
+                                                       "x":  30,
+                                                       "y":  34
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C03",
+                                                              "cell":  {
+                                                                           "x":  27,
+                                                                           "y":  34
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C01.C04",
+                                          "cell":  {
+                                                       "x":  60,
+                                                       "y":  50
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C04",
+                                                              "cell":  {
+                                                                           "x":  60,
+                                                                           "y":  55
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C01.C05",
+                                          "cell":  {
+                                                       "x":  35,
+                                                       "y":  40
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C05",
+                                                              "cell":  {
+                                                                           "x":  35,
+                                                                           "y":  39
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "C02",
+                      "name":  "Orientation terrace",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "C02",
+                      "portals":  [
+                                      {
+                                          "id":  "P.C02.C01",
+                                          "cell":  {
+                                                       "x":  42,
+                                                       "y":  26
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C01",
+                                                              "cell":  {
+                                                                           "x":  42,
+                                                                           "y":  28
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "C03",
+                      "name":  "Orientation trial strip",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "C03",
+                      "portals":  [
+                                      {
+                                          "id":  "P.C03.C01",
+                                          "cell":  {
+                                                       "x":  27,
+                                                       "y":  34
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C01",
+                                                              "cell":  {
+                                                                           "x":  30,
+                                                                           "y":  34
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "C04",
+                      "name":  "Garden walk",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "C04",
+                      "portals":  [
+                                      {
+                                          "id":  "P.C04.C01",
+                                          "cell":  {
+                                                       "x":  60,
+                                                       "y":  55
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C01",
+                                                              "cell":  {
+                                                                           "x":  60,
+                                                                           "y":  50
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "C05",
+                      "name":  "Campus path loop",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "campus",
+                      "regionId":  "C05",
+                      "portals":  [
+                                      {
+                                          "id":  "P.C05.C01",
+                                          "cell":  {
+                                                       "x":  35,
+                                                       "y":  39
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "C01",
+                                                              "cell":  {
+                                                                           "x":  35,
+                                                                           "y":  40
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C05.B01",
+                                          "cell":  {
+                                                       "x":  25,
+                                                       "y":  56
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "B01.Ground",
+                                                              "regionId":  "B01",
+                                                              "cell":  {
+                                                                           "x":  20,
+                                                                           "y":  58
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C05.B02",
+                                          "cell":  {
+                                                       "x":  23,
+                                                       "y":  12
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "B02.Ground",
+                                                              "regionId":  "B02",
+                                                              "cell":  {
+                                                                           "x":  18,
+                                                                           "y":  14
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C05.B03",
+                                          "cell":  {
+                                                       "x":  53,
+                                                       "y":  8
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "B03.Ground",
+                                                              "regionId":  "B03",
+                                                              "cell":  {
+                                                                           "x":  48,
+                                                                           "y":  10
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.C05.B04",
+                                          "cell":  {
+                                                       "x":  85,
+                                                       "y":  48
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "B04.Ground",
+                                                              "regionId":  "B04",
+                                                              "cell":  {
+                                                                           "x":  80,
+                                                                           "y":  50
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "D01",
+                      "name":  "Sirius entrance lobby",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D01",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D02",
+                      "name":  "Sirius common area",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D02",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D03",
+                      "name":  "Dormitory waypoint alcove",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D03",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D04",
+                      "name":  "Residential key door zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D04",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D05",
+                      "name":  "Laundry and utility room",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D05",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D06",
+                      "name":  "Common-area washroom",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D06",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D07",
+                      "name":  "Group living zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D07",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D08",
+                      "name":  "Player sleeping room",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D08",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D09",
+                      "name":  "Stella\u0027s sleeping zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D09",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D10",
+                      "name":  "Cinna Cirra\u0027s sleeping zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D10",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D11",
+                      "name":  "Orio\u0027s sleeping zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D11",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D12",
+                      "name":  "Katrina\u0027s sleeping zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D12",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D13",
+                      "name":  "Shared washroom zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D13",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "D14",
+                      "name":  "Linen storage zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B04.Ground",
+                      "regionId":  "D14",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "F01",
+                      "name":  "Forest arrival clearing",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "eastForest",
+                      "regionId":  "F01",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F01.F02",
+                                          "cell":  {
+                                                       "x":  9,
+                                                       "y":  15
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F02",
+                                                              "cell":  {
+                                                                           "x":  8,
+                                                                           "y":  15
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "F02",
+                      "name":  "Lantern trail",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "eastForest",
+                      "regionId":  "F02",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F02.F01",
+                                          "cell":  {
+                                                       "x":  8,
+                                                       "y":  15
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F01",
+                                                              "cell":  {
+                                                                           "x":  9,
+                                                                           "y":  15
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.F02.F03",
+                                          "cell":  {
+                                                       "x":  31,
+                                                       "y":  15
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F03",
+                                                              "cell":  {
+                                                                           "x":  30,
+                                                                           "y":  15
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.F02.F04",
+                                          "cell":  {
+                                                       "x":  20,
+                                                       "y":  12
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F04",
+                                                              "cell":  {
+                                                                           "x":  25,
+                                                                           "y":  11
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.F02.F05",
+                                          "cell":  {
+                                                       "x":  15,
+                                                       "y":  17
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F05",
+                                                              "cell":  {
+                                                                           "x":  18,
+                                                                           "y":  18
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "F03",
+                      "name":  "Forest threshold",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "eastForest",
+                      "regionId":  "F03",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F03.F02",
+                                          "cell":  {
+                                                       "x":  30,
+                                                       "y":  15
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F02",
+                                                              "cell":  {
+                                                                           "x":  31,
+                                                                           "y":  15
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.F03.A01",
+                                          "cell":  {
+                                                       "x":  41,
+                                                       "y":  15
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "campus",
+                                                              "regionId":  "A01",
+                                                              "cell":  {
+                                                                           "x":  43,
+                                                                           "y":  40
+                                                                       }
+                                                          },
+                                          "requires":  null,
+                                          "state":  "reserved"
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "F04",
+                      "name":  "Orio\u0027s mechanism glade",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "eastForest",
+                      "regionId":  "F04",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F04.F02",
+                                          "cell":  {
+                                                       "x":  25,
+                                                       "y":  11
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F02",
+                                                              "cell":  {
+                                                                           "x":  20,
+                                                                           "y":  12
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      },
+                                      {
+                                          "id":  "P.F04.F06",
+                                          "cell":  {
+                                                       "x":  25,
+                                                       "y":  5
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F06",
+                                                              "cell":  {
+                                                                           "x":  25,
+                                                                           "y":  4
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "F05",
+                      "name":  "Brook overlook",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "eastForest",
+                      "regionId":  "F05",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F05.F02",
+                                          "cell":  {
+                                                       "x":  18,
+                                                       "y":  18
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F02",
+                                                              "cell":  {
+                                                                           "x":  15,
+                                                                           "y":  17
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "F06",
+                      "name":  "Deep forest boundary",
+                      "kind":  "outdoor",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "eastForest",
+                      "regionId":  "F06",
+                      "portals":  [
+                                      {
+                                          "id":  "P.F06.F04",
+                                          "cell":  {
+                                                       "x":  25,
+                                                       "y":  4
+                                                   },
+                                          "destination":  {
+                                                              "mapId":  "eastForest",
+                                                              "regionId":  "F04",
+                                                              "cell":  {
+                                                                           "x":  25,
+                                                                           "y":  5
+                                                                       }
+                                                          },
+                                          "state":  "open",
+                                          "requires":  null
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "N01",
+                      "name":  "Shared-building hall",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N01",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N02",
+                      "name":  "Student dining hall",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N02",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N03",
+                      "name":  "Kitchen and pantry",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N03",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N04",
+                      "name":  "Library reading room",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N04",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N05",
+                      "name":  "Restricted archive",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N05",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N06",
+                      "name":  "Spell-practice hall",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N06",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N07",
+                      "name":  "Academy common room",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N07",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N08",
+                      "name":  "Shared washroom",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N08",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N09",
+                      "name":  "Administration zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N09",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N10",
+                      "name":  "Administration landing zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N10",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N11",
+                      "name":  "Head\u0027s office zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N11",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "N12",
+                      "name":  "Staff meeting zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B03.Ground",
+                      "regionId":  "N12",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S01",
+                      "name":  "Entrance vestibule",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S01",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S02",
+                      "name":  "Reception hall",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S02",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S03",
+                      "name":  "Inner entrance passage",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S03",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S04",
+                      "name":  "Student services office",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S04",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S05",
+                      "name":  "Infirmary",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S05",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "S06",
+                      "name":  "Public washroom",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B01.Ground",
+                      "regionId":  "S06",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W01",
+                      "name":  "Teaching gallery",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W01",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W02",
+                      "name":  "Magical engineering classroom",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W02",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W03",
+                      "name":  "Circuit project room",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W03",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W04",
+                      "name":  "Foundations classroom",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W04",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W05",
+                      "name":  "Teaching equipment store",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W05",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W06",
+                      "name":  "Campus-side vestibule",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Chapter 1",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W06",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W07",
+                      "name":  "Classroom waypoint alcove",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Optional",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W07",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W08",
+                      "name":  "Teaching support zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W08",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W09",
+                      "name":  "Seminar zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W09",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W10",
+                      "name":  "Advanced seminar zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W10",
+                      "portals":  [
+
+                                  ]
+                  },
+                  {
+                      "id":  "W11",
+                      "name":  "Faculty preparation zone",
+                      "kind":  "room",
+                      "floor":  "Ground",
+                      "access":  "Reserved",
+                      "mapId":  "B02.Ground",
+                      "regionId":  "W11",
+                      "portals":  [
+
+                                  ]
+                  }
+              ]
 }

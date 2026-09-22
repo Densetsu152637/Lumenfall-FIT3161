@@ -39,6 +39,8 @@ namespace Lumenfall.GridMovement
         public bool RestrictToBounds => restrictToBounds;
         public Vector2Int BoundsMin => boundsMin;
         public Vector2Int BoundsSize => boundsSize;
+        public void ConfigureBounds(int width, int height)
+        { boundsMin = Vector2Int.zero; boundsSize = new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height)); restrictToBounds = true; }
 
         public Vector3 CellToWorld(Vector2Int cell, float elevation = 0f)
         {

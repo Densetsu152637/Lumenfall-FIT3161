@@ -31,3 +31,7 @@ Katrina has lost an item with personal significance but minimises its importance
 ## Optional activities
 
 Potential side content includes restoring power to the dormitory grid and locating an item through a recovery quest. The scope, reset behaviour, and any replayable minigame are open production decisions.
+
+## Runtime puzzle targets
+
+The runtime target registry maps Stella’s two stable object IDs to `B02.Ground` (W02), Cinna’s trial and alignment targets plus Katrina’s keepsake to `campus` (C02/C03/C04), and Orio’s mechanism to `eastForest` (F04). First Light requires `relic.stella.power` to be powered; String Them Together requires that relic and `circuit.stella.link` to share their authored Weave connection; Out of Alignment requires `orientation.cinna.align` to be aligned; Cold Feet, Warm Idea requires `trial.cinna.ice` to be frozen at `(24,34)`; Patch Notes requires `mechanism.orio.rotate` to reach rotation 90; and Something Borrowed requires `keepsake.katrina.hidden` to be revealed at grid cell `(31,42)`. Each monitor waits until its quest is Active before triggering the existing completion event, so a solved object remains available when the player accepts the quest later.

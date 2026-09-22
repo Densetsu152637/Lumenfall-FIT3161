@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "puzzles": [
+    {
+      "id": "stella_first_light_monitor",
+      "questId": "stella_first_light",
+      "completionEventId": "complete_stella_first_light",
+      "mapId": "B02.Ground",
+      "targets": [
+        { "id": "repaired_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true }
+      ]
+    },
+    {
+      "id": "stella_string_them_together_monitor",
+      "questId": "stella_string_them_together",
+      "completionEventId": "complete_stella_string_them_together",
+      "mapId": "B02.Ground",
+      "targets": [
+        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredConnected": true },
+        { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
+      ]
+    },
+    {
+      "id": "cinna_out_of_alignment_monitor",
+      "questId": "cinna_out_of_alignment",
+      "completionEventId": "complete_cinna_out_of_alignment",
+      "mapId": "campus",
+      "targets": [
+        { "id": "vis_marker", "objectIds": ["orientation.cinna.align"], "requiredAligned": true }
+      ]
+    },
+    {
+      "id": "cinna_cold_feet_warm_idea_monitor",
+      "questId": "cinna_cold_feet_warm_idea",
+      "completionEventId": "complete_cinna_cold_feet_warm_idea",
+      "mapId": "campus",
+      "targets": [
+        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
+      ]
+    },
+    {
+      "id": "orio_patch_notes_monitor",
+      "questId": "orio_patch_notes",
+      "completionEventId": "complete_orio_patch_notes",
+      "mapId": "eastForest",
+      "targets": [
+        { "id": "rotara_mechanism", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
+      ]
+    },
+    {
+      "id": "katrina_something_borrowed_monitor",
+      "questId": "katrina_something_borrowed",
+      "completionEventId": "complete_katrina_something_borrowed",
+      "mapId": "campus",
+      "targets": [
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 31, "requiredPositionY": 42 }
+      ]
+    }
+  ]
+}
