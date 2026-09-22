@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using Lumenfall.GameEvents;
+using Lumenfall.Spells;
+using Lumenfall.Inventory;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -59,6 +62,130 @@ namespace Lumenfall.Tests.GameEvents
             StartAndComplete(cinnaRuntime, "cinna_out_of_alignment");
             cinnaSecond = cinnaRuntime.StartDialogue("cinna_cold_feet_warm_idea_dialogue");
             Assert.That(cinnaSecond.SelectChoice("accept"), Is.True);
+        }
+
+        [Test]
+        public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
+        {
+            GameEventRuntime runtime = CreateRuntime();
+            DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
+            Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
+            Assert.That(session.IsCompleted, Is.False);
+            session.SelectChoice("leave");
+            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
+
+            session = runtime.StartDialogue("stella_first_light_dialogue");
+            Assert.That(session.SelectChoice("accept"), Is.True);
+            Assert.That(session.IsCompleted, Is.False);
+            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
+            Assert.That(session.Continue(), Is.True);
+            Assert.That(session.IsCompleted, Is.True);
+            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+        }
+
+        [Test]
+        public void SpellRewardFlagsSurviveRuntimeSaveRoundTrip()
+        {
+            GameEventRuntime runtime = CreateRuntime();
+            runtime.SetFlag("spell.unlocked.Weave", true);
+            string saved = runtime.ExportStateJson(false);
+            GameEventRuntime restored = CreateRuntime();
+            Assert.That(restored.ImportStateJson(saved), Is.True);
+            Assert.That(restored.GetFlag("spell.unlocked.Weave"), Is.True);
+        }
+
+        [Test]
+        public void FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            manager.Runtime.ResetState();
+            GameObject host = new GameObject("spell-progression-test");
+            try
+            {
+                SpellCaster caster = host.AddComponent<SpellCaster>();
+                Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
+
+                DialogueSession abandoned = manager.Runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(abandoned.SelectChoice("leave"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
+
+                DialogueSession finished = manager.Runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(finished.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
+                Assert.That(finished.Continue(), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            manager.Runtime.ResetState();
+            GameObject host = new GameObject("later-spell-progression-test");
+            try
+            {
+                SpellCaster caster = host.AddComponent<SpellCaster>();
+                DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(dialogue.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            manager.Runtime.ResetState();
+            GameObject uiObject = new GameObject("inventory-test-ui");
+            uiObject.AddComponent<InventoryEncyclopediaUI>();
+            try
+            {
+                Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
+
+                DialogueSession dialogue = manager.Runtime.StartDialogue("katrina_something_borrowed_dialogue");
+                Assert.That(dialogue.SelectChoice("accept"), Is.True);
+                Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
+                Assert.That(manager.Runtime.TriggerEvent("complete_katrina_something_borrowed").Succeeded, Is.True);
+                Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.True);
+
+                string saved = manager.Runtime.ExportStateJson(false);
+                manager.Runtime.ResetState();
+                Assert.That(manager.Runtime.ImportStateJson(saved), Is.True);
+                Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(uiObject);
+            }
+        }
+
+        [Test]
+        public void EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag()
+        {
+            GameEventManager.Instance.Runtime.ResetState();
+            string[] ids = { "stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio", "campus_student", "forest_student", "katrina" };
+            foreach (string id in ids)
+            {
+                Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered(id), Is.False, id);
+                InventoryEncyclopediaUI.DiscoverCharacter(id);
+                Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered(id), Is.True, id);
+            }
+            Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered("unknown"), Is.False);
         }
 
         private static GameEventRuntime CreateRuntime()

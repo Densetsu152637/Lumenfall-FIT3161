@@ -63,7 +63,7 @@ The quest registry currently contains these six main quests and monitor targets:
 
 | Quest | Location/data target | Spell lesson | Remaining completion work |
 | --- | --- | --- | --- |
-| Stella: First Light | `B02.Ground`, `relic.stella.power` | Ampere | Confirm relic fault, teach/lock Ampere, author feedback and reward, test completion before/after accepting. |
+| Stella: First Light | `B02.Ground`, `relic.stella.power` | Ampere | Stella's terminal teaching dialogue awards Ampere after quest acceptance and before the relic puzzle; completion is monitored from the powered target and the reward path is covered by edit-mode tests. |
 | Stella: String Them Together | `B02.Ground`, `circuit.stella.link` | Weave | Author endpoint layout and distance rule, wire visuals, prerequisite handoff from First Light. |
 | Cinna Cirra: Out of Alignment | `campus`, `orientation.cinna.align` | Vis | Decide object category and alignment rule, implement readable success/failure feedback. |
 | Cinna Cirra: Cold Feet, Warm Idea | `campus`, `trial.cinna.ice` | Glaciate | Build bounded slide lane and trap order, test reset and safe exit. |
