@@ -38,6 +38,7 @@ namespace Lumenfall.GridMovement
         [SerializeField] private Vector2Int destinationCell;
         [SerializeField] private string destinationScene;
         [SerializeField] private string destinationPortalId;
+        [SerializeField] private PortalContentAsset content;
         [Tooltip("Maps the entered tile to the equivalent tile in the destination footprint.")]
         [SerializeField] private bool preserveEntryOffset = true;
         [SerializeField] private Vector2Int arrivalOffset;
@@ -54,6 +55,19 @@ namespace Lumenfall.GridMovement
         public Vector2Int FootprintSize => footprintSize;
         public string PortalId => portalId;
         public GridPortalDestinationMode DestinationMode => destinationMode;
+        public PortalContentAsset Content => content;
+
+        public void Configure(PortalContentAsset portalContent, GridWorld targetWorld)
+        {
+            content = portalContent;
+            world = targetWorld;
+            portalId = portalContent == null ? string.Empty : portalContent.id;
+            anchorCell = portalContent == null ? Vector2Int.zero : portalContent.cell;
+            footprintSize = portalContent == null ? Vector2Int.one : portalContent.footprint;
+            useTransformAsAnchor = false;
+            destinationMode = GridPortalDestinationMode.PortalReference;
+            if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
+        }
 
         public void Configure(string id, int width, int height, string scene, string targetId, Vector2Int offset)
         {
@@ -96,6 +110,12 @@ namespace Lumenfall.GridMovement
                 return false;
             }
 
+            if (content != null && content.destination != null && DataDrivenWorldLoader.Instance != null)
+            {
+                Vector2Int entryOffset = preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero;
+                return DataDrivenWorldLoader.Instance.SwitchArea(content, entryOffset);
+            }
+
             switch (destinationMode)
             {
                 case GridPortalDestinationMode.PortalReference:
@@ -108,10 +128,6 @@ namespace Lumenfall.GridMovement
                     Vector2Int entryOffset = preserveEntryOffset
                         ? mover.CurrentCell - FirstCell
                         : Vector2Int.zero;
-                    // Data-driven area ids (campus/eastForest) are virtual areas within this scene.
-                    // Keep the legacy scene transition for actual Build Settings scene names.
-                    if (DataDrivenWorldLoader.Instance != null && DataDrivenWorldLoader.Instance.HasArea(destinationScene))
-                        return DataDrivenWorldLoader.Instance.SwitchArea(destinationScene, destinationPortalId, arrivalOffset + (preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero));
                     if (string.IsNullOrWhiteSpace(destinationScene) ||
                         string.IsNullOrWhiteSpace(destinationPortalId))
                     {

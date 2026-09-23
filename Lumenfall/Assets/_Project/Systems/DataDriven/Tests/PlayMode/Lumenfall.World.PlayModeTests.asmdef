@@ -1,0 +1,11 @@
+{
+    "name": "Lumenfall.World.PlayModeTests",
+    "rootNamespace": "Lumenfall.Tests.World",
+    "references": [
+        "Lumenfall.Runtime",
+        "Lumenfall.GameEvents"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

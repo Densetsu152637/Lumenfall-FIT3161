@@ -1,0 +1,263 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: eastForest
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: eastForest
+    width: 50
+    height: 38
+    tileFile: eastForest.txt
+    portalGlyph: X
+    spawn:
+      x: 1
+      y: 1
+    regions:
+    - id: F01
+      name: Forest arrival clearing
+      rect:
+        x: 2
+        y: 12
+        width: 8
+        height: 6
+      walkable: 1
+    - id: F02
+      name: Lantern trail
+      rect:
+        x: 8
+        y: 12
+        width: 24
+        height: 6
+      walkable: 1
+    - id: F03
+      name: Forest threshold
+      rect:
+        x: 30
+        y: 12
+        width: 12
+        height: 6
+      walkable: 1
+    - id: F04
+      name: Orio's mechanism glade
+      rect:
+        x: 22
+        y: 5
+        width: 10
+        height: 7
+      walkable: 1
+    - id: F05
+      name: Brook overlook
+      rect:
+        x: 14
+        y: 18
+        width: 12
+        height: 7
+      walkable: 1
+    - id: F06
+      name: Deep forest boundary
+      rect:
+        x: 22
+        y: 2
+        width: 8
+        height: 4
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
+    B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
+    B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
+    B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
+    objects:
+    - id: mechanism.orio.rotate
+      prefab: {fileID: 0}
+      type: mechanism
+      x: 28
+      y: 8
+      width: 1
+      height: 1
+      elevation: 0
+      rotation: 0
+      blocks: 0
+      tags:
+      - rotara
+      compatibleWithSpells: 1
+    puzzleTargets:
+    - id: quest.orio.patch-notes
+      objectIds:
+      - mechanism.orio.rotate
+      requiredConnections: []
+      conditionMode: All
+      requiredPowered: 0
+      requiredConnected: 0
+      requiredRevealed: 0
+      requiredFrozen: 0
+      requiredAligned: 0
+      requiredRotation: 90
+      requiredPositionX: -2147483648
+      requiredPositionY: -2147483648
+    portals:
+    - id: P.F01.F02
+      x: 9
+      y: 15
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: f2ddf5dec8059a747bf8391ee0b4bffb, type: 2}
+      arrivalOffset: {x: 8, y: 15}
+      reserved: 0
+    - id: P.F02.F01
+      x: 8
+      y: 15
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: cda669d3c1fcdcc4ea5cbd2cf82deb7b, type: 2}
+      arrivalOffset: {x: 9, y: 15}
+      reserved: 0
+    - id: P.F02.F03
+      x: 31
+      y: 15
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: aebda065a89ec7e49bc6694c62edf03e, type: 2}
+      arrivalOffset: {x: 30, y: 15}
+      reserved: 0
+    - id: P.F02.F04
+      x: 20
+      y: 12
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: d89432fc3e2c49e43a5f86b7613a6e0a, type: 2}
+      arrivalOffset: {x: 25, y: 11}
+      reserved: 0
+    - id: P.F02.F05
+      x: 15
+      y: 17
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 7c64197a367d6154cb14a40e77b67fa6, type: 2}
+      arrivalOffset: {x: 18, y: 18}
+      reserved: 0
+    - id: P.F03.F02
+      x: 30
+      y: 15
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 55b2c88a224e1ad46baf2a4d3ad6d497, type: 2}
+      arrivalOffset: {x: 31, y: 15}
+      reserved: 0
+    - id: P.F04.F02
+      x: 25
+      y: 11
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 881a4a9235a6113489a08d1162a899e7, type: 2}
+      arrivalOffset: {x: 20, y: 12}
+      reserved: 0
+    - id: P.F04.F06
+      x: 25
+      y: 5
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 5a1af31dc2b985344b2583b3547aae39, type: 2}
+      arrivalOffset: {x: 25, y: 4}
+      reserved: 0
+    - id: P.F05.F02
+      x: 18
+      y: 18
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: bf0cb2acf96d5984a8caa74130dbc5e7, type: 2}
+      arrivalOffset: {x: 15, y: 17}
+      reserved: 0
+    - id: P.F06.F04
+      x: 25
+      y: 4
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: e3ec97063bb0fcf4aa39615af98ea3b4, type: 2}
+      arrivalOffset: {x: 25, y: 5}
+      reserved: 0
+    - id: P.F03.A01.0_34
+      x: 0
+      y: 34
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+      arrivalOffset: {x: 85, y: 25}
+      reserved: 0
+    - id: P.F03.A01.1_34
+      x: 1
+      y: 34
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+      arrivalOffset: {x: 85, y: 25}
+      reserved: 0
+    - id: P.F03.A01.0_35
+      x: 0
+      y: 35
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+      arrivalOffset: {x: 85, y: 25}
+      reserved: 0
+    - id: P.F03.A01.1_35
+      x: 1
+      y: 35
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+      arrivalOffset: {x: 85, y: 25}
+      reserved: 0
+    - id: P.F03.A01
+      x: 0
+      y: 34
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+      arrivalOffset: {x: 85, y: 25}
+      reserved: 0
+  areaPrefab: {fileID: 5632919234203233261, guid: f54d29105f80c8242b39536dc4282947, type: 3}
+  portals:
+  - {fileID: 11400000, guid: cda669d3c1fcdcc4ea5cbd2cf82deb7b, type: 2}
+  - {fileID: 11400000, guid: f2ddf5dec8059a747bf8391ee0b4bffb, type: 2}
+  - {fileID: 11400000, guid: 55b2c88a224e1ad46baf2a4d3ad6d497, type: 2}
+  - {fileID: 11400000, guid: 881a4a9235a6113489a08d1162a899e7, type: 2}
+  - {fileID: 11400000, guid: bf0cb2acf96d5984a8caa74130dbc5e7, type: 2}
+  - {fileID: 11400000, guid: aebda065a89ec7e49bc6694c62edf03e, type: 2}
+  - {fileID: 11400000, guid: d89432fc3e2c49e43a5f86b7613a6e0a, type: 2}
+  - {fileID: 11400000, guid: e3ec97063bb0fcf4aa39615af98ea3b4, type: 2}
+  - {fileID: 11400000, guid: 7c64197a367d6154cb14a40e77b67fa6, type: 2}
+  - {fileID: 11400000, guid: 5a1af31dc2b985344b2583b3547aae39, type: 2}
+  - {fileID: 11400000, guid: 92ec2f2aa343cac4daab94a857c71a4c, type: 2}
+  - {fileID: 11400000, guid: 941cc2eee7d608045af8db5cc029d50d, type: 2}
+  - {fileID: 11400000, guid: 782fc54f368e78e499e519f2197b1df4, type: 2}
+  - {fileID: 11400000, guid: 7625c3b6d8ed5cd46a06a07af990958f, type: 2}
+  - {fileID: 11400000, guid: 604ce7d6f1e05024b9b0731771c6a743, type: 2}

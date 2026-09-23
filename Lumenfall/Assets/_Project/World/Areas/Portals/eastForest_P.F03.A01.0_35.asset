@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9078441d6b9093942ac9f99b707a48b1, type: 3}
+  m_Name: eastForest_P.F03.A01.0_35
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.PortalContentAsset
+  id: P.F03.A01.0_35
+  area: {fileID: 11400000, guid: 40f5a879094cafd45a8e5ec898d345bd, type: 2}
+  cell: {x: 0, y: 35}
+  footprint: {x: 1, y: 1}
+  reserved: 0
+  destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
+  arrivalOffset: {x: -1, y: 0}
