@@ -102,7 +102,7 @@ namespace Lumenfall.DataDriven
         public bool RestoreStateJson(string json)
         {
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
-            WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
+            WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
             if (area == null) return false;
             Load(area, npcCatalog);
             GridMover player = FindAnyObjectByType<GridMover>();
@@ -124,6 +124,11 @@ namespace Lumenfall.DataDriven
             if (player.TryTeleportTo(world, arrival, target)) return true;
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;
+        }
+
+        private static string NormalizeMapId(string id)
+        {
+            return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
         }
 
         private WorldAreaAsset FindArea(string id)

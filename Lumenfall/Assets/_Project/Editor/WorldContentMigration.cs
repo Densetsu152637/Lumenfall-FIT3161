@@ -74,7 +74,7 @@ namespace Lumenfall.EditorTools
                 { grid = sceneRoot.GetComponentInChildren<GridWorld>(true); if (grid != null) break; }
                 if (grid == null) throw new InvalidOperationException("SampleScene has no GridWorld.");
 
-                string[] ids = { "campus", "eastForest", "B01.Ground", "B02.Ground", "B03.Ground", "B04.Ground" };
+                string[] ids = { "campus", "westForest", "B01.Ground", "B02.Ground", "B03.Ground", "B04.Ground" };
                 Dictionary<string, LegacyMap> legacyMaps = new Dictionary<string, LegacyMap>(StringComparer.OrdinalIgnoreCase);
                 Dictionary<string, WorldAreaAsset> areas = new Dictionary<string, WorldAreaAsset>(StringComparer.OrdinalIgnoreCase);
                 foreach (string id in ids)

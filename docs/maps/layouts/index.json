@@ -4,7 +4,7 @@
     "legendFile":  "legend.json",
     "maps":  {
                  "campus":  "campus.json",
-                 "eastForest":  "eastForest.json",
+                 "westForest":  "westForest.json",
                  "B01.Ground":  "B01.Ground.json",
                  "B02.Ground":  "B02.Ground.json",
                  "B03.Ground":  "B03.Ground.json",
@@ -13,7 +13,7 @@
     "areas":  [
                   {
                       "id":  "A01",
-                      "name":  "East gate forecourt",
+                      "name":  "West gate forecourt",
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Chapter 1",
@@ -27,7 +27,7 @@
                                                        "y":  40
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F03",
                                                               "cell":  {
                                                                            "x":  41,
@@ -618,7 +618,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Chapter 1",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F01",
                       "portals":  [
                                       {
@@ -628,7 +628,7 @@
                                                        "y":  15
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F02",
                                                               "cell":  {
                                                                            "x":  8,
@@ -646,7 +646,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Chapter 1",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F02",
                       "portals":  [
                                       {
@@ -656,7 +656,7 @@
                                                        "y":  15
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F01",
                                                               "cell":  {
                                                                            "x":  9,
@@ -673,7 +673,7 @@
                                                        "y":  15
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F03",
                                                               "cell":  {
                                                                            "x":  30,
@@ -690,7 +690,7 @@
                                                        "y":  12
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F04",
                                                               "cell":  {
                                                                            "x":  25,
@@ -707,7 +707,7 @@
                                                        "y":  17
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F05",
                                                               "cell":  {
                                                                            "x":  18,
@@ -725,7 +725,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Chapter 1",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F03",
                       "portals":  [
                                       {
@@ -735,7 +735,7 @@
                                                        "y":  15
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F02",
                                                               "cell":  {
                                                                            "x":  31,
@@ -770,7 +770,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Chapter 1",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F04",
                       "portals":  [
                                       {
@@ -780,7 +780,7 @@
                                                        "y":  11
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F02",
                                                               "cell":  {
                                                                            "x":  20,
@@ -797,7 +797,7 @@
                                                        "y":  5
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F06",
                                                               "cell":  {
                                                                            "x":  25,
@@ -815,7 +815,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Optional",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F05",
                       "portals":  [
                                       {
@@ -825,7 +825,7 @@
                                                        "y":  18
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F02",
                                                               "cell":  {
                                                                            "x":  15,
@@ -843,7 +843,7 @@
                       "kind":  "outdoor",
                       "floor":  "Ground",
                       "access":  "Reserved",
-                      "mapId":  "eastForest",
+                      "mapId":  "westForest",
                       "regionId":  "F06",
                       "portals":  [
                                       {
@@ -853,7 +853,7 @@
                                                        "y":  4
                                                    },
                                           "destination":  {
-                                                              "mapId":  "eastForest",
+                                                              "mapId":  "westForest",
                                                               "regionId":  "F04",
                                                               "cell":  {
                                                                            "x":  25,

@@ -1,6 +1,6 @@
 # World and locations
 
-The opening chapter takes place across a walled academy campus and the forest immediately beyond its east gate. The areas below define the intended player-accessible spaces and their narrative purpose.
+The opening chapter takes place across a walled academy campus and the forest immediately beyond its west gate. The areas below define the intended player-accessible spaces and their narrative purpose.
 
 For a detailed proposed expansion, see the [building and room plan](location-plan.md) and the [academy game map and creative rationale](maps/academy-map.md). These documents develop the layout without making every proposed interior a Chapter 1 production requirement.
 
@@ -10,7 +10,7 @@ The forest is the large starting area and a recurring meeting place for Orio. It
 
 ## Courtyard
 
-The campus commons is a large open area within the academy wall. It contains a central fountain, bushes, seating, and an assembly area associated with Cinna Cirra's orientation duties. Paths allow players to choose between separate buildings. The north, south, and west gates are reserved for future map expansion.
+The campus commons is a large open area within the academy wall. It contains a central fountain, bushes, seating, and an assembly area associated with Cinna Cirra's orientation duties. Paths allow players to choose between separate buildings. The north, south, and east gates are reserved for future map expansion.
 
 ## Academy buildings
 

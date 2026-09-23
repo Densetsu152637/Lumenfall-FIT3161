@@ -7,8 +7,8 @@
       "height": 54
     },
     {
-      "mapId": "eastForest",
-      "tileFile": "eastForest.npcs.txt",
+      "mapId": "westForest",
+      "tileFile": "westForest.npcs.txt",
       "width": 50,
       "height": 38
     },
@@ -184,7 +184,7 @@
     {
       "id": "orio",
       "displayName": "Orio",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
       "x": 26,
       "y": 8,
@@ -236,7 +236,7 @@
     {
       "id": "forest_student",
       "displayName": "Forest student",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
       "x": 12,
       "y": 16,

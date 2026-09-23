@@ -42,7 +42,7 @@
       "id": "orio_patch_notes_monitor",
       "questId": "orio_patch_notes",
       "completionEventId": "complete_orio_patch_notes",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "targets": [
         { "id": "rotara_mechanism", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
       ]

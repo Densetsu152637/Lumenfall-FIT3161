@@ -11,7 +11,7 @@ The project is a Unity `6000.4.10f1` project. Open [`Lumenfall`](../Lumenfall) a
 
 ## Product target and chapter loop
 
-The opening chapter is a cozy 2.5D, tile-based academy mystery. The player arrives through the east forest, reaches the academy, learns that the dormitory key was supposedly passed to another student, and meets Stella, Cinna Cirra, Orio, and Katrina while helping with their practical spell puzzles. The receptionist later contradicts the earlier account and hands over the key. The group discusses the contradiction, then the player returns to the Sirius dormitory and sleeps; waking ends Chapter 1. See [`main-cast.md`](main-cast.md) and [`world.md`](world.md).
+The opening chapter is a cozy 2.5D, tile-based academy mystery. The player arrives through the west forest, reaches the academy, learns that the dormitory key was supposedly passed to another student, and meets Stella, Cinna Cirra, Orio, and Katrina while helping with their practical spell puzzles. The receptionist later contradicts the earlier account and hands over the key. The group discusses the contradiction, then the player returns to the Sirius dormitory and sleeps; waking ends Chapter 1. See [`main-cast.md`](main-cast.md) and [`world.md`](world.md).
 
 The intended loop is:
 
@@ -40,7 +40,7 @@ The mystery, exact quest order, reward presentation, sleep/wake transition, and 
 
 ### Maps and level data
 
-`Assets/Resources/Maps/index.json` lists six maps: `campus`, `eastForest`, `B01.Ground`, `B02.Ground`, `B03.Ground`, and `B04.Ground`. It contains 59 area records: 26 marked Chapter 1, 9 Optional, and 24 Reserved. `campus.json` contains six objects and four puzzle targets; `eastForest.json` contains one object and one target; `B02.Ground.json` contains two objects and two targets. B01, B03, and B04 currently contain map/region/portal structure without puzzle objects.
+`Assets/Resources/Maps/index.json` lists six maps: `campus`, `westForest`, `B01.Ground`, `B02.Ground`, `B03.Ground`, and `B04.Ground`. It contains 59 area records: 26 marked Chapter 1, 9 Optional, and 24 Reserved. `campus.json` contains six objects and four puzzle targets; `westForest.json` contains one object and one target; `B02.Ground.json` contains two objects and two targets. B01, B03, and B04 currently contain map/region/portal structure without puzzle objects.
 
 The design layout identifies the playable route as F01-F04 forest, A01/S01-S03 arrival, C01-C05 campus, B02 teaching spaces, and D01/D02/D04/D07/D08 Sirius spaces. The proposed campus and room plan are useful blockout references, not proof that the corresponding 3D spaces are complete. See [`academy-map.md`](maps/academy-map.md), [`location-plan.md`](location-plan.md), and the tile layouts under [`docs/maps/layouts`](maps/layouts).
 
@@ -67,7 +67,7 @@ The quest registry currently contains these six main quests and monitor targets:
 | Stella: String Them Together | `B02.Ground`, `circuit.stella.link` | Weave | Author endpoint layout and distance rule, wire visuals, prerequisite handoff from First Light. |
 | Cinna Cirra: Out of Alignment | `campus`, `orientation.cinna.align` | Vis | Decide object category and alignment rule, implement readable success/failure feedback. |
 | Cinna Cirra: Cold Feet, Warm Idea | `campus`, `trial.cinna.ice` | Glaciate | Build bounded slide lane and trap order, test reset and safe exit. |
-| Orio: Patch Notes | `eastForest`, `mechanism.orio.rotate` | Rotara | Author final mechanism configuration and rotation presentation. |
+| Orio: Patch Notes | `westForest`, `mechanism.orio.rotate` | Rotara | Author final mechanism configuration and rotation presentation. |
 | Katrina: Something Borrowed | `campus`, `keepsake.katrina.hidden` | Lost Echoes | Decide keepsake identity/family history and local search/reveal feedback. |
 
 `docs/quests.md`, `docs/spells.md`, and `docs/npc-dialogue.md` explicitly leave several of those details unresolved. Do not turn those prose concepts into hard requirements until the design decision is recorded. The dialogue package intentionally starts quests but does not complete them; the puzzle monitor must complete them after a successful target evaluation.

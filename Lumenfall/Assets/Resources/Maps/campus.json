@@ -4,7 +4,7 @@
   "regions": [
     {
       "id": "A01",
-      "name": "East gate forecourt",
+      "name": "West gate forecourt",
       "rect": {
         "x": 43,
         "y": 35,
@@ -336,7 +336,7 @@
       "id": "P.A01.F03",
       "x": 86,
       "y": 25,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F03.A01",
       "arrivalOffsetX": 2,
       "arrivalOffsetY": 34
@@ -345,7 +345,7 @@
       "id": "P.A01.F03.86_26",
       "x": 86,
       "y": 26,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F03.A01",
       "arrivalOffsetX": 2,
       "arrivalOffsetY": 34

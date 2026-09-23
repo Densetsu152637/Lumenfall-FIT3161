@@ -157,7 +157,7 @@ MonoBehaviour:
   - id: orio
     displayName: Orio
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
-    mapId: eastForest
+    mapId: westForest
     x: 26
     y: 8
     layerSymbol: o
@@ -215,7 +215,7 @@ MonoBehaviour:
   - id: forest_student
     displayName: Forest student
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
-    mapId: eastForest
+    mapId: westForest
     x: 12
     y: 16
     layerSymbol: f
@@ -331,8 +331,8 @@ MonoBehaviour:
     - ............................................................................................
     - ............................................................................................
     - 
-  - mapId: eastForest
-    tileFile: eastForest.npcs.txt
+  - mapId: westForest
+    tileFile: westForest.npcs.txt
     width: 50
     height: 38
     rows:

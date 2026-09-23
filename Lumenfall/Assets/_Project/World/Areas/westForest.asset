@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
-  m_Name: eastForest
+  m_Name: westForest
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
   definition:
     schemaVersion: 1
-    id: eastForest
+    id: westForest
     width: 50
     height: 38
-    tileFile: eastForest.txt
+    tileFile: westForest.txt
     portalGlyph: X
     spawn:
       x: 1

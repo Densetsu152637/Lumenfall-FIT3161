@@ -6,7 +6,7 @@ docs = root / 'docs/maps/layouts'
 runtime = root / 'Lumenfall/Assets/Resources/Maps'
 backup = root / 'Temp/recovery/planning-import'
 backup.mkdir(parents=True, exist_ok=True)
-for name in ('campus','eastForest'):
+for name in ('campus','westForest'):
     for ext in ('.txt','.json'):
         src = runtime / (name + ext)
         if src.exists(): shutil.copy2(src, backup / src.name)

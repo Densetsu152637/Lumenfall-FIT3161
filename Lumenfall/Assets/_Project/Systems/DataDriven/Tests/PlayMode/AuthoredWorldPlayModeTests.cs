@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using Lumenfall.DataDriven;
@@ -27,22 +27,23 @@ namespace Lumenfall.Tests.World
 
             GridPortal outward = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
-                    portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "eastForest");
-            Assert.That(outward, Is.Not.Null, "Campus should have an authored eastForest portal.");
+                    portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "westForest");
+            Assert.That(outward, Is.Not.Null, "Campus should have an authored westForest portal.");
             Assert.That(loader.SwitchArea(outward.Content, Vector2Int.zero), Is.True,
-                "The authored campus to eastForest route should accept its migrated arrival cell.");
-            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+                "The authored campus to westForest route should accept its migrated arrival cell.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
 
             string savedWorld = loader.CaptureStateJson();
             GridPortal returnPortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "campus");
-            Assert.That(returnPortal, Is.Not.Null, "eastForest should have an authored return portal to campus.");
+            Assert.That(returnPortal, Is.Not.Null, "westForest should have an authored return portal to campus.");
             Assert.That(loader.SwitchArea(returnPortal.Content, Vector2Int.zero), Is.True,
-                "The authored eastForest return route should accept its migrated arrival cell.");
+                "The authored westForest return route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
-            Assert.That(loader.RestoreStateJson(savedWorld), Is.True, "World save should restore the saved area and cell.");
-            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+            string legacySavedWorld = savedWorld.Replace("westForest", "eastForest");
+            Assert.That(loader.RestoreStateJson(legacySavedWorld), Is.True, "A legacy eastForest save should migrate and restore the saved area and cell.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
 
             FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
             FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -111,7 +112,7 @@ namespace Lumenfall.Tests.World
             Assert.That(trial.gameObject.activeSelf, Is.True,
                 "The trial NPC should appear at its explicit authored coordinates.");
 
-            loader.Load(availableAreas.Single(area => area.definition.id == "eastForest"), catalog);
+            loader.Load(availableAreas.Single(area => area.definition.id == "westForest"), catalog);
             yield return null;
             loader.Load(campus, catalog);
             yield return null;

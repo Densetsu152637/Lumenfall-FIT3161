@@ -73,7 +73,7 @@
     "x": 1,
     "y": 1
   },
-  "tileFile": "eastForest.txt",
+  "tileFile": "westForest.txt",
   "portalGlyph": "X",
   "objects": [
     { "id": "mechanism.orio.rotate", "type": "mechanism", "x": 28, "y": 8, "blocks": false, "tags": ["rotara"] }
@@ -86,7 +86,7 @@
       "id": "P.F01.F02",
       "x": 9,
       "y": 15,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F02.F01",
       "arrivalOffsetX": 8,
       "arrivalOffsetY": 15
@@ -95,7 +95,7 @@
       "id": "P.F02.F01",
       "x": 8,
       "y": 15,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F01.F02",
       "arrivalOffsetX": 9,
       "arrivalOffsetY": 15
@@ -104,7 +104,7 @@
       "id": "P.F02.F03",
       "x": 31,
       "y": 15,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F03.F02",
       "arrivalOffsetX": 30,
       "arrivalOffsetY": 15
@@ -113,7 +113,7 @@
       "id": "P.F02.F04",
       "x": 20,
       "y": 12,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F04.F02",
       "arrivalOffsetX": 25,
       "arrivalOffsetY": 11
@@ -122,7 +122,7 @@
       "id": "P.F02.F05",
       "x": 15,
       "y": 17,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F05.F02",
       "arrivalOffsetX": 18,
       "arrivalOffsetY": 18
@@ -131,7 +131,7 @@
       "id": "P.F03.F02",
       "x": 30,
       "y": 15,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F02.F03",
       "arrivalOffsetX": 31,
       "arrivalOffsetY": 15
@@ -140,7 +140,7 @@
       "id": "P.F04.F02",
       "x": 25,
       "y": 11,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F02.F04",
       "arrivalOffsetX": 20,
       "arrivalOffsetY": 12
@@ -149,7 +149,7 @@
       "id": "P.F04.F06",
       "x": 25,
       "y": 5,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F06.F04",
       "arrivalOffsetX": 25,
       "arrivalOffsetY": 4
@@ -158,7 +158,7 @@
       "id": "P.F05.F02",
       "x": 18,
       "y": 18,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F02.F05",
       "arrivalOffsetX": 15,
       "arrivalOffsetY": 17
@@ -167,7 +167,7 @@
       "id": "P.F06.F04",
       "x": 25,
       "y": 4,
-      "destinationScene": "eastForest",
+      "destinationScene": "westForest",
       "destinationPortalId": "P.F04.F06",
       "arrivalOffsetX": 25,
       "arrivalOffsetY": 5
