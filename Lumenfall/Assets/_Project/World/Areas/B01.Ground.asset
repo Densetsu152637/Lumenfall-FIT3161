@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: B01.Ground
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: B01.Ground
+    width: 36
+    height: 24
+    tileFile: B01.Ground.txt
+    portalGlyph: 
+    spawn:
+      x: 2
+      y: 2
+    regions:
+    - id: B01
+      name: B01
+      rect:
+        x: 1
+        y: 1
+        width: 34
+        height: 22
+      walkable: 1
+    - id: S01
+      name: S01
+      rect:
+        x: 2
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: S02
+      name: S02
+      rect:
+        x: 10
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: S03
+      name: S03
+      rect:
+        x: 18
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: S04
+      name: S04
+      rect:
+        x: 26
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: S05
+      name: S05
+      rect:
+        x: 2
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: S06
+      name: S06
+      rect:
+        x: 10
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
+    B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
+    B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
+    B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
+    objects: []
+    puzzleTargets: []
+    portals:
+    - id: P.B01.C05
+      x: 8
+      y: 2
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
+      arrivalOffset: {x: 20, y: 58}
+      reserved: 1
+  areaPrefab: {fileID: 414310012204407207, guid: 674b00eb5a3d7fc49bbb0dc240b82542, type: 3}
+  portals:
+  - {fileID: 11400000, guid: 14784508c4d2cf948946e594564fd637, type: 2}

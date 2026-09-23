@@ -15,9 +15,29 @@ namespace Lumenfall.DataDriven
         public string Id { get; private set; }
         public string DisplayName { get; private set; }
         public string DialogueId { get; private set; }
-        private NpcDefinition definition;
+        public NpcDefinition Definition => definition;
+        [SerializeField] private NpcDefinition definition;
+        [SerializeField] private string initialDialogueId;
+        private void Awake() { ApplyDefinition(); }
+        private void OnEnable() { ApplyDefinition(); }
+        private void ApplyDefinition()
+        {
+            if (definition == null) return;
+            Id = definition.id; DisplayName = definition.displayName;
+            if (string.IsNullOrEmpty(DialogueId)) DialogueId = initialDialogueId;
+            if (GetComponent<Collider>() == null) gameObject.AddComponent<SphereCollider>().isTrigger = true;
+        }
         public void Configure(NpcDefinition definition, string dialogueId)
-        { this.definition = definition; Id = definition == null ? null : definition.id; DisplayName = definition == null ? null : definition.displayName; DialogueId = dialogueId; if (GetComponent<Collider>() == null) gameObject.AddComponent<SphereCollider>().isTrigger = true; }
+        { this.definition = definition; initialDialogueId = dialogueId; DialogueId = dialogueId; ApplyDefinition(); }
+        public void RefreshVisibility()
+        {
+            if (definition == null || GameEventManager.Instance == null) return;
+            bool visible = string.IsNullOrWhiteSpace(definition.showWhenQuestCompleted) ||
+                GameEventManager.Instance.Runtime.GetQuestStatus(definition.showWhenQuestCompleted) == QuestStatus.Completed;
+            visible &= string.IsNullOrWhiteSpace(definition.hideWhenQuestCompleted) ||
+                GameEventManager.Instance.Runtime.GetQuestStatus(definition.hideWhenQuestCompleted) != QuestStatus.Completed;
+            if (gameObject.activeSelf != visible) gameObject.SetActive(visible);
+        }
         private void Update()
         { if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null || !Keyboard.current.eKey.wasPressedThisFrame || GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return; GridMover player = FindAnyObjectByType<GridMover>(); if (player == null) return; DynamicNpc nearest = null; float best = 2.01f; foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)) { float d = Vector3.Distance(player.transform.position, npc.transform.position); if (d <= best) { best = d; nearest = npc; } } if (nearest == this) Interact(); }
         public DialogueSession Interact()

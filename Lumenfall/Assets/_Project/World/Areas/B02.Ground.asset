@@ -1,0 +1,216 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: B02.Ground
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: B02.Ground
+    width: 36
+    height: 24
+    tileFile: B02.Ground.txt
+    portalGlyph: 
+    spawn:
+      x: 2
+      y: 2
+    regions:
+    - id: B02
+      name: B02
+      rect:
+        x: 1
+        y: 1
+        width: 34
+        height: 22
+      walkable: 1
+    - id: W01
+      name: W01
+      rect:
+        x: 2
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W02
+      name: W02
+      rect:
+        x: 10
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W03
+      name: W03
+      rect:
+        x: 18
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W04
+      name: W04
+      rect:
+        x: 26
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W05
+      name: W05
+      rect:
+        x: 2
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W06
+      name: W06
+      rect:
+        x: 10
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W07
+      name: W07
+      rect:
+        x: 18
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W08
+      name: W08
+      rect:
+        x: 26
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W09
+      name: W09
+      rect:
+        x: 2
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W10
+      name: W10
+      rect:
+        x: 10
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: W11
+      name: W11
+      rect:
+        x: 18
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
+    B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
+    B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
+    B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
+    objects:
+    - id: relic.stella.power
+      prefab: {fileID: 0}
+      type: relic
+      x: 18
+      y: 14
+      width: 1
+      height: 1
+      elevation: 0
+      rotation: 0
+      blocks: 0
+      tags:
+      - ampere
+      - weave
+      - weave-with:circuit.stella.link
+      compatibleWithSpells: 1
+    - id: circuit.stella.link
+      prefab: {fileID: 0}
+      type: relic
+      x: 20
+      y: 14
+      width: 1
+      height: 1
+      elevation: 0
+      rotation: 0
+      blocks: 0
+      tags:
+      - weave
+      - weave-with:relic.stella.power
+      compatibleWithSpells: 1
+    puzzleTargets:
+    - id: quest.stella.first-light
+      objectIds:
+      - relic.stella.power
+      requiredConnections: []
+      conditionMode: All
+      requiredPowered: 1
+      requiredConnected: 0
+      requiredRevealed: 0
+      requiredFrozen: 0
+      requiredAligned: 0
+      requiredRotation: -1
+      requiredPositionX: -2147483648
+      requiredPositionY: -2147483648
+    - id: quest.stella.string-them-together
+      objectIds:
+      - relic.stella.power
+      - circuit.stella.link
+      requiredConnections:
+      - relic.stella.power|circuit.stella.link
+      conditionMode: All
+      requiredPowered: 0
+      requiredConnected: 1
+      requiredRevealed: 0
+      requiredFrozen: 0
+      requiredAligned: 0
+      requiredRotation: -1
+      requiredPositionX: -2147483648
+      requiredPositionY: -2147483648
+    portals:
+    - id: P.B02.C05
+      x: 8
+      y: 2
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
+      arrivalOffset: {x: 23, y: 11}
+      reserved: 0
+  areaPrefab: {fileID: 4115630932725841253, guid: 239ec96ee2cc77d449e559606f5a6797, type: 3}
+  portals:
+  - {fileID: 11400000, guid: de1180b4ea288b2498f14342f81e85ee, type: 2}

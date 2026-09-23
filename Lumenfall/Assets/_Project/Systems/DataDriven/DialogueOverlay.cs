@@ -28,8 +28,11 @@ namespace Lumenfall.DataDriven
 
         private void OnEnable()
         {
-            GameEventManager.Instance.Runtime.DialogueStarted += OnStarted;
-            GameEventManager.Instance.Runtime.DialogueEnded += OnEnded;
+            if (GameEventManager.Instance != null)
+            {
+                GameEventManager.Instance.Runtime.DialogueStarted += OnStarted;
+                GameEventManager.Instance.Runtime.DialogueEnded += OnEnded;
+            }
         }
 
         private void OnDisable()

@@ -1,0 +1,183 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: B04.Ground
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: B04.Ground
+    width: 36
+    height: 24
+    tileFile: B04.Ground.txt
+    portalGlyph: 
+    spawn:
+      x: 2
+      y: 2
+    regions:
+    - id: B04
+      name: B04
+      rect:
+        x: 1
+        y: 1
+        width: 34
+        height: 22
+      walkable: 1
+    - id: D01
+      name: D01
+      rect:
+        x: 2
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D02
+      name: D02
+      rect:
+        x: 10
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D03
+      name: D03
+      rect:
+        x: 18
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D04
+      name: D04
+      rect:
+        x: 26
+        y: 2
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D05
+      name: D05
+      rect:
+        x: 2
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D06
+      name: D06
+      rect:
+        x: 10
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D07
+      name: D07
+      rect:
+        x: 18
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D08
+      name: D08
+      rect:
+        x: 26
+        y: 7
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D09
+      name: D09
+      rect:
+        x: 2
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D10
+      name: D10
+      rect:
+        x: 10
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D11
+      name: D11
+      rect:
+        x: 18
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D12
+      name: D12
+      rect:
+        x: 26
+        y: 12
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D13
+      name: D13
+      rect:
+        x: 2
+        y: 17
+        width: 6
+        height: 3
+      walkable: 1
+    - id: D14
+      name: D14
+      rect:
+        x: 10
+        y: 17
+        width: 6
+        height: 3
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
+    B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
+    B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
+    B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
+    objects: []
+    puzzleTargets: []
+    portals:
+    - id: P.B04.C05
+      x: 8
+      y: 2
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 41c184c10886e40449ff7576f4f40ebf, type: 2}
+      arrivalOffset: {x: 85, y: 47}
+      reserved: 0
+  areaPrefab: {fileID: 7982450690963271766, guid: 159ff338743a08247889ee2c323bb77d, type: 3}
+  portals:
+  - {fileID: 11400000, guid: cedd9b5ed211ce2489890abf46f4f7c8, type: 2}

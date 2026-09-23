@@ -1,0 +1,407 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41d46f842cfd89d46823abfe84b5b039, type: 3}
+  m_Name: NpcCatalog
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.NpcCatalogAsset
+  npcs:
+  - id: stella
+    displayName: Stella
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: B02.Ground
+    x: 19
+    y: 14
+    layerSymbol: s
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: stella_first_light_dialogue
+      questId: stella_first_light
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: stella_first_light_dialogue
+      questId: stella_first_light
+      requiredQuestStatus: Active
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: stella_first_light_dialogue
+      questId: stella_first_light
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: stella_string_them_together_dialogue
+      questId: stella_string_them_together
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: stella_first_light
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: stella_string_them_together_dialogue
+      questId: stella_string_them_together
+      requiredQuestStatus: Active
+      prerequisiteQuestId: stella_first_light
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: stella_string_them_together_dialogue
+      questId: stella_string_them_together
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: stella_first_light
+      prerequisiteQuestStatus: Completed
+      weight: 5
+  - id: cinna_cirra_orientation
+    displayName: Cinna Cirra
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: campus
+    x: 40
+    y: 22
+    layerSymbol: c
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: cinna_out_of_alignment
+    dialogueIds: []
+    dialogue:
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: Active
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: Active
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+  - id: cinna_cirra_trial
+    displayName: Cinna Cirra
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: campus
+    x: 20
+    y: 34
+    layerSymbol: c
+    showWhenQuestCompleted: cinna_out_of_alignment
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: Active
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_out_of_alignment_dialogue
+      questId: cinna_out_of_alignment
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: Active
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+    - dialogueId: cinna_cold_feet_warm_idea_dialogue
+      questId: cinna_cold_feet_warm_idea
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: cinna_out_of_alignment
+      prerequisiteQuestStatus: Completed
+      weight: 5
+  - id: orio
+    displayName: Orio
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: eastForest
+    x: 26
+    y: 8
+    layerSymbol: o
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: orio_patch_notes_dialogue
+      questId: orio_patch_notes
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: orio_patch_notes_dialogue
+      questId: orio_patch_notes
+      requiredQuestStatus: Active
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: orio_patch_notes_dialogue
+      questId: orio_patch_notes
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+  - id: campus_student
+    displayName: Campus student
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: campus
+    x: 70
+    y: 32
+    layerSymbol: a
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_courtyard_student
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+    - dialogueId: ambient_courtyard_student_2
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+    - dialogueId: ambient_courtyard_student_3
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: forest_student
+    displayName: Forest student
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: eastForest
+    x: 12
+    y: 16
+    layerSymbol: f
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_forest_student
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+    - dialogueId: ambient_forest_student_2
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+    - dialogueId: ambient_forest_student_3
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: katrina
+    displayName: Katrina
+    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    mapId: campus
+    x: 23
+    y: 40
+    layerSymbol: k
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: katrina_something_borrowed_dialogue
+      questId: katrina_something_borrowed
+      requiredQuestStatus: NotStarted
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: katrina_something_borrowed_dialogue
+      questId: katrina_something_borrowed
+      requiredQuestStatus: Active
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+    - dialogueId: katrina_something_borrowed_dialogue
+      questId: katrina_something_borrowed
+      requiredQuestStatus: Completed
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 5
+  layers:
+  - mapId: campus
+    tileFile: campus.npcs.txt
+    width: 92
+    height: 54
+    rows:
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ........................................c...................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ......................................................................a.....................
+    - ............................................................................................
+    - ....................d.......................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - .......................k....................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - ............................................................................................
+    - 
+  - mapId: eastForest
+    tileFile: eastForest.npcs.txt
+    width: 50
+    height: 38
+    rows:
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..........................o.......................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ............f.....................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - ..................................................
+    - 
+  - mapId: B02.Ground
+    tileFile: B02.Ground.npcs.txt
+    width: 36
+    height: 24
+    rows:
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ...................s................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - ....................................
+    - 
