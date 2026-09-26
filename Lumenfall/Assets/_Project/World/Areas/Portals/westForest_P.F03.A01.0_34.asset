@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.PortalContentAsset
   id: P.F03.A01.0_34
   area: {fileID: 11400000, guid: 40f5a879094cafd45a8e5ec898d345bd, type: 2}
-  cell: {x: 0, y: 34}
+  cell: {x: 34, y: 49}
   footprint: {x: 1, y: 1}
-  reserved: 0
+  reserved: 1
   destination: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
-  arrivalOffset: {x: -1, y: 0}
+  arrivalOffset: {x: 0, y: 1}

@@ -71,6 +71,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 		
 
 		HLSLINCLUDE
+        #include "Assets/_Project/Systems/Camera/PlayerOcclusionReveal.hlsl"
 		#pragma target 4.5
 		#pragma prefer_hlslcc gles
 		// ensure rendering platforms toggle list is visible
@@ -610,6 +611,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				#endif
 
 				float3 WorldPosition = float3(input.tSpace0.w,input.tSpace1.w,input.tSpace2.w);
+                LumenfallRevealClip(WorldPosition);
 				float3 WorldViewDirection = _WorldSpaceCameraPos.xyz  - WorldPosition;
 				float4 ShadowCoords = float4( 0, 0, 0, 0 );
 
@@ -1599,6 +1601,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( input );
 
 				float3 WorldPosition = input.positionWS;
+                LumenfallRevealClip(WorldPosition);
 				float4 ShadowCoords = float4( 0, 0, 0, 0 );
 				float4 ClipPos = input.clipPosV;
 				float4 ScreenPos = ComputeScreenPos( input.clipPosV );
@@ -2735,6 +2738,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				float3 WorldNormal = input.normalWS;
 				float4 WorldTangent = input.tangentWS;
 				float3 WorldPosition = input.positionWS;
+                LumenfallRevealClip(WorldPosition);
 				float4 ClipPos = input.clipPosV;
 				float4 ScreenPos = ComputeScreenPos( input.clipPosV );
 

@@ -1,15 +1,15 @@
 {
-  "width": 92,
-  "height": 54,
+  "width": 54,
+  "height": 92,
   "regions": [
     {
       "id": "A01",
       "name": "West gate forecourt",
       "rect": {
-        "x": 43,
+        "x": 35,
         "y": 35,
-        "width": 14,
-        "height": 10
+        "width": 10,
+        "height": 14
       },
       "walkable": true
     },
@@ -17,10 +17,10 @@
       "id": "C01",
       "name": "Campus commons",
       "rect": {
-        "x": 30,
-        "y": 28,
-        "width": 40,
-        "height": 28
+        "x": 28,
+        "y": 22,
+        "width": 28,
+        "height": 40
       },
       "walkable": true
     },
@@ -28,10 +28,10 @@
       "id": "C02",
       "name": "Orientation terrace",
       "rect": {
-        "x": 34,
-        "y": 18,
-        "width": 18,
-        "height": 8
+        "x": 18,
+        "y": 40,
+        "width": 8,
+        "height": 18
       },
       "walkable": true
     },
@@ -39,10 +39,10 @@
       "id": "C03",
       "name": "Orientation trial strip",
       "rect": {
-        "x": 15,
-        "y": 30,
-        "width": 12,
-        "height": 8
+        "x": 30,
+        "y": 65,
+        "width": 8,
+        "height": 12
       },
       "walkable": true
     },
@@ -50,10 +50,10 @@
       "id": "C04",
       "name": "Garden walk",
       "rect": {
-        "x": 10,
-        "y": 32,
-        "width": 26,
-        "height": 18
+        "x": 32,
+        "y": 56,
+        "width": 18,
+        "height": 26
       },
       "walkable": true
     },
@@ -62,9 +62,9 @@
       "name": "Campus path loop",
       "rect": {
         "x": 25,
-        "y": 25,
-        "width": 50,
-        "height": 40
+        "y": 17,
+        "width": 40,
+        "height": 50
       },
       "walkable": true
     },
@@ -72,10 +72,10 @@
       "id": "B01",
       "name": "B01",
       "rect": {
-        "x": 12,
-        "y": 56,
-        "width": 20,
-        "height": 14
+        "x": 56,
+        "y": 60,
+        "width": 14,
+        "height": 20
       },
       "walkable": true
     },
@@ -83,10 +83,10 @@
       "id": "B02",
       "name": "B02",
       "rect": {
-        "x": 10,
-        "y": 12,
-        "width": 26,
-        "height": 20
+        "x": 12,
+        "y": 56,
+        "width": 20,
+        "height": 26
       },
       "walkable": true
     },
@@ -94,10 +94,10 @@
       "id": "B03",
       "name": "B03",
       "rect": {
-        "x": 40,
-        "y": 8,
-        "width": 30,
-        "height": 18
+        "x": 8,
+        "y": 22,
+        "width": 18,
+        "height": 30
       },
       "walkable": true
     },
@@ -105,280 +105,445 @@
       "id": "B04",
       "name": "B04",
       "rect": {
-        "x": 72,
-        "y": 48,
-        "width": 20,
-        "height": 24
+        "x": 48,
+        "y": 0,
+        "width": 24,
+        "height": 20
       },
       "walkable": true
     }
   ],
   "spawn": {
     "x": 1,
-    "y": 1
+    "y": 90
   },
   "buildingPlacements": {
     "B01": {
+      "x": 56,
+      "y": 60,
+      "width": 14,
+      "height": 20
+    },
+    "B02": {
       "x": 12,
       "y": 56,
       "width": 20,
-      "height": 14
-    },
-    "B02": {
-      "x": 10,
-      "y": 12,
-      "width": 26,
-      "height": 20
+      "height": 26
     },
     "B03": {
-      "x": 40,
-      "y": 8,
-      "width": 30,
-      "height": 18
+      "x": 8,
+      "y": 22,
+      "width": 18,
+      "height": 30
     },
     "B04": {
-      "x": 72,
-      "y": 48,
-      "width": 20,
-      "height": 24
+      "x": 48,
+      "y": 0,
+      "width": 24,
+      "height": 20
     }
   },
   "gateStates": {
     "north": "locked",
-    "south": "locked",
-    "west": "locked",
-    "east": "open"
+    "east": "locked",
+    "south": "open",
+    "west": "locked"
   },
   "tileFile": "campus.txt",
   "portalGlyph": "X",
   "objects": [
-    { "id": "relic.stella.power", "type": "relic", "x": 44, "y": 35, "blocks": false, "tags": ["ampere", "weave", "weave-with:circuit.stella.link"] },
-    { "id": "circuit.stella.link", "type": "relic", "x": 46, "y": 35, "blocks": false, "tags": ["weave", "weave-with:relic.stella.power"] },
-    { "id": "orientation.cinna.align", "type": "orientation", "x": 40, "y": 22, "blocks": false, "tags": ["vis"] },
-    { "id": "trial.cinna.ice", "type": "surface", "x": 20, "y": 34, "blocks": false, "tags": ["glaciate", "slide-goal:24,34"] },
-    { "id": "mechanism.orio.rotate", "type": "mechanism", "x": 57, "y": 25, "blocks": false, "tags": ["rotara"] },
-    { "id": "keepsake.katrina.hidden", "type": "keepsake", "x": 31, "y": 42, "blocks": false, "tags": ["hidden", "lost-echoes"] }
+    {
+      "id": "relic.stella.power",
+      "type": "relic",
+      "x": 35,
+      "y": 47,
+      "blocks": false,
+      "tags": [
+        "ampere",
+        "weave",
+        "weave-with:circuit.stella.link"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    },
+    {
+      "id": "circuit.stella.link",
+      "type": "relic",
+      "x": 35,
+      "y": 45,
+      "blocks": false,
+      "tags": [
+        "weave",
+        "weave-with:relic.stella.power"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    },
+    {
+      "id": "orientation.cinna.align",
+      "type": "orientation",
+      "x": 22,
+      "y": 51,
+      "blocks": false,
+      "tags": [
+        "vis"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    },
+    {
+      "id": "trial.cinna.ice",
+      "type": "surface",
+      "x": 34,
+      "y": 71,
+      "blocks": false,
+      "tags": [
+        "glaciate",
+        "slide-goal:34,67"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    },
+    {
+      "id": "mechanism.orio.rotate",
+      "type": "mechanism",
+      "x": 25,
+      "y": 34,
+      "blocks": false,
+      "tags": [
+        "rotara"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    },
+    {
+      "id": "keepsake.katrina.hidden",
+      "type": "keepsake",
+      "x": 42,
+      "y": 60,
+      "blocks": false,
+      "tags": [
+        "hidden",
+        "lost-echoes"
+      ],
+      "width": 1,
+      "height": 1,
+      "rotation": 90
+    }
   ],
   "puzzleTargets": [
-    { "id": "quest.stella.first-light", "objectIds": ["relic.stella.power"], "requiredPowered": true },
-    { "id": "quest.stella.string-them-together", "objectIds": ["relic.stella.power", "circuit.stella.link"], "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"] },
-    { "id": "quest.cinna.out-of-alignment", "objectIds": ["orientation.cinna.align"], "requiredAligned": true },
-    { "id": "quest.cinna.cold-feet-warm-idea", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 },
-    { "id": "quest.orio.patch-notes", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 },
-    { "id": "quest.katrina.something-borrowed", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true }
+    {
+      "id": "quest.stella.first-light",
+      "objectIds": [
+        "relic.stella.power"
+      ],
+      "requiredPowered": true
+    },
+    {
+      "id": "quest.stella.string-them-together",
+      "objectIds": [
+        "relic.stella.power",
+        "circuit.stella.link"
+      ],
+      "requiredConnected": true,
+      "requiredConnections": [
+        "relic.stella.power|circuit.stella.link"
+      ]
+    },
+    {
+      "id": "quest.cinna.out-of-alignment",
+      "objectIds": [
+        "orientation.cinna.align"
+      ],
+      "requiredAligned": true
+    },
+    {
+      "id": "quest.cinna.cold-feet-warm-idea",
+      "objectIds": [
+        "trial.cinna.ice"
+      ],
+      "requiredFrozen": true,
+      "requiredPositionX": 34,
+      "requiredPositionY": 67
+    },
+    {
+      "id": "quest.orio.patch-notes",
+      "objectIds": [
+        "mechanism.orio.rotate"
+      ],
+      "requiredRotation": 180
+    },
+    {
+      "id": "quest.katrina.something-borrowed",
+      "objectIds": [
+        "keepsake.katrina.hidden"
+      ],
+      "requiredRevealed": true
+    }
   ],
   "portals": [
     {
       "id": "P.A01.C01",
-      "x": 50,
-      "y": 35,
+      "x": 35,
+      "y": 41,
       "destinationScene": "campus",
       "destinationPortalId": "P.C01.A01",
-      "arrivalOffsetX": 50,
-      "arrivalOffsetY": 35
+      "arrivalOffsetX": 35,
+      "arrivalOffsetY": 41,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.B01.C05",
-      "x": 20,
-      "y": 58,
+      "x": 58,
+      "y": 71,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B01",
-      "arrivalOffsetX": 25,
-      "arrivalOffsetY": 56,
-      "reserved": true
+      "arrivalOffsetX": 56,
+      "arrivalOffsetY": 66,
+      "reserved": true,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.B02.C05",
-      "x": 18,
-      "y": 14,
+      "x": 14,
+      "y": 73,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B02",
-      "arrivalOffsetX": 23,
-      "arrivalOffsetY": 12
+      "arrivalOffsetX": 12,
+      "arrivalOffsetY": 68,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.B03.C05",
-      "x": 48,
-      "y": 10,
+      "x": 10,
+      "y": 43,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B03",
-      "arrivalOffsetX": 53,
-      "arrivalOffsetY": 8
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 38,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.B04.C05",
-      "x": 80,
-      "y": 50,
+      "x": 50,
+      "y": 11,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B04",
-      "arrivalOffsetX": 85,
-      "arrivalOffsetY": 48
+      "arrivalOffsetX": 48,
+      "arrivalOffsetY": 6,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C01.A01",
-      "x": 50,
-      "y": 35,
+      "x": 35,
+      "y": 41,
       "destinationScene": "campus",
       "destinationPortalId": "P.A01.C01",
-      "arrivalOffsetX": 50,
-      "arrivalOffsetY": 35
+      "arrivalOffsetX": 35,
+      "arrivalOffsetY": 41,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C01.C02",
-      "x": 42,
-      "y": 28,
+      "x": 28,
+      "y": 49,
       "destinationScene": "campus",
       "destinationPortalId": "P.C02.C01",
-      "arrivalOffsetX": 42,
-      "arrivalOffsetY": 26
+      "arrivalOffsetX": 26,
+      "arrivalOffsetY": 49,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C01.C03",
-      "x": 30,
-      "y": 34,
+      "x": 34,
+      "y": 61,
       "destinationScene": "campus",
       "destinationPortalId": "P.C03.C01",
-      "arrivalOffsetX": 27,
-      "arrivalOffsetY": 34
+      "arrivalOffsetX": 34,
+      "arrivalOffsetY": 64,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C01.C04",
-      "x": 60,
-      "y": 50,
+      "x": 50,
+      "y": 31,
       "destinationScene": "campus",
       "destinationPortalId": "P.C04.C01",
-      "arrivalOffsetX": 60,
-      "arrivalOffsetY": 55,
-      "reserved": true
+      "arrivalOffsetX": 55,
+      "arrivalOffsetY": 31,
+      "reserved": true,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C01.C05",
-      "x": 35,
-      "y": 40,
+      "x": 40,
+      "y": 56,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.C01",
-      "arrivalOffsetX": 35,
-      "arrivalOffsetY": 39
+      "arrivalOffsetX": 39,
+      "arrivalOffsetY": 56,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C02.C01",
-      "x": 42,
-      "y": 26,
+      "x": 26,
+      "y": 49,
       "destinationScene": "campus",
       "destinationPortalId": "P.C01.C02",
-      "arrivalOffsetX": 42,
-      "arrivalOffsetY": 28
+      "arrivalOffsetX": 28,
+      "arrivalOffsetY": 49,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C03.C01",
-      "x": 27,
-      "y": 34,
+      "x": 34,
+      "y": 64,
       "destinationScene": "campus",
       "destinationPortalId": "P.C01.C03",
-      "arrivalOffsetX": 30,
-      "arrivalOffsetY": 34
+      "arrivalOffsetX": 34,
+      "arrivalOffsetY": 61,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C04.C01",
-      "x": 60,
-      "y": 55,
+      "x": 55,
+      "y": 31,
       "destinationScene": "campus",
       "destinationPortalId": "P.C01.C04",
-      "arrivalOffsetX": 60,
-      "arrivalOffsetY": 50
+      "arrivalOffsetX": 50,
+      "arrivalOffsetY": 31,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C05.C01",
-      "x": 35,
-      "y": 39,
+      "x": 39,
+      "y": 56,
       "destinationScene": "campus",
       "destinationPortalId": "P.C01.C05",
-      "arrivalOffsetX": 35,
-      "arrivalOffsetY": 40
+      "arrivalOffsetX": 40,
+      "arrivalOffsetY": 56,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C05.B01",
-      "x": 25,
-      "y": 56,
+      "x": 56,
+      "y": 66,
       "destinationScene": "B01.Ground",
       "destinationPortalId": "P.B01.C05",
       "arrivalOffsetX": 20,
-      "arrivalOffsetY": 58
+      "arrivalOffsetY": 58,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C05.B02",
-      "x": 23,
-      "y": 12,
+      "x": 12,
+      "y": 68,
       "destinationScene": "B02.Ground",
       "destinationPortalId": "P.B02.C05",
       "arrivalOffsetX": 18,
-      "arrivalOffsetY": 14
+      "arrivalOffsetY": 14,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C05.B03",
-      "x": 53,
-      "y": 8,
+      "x": 8,
+      "y": 38,
       "destinationScene": "B03.Ground",
       "destinationPortalId": "P.B03.C05",
       "arrivalOffsetX": 48,
-      "arrivalOffsetY": 10
+      "arrivalOffsetY": 10,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.C05.B04",
-      "x": 85,
-      "y": 48,
+      "x": 48,
+      "y": 6,
       "destinationScene": "B04.Ground",
       "destinationPortalId": "P.B04.C05",
       "arrivalOffsetX": 80,
-      "arrivalOffsetY": 50
+      "arrivalOffsetY": 50,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.A01.F03",
-      "x": 86,
-      "y": 25,
+      "x": 25,
+      "y": 5,
       "destinationScene": "westForest",
       "destinationPortalId": "P.F03.A01",
-      "arrivalOffsetX": 2,
-      "arrivalOffsetY": 34
+      "arrivalOffsetX": 17,
+      "arrivalOffsetY": 47,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "P.A01.F03.86_26",
-      "x": 86,
-      "y": 26,
+      "x": 26,
+      "y": 5,
       "destinationScene": "westForest",
       "destinationPortalId": "P.F03.A01",
-      "arrivalOffsetX": 2,
-      "arrivalOffsetY": 34
+      "arrivalOffsetX": 17,
+      "arrivalOffsetY": 47,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "reserved.X.45_19",
-      "x": 45,
-      "y": 19,
+      "x": 19,
+      "y": 46,
       "reserved": true,
       "destinationScene": "",
       "destinationPortalId": "",
       "arrivalOffsetX": 0,
-      "arrivalOffsetY": 0
+      "arrivalOffsetY": 0,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "reserved.X.46_19",
-      "x": 46,
-      "y": 19,
+      "x": 19,
+      "y": 45,
       "reserved": true,
       "destinationScene": "",
       "destinationPortalId": "",
       "arrivalOffsetX": 0,
-      "arrivalOffsetY": 0
+      "arrivalOffsetY": 0,
+      "width": 1,
+      "height": 1
     },
     {
       "id": "reserved.X.68_23",
-      "x": 68,
+      "x": 23,
       "y": 23,
       "reserved": true,
       "destinationScene": "",
       "destinationPortalId": "",
       "arrivalOffsetX": 0,
-      "arrivalOffsetY": 0
+      "arrivalOffsetY": 0,
+      "width": 1,
+      "height": 1
     }
   ]
 }

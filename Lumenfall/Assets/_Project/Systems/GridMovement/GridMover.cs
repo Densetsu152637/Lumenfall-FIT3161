@@ -30,7 +30,7 @@ namespace Lumenfall.GridMovement
         [SerializeField] private GridMovementMode movementMode = GridMovementMode.Walk;
         [FormerlySerializedAs("moveDuration")]
         [SerializeField, Min(0f)] private float walkMoveDuration = 0.15f;
-        [SerializeField, Min(0f)] private float sprintMoveDuration = 0.075f;
+        [SerializeField, Min(0f)] private float sprintMoveDuration = 0.1f;
 
         [Header("Step Animation")]
         [SerializeField] private AnimationCurve movementCurve = null;
