@@ -80,7 +80,7 @@
       "id": "mechanism.orio.rotate",
       "type": "mechanism",
       "x": 8,
-      "y": 21,
+      "y": 23,
       "blocks": false,
       "tags": [
         "rotara"

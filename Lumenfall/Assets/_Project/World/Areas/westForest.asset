@@ -100,7 +100,7 @@ MonoBehaviour:
       prefab: {fileID: 0}
       type: mechanism
       x: 8
-      y: 21
+      y: 23
       width: 1
       height: 1
       elevation: 0

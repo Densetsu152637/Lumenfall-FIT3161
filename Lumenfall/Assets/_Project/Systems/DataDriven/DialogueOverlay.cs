@@ -20,10 +20,12 @@ namespace Lumenfall.DataDriven
         private float revealAccumulator;
         private string nodeId;
         private Texture2D borderTexture;
+        private Texture2D fallbackPanelTexture;
         private Font dialogueFont;
         private Texture2D speakerFrame;
         private Vector2 scrollPosition;
         private int inputBlockedFrame = -1;
+        private static int npcInteractionBlockUntilFrame = -1;
         private const float CharactersPerSecond = 42f;
 
         private void OnEnable()
@@ -57,6 +59,7 @@ namespace Lumenfall.DataDriven
         private void OnEnded(DialogueSession value)
         {
             if (session != value) return;
+            npcInteractionBlockUntilFrame = Time.frameCount + 1;
             if (lockedMover != null) lockedMover.SetMovementLocked(false);
             lockedMover = null;
             session = null;
@@ -94,7 +97,7 @@ namespace Lumenfall.DataDriven
             Rect panel = new Rect((Screen.width - width) * 0.5f, Screen.height - height - 22f, width, height);
             string speaker = string.IsNullOrWhiteSpace(session.CurrentNode.speaker) ? session.Definition.id : session.CurrentNode.speaker;
             speakerFrame = SpeakerFrame(speaker);
-            panelStyle.normal.background = speakerFrame != null ? speakerFrame : borderTexture;
+            panelStyle.normal.background = speakerFrame != null ? speakerFrame : (borderTexture != null ? borderTexture : fallbackPanelTexture);
             GUI.Box(panel, GUIContent.none, panelStyle);
             float safeWidth = panel.width * 0.72f;
             float safeHeight = panel.height * 0.58f;
@@ -159,6 +162,13 @@ namespace Lumenfall.DataDriven
             dialogueFont = Resources.Load<Font>("Dialogue/Nunito-Regular");
             panelStyle = new GUIStyle(GUI.skin.box) { padding = new RectOffset(18, 18, 12, 12) };
             if (borderTexture != null) panelStyle.normal.background = borderTexture;
+            else
+            {
+                fallbackPanelTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                fallbackPanelTexture.SetPixel(0, 0, new Color(0.055f, 0.07f, 0.09f, 0.94f));
+                fallbackPanelTexture.Apply();
+                panelStyle.normal.background = fallbackPanelTexture;
+            }
             nameStyle = new GUIStyle(GUI.skin.label) { fontSize = 21, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft };
             textStyle = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true, richText = true };
             SetTextColor(textStyle, new Color(0.12f, 0.11f, 0.16f));
@@ -202,5 +212,7 @@ namespace Lumenfall.DataDriven
             if (string.Equals(speaker, "Katrina", StringComparison.OrdinalIgnoreCase)) return new Color(0.64f, 0.33f, 0.58f);
             return new Color(0.26f, 0.25f, 0.30f);
         }
+
+        internal static bool IsNpcInteractionBlocked => Time.frameCount <= npcInteractionBlockUntilFrame;
     }
 }
