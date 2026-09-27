@@ -16,8 +16,13 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredConnected": true },
-        { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
+        { "id": "all_five_relics", "objectIds": [
+          "stella.string-together.relic.1",
+          "stella.string-together.relic.2",
+          "stella.string-together.relic.3",
+          "stella.string-together.relic.4",
+          "stella.string-together.relic.5"
+        ], "requiredPowered": true }
       ]
     },
     {

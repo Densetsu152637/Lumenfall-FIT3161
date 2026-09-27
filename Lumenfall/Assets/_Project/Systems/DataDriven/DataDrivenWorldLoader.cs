@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Quests;
 
 namespace Lumenfall.DataDriven
 {
@@ -76,6 +77,7 @@ namespace Lumenfall.DataDriven
             root.SetActive(true);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
+            StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
