@@ -86,6 +86,8 @@ namespace Lumenfall.DataDriven
             EnsureStyles();
             EnsureNode();
             if (Time.frameCount > inputBlockedFrame) HandleAdvanceInput();
+            // Advancing past the last node ends the dialogue, and OnEnded clears the session.
+            if (session == null || !session.IsActive || session.CurrentNode == null) return;
             float width = Mathf.Min(Screen.width - 40f, 760f);
             // Generated frames are 3:1; preserve that ratio so their quiet center and border remain intact.
             float height = Mathf.Min(Screen.height * 0.42f, width / 3f);
@@ -97,7 +99,7 @@ namespace Lumenfall.DataDriven
             float safeWidth = panel.width * 0.72f;
             float safeHeight = panel.height * 0.58f;
             GUILayout.BeginArea(new Rect(panel.x + panel.width * 0.14f, panel.y + panel.height * 0.18f, safeWidth, safeHeight));
-            nameStyle.normal.textColor = SpeakerColor(speaker);
+            SetTextColor(nameStyle, SpeakerColor(speaker));
             GUILayout.Label(speaker, nameStyle);
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true, GUILayout.Height(Mathf.Max(40f, safeHeight - 34f)));
             GUILayout.Label(DialogueTextReveal.Reveal(displayedText, visibleCharacters), textStyle);
@@ -107,7 +109,10 @@ namespace Lumenfall.DataDriven
                 for (int i = 0; i < session.AvailableChoices.Count; i++)
                 {
                     DialogueChoiceDefinition choice = session.AvailableChoices[i];
-                    if (GUILayout.Button(choice.text ?? choice.id, buttonStyle)) session.SelectChoice(choice.id);
+                    if (!GUILayout.Button(choice.text ?? choice.id, buttonStyle)) continue;
+                    // Selecting can end the dialogue (clearing session) or replace the choice list, so stop drawing choices.
+                    session.SelectChoice(choice.id);
+                    break;
                 }
             }
             else if (complete && GUILayout.Button(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle))
@@ -155,10 +160,29 @@ namespace Lumenfall.DataDriven
             panelStyle = new GUIStyle(GUI.skin.box) { padding = new RectOffset(18, 18, 12, 12) };
             if (borderTexture != null) panelStyle.normal.background = borderTexture;
             nameStyle = new GUIStyle(GUI.skin.label) { fontSize = 21, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft };
-            textStyle = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true, richText = true, normal = { textColor = new Color(0.12f, 0.11f, 0.16f) } };
+            textStyle = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true, richText = true };
+            SetTextColor(textStyle, new Color(0.12f, 0.11f, 0.16f));
             buttonStyle = new GUIStyle(GUI.skin.button) { fontSize = 16, wordWrap = true };
-            hintStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleRight, normal = { textColor = new Color(0.35f, 0.34f, 0.40f) } };
+            // The default skin turns hovered text white; use a warm highlight that stays readable on the dark button.
+            SetTextColor(buttonStyle, new Color(0.92f, 0.90f, 0.86f));
+            buttonStyle.hover.textColor = new Color(1f, 0.82f, 0.36f);
+            buttonStyle.active.textColor = new Color(1f, 0.72f, 0.22f);
+            hintStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleRight };
+            SetTextColor(hintStyle, new Color(0.35f, 0.34f, 0.40f));
             if (dialogueFont != null) { nameStyle.font = dialogueFont; textStyle.font = dialogueFont; buttonStyle.font = dialogueFont; hintStyle.font = dialogueFont; }
+        }
+
+        /// Applies one colour to every interaction state so hovering or clicking never swaps in the skin's white text.
+        private static void SetTextColor(GUIStyle style, Color color)
+        {
+            style.normal.textColor = color;
+            style.hover.textColor = color;
+            style.active.textColor = color;
+            style.focused.textColor = color;
+            style.onNormal.textColor = color;
+            style.onHover.textColor = color;
+            style.onActive.textColor = color;
+            style.onFocused.textColor = color;
         }
 
         private static Texture2D SpeakerFrame(string speaker)
