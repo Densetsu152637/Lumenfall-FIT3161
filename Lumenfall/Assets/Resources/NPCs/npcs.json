@@ -238,8 +238,8 @@
       "displayName": "Forest student",
       "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
-      "x": 16,
-      "y": 37,
+      "x": 15,
+      "y": 39,
       "layerSymbol": "f",
       "dialogue": [
         {
