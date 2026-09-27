@@ -206,7 +206,11 @@ namespace Lumenfall.GridMovement
 
             currentCell = cell;
             destinationCell = cell;
-            suppressedPortal = portalToSuppress;
+            // Only suppress a portal the mover actually lands inside. When the arrival cell is beside the
+            // portal, suppressing it would make the first step back onto it silently do nothing.
+            suppressedPortal = portalToSuppress != null && portalToSuppress.ContainsCell(cell)
+                ? portalToSuppress
+                : null;
             transform.position = destinationWorld.CellToWorld(cell, elevation);
             Teleported?.Invoke(this, cell);
             return true;
@@ -267,17 +271,21 @@ namespace Lumenfall.GridMovement
             currentCell = destination;
             isMoving = false;
             moveRoutine = null;
-            MoveCompleted?.Invoke(this, currentCell);
 
+            // Resolve portals before MoveCompleted: held input chains the next step from that event,
+            // and a mover that is already moving again is refused by GridPortal.TryEnter.
             GridPortal portal = world.GetPortalAt(currentCell);
             if (portal == null)
             {
                 suppressedPortal = null;
             }
-            else if (portal != suppressedPortal)
+            else if (portal != suppressedPortal && portal.TryEnter(this))
             {
-                portal.TryEnter(this);
+                // The portal raised Teleported; the step's destination is no longer where the mover is.
+                yield break;
             }
+
+            MoveCompleted?.Invoke(this, currentCell);
         }
 
         private IEnumerator TravelToScene(
