@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using Lumenfall.Spells;
 using Lumenfall.GridMovement;
 using Lumenfall.GameEvents;
-using Lumenfall.DataDriven;
+using Lumenfall.Quests;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -48,13 +49,23 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void StellaCircuitRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance()
+        public void StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance()
         {
             GameEventManager manager = GameEventManager.Instance;
             GameEventRuntime runtime = manager.Runtime;
             runtime.ResetState();
+            QuestPuzzleMonitor monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
+            GameObject monitorHost = null;
+            if (monitor == null)
+            {
+                monitorHost = new GameObject("stella-quest-puzzle-monitor-test");
+                monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
+            }
             try
             {
+                Assert.That(monitor, Is.Not.Null);
+                state.BeginMapRebuild("B02.Ground");
+                RunPuzzleMonitor(monitor);
                 Register("relic.stella.power", new Vector2Int(3, 4), Vector2Int.one,
                     new[] { "weave-with:circuit.stella.link" });
                 Register("circuit.stella.link", new Vector2Int(6, 4), Vector2Int.one,
@@ -72,34 +83,38 @@ namespace Lumenfall.Tests.GameEvents
                 DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
                 Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+                Assert.That(circuitQuest.Continue(), Is.True,
+                    "Finish Stella's teaching dialogue before casting puzzle spells.");
 
-                PuzzleTargetDefinition poweredSource = new PuzzleTargetDefinition
-                {
-                    objectIds = new[] { "relic.stella.power" },
-                    requiredPowered = true
-                };
-                PuzzleTargetDefinition exactConnection = new PuzzleTargetDefinition
-                {
-                    objectIds = new[] { "relic.stella.power", "circuit.stella.link" },
-                    requiredConnections = new[] { "relic.stella.power|circuit.stella.link" }
-                };
-                Assert.That(state.EvaluatePuzzleTarget(poweredSource), Is.False);
-                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.False);
+                RunPuzzleMonitor(monitor);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
                 Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.False,
                     "Weave cannot connect the board while its source relic is dark.");
+                RunPuzzleMonitor(monitor);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
 
                 Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
-                Assert.That(state.EvaluatePuzzleTarget(poweredSource), Is.True);
-                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.False);
+                RunPuzzleMonitor(monitor);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active),
+                    "Powering the source alone must not complete the circuit quest.");
                 Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.True);
-                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.True);
-                Assert.That(runtime.TriggerEvent("complete_stella_string_them_together").Succeeded, Is.True);
+                RunPuzzleMonitor(monitor);
+                Assert.That(state.IsConnected("relic.stella.power", "circuit.stella.link"), Is.True);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             }
             finally
             {
                 if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
                 runtime.ResetState();
+                if (monitorHost != null) Object.DestroyImmediate(monitorHost);
             }
+        }
+
+        private static void RunPuzzleMonitor(QuestPuzzleMonitor monitor)
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(QuestPuzzleMonitor).GetField("nextCheck", flags).SetValue(monitor, 0f);
+            typeof(QuestPuzzleMonitor).GetMethod("Update", flags).Invoke(monitor, null);
         }
 
         [Test]
