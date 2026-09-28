@@ -477,7 +477,7 @@ MonoBehaviour:
       destination: {fileID: 0}
       arrivalOffset: {x: 0, y: 0}
       reserved: 1
-  areaPrefab: {fileID: 2761501048540058367, guid: edab88b9e67aceb42962756885b25787, type: 3}
+  areaPrefab: {fileID: 7035163530281894877, guid: edab88b9e67aceb42962756885b25787, type: 3}
   portals:
   - {fileID: 11400000, guid: d74df04b6c197ab4baff13fc618dcd59, type: 2}
   - {fileID: 11400000, guid: d265d548b1c29fa4389272c02be1114d, type: 2}
