@@ -178,6 +178,8 @@ namespace Lumenfall.Tests.World
                 Assert.That(campusGate.World.GetPortalAt(entry), Is.SameAs(campusGate),
                     "Both campus gate tiles must belong to the same reciprocal portal.");
                 Assert.That(campusGate.World.IsCellBlocked(entry), Is.False);
+                Assert.That(CanReach(campusGate.World, player.CurrentCell, entry), Is.True,
+                    "Both campus gate tiles must be reachable from the forest arrival.");
                 Assert.That(player.TryTeleportTo(campusGate.World, entry), Is.True);
                 Assert.That(campusGate.TryEnter(player), Is.True);
                 Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
