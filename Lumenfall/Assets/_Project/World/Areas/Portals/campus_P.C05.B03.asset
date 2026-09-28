@@ -18,4 +18,4 @@ MonoBehaviour:
   footprint: {x: 1, y: 1}
   reserved: 0
   destination: {fileID: 11400000, guid: 34a8113bdba92cf45916471fd6ca67cb, type: 2}
-  arrivalOffset: {x: 40, y: 8}
+  arrivalOffset: {x: 0, y: -1}

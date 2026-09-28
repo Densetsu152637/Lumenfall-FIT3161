@@ -419,7 +419,7 @@ MonoBehaviour:
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: de1180b4ea288b2498f14342f81e85ee, type: 2}
-      arrivalOffset: {x: 18, y: 14}
+      arrivalOffset: {x: 10, y: 5}
       reserved: 0
     - id: P.C05.B03
       x: 8
@@ -427,7 +427,7 @@ MonoBehaviour:
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: 34a8113bdba92cf45916471fd6ca67cb, type: 2}
-      arrivalOffset: {x: 48, y: 10}
+      arrivalOffset: {x: 8, y: 1}
       reserved: 0
     - id: P.C05.B04
       x: 48
@@ -435,7 +435,7 @@ MonoBehaviour:
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: cedd9b5ed211ce2489890abf46f4f7c8, type: 2}
-      arrivalOffset: {x: 80, y: 50}
+      arrivalOffset: {x: 8, y: 1}
       reserved: 0
     - id: P.A01.F03
       x: 25

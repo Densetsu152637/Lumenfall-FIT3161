@@ -147,8 +147,8 @@ MonoBehaviour:
     - id: relic.stella.power
       prefab: {fileID: 0}
       type: relic
-      x: 18
-      y: 14
+      x: 11
+      y: 4
       width: 1
       height: 1
       elevation: 0
@@ -162,8 +162,8 @@ MonoBehaviour:
     - id: circuit.stella.link
       prefab: {fileID: 0}
       type: relic
-      x: 20
-      y: 14
+      x: 14
+      y: 4
       width: 1
       height: 1
       elevation: 0
@@ -204,8 +204,8 @@ MonoBehaviour:
       requiredPositionY: -2147483648
     portals:
     - id: P.B02.C05
-      x: 8
-      y: 2
+      x: 10
+      y: 6
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}

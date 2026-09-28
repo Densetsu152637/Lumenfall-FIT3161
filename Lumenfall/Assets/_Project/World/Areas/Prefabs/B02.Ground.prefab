@@ -1077,7 +1077,7 @@ Transform:
   m_GameObject: {fileID: 368135597057073207}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20, y: 0, z: 14}
+  m_LocalPosition: {x: 14, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1174,7 +1174,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: circuit.stella.link
-  cell: {x: 20, y: 14}
+  cell: {x: 14, y: 4}
   size: {x: 1, y: 1}
   spellCompatible: 1
   tags:
@@ -10900,7 +10900,7 @@ Transform:
   m_GameObject: {fileID: 3150762171185025366}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8, y: 0, z: 2}
+  m_LocalPosition: {x: 10, y: 0, z: 6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10920,7 +10920,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
   useTransformAsAnchor: 0
-  anchorCell: {x: 8, y: 2}
+  anchorCell: {x: 10, y: 6}
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 1}
   portalId: P.B02.C05
@@ -15426,7 +15426,7 @@ Transform:
   - {fileID: 7517365439867974158}
   - {fileID: 7568673373553945127}
   - {fileID: 5183937150022764766}
-  - {fileID: 5058490273370343896}
+  - {fileID: 3614608839952996186}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4122008075326595725
@@ -16637,7 +16637,7 @@ Transform:
   m_GameObject: {fileID: 4386612126888928766}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 18, y: 0, z: 14}
+  m_LocalPosition: {x: 11, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16734,7 +16734,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: relic.stella.power
-  cell: {x: 18, y: 14}
+  cell: {x: 11, y: 4}
   size: {x: 1, y: 1}
   spellCompatible: 1
   tags:
@@ -35736,7 +35736,7 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
---- !u!1001 &502973971841972325
+--- !u!1001 &133543732071623343
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -35744,47 +35744,47 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8597618520780364311}
     m_Modifications:
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 19
+      value: 12
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 14
+      value: 4
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - target: {fileID: 4655114116753613850, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       propertyPath: m_Name
       value: Stella
       objectReference: {fileID: 0}
@@ -35792,27 +35792,27 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 4655114116753613850, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3364484223662153953}
-  m_SourcePrefab: {fileID: 100100000, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
---- !u!4 &5058490273370343896 stripped
+      addedObject: {fileID: 2622176008317705526}
+  m_SourcePrefab: {fileID: 100100000, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
+--- !u!4 &3614608839952996186 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 4668458424599212477, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
-  m_PrefabInstance: {fileID: 502973971841972325}
+  m_CorrespondingSourceObject: {fileID: 3743576267190533621, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
+  m_PrefabInstance: {fileID: 133543732071623343}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &9134102130318891287 stripped
+--- !u!1 &4701820618949693109 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
-  m_PrefabInstance: {fileID: 502973971841972325}
+  m_CorrespondingSourceObject: {fileID: 4655114116753613850, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
+  m_PrefabInstance: {fileID: 133543732071623343}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3364484223662153953
+--- !u!114 &2622176008317705526
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9134102130318891287}
+  m_GameObject: {fileID: 4701820618949693109}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9c2e9c3b524fe4b2ef0af3c4b9c004, type: 3}
@@ -35821,10 +35821,10 @@ MonoBehaviour:
   definition:
     id: stella
     displayName: Stella
-    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    prefab: {fileID: 4655114116753613850, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
     mapId: B02.Ground
-    x: 19
-    y: 14
+    x: 12
+    y: 4
     layerSymbol: s
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 
