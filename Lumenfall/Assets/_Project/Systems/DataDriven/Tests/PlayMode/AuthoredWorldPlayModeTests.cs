@@ -119,6 +119,44 @@ namespace Lumenfall.Tests.World
             Assert.That(trial.gameObject.activeSelf, Is.True,
                 "Quest-gated visibility should persist when revisiting an area.");
         }
+
+        [UnityTest]
+        public IEnumerator PlayerCanWalkThroughWestForestGateToCampus()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            Assert.That(loader, Is.Not.Null);
+            FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
+            NpcCatalogAsset catalog = (NpcCatalogAsset)catalogField.GetValue(loader);
+            WorldAreaAsset[] availableAreas = (WorldAreaAsset[])areasField.GetValue(loader);
+            loader.Load(availableAreas.Single(area => area.definition.id == "westForest"), catalog);
+            yield return null;
+
+            GridPortal gate = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+            Assert.That(gate.Content.cell, Is.EqualTo(new Vector2Int(16, 48)));
+            Assert.That(gate.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+            foreach (Vector2Int gateCell in gate.EnumeratePortalCells())
+            {
+                Assert.That(gate.World.GetPortalAt(gateCell), Is.SameAs(gate));
+                Assert.That(gate.World.IsCellBlocked(gateCell), Is.False,
+                    $"WestForest gate cell {gateCell} must be enterable even when its threshold overlaps a baked obstacle.");
+            }
+
+            GridMover player = Object.FindAnyObjectByType<GridMover>();
+            Assert.That(player.TryTeleportTo(gate.World, new Vector2Int(16, 47)), Is.True,
+                "The player should be able to stand immediately before the westForest gate.");
+            Assert.That(gate.World.CanTraverse(new Vector2Int(16, 47), new Vector2Int(16, 48)), Is.True,
+                "The player should be able to step onto the westForest gate portal.");
+            Assert.That(player.TryTeleportTo(gate.World, new Vector2Int(16, 48)), Is.True);
+            Assert.That(gate.TryEnter(player), Is.True,
+                "Entering the registered westForest gate should perform the area transition.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
+            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
+        }
     }
 }
 
