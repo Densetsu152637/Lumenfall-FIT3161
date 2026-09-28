@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lumenfall.GameEvents;
+using Lumenfall.DataDriven;
 using Lumenfall.Spells;
 using Lumenfall.Inventory;
 using NUnit.Framework;
@@ -62,6 +63,84 @@ namespace Lumenfall.Tests.GameEvents
             StartAndComplete(cinnaRuntime, "cinna_out_of_alignment");
             cinnaSecond = cinnaRuntime.StartDialogue("cinna_cold_feet_warm_idea_dialogue");
             Assert.That(cinnaSecond.SelectChoice("accept"), Is.True);
+        }
+
+        [Test]
+        public void StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            GameEventRuntime runtime = manager.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("stella-follow-up-selection-test");
+            try
+            {
+                StartAndComplete(runtime, "stella_first_light");
+                DynamicNpc stella = host.AddComponent<DynamicNpc>();
+                stella.Configure(new NpcDefinition
+                {
+                    id = "stella",
+                    dialogue = new[]
+                    {
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_first_light_dialogue",
+                            questId = "stella_first_light",
+                            requiredQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "NotStarted",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Active",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Completed",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        }
+                    }
+                }, null);
+
+                DialogueSession session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("accept"));
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
+                session.End();
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("active"));
+                session.End();
+                Assert.That(runtime.TriggerEvent("complete_stella_string_them_together").Succeeded, Is.True);
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("done"));
+            }
+            finally
+            {
+                if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
+                runtime.ResetState();
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]

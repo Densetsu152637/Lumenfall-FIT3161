@@ -86,6 +86,7 @@ namespace Lumenfall.DataDriven
                 return DialogueId;
 
             List<string> choices = new List<string>(definition.dialogueIds ?? Array.Empty<string>());
+            List<string> prerequisiteChoices = new List<string>();
             foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
             {
                 if (item == null || string.IsNullOrWhiteSpace(item.dialogueId)) continue;
@@ -94,8 +95,12 @@ namespace Lumenfall.DataDriven
                 bool prerequisiteMatches = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) ||
                     StatusMatches(item.prerequisiteQuestId, item.prerequisiteQuestStatus);
                 if (!questMatches || !prerequisiteMatches) continue;
-                for (int i = 0; i < Mathf.Max(1, item.weight); i++) choices.Add(item.dialogueId);
+                List<string> eligible = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) ? choices : prerequisiteChoices;
+                for (int i = 0; i < Mathf.Max(1, item.weight); i++) eligible.Add(item.dialogueId);
             }
+            // A newly available prerequisite-gated dialogue is the NPC's follow-up beat. Keep
+            // completed earlier quests from competing with it in the weighted random selection.
+            if (prerequisiteChoices.Count > 0) choices = prerequisiteChoices;
             return choices.Count == 0 ? null : choices[UnityEngine.Random.Range(0, choices.Count)];
         }
 

@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.Spells;
 using Lumenfall.GridMovement;
 using Lumenfall.GameEvents;
+using Lumenfall.DataDriven;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -44,6 +45,61 @@ namespace Lumenfall.Tests.GameEvents
             state.SetProperty("power", x => x.powered = true); UnlockForTest(SpellId.Weave); SpellCaster caster = created[1].AddComponent<SpellCaster>(); Assert.That(caster.Cast(SpellId.Weave, "link", Vector2Int.right), Is.True);
             Assert.That(state.IsConnected("power", "link"), Is.True); Assert.That(state.GetConnectionStrength("power", "link"), Is.GreaterThan(0.2f).And.LessThan(1f));
             string save = state.CaptureStateJson(); state.ResetAllState(); state.BeginMapRebuild("test-map"); Register("power", new Vector2Int(2, 2), Vector2Int.one, new[] { "weave-with:link" }); Register("link", new Vector2Int(4, 2), Vector2Int.one, new[] { "weave-with:power" }); state.EndMapRebuild(); Assert.That(state.RestoreStateJson(save), Is.True); Assert.That(state.GetConnectionStrength("power", "link"), Is.GreaterThan(0.2f));
+        }
+
+        [Test]
+        public void StellaCircuitRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            GameEventRuntime runtime = manager.Runtime;
+            runtime.ResetState();
+            try
+            {
+                Register("relic.stella.power", new Vector2Int(3, 4), Vector2Int.one,
+                    new[] { "weave-with:circuit.stella.link" });
+                Register("circuit.stella.link", new Vector2Int(6, 4), Vector2Int.one,
+                    new[] { "weave-with:relic.stella.power" });
+                state.EndMapRebuild();
+                SpellCaster caster = created[1].AddComponent<SpellCaster>();
+
+                DialogueSession firstLight = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(firstLight.SelectChoice("accept"), Is.True);
+                Assert.That(firstLight.Continue(), Is.True);
+                Assert.That(runtime.TriggerEvent("complete_stella_first_light").Succeeded, Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
+
+                DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
+                Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+
+                PuzzleTargetDefinition poweredSource = new PuzzleTargetDefinition
+                {
+                    objectIds = new[] { "relic.stella.power" },
+                    requiredPowered = true
+                };
+                PuzzleTargetDefinition exactConnection = new PuzzleTargetDefinition
+                {
+                    objectIds = new[] { "relic.stella.power", "circuit.stella.link" },
+                    requiredConnections = new[] { "relic.stella.power|circuit.stella.link" }
+                };
+                Assert.That(state.EvaluatePuzzleTarget(poweredSource), Is.False);
+                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.False);
+                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.False,
+                    "Weave cannot connect the board while its source relic is dark.");
+
+                Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
+                Assert.That(state.EvaluatePuzzleTarget(poweredSource), Is.True);
+                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.False);
+                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.True);
+                Assert.That(state.EvaluatePuzzleTarget(exactConnection), Is.True);
+                Assert.That(runtime.TriggerEvent("complete_stella_string_them_together").Succeeded, Is.True);
+            }
+            finally
+            {
+                if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
+                runtime.ResetState();
+            }
         }
 
         [Test]
