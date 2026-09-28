@@ -495,18 +495,7 @@
       "destinationPortalId": "P.F03.A01",
       "arrivalOffsetX": 17,
       "arrivalOffsetY": 47,
-      "width": 1,
-      "height": 1
-    },
-    {
-      "id": "P.A01.F03.86_26",
-      "x": 26,
-      "y": 5,
-      "destinationScene": "westForest",
-      "destinationPortalId": "P.F03.A01",
-      "arrivalOffsetX": 17,
-      "arrivalOffsetY": 47,
-      "width": 1,
+      "width": 2,
       "height": 1
     },
     {

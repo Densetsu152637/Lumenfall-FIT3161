@@ -89,6 +89,8 @@ namespace Lumenfall.Tests.World
                 {
                     Assert.That(route.destination, Is.Not.Null,
                         "Active route " + area.definition.id + "/" + route.id + " needs a direct destination.");
+                    Assert.That(route.destination.destination, Is.SameAs(route),
+                        "Active route " + area.definition.id + "/" + route.id + " needs an exact return portal.");
                     Assert.That(route.destination.area.areaPrefab.GetComponentsInChildren<GridPortal>(true)
                         .Any(portal => portal.Content == route.destination), Is.True,
                         "Destination portal " + route.destination.id + " must exist in its area prefab.");
@@ -103,7 +105,7 @@ namespace Lumenfall.Tests.World
                     activeRouteCount++;
                 }
             }
-            Assert.That(activeRouteCount, Is.EqualTo(9), "All active forest, campus, and building portal edges should be traversable.");
+            Assert.That(activeRouteCount, Is.EqualTo(8), "All active forest, campus, and building portal edges should be traversable.");
 
             WorldAreaAsset campus = allAreas.Single(area => area.definition.id == "campus");
             loader.Load(campus, catalog);
@@ -166,6 +168,28 @@ namespace Lumenfall.Tests.World
                 "Entering the registered westForest gate should perform the area transition.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
+
+            for (int offset = 0; offset < 2; offset++)
+            {
+                GridPortal campusGate = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.A01.F03");
+                Vector2Int entry = new Vector2Int(25 + offset, 5);
+                Assert.That(campusGate.FootprintSize, Is.EqualTo(new Vector2Int(2, 1)));
+                Assert.That(campusGate.World.GetPortalAt(entry), Is.SameAs(campusGate),
+                    "Both campus gate tiles must belong to the same reciprocal portal.");
+                Assert.That(campusGate.World.IsCellBlocked(entry), Is.False);
+                Assert.That(player.TryTeleportTo(campusGate.World, entry), Is.True);
+                Assert.That(campusGate.TryEnter(player), Is.True);
+                Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
+                Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(17 + offset, 47)));
+                GridPortal forestReturn = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+                Assert.That(forestReturn.Content.destination, Is.SameAs(campusGate.Content));
+                Assert.That(player.TryTeleportTo(forestReturn.World, new Vector2Int(16, 48)), Is.True);
+                Assert.That(forestReturn.TryEnter(player), Is.True);
+                Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
+                Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
+            }
 
             GridPortal b02Entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
