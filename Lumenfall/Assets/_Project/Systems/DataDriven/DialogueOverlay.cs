@@ -201,6 +201,10 @@ namespace Lumenfall.DataDriven
             if (string.Equals(speaker, "Cinna Cirra", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/CinnaCirra");
             if (string.Equals(speaker, "Orio", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Orio");
             if (string.Equals(speaker, "Katrina", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Katrina");
+            if (string.Equals(speaker, "Student", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(speaker, "Campus student", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(speaker, "Forest student", StringComparison.OrdinalIgnoreCase))
+                return Resources.Load<Texture2D>("Dialogue/Random NPC");
             return null;
         }
 

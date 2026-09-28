@@ -12467,6 +12467,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 143181183513890913}
     m_Modifications:
+    - target: {fileID: 4511720541420525527, guid: 67030a9f67fb5ea40893021fad5d4b4a, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 541bf90e319d5884c9adb029a6044864, type: 2}
     - target: {fileID: 7149224258491225879, guid: 67030a9f67fb5ea40893021fad5d4b4a, type: 3}
       propertyPath: m_Name
       value: Forest student
@@ -12571,7 +12575,7 @@ MonoBehaviour:
       prerequisiteQuestId: 
       prerequisiteQuestStatus: 
       weight: 1
-    initialDialogueId: 
+  initialDialogueId: 
 --- !u!1001 &8509496846914848588
 PrefabInstance:
   m_ObjectHideFlags: 0
