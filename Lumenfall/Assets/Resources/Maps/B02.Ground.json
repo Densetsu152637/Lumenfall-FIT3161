@@ -144,8 +144,8 @@
     {
       "id": "relic.stella.power",
       "type": "relic",
-      "x": 18,
-      "y": 14,
+      "x": 11,
+      "y": 4,
       "blocks": false,
       "tags": [
         "ampere",
@@ -156,8 +156,8 @@
     {
       "id": "circuit.stella.link",
       "type": "relic",
-      "x": 20,
-      "y": 14,
+      "x": 14,
+      "y": 4,
       "blocks": false,
       "tags": [
         "weave",
@@ -188,8 +188,8 @@
   "portals": [
     {
       "id": "P.B02.C05",
-      "x": 8,
-      "y": 2,
+      "x": 10,
+      "y": 6,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B02",
       "arrivalOffsetX": 11,

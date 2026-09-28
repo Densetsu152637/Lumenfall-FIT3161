@@ -460,8 +460,8 @@
       "y": 68,
       "destinationScene": "B02.Ground",
       "destinationPortalId": "P.B02.C05",
-      "arrivalOffsetX": 18,
-      "arrivalOffsetY": 14,
+      "arrivalOffsetX": 10,
+      "arrivalOffsetY": 5,
       "width": 1,
       "height": 1
     },
@@ -471,8 +471,8 @@
       "y": 38,
       "destinationScene": "B03.Ground",
       "destinationPortalId": "P.B03.C05",
-      "arrivalOffsetX": 48,
-      "arrivalOffsetY": 10,
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1,
       "width": 1,
       "height": 1
     },
@@ -482,8 +482,8 @@
       "y": 6,
       "destinationScene": "B04.Ground",
       "destinationPortalId": "P.B04.C05",
-      "arrivalOffsetX": 80,
-      "arrivalOffsetY": 50,
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1,
       "width": 1,
       "height": 1
     },
