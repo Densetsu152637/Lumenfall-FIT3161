@@ -157,6 +157,37 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
         }
+
+        [UnityTest]
+        public IEnumerator ThreeWideCampusPortalEntersB02FromEveryCell()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
+            NpcCatalogAsset catalog = (NpcCatalogAsset)catalogField.GetValue(loader);
+            WorldAreaAsset[] availableAreas = (WorldAreaAsset[])areasField.GetValue(loader);
+            WorldAreaAsset campus = availableAreas.Single(area => area.definition.id == "campus");
+
+            for (int x = 19; x <= 21; x++)
+            {
+                loader.Load(campus, catalog);
+                yield return null;
+                GridPortal entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
+                Assert.That(entrance.Content.cell, Is.EqualTo(new Vector2Int(19, 46)));
+                Assert.That(entrance.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+                Assert.That(entrance.World.IsCellBlocked(new Vector2Int(x, 46)), Is.False);
+
+                GridMover player = Object.FindAnyObjectByType<GridMover>();
+                Assert.That(player.TryTeleportTo(entrance.World, new Vector2Int(x, 46)), Is.True);
+                Assert.That(entrance.TryEnter(player), Is.True, $"Campus B02 entrance cell ({x},46) should transition.");
+                Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("B02.Ground"));
+                Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(8, 3)));
+            }
+        }
     }
 }
 

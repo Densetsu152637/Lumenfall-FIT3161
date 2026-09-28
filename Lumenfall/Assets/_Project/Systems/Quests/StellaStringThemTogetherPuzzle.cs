@@ -13,11 +13,12 @@ namespace Lumenfall.Quests
     {
         private const string MapId = "B02.Ground";
         private const string IdPrefix = "stella.string-together.relic.";
-        private const string QuestId = "stella_string_them_together";
+        private const string QuestId = "stella_first_light";
         private static readonly Vector2Int[] Cells =
         {
-            new Vector2Int(21, 14), new Vector2Int(18, 15), new Vector2Int(19, 15),
-            new Vector2Int(20, 15), new Vector2Int(21, 15)
+            // Five widely separated vertices of a pentagon around the B02 hall.
+            new Vector2Int(19, 19), new Vector2Int(26, 14), new Vector2Int(23, 6),
+            new Vector2Int(15, 6), new Vector2Int(12, 14)
         };
 
         // Each switch toggles itself and the other indexed relics in its mask.
@@ -134,6 +135,7 @@ namespace Lumenfall.Quests
             if (state == null || !state.IsReady || !string.Equals(state.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return;
             if (relicViews == null) return;
             RefreshViews();
+            TryCompleteIfSolved();
             if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !Keyboard.current.fKey.wasPressedThisFrame) return;
             TryActivateNearest();
@@ -162,6 +164,16 @@ namespace Lumenfall.Quests
                 state.QueueEffect("stella-relic:" + (i + 1) + ":" + (next ? "on" : "off"));
             }
             RefreshViews();
+            TryCompleteIfSolved();
+        }
+
+        private void TryCompleteIfSolved()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (runtime == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active) return;
+            for (int i = 0; i < Cells.Length; i++)
+                if (!state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) || !snapshot.powered) return;
+            runtime.TriggerEvent("complete_stella_first_light");
         }
 
         private void RefreshViews()
@@ -190,10 +202,10 @@ namespace Lumenfall.Quests
             int count = 0;
             for (int i = 0; i < powered.Length; i++)
                 if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) && (powered[i] = snapshot.powered)) count++;
-            GUI.Box(new Rect(18f, 18f, 420f, 98f), "Stella's Circuit Relics");
+            GUI.Box(new Rect(18f, 18f, 420f, 98f), "Stella — First Light");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
-            string instruction = complete ? "Circuit restored. Stella's relics are stable." : "F: activate a nearby relic     Solution: 1 → 2 → 3 → 4";
+            string instruction = complete ? "Circuit restored. Return to Stella." : "Stand near a relic and press F. Light all five.";
             GridMover player = FindAnyObjectByType<GridMover>();
             if (!complete && player != null)
             {
@@ -204,7 +216,7 @@ namespace Lumenfall.Quests
                     int distance = Mathf.Abs(player.CurrentCell.x - Cells[i].x) + Mathf.Abs(player.CurrentCell.y - Cells[i].y);
                     if (distance <= best) { best = distance; nearest = i; }
                 }
-                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  F: activate     Solution: 1 → 2 → 3 → 4";
+                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Press F to activate";
             }
             GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             string status = "Power: ";

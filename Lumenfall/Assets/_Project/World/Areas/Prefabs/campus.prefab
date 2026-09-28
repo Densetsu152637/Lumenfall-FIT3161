@@ -1727,7 +1727,7 @@ Transform:
   m_GameObject: {fileID: 6850555205140822039}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -62.499992, y: 0, z: 6.749991}
+  m_LocalPosition: {x: -40.499996, y: 0, z: -6.0000033}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1747,19 +1747,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
   useTransformAsAnchor: 0
-  anchorCell: {x: 25, y: 5}
+  anchorCell: {x: 19, y: 46}
   footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 1}
-  portalId: P.A01.F03
+  footprintSize: {x: 3, y: 1}
+  portalId: P.C05.B02
   destinationMode: 0
   destinationPortal: {fileID: 0}
   destinationWorld: {fileID: 0}
   destinationCell: {x: 0, y: 0}
   destinationScene: 
   destinationPortalId: 
-  content: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
-  preserveEntryOffset: 1
-  arrivalOffset: {x: 1, y: -1}
+  content: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
+  preserveEntryOffset: 0
+  arrivalOffset: {x: 0, y: 1}
   gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
 --- !u!1 &6905512318141127761
 GameObject:
