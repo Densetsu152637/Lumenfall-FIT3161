@@ -51,6 +51,7 @@ namespace Lumenfall.Quests
         public int requiredRotation = -1;
         public int requiredPositionX = int.MinValue;
         public int requiredPositionY = int.MinValue;
+        public string[] requiredConnections = Array.Empty<string>();
     }
 
     /// <summary>
@@ -134,6 +135,12 @@ namespace Lumenfall.Quests
             foreach (QuestPuzzleTarget target in targets)
             {
                 if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
+                foreach (string requiredConnection in target.requiredConnections ?? Array.Empty<string>())
+                {
+                    string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
+                    if (endpoints.Length != 2 || string.IsNullOrWhiteSpace(endpoints[0]) || string.IsNullOrWhiteSpace(endpoints[1]) ||
+                        !state.IsConnected(endpoints[0], endpoints[1])) return false;
+                }
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)
