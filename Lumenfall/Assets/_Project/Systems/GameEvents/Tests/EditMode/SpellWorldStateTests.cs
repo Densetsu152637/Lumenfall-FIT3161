@@ -93,11 +93,14 @@ namespace Lumenfall.Tests.GameEvents
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
 
-                Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
+                Assert.That(caster.Cast(SpellId.Ampere, "circuit.stella.link", Vector2Int.right), Is.True);
+                Assert.That(caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.right), Is.True,
+                    "The dark source can connect to its powered partner.");
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active),
-                    "Powering the source alone must not complete the circuit quest.");
-                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.True);
+                    "A valid connection must not complete the quest while the source relic is dark.");
+
+                Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
                 RunPuzzleMonitor(monitor);
                 Assert.That(state.IsConnected("relic.stella.power", "circuit.stella.link"), Is.True);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
