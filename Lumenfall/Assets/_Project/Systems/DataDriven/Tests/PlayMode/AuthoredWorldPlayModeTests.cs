@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lumenfall.DataDriven;
@@ -21,9 +22,15 @@ namespace Lumenfall.Tests.World
 
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             Assert.That(loader, Is.Not.Null, "SampleScene should have a wired world loader.");
-            Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
+            Assert.That(loader.LoadedMap.id, Is.EqualTo("westForest"));
             GridMover player = Object.FindAnyObjectByType<GridMover>();
             Assert.That(player, Is.Not.Null, "SampleScene should have a player for portal and save checks.");
+
+            GridPortal startingReturn = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+            Assert.That(loader.SwitchArea(startingReturn.Content, Vector2Int.zero), Is.True,
+                "The forest start should be able to reach campus.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
 
             GridPortal outward = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
@@ -54,9 +61,9 @@ namespace Lumenfall.Tests.World
 
             var migratedReturns = new[]
             {
-                new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(23, 11) },
-                new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(53, 7) },
-                new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(85, 47) }
+                new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(11, 68) },
+                new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(7, 38) },
+                new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(47, 6) }
             };
             foreach (var expected in migratedReturns)
             {
@@ -82,6 +89,9 @@ namespace Lumenfall.Tests.World
                 {
                     Assert.That(route.destination, Is.Not.Null,
                         "Active route " + area.definition.id + "/" + route.id + " needs a direct destination.");
+                    Assert.That(route.destination.area.areaPrefab.GetComponentsInChildren<GridPortal>(true)
+                        .Any(portal => portal.Content == route.destination), Is.True,
+                        "Destination portal " + route.destination.id + " must exist in its area prefab.");
                     loader.Load(area, catalog);
                     yield return null;
                     GridPortal livePortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
@@ -93,7 +103,7 @@ namespace Lumenfall.Tests.World
                     activeRouteCount++;
                 }
             }
-            Assert.That(activeRouteCount, Is.EqualTo(10), "All legacy active portal edges should be present and traversable.");
+            Assert.That(activeRouteCount, Is.EqualTo(9), "All active forest, campus, and building portal edges should be traversable.");
 
             WorldAreaAsset campus = allAreas.Single(area => area.definition.id == "campus");
             loader.Load(campus, catalog);
@@ -156,6 +166,47 @@ namespace Lumenfall.Tests.World
                 "Entering the registered westForest gate should perform the area transition.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
+
+            GridPortal b02Entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
+            Assert.That(CanReach(gate.World, player.CurrentCell, b02Entrance.FirstCell), Is.True,
+                "The campus route from the forest arrival to B02 must be walkable.");
+            Assert.That(player.TryTeleportTo(b02Entrance.World, b02Entrance.FirstCell), Is.True);
+            Assert.That(b02Entrance.TryEnter(player), Is.True, "The B02 entrance must transfer the player.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("B02.Ground"));
+            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(10, 5)));
+            GridPortal b02Exit = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content != null && portal.Content.id == "P.B02.C05");
+            Assert.That(CanReach(b02Exit.World, player.CurrentCell, new Vector2Int(12, 5)), Is.True,
+                "The B02 landing must reach Stella's interaction side.");
+            Assert.That(CanReach(b02Exit.World, player.CurrentCell, b02Exit.FirstCell), Is.True,
+                "The B02 landing must reach its return portal.");
+            Assert.That(player.TryTeleportTo(b02Exit.World, b02Exit.FirstCell), Is.True);
+            Assert.That(b02Exit.TryEnter(player), Is.True, "The B02 exit must return the player to campus.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
+            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(11, 68)));
+        }
+
+        private static bool CanReach(GridWorld world, Vector2Int from, Vector2Int destination)
+        {
+            var visited = new HashSet<Vector2Int> { from };
+            var queue = new Queue<Vector2Int>();
+            queue.Enqueue(from);
+            while (queue.Count > 0)
+            {
+                Vector2Int cell = queue.Dequeue();
+                if (cell == destination) return true;
+                foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                {
+                    Vector2Int next = cell + step;
+                    if (!visited.Contains(next) && world.CanTraverse(cell, next))
+                    {
+                        visited.Add(next);
+                        queue.Enqueue(next);
+                    }
+                }
+            }
+            return false;
         }
     }
 }
