@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -137,7 +138,7 @@ namespace Lumenfall.Quests
             RefreshViews();
             TryCompleteIfSolved();
             if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !Keyboard.current.fKey.wasPressedThisFrame) return;
+                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !KeyBindings.WasPressed(GameAction.Interact)) return;
             TryActivateNearest();
         }
 
@@ -205,7 +206,7 @@ namespace Lumenfall.Quests
             GUI.Box(new Rect(18f, 18f, 420f, 98f), "Stella — First Light");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
-            string instruction = complete ? "Circuit restored. Return to Stella." : "Stand near a relic and press F. Light all five.";
+            string instruction = complete ? "Circuit restored. Return to Stella." : "Stand near a relic and press " + KeyBindings.GetKeyLabel(GameAction.Interact) + ". Light all five.";
             GridMover player = FindAnyObjectByType<GridMover>();
             if (!complete && player != null)
             {
@@ -216,7 +217,7 @@ namespace Lumenfall.Quests
                     int distance = Mathf.Abs(player.CurrentCell.x - Cells[i].x) + Mathf.Abs(player.CurrentCell.y - Cells[i].y);
                     if (distance <= best) { best = distance; nearest = i; }
                 }
-                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Press F to activate";
+                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Press " + KeyBindings.GetKeyLabel(GameAction.Interact) + " to activate";
             }
             GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             string status = "Power: ";

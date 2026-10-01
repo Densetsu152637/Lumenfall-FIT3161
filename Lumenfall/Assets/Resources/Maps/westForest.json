@@ -80,11 +80,12 @@
       "id": "mechanism.orio.rotate",
       "type": "mechanism",
       "x": 8,
-      "y": 23,
+      "y": 21,
       "blocks": false,
       "tags": [
         "rotara"
-      ]
+      ],
+      "rotation": 180
     }
   ],
   "puzzleTargets": [

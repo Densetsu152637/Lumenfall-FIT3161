@@ -125,7 +125,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
+        public void OrioQuestCompletionTeachesOnlyRotara()
         {
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
@@ -135,13 +135,44 @@ namespace Lumenfall.Tests.GameEvents
                 SpellCaster caster = host.AddComponent<SpellCaster>();
                 DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
                 Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void OrioConfirmsPatchOnlyOnceGearIsAlignedAndTeachesRotara()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            manager.Runtime.ResetState();
+            GameObject host = new GameObject("orio-report-test");
+            try
+            {
+                SpellCaster caster = host.AddComponent<SpellCaster>();
+                Assert.That(manager.Runtime.StartDialogue("orio_patch_notes_dialogue").SelectChoice("accept"), Is.True);
+                manager.Runtime.ActiveDialogue?.End();
+
+                DialogueSession misaligned = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(ChoiceIds(misaligned), Does.Not.Contain("report"));
+                Assert.That(ChoiceIds(misaligned), Does.Contain("active"));
+                misaligned.End();
+
+                manager.Runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
+                DialogueSession aligned = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(ChoiceIds(aligned), Does.Not.Contain("active"));
+                Assert.That(aligned.SelectChoice("report"), Is.True);
+                Assert.That(manager.Runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Completed));
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
             }
             finally
             {
+                manager.Runtime.ActiveDialogue?.End();
                 Object.DestroyImmediate(host);
             }
         }
