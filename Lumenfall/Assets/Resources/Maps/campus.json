@@ -456,13 +456,13 @@
     },
     {
       "id": "P.C05.B02",
-      "x": 12,
-      "y": 68,
+      "x": 19,
+      "y": 46,
       "destinationScene": "B02.Ground",
       "destinationPortalId": "P.B02.C05",
-      "arrivalOffsetX": 10,
-      "arrivalOffsetY": 5,
-      "width": 1,
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 3,
+      "width": 3,
       "height": 1
     },
     {

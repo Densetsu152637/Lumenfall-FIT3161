@@ -1,65 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &110860742046674840
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4073239001730472231}
-  - component: {fileID: 5221300726928324961}
-  m_Layer: 0
-  m_Name: P.C05.B04
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4073239001730472231
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 110860742046674840}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.000002, y: 0, z: 23.000002}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3054605415130267019}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5221300726928324961
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 110860742046674840}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
-  world: {fileID: 0}
-  useTransformAsAnchor: 0
-  anchorCell: {x: 48, y: 6}
-  footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 1}
-  portalId: P.C05.B04
-  destinationMode: 0
-  destinationPortal: {fileID: 0}
-  destinationWorld: {fileID: 0}
-  destinationCell: {x: 0, y: 0}
-  destinationScene:
-  destinationPortalId:
-  content: {fileID: 11400000, guid: 41c184c10886e40449ff7576f4f40ebf, type: 2}
-  preserveEntryOffset: 1
-  arrivalOffset: {x: 0, y: -1}
-  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
 --- !u!1 &265615906580992228
 GameObject:
   m_ObjectHideFlags: 0
@@ -183,7 +123,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
@@ -314,7 +254,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: mechanism.orio.rotate
   cell: {x: 25, y: 34}
@@ -445,7 +385,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: keepsake.katrina.hidden
   cell: {x: 42, y: 60}
@@ -577,7 +517,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: circuit.stella.link
   cell: {x: 35, y: 45}
@@ -709,7 +649,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
@@ -794,20 +734,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
   useTransformAsAnchor: 0
   anchorCell: {x: 25, y: 5}
   footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 2, y: 1}
+  footprintSize: {x: 1, y: 1}
   portalId: P.A01.F03
   destinationMode: 0
   destinationPortal: {fileID: 0}
   destinationWorld: {fileID: 0}
   destinationCell: {x: 0, y: 0}
-  destinationScene:
-  destinationPortalId:
+  destinationScene: 
+  destinationPortalId: 
   content: {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
   preserveEntryOffset: 1
   arrivalOffset: {x: 1, y: -1}
@@ -1035,7 +975,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
@@ -1166,7 +1106,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: relic.stella.power
   cell: {x: 35, y: 47}
@@ -1297,66 +1237,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &5850725148813756534
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7899425530359312674}
-  - component: {fileID: 7225049447077450359}
-  m_Layer: 0
-  m_Name: P.C05.B02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7899425530359312674
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5850725148813756534}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -63.000008, y: 0, z: -13.000008}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3054605415130267019}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7225049447077450359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5850725148813756534}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
-  world: {fileID: 0}
-  useTransformAsAnchor: 0
-  anchorCell: {x: 12, y: 68}
-  footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 1}
-  portalId: P.C05.B02
-  destinationMode: 0
-  destinationPortal: {fileID: 0}
-  destinationWorld: {fileID: 0}
-  destinationCell: {x: 0, y: 0}
-  destinationScene:
-  destinationPortalId:
-  content: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
-  preserveEntryOffset: 1
-  arrivalOffset: {x: 0, y: -1}
-  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
 --- !u!1 &6181039936976293240
 GameObject:
   m_ObjectHideFlags: 0
@@ -1480,7 +1360,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: orientation.cinna.align
   cell: {x: 22, y: 51}
@@ -1646,7 +1526,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
@@ -1812,7 +1692,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4119d75d43b6714dabe5808642de111, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: trial.cinna.ice
   cell: {x: 34, y: 71}
@@ -1821,7 +1701,7 @@ MonoBehaviour:
   tags:
   - glaciate
   - slide-goal:34,67
---- !u!1 &6867053598538692855
+--- !u!1 &6850555205140822039
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1829,57 +1709,57 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1923730320881349379}
-  - component: {fileID: 7626713898850642671}
+  - component: {fileID: 8911038295921548636}
+  - component: {fileID: 6876565327862604737}
   m_Layer: 0
-  m_Name: P.C05.B03
+  m_Name: P.B02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1923730320881349379
+--- !u!4 &8911038295921548636
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6867053598538692855}
+  m_GameObject: {fileID: 6850555205140822039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -33, y: 0, z: -17.000006}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -40.499996, y: 0, z: -6.0000033}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3054605415130267019}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7626713898850642671
+--- !u!114 &6876565327862604737
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6867053598538692855}
+  m_GameObject: {fileID: 6850555205140822039}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
   useTransformAsAnchor: 0
-  anchorCell: {x: 8, y: 38}
+  anchorCell: {x: 19, y: 46}
   footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 1}
-  portalId: P.C05.B03
+  footprintSize: {x: 3, y: 1}
+  portalId: P.C05.B02
   destinationMode: 0
   destinationPortal: {fileID: 0}
   destinationWorld: {fileID: 0}
   destinationCell: {x: 0, y: 0}
-  destinationScene:
-  destinationPortalId:
-  content: {fileID: 11400000, guid: b0caa62ccb2f27a4486d399e5832aa9b, type: 2}
-  preserveEntryOffset: 1
-  arrivalOffset: {x: 0, y: -1}
+  destinationScene: 
+  destinationPortalId: 
+  content: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
+  preserveEntryOffset: 0
+  arrivalOffset: {x: 0, y: 1}
   gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
 --- !u!1 &6905512318141127761
 GameObject:
@@ -2088,11 +1968,70 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7755427063844067721}
-  - {fileID: 7899425530359312674}
-  - {fileID: 1923730320881349379}
-  - {fileID: 4073239001730472231}
+  - {fileID: 8911038295921548636}
+  - {fileID: 755625262846149214}
   m_Father: {fileID: 7880011013163449690}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8933431982076125161
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 755625262846149214}
+  - component: {fileID: 8891380159486308919}
+  m_Layer: 0
+  m_Name: P.A01.F03.86_26
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &755625262846149214
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8933431982076125161}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3054605415130267019}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8891380159486308919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8933431982076125161}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
+  world: {fileID: 0}
+  useTransformAsAnchor: 0
+  anchorCell: {x: 26, y: 5}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 1}
+  portalId: P.A01.F03.86_26
+  destinationMode: 0
+  destinationPortal: {fileID: 0}
+  destinationWorld: {fileID: 0}
+  destinationCell: {x: 0, y: 0}
+  destinationScene: 
+  destinationPortalId: 
+  content: {fileID: 11400000, guid: 67ff985442c01aa4fa6fd3274716df6b, type: 2}
+  preserveEntryOffset: 1
+  arrivalOffset: {x: 1, y: -1}
+  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
 --- !u!1001 &27264388442470446
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2427,7 +2366,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: e5e73977439d8b24f8e7ab5913438126, type: 3}
       propertyPath: m_Controller
-      value:
+      value: 
       objectReference: {fileID: 9100000, guid: 5197bd3e79eddcd4d9ac7756e90c423c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5765,7 +5704,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9c2e9c3b524fe4b2ef0af3c4b9c004, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DynamicNpc
   definition:
     id: cinna_cirra_trial
@@ -5776,26 +5715,26 @@ MonoBehaviour:
     y: 71
     layerSymbol: c
     showWhenQuestCompleted: cinna_out_of_alignment
-    hideWhenQuestCompleted:
+    hideWhenQuestCompleted: 
     dialogueIds: []
     dialogue:
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: NotStarted
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: Active
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: Completed
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_cold_feet_warm_idea_dialogue
       questId: cinna_cold_feet_warm_idea
@@ -5815,7 +5754,7 @@ MonoBehaviour:
       prerequisiteQuestId: cinna_out_of_alignment
       prerequisiteQuestStatus: Completed
       weight: 5
-  initialDialogueId:
+  initialDialogueId: 
 --- !u!1001 &6385571967526379110
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6214,7 +6153,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9c2e9c3b524fe4b2ef0af3c4b9c004, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DynamicNpc
   definition:
     id: campus_student
@@ -6224,29 +6163,29 @@ MonoBehaviour:
     x: 32
     y: 21
     layerSymbol: a
-    showWhenQuestCompleted:
-    hideWhenQuestCompleted:
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
     dialogueIds: []
     dialogue:
     - dialogueId: ambient_courtyard_student
-      questId:
-      requiredQuestStatus:
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 1
     - dialogueId: ambient_courtyard_student_2
-      questId:
-      requiredQuestStatus:
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 1
     - dialogueId: ambient_courtyard_student_3
-      questId:
-      requiredQuestStatus:
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 1
-  initialDialogueId:
+  initialDialogueId: 
 --- !u!1001 &6918827215776422797
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7783,7 +7722,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 243926603113532292, guid: e59ae35362b480048ac835df14632f5f, type: 3}
       propertyPath: m_Controller
-      value:
+      value: 
       objectReference: {fileID: 9100000, guid: 5197bd3e79eddcd4d9ac7756e90c423c, type: 2}
     - target: {fileID: 6161686391465202174, guid: e59ae35362b480048ac835df14632f5f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7852,7 +7791,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9c2e9c3b524fe4b2ef0af3c4b9c004, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DynamicNpc
   definition:
     id: cinna_cirra_orientation
@@ -7862,27 +7801,27 @@ MonoBehaviour:
     x: 22
     y: 51
     layerSymbol: c
-    showWhenQuestCompleted:
+    showWhenQuestCompleted: 
     hideWhenQuestCompleted: cinna_out_of_alignment
     dialogueIds: []
     dialogue:
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: NotStarted
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: Active
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_out_of_alignment_dialogue
       questId: cinna_out_of_alignment
       requiredQuestStatus: Completed
-      prerequisiteQuestId:
-      prerequisiteQuestStatus:
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
       weight: 5
     - dialogueId: cinna_cold_feet_warm_idea_dialogue
       questId: cinna_cold_feet_warm_idea
@@ -7902,7 +7841,7 @@ MonoBehaviour:
       prerequisiteQuestId: cinna_out_of_alignment
       prerequisiteQuestStatus: Completed
       weight: 5
-  initialDialogueId:
+  initialDialogueId: 
 --- !u!4 &3426908732515942622 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6161686391465202174, guid: e59ae35362b480048ac835df14632f5f, type: 3}
@@ -8246,7 +8185,7 @@ DefaultAsset:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name:
+  m_Name: 
   m_Message: This default asset was generated because the worker process has crashed
     during last import.
   m_IsWarning: 1
