@@ -139,6 +139,7 @@ namespace Lumenfall.Tests.GameEvents
             {
                 if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
                 runtime.ResetState();
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -146,7 +147,13 @@ namespace Lumenfall.Tests.GameEvents
         [Test]
         public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
         {
-            GameEventRuntime runtime = CreateRuntime();
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("dialogue-spell-reward-test");
+            SpellCaster caster = host.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
+            try
+            {
             DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
             Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
             Assert.That(session.IsCompleted, Is.False);
@@ -160,6 +167,14 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(session.Continue(), Is.True);
             Assert.That(session.IsCompleted, Is.True);
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+            }
+            finally
+            {
+                EditModeLifecycle.Call(caster, "OnDisable");
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                Object.DestroyImmediate(host);
+                runtime.ResetState();
+            }
         }
 
         [Test]
@@ -182,6 +197,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
+                EditModeLifecycle.Call(caster, "OnEnable");
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
@@ -199,6 +215,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -212,6 +229,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
+                EditModeLifecycle.Call(caster, "OnEnable");
                 DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
@@ -221,6 +239,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -231,7 +250,8 @@ namespace Lumenfall.Tests.GameEvents
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
             GameObject uiObject = new GameObject("inventory-test-ui");
-            uiObject.AddComponent<InventoryEncyclopediaUI>();
+            InventoryEncyclopediaUI ui = uiObject.AddComponent<InventoryEncyclopediaUI>();
+            EditModeLifecycle.Call(ui, "OnEnable");
             try
             {
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
@@ -249,6 +269,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                EditModeLifecycle.Call(ui, "OnDisable");
                 Object.DestroyImmediate(uiObject);
             }
         }

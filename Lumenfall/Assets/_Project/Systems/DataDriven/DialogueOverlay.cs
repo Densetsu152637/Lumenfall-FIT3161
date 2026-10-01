@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Quests;
 
 namespace Lumenfall.DataDriven
 {
@@ -88,7 +89,7 @@ namespace Lumenfall.DataDriven
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
             EnsureStyles();
             EnsureNode();
-            if (Time.frameCount > inputBlockedFrame) HandleAdvanceInput();
+            if (Time.frameCount > inputBlockedFrame && !QuestHintOverlay.IsSettingsOpen) HandleAdvanceInput();
             // Advancing past the last node ends the dialogue, and OnEnded clears the session.
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
             float width = Mathf.Min(Screen.width - 40f, 760f);
@@ -112,17 +113,26 @@ namespace Lumenfall.DataDriven
                 for (int i = 0; i < session.AvailableChoices.Count; i++)
                 {
                     DialogueChoiceDefinition choice = session.AvailableChoices[i];
+                    if (QuestHintOverlay.IsSettingsOpen)
+                    {
+                        GUILayout.Label(choice.text ?? choice.id, buttonStyle);
+                        continue;
+                    }
                     if (!GUILayout.Button(choice.text ?? choice.id, buttonStyle)) continue;
                     // Selecting can end the dialogue (clearing session) or replace the choice list, so stop drawing choices.
                     session.SelectChoice(choice.id);
                     break;
                 }
             }
+            else if (complete && QuestHintOverlay.IsSettingsOpen)
+            {
+                GUILayout.Label(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle);
+            }
             else if (complete && GUILayout.Button(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle))
             {
                 session.Continue();
             }
-            else if (!complete) GUILayout.Label("Press Space or E to reveal", hintStyle);
+            else if (!complete) GUILayout.Label(QuestHintOverlay.IsSettingsOpen ? "Close Settings to continue" : "Press Space or E to reveal", hintStyle);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }

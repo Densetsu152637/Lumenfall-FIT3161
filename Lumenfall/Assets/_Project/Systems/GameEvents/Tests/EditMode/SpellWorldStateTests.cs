@@ -19,15 +19,21 @@ namespace Lumenfall.Tests.GameEvents
         public void SetUp()
         {
             GameObject gridObject = new GameObject("test-grid"); created.Add(gridObject); grid = gridObject.AddComponent<GridWorld>(); grid.ConfigureBounds(12, 12);
-            GameObject stateObject = new GameObject("test-spell-state"); created.Add(stateObject); state = stateObject.AddComponent<WorldStateService>(); state.BeginMapRebuild("test-map");
+            GameObject stateObject = new GameObject("test-spell-state"); created.Add(stateObject); state = stateObject.AddComponent<WorldStateService>(); EditModeLifecycle.SetWorldInstance(state); state.BeginMapRebuild("test-map");
+            GameEventManager.Instance.Runtime.ResetState();
         }
 
         [TearDown]
         public void TearDown()
         {
             if (state != null) GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
-            for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null) Object.DestroyImmediate(created[i]);
+            for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null)
+            {
+                foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                Object.DestroyImmediate(created[i]);
+            }
             created.Clear();
+            GameEventManager.Instance.Runtime.ResetState();
         }
 
         [Test]
@@ -60,6 +66,7 @@ namespace Lumenfall.Tests.GameEvents
             {
                 monitorHost = new GameObject("stella-quest-puzzle-monitor-test");
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
+                EditModeLifecycle.Call(monitor, "Awake");
             }
             try
             {
@@ -72,6 +79,7 @@ namespace Lumenfall.Tests.GameEvents
                     new[] { "weave-with:relic.stella.power" });
                 state.EndMapRebuild();
                 SpellCaster caster = created[1].AddComponent<SpellCaster>();
+                EditModeLifecycle.Call(caster, "OnEnable");
 
                 DialogueSession firstLight = runtime.StartDialogue("stella_first_light_dialogue");
                 Assert.That(firstLight.SelectChoice("accept"), Is.True);

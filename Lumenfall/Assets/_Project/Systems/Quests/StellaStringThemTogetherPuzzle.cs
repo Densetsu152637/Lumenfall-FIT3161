@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
@@ -51,6 +52,57 @@ namespace Lumenfall.Quests
             }
             instance.SetPresentationVisible(true);
             instance.RegisterObjects(world);
+        }
+
+        /// <summary>Returns the next board switch on a shortest route to lighting all five relics.</summary>
+        public static bool TryGetFirstLightStep(out string instruction, out Vector2Int targetCell)
+        {
+            instruction = null;
+            targetCell = default;
+            WorldStateService worldState = WorldStateService.Instance;
+            if (worldState == null || !worldState.IsReady ||
+                !string.Equals(worldState.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return false;
+
+            int board = 0;
+            for (int i = 0; i < Cells.Length; i++)
+            {
+                if (!worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic)) return false;
+                if (relic.powered) board |= 1 << i;
+            }
+            if (board == (1 << Cells.Length) - 1)
+            {
+                instruction = "All five relics are lit. Return to Stella.";
+                return true;
+            }
+
+            int nextSwitch = FindNextSwitch(board);
+            if (nextSwitch < 0 || !worldState.TryGetObject(ObjectId(nextSwitch), out WorldObjectSnapshot target)) return false;
+            instruction = $"Next: activate relic {nextSwitch + 1}. Press F when nearby.";
+            targetCell = target.cell;
+            return true;
+        }
+
+        private static int FindNextSwitch(int board)
+        {
+            int[] firstSwitch = new int[1 << Cells.Length];
+            for (int i = 0; i < firstSwitch.Length; i++) firstSwitch[i] = -1;
+            firstSwitch[board] = -2;
+            Queue<int> pending = new Queue<int>();
+            pending.Enqueue(board);
+            int goal = (1 << Cells.Length) - 1;
+            while (pending.Count > 0)
+            {
+                int current = pending.Dequeue();
+                for (int i = 0; i < ToggleMasks.Length; i++)
+                {
+                    int next = current ^ ToggleMasks[i];
+                    if (firstSwitch[next] != -1) continue;
+                    firstSwitch[next] = current == board ? i : firstSwitch[current];
+                    if (next == goal) return firstSwitch[next];
+                    pending.Enqueue(next);
+                }
+            }
+            return -1;
         }
 
         private void Awake()
@@ -136,7 +188,7 @@ namespace Lumenfall.Quests
             if (relicViews == null) return;
             RefreshViews();
             TryCompleteIfSolved();
-            if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
+            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !Keyboard.current.fKey.wasPressedThisFrame) return;
             TryActivateNearest();
         }
@@ -202,7 +254,8 @@ namespace Lumenfall.Quests
             int count = 0;
             for (int i = 0; i < powered.Length; i++)
                 if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) && (powered[i] = snapshot.powered)) count++;
-            GUI.Box(new Rect(18f, 18f, 420f, 98f), "Stella — First Light");
+            bool showGuidance = QuestHintOverlay.HintsEnabled && !QuestHintOverlay.IsSettingsOpen;
+            GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — First Light");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
             string instruction = complete ? "Circuit restored. Return to Stella." : "Stand near a relic and press F. Light all five.";
@@ -218,10 +271,10 @@ namespace Lumenfall.Quests
                 }
                 if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Press F to activate";
             }
-            GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
+            if (showGuidance) GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             string status = "Power: ";
             for (int i = 0; i < powered.Length; i++) status += (i == 0 ? "" : "   ") + (i + 1) + (powered[i] ? " ●" : " ○");
-            GUI.Label(new Rect(32f, 68f, 396f, 22f), status + "     " + count + "/5");
+            GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + count + "/5");
         }
 
         private static string ObjectId(int index) => IdPrefix + (index + 1);

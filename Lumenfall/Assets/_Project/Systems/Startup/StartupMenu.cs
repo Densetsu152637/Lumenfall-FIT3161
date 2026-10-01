@@ -6,6 +6,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
+using Lumenfall.Quests;
 
 namespace Lumenfall.Startup
 {
@@ -19,6 +20,7 @@ namespace Lumenfall.Startup
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
         private const string MasterVolumeKey = "lumenfall.master-volume";
+        private const string QuestHintsEnabledKey = "lumenfall.quest-hints-enabled";
 
         private enum Page { Main, Load, Settings }
 
@@ -29,11 +31,21 @@ namespace Lumenfall.Startup
         private string backdropSlot;
         private string message;
         private float masterVolume;
+        private bool questHintsEnabled;
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
         private readonly Dictionary<string, Texture2D> buttonTextures = new Dictionary<string, Texture2D>();
         private float previousTimeScale = 1f;
+
+        public static bool IsVisible
+        {
+            get
+            {
+                StartupMenu menu = FindAnyObjectByType<StartupMenu>();
+                return menu != null && menu.isActiveAndEnabled && menu.ready;
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -51,6 +63,8 @@ namespace Lumenfall.Startup
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             masterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumeKey, 1f));
+            questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
+            QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
             AudioListener.volume = masterVolume;
             SetGameplayInput(false);
             LoadButtonTextures();
@@ -134,7 +148,11 @@ namespace Lumenfall.Startup
             float y = panel.y + 112f;
             if (Button("start", new Rect(x, y, width, 72f), "START")) StartNewGame();
             if (Button("load", new Rect(x, y + 88f, width, 72f), "LOAD")) page = Page.Load;
-            if (Button("options", new Rect(x, y + 176f, width, 72f), "SETTINGS")) page = Page.Settings;
+            if (Button("options", new Rect(x, y + 176f, width, 72f), "SETTINGS"))
+            {
+                questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
+                page = Page.Settings;
+            }
             if (Button("exit", new Rect(x, y + 264f, width, 72f), "EXIT")) Application.Quit();
             if (!string.IsNullOrEmpty(message)) GUI.Label(new Rect(panel.x + 30f, panel.yMax - 68f, panel.width - 60f, 42f), message, BodyStyle());
         }
@@ -176,6 +194,15 @@ namespace Lumenfall.Startup
             }
             GUI.Label(new Rect(panel.x + 54f, panel.y + 224f, panel.width - 108f, 40f),
                 $"{Mathf.RoundToInt(masterVolume * 100f)}%", BodyStyle());
+            bool hintsEnabled = GUI.Toggle(new Rect(panel.x + 54f, panel.y + 278f, panel.width - 108f, 40f),
+                questHintsEnabled, "SHOW QUEST HINTS");
+            if (hintsEnabled != questHintsEnabled)
+            {
+                questHintsEnabled = hintsEnabled;
+                QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
+                PlayerPrefs.SetInt(QuestHintsEnabledKey, questHintsEnabled ? 1 : 0);
+                PlayerPrefs.Save();
+            }
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK")) page = Page.Main;
         }
 

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
+using Lumenfall.Quests;
 
 namespace Lumenfall.Spells
 {
@@ -120,7 +121,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
+        private bool InputBlockedByOverlay => QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void CloseSpellWheel()
         {
             if (!spellWheelOpen) return;
