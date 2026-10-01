@@ -15,38 +15,106 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-lint:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install and run actionlint
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+        run: |
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          release="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}"
+          curl --fail --silent --show-error --location "$release/$archive" --output "$RUNNER_TEMP/$archive"
+          curl --fail --silent --show-error --location "$release/actionlint_${ACTIONLINT_VERSION}_checksums.txt" --output "$RUNNER_TEMP/actionlint-checksums.txt"
+          (cd "$RUNNER_TEMP" && sha256sum --check --ignore-missing actionlint-checksums.txt)
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+
   repository-integrity:
     name: Repository integrity
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
       - name: Test the validation harness
-        run: python3 -m unittest discover --start-directory scripts/tests --verbose
+        run: python -m unittest discover --start-directory scripts/tests --verbose
 
       - name: Validate Unity project structure
-        run: python3 scripts/validate_unity_project.py Lumenfall
+        run: python scripts/validate_unity_project.py Lumenfall
 
-  unity-edit-mode:
-    name: Unity EditMode tests
-    needs: repository-integrity
+  content-validation:
+    name: Content / ${{ matrix.suite }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: Runtime world
+            script: validate_runtime_world.py
+          - suite: Quest and NPC dialogue
+            script: validate_npc_dialogue.py
+          - suite: NPC layers
+            script: validate_npc_layers.py
+          - suite: Garden and portals
+            script: validate_garden_portals.py
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Restore Unity Library cache
-        uses: actions/cache@v5
         with:
-          path: Lumenfall/Library
-          key: unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}
-          restore-keys: |
-            unity-library-${{ runner.os }}-
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate authored content
+        env:
+          VALIDATION_SCRIPT: ${{ matrix.script }}
+        run: python "scripts/$VALIDATION_SCRIPT"
+
+  unity-tests:
+    name: Unity ${{ matrix.label }} tests
+    needs: [workflow-lint, repository-integrity, content-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: editmode
+            label: EditMode
+            assembly: Lumenfall.GameEvents.Tests
+          - mode: playmode
+            label: PlayMode
+            assembly: Lumenfall.World.PlayModeTests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
       - name: Verify Unity license secrets
         shell: bash
@@ -64,7 +132,15 @@ jobs:
             exit 1
           fi
 
-      - name: Run Unity EditMode tests
+      - name: Restore Unity Library cache
+        uses: actions/cache@v5
+        with:
+          path: Lumenfall/Library
+          key: unity-library-${{ runner.os }}-${{ matrix.mode }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-${{ github.sha }}
+          restore-keys: |
+            unity-library-${{ runner.os }}-${{ matrix.mode }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-
+
+      - name: Run first-party Unity tests
         id: unity-tests
         uses: game-ci/unity-test-runner@v4
         env:
@@ -74,14 +150,24 @@ jobs:
         with:
           projectPath: Lumenfall
           unityVersion: auto
-          testMode: editmode
-          artifactsPath: artifacts/editmode
+          testMode: ${{ matrix.mode }}
+          customParameters: -assemblyNames ${{ matrix.assembly }}
+          coverageEnabled: false
+          githubToken: ''
+          artifactsPath: artifacts/${{ matrix.mode }}
 
-      - name: Upload Unity test results
-        if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
+      - name: Require passing results from the intended suite
+        if: ${{ always() && steps.unity-tests.outcome != 'skipped' && steps.unity-tests.outcome != '' }}
+        env:
+          TEST_MODE: ${{ matrix.mode }}
+          TEST_ASSEMBLY: ${{ matrix.assembly }}
+        run: python scripts/validate_unity_results.py "artifacts/$TEST_MODE" --assembly "$TEST_ASSEMBLY" --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Unity test results and logs
+        if: ${{ always() && steps.unity-tests.outcome != 'skipped' && steps.unity-tests.outcome != '' }}
         uses: actions/upload-artifact@v7
         with:
-          name: unity-editmode-results
-          path: ${{ steps.unity-tests.outputs.artifactsPath }}
+          name: unity-${{ matrix.mode }}-results
+          path: artifacts/${{ matrix.mode }}
           if-no-files-found: warn
           retention-days: 14

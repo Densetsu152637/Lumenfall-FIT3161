@@ -71,6 +71,12 @@ def _relative(path: Path, root: Path) -> str:
 
 def _read_text(path: Path, errors: list[str], root: Path) -> str | None:
     try:
+        # Some Asset Store documentation ships with a UTF-16 BOM. Keep source
+        # and serialized assets strictly UTF-8, but accept those text documents.
+        if path.suffix.lower() in {".txt", ".md"}:
+            data = path.read_bytes()
+            if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+                return data.decode("utf-16")
         return path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeDecodeError) as exception:
         errors.append(f"Cannot read {_relative(path, root)} as UTF-8: {exception}")
@@ -164,14 +170,14 @@ def _validate_build_scenes(project: Path, errors: list[str]) -> None:
 
 
 def _validate_text_files(project: Path, errors: list[str]) -> None:
-    markers = ("<<<<<<< ", "=======", ">>>>>>> ")
+    marker = re.compile(r"^(?:<{7} .+|={7}|>{7} .+)$", re.MULTILINE)
     for path in (item for item in _iter_source_paths(project) if item.is_file()):
         if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {"LICENSE"}:
             continue
         text = _read_text(path, errors, project)
         if text is None:
             continue
-        if any(line.startswith(markers) for line in text.splitlines()):
+        if marker.search(text):
             errors.append(f"Unresolved merge-conflict marker in {_relative(path, project)}")
 
 

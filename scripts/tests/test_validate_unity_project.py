@@ -80,6 +80,39 @@ class UnityProjectValidatorTests(unittest.TestCase):
 
         self.assertTrue(any("Invalid JSON" in error and "broken.json" in error for error in errors))
 
+    def test_vendor_utf16_documentation_is_accepted(self) -> None:
+        asset = self.create_asset("ReadMe.txt", "5" * 32)
+        asset.write_text("Vendor documentation: café\n", encoding="utf-16")
+        self.assertEqual([], validate_project(self.project))
+
+    def test_non_utf8_source_is_still_rejected(self) -> None:
+        asset = self.create_asset("broken.cs", "6" * 32)
+        asset.write_text("class Example {}", encoding="utf-16")
+        self.assertTrue(any("Cannot read" in error for error in validate_project(self.project)))
+
+    def test_decorative_dividers_are_not_conflicts(self) -> None:
+        asset = self.create_asset("ReadMe.txt", "7" * 32)
+        asset.write_text("=" * 72 + "\nVendor readme\n", encoding="utf-8")
+        self.assertEqual([], validate_project(self.project))
+
+    def test_each_conflict_marker_is_reported(self) -> None:
+        asset = self.create_asset("broken.cs", "8" * 32)
+        for marker in ("<<<<<<< HEAD", "=======", ">>>>>>> main"):
+            with self.subTest(marker=marker):
+                asset.write_text(marker + "\n", encoding="utf-8")
+                self.assertTrue(any("merge-conflict" in error for error in validate_project(self.project)))
+
+    def test_orphaned_metadata_is_reported(self) -> None:
+        (self.assets / "missing.prefab.meta").write_text("guid: " + "9" * 32 + "\n", encoding="utf-8")
+        self.assertTrue(any("Orphaned" in error for error in validate_project(self.project)))
+
+    def test_missing_enabled_build_scene_is_reported(self) -> None:
+        (self.project / "ProjectSettings" / "EditorBuildSettings.asset").write_text(
+            "EditorBuildSettings:\n  m_Scenes:\n  - enabled: 1\n    path: Assets/Missing.unity\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(any("Enabled build scene" in error for error in validate_project(self.project)))
+
 
 if __name__ == "__main__":
     unittest.main()
