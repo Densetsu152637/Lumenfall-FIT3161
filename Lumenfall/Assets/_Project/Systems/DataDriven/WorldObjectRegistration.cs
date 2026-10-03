@@ -15,6 +15,7 @@ namespace Lumenfall.DataDriven
         public string ObjectId => objectId;
         public Vector2Int Cell => cell;
         public Vector2Int Size => size;
+        public string[] Tags => tags == null ? Array.Empty<string>() : (string[])tags.Clone();
         public void Configure(string id, Vector2Int at, Vector2Int footprint, bool compatible, string[] objectTags)
         { objectId = id; cell = at; size = footprint; spellCompatible = compatible; tags = objectTags ?? Array.Empty<string>(); }
         private void OnEnable()

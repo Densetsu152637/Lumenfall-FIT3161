@@ -25,6 +25,18 @@ namespace Lumenfall.DataDriven
         {
             if (definition == null) return;
             Id = definition.id; DisplayName = definition.displayName;
+            if (WorldPresentationCatalog.TryCharacter(Id, out CharacterPresentationIdentity identity))
+            {
+                WorldPresentationLabel label = GetComponent<WorldPresentationLabel>();
+                if (label == null) label = gameObject.AddComponent<WorldPresentationLabel>();
+                label.Configure(identity.Symbol + " | " + identity.Name + "\nProvisional model", identity.AccentRgb, Vector3.up * 1.9f, identity);
+                label.SetVisible(true);
+            }
+            else
+            {
+                WorldPresentationLabel label = GetComponent<WorldPresentationLabel>();
+                if (label != null) { label.Configure(string.Empty, 0xFFFFFF, Vector3.up * 1.9f); label.SetVisible(false); }
+            }
             if (string.IsNullOrEmpty(DialogueId)) DialogueId = initialDialogueId;
             if (GetComponent<Collider>() == null) gameObject.AddComponent<SphereCollider>().isTrigger = true;
         }

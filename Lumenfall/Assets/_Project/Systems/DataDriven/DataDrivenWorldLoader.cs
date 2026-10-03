@@ -77,6 +77,7 @@ namespace Lumenfall.DataDriven
             root.SetActive(true);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
+            WorldAreaPresentation.Install(root, LoadedMap, world, LoadedNpcs, WorldStateService.Instance);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             StellaReturnPortal.RegisterForMap(LoadedMap.id, world);
             WorldStateService.Instance?.EndMapRebuild();
@@ -152,6 +153,12 @@ namespace Lumenfall.DataDriven
         {
             if (world == null || definition == null || definition.spawn == null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
+            if (player != null && WorldPresentationCatalog.TryCharacter("player", out CharacterPresentationIdentity identity))
+            {
+                WorldPresentationLabel label = player.GetComponent<WorldPresentationLabel>();
+                if (label == null) label = player.gameObject.AddComponent<WorldPresentationLabel>();
+                label.Configure(identity.Symbol + " | " + identity.Name + "\nProvisional model", identity.AccentRgb, Vector3.up * 1.9f, identity);
+            }
             if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>();
             if (player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
                 Debug.LogWarning($"Map '{definition.id}' spawn is unavailable; keeping player position.", this);
