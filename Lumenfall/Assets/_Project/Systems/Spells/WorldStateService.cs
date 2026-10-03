@@ -20,7 +20,7 @@ namespace Lumenfall.Spells
 
     /// Authoritative mutable state for puzzle objects. Quest monitors can subscribe without holding scene references.
     [DefaultExecutionOrder(-300)]
-    public sealed class WorldStateService : MonoBehaviour, ISaveStateProvider
+    public sealed class WorldStateService : MonoBehaviour, ISaveStateProvider, ISaveStateValidator
     {
         public static WorldStateService Instance { get; private set; }
         private readonly Dictionary<string, WorldEntry> entries = new Dictionary<string, WorldEntry>(StringComparer.Ordinal);
@@ -47,7 +47,13 @@ namespace Lumenfall.Spells
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this; DontDestroyOnLoad(gameObject); GameSaveManager.Instance.RegisterProvider(this);
         }
-        private void OnDestroy() { if (Instance == this) Instance = null; }
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            GameSaveManager manager = FindAnyObjectByType<GameSaveManager>();
+            if (manager != null) manager.UnregisterProvider(this);
+            Instance = null;
+        }
 
         public void BeginMapRebuild(string mapId)
         {
@@ -101,7 +107,56 @@ namespace Lumenfall.Spells
         }
         public string CaptureStateJson()
         { if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); } List<MapArchive> maps = new List<MapArchive>(); foreach (KeyValuePair<string, MapStateSnapshot> pair in archivedMaps) maps.Add(new MapArchive { mapId = pair.Key, snapshot = pair.Value, pendingEffects = archivedEffects.TryGetValue(pair.Key, out List<string> effects) ? effects.ToArray() : Array.Empty<string>() }); return JsonUtility.ToJson(new SaveData { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths(), pendingEffects = pendingEffects.ToArray(), maps = maps.ToArray() }); }
-        public bool RestoreStateJson(string json) { SaveData data; try { data = JsonUtility.FromJson<SaveData>(json); } catch { return false; } if (data == null) return false; archivedMaps.Clear(); archivedEffects.Clear(); foreach (MapArchive map in data.maps ?? Array.Empty<MapArchive>()) { if (map == null || string.IsNullOrWhiteSpace(map.mapId)) continue; archivedMaps[map.mapId] = map.snapshot; archivedEffects[map.mapId] = new List<string>(map.pendingEffects ?? Array.Empty<string>()); } pendingRestore = new MapStateSnapshot { mapId = data.mapId, objects = data.objects ?? Array.Empty<WorldObjectSnapshot>(), connections = data.connections ?? Array.Empty<string>(), connectionStrengths = data.connectionStrengths ?? Array.Empty<float>() }; pendingEffects.Clear(); pendingEffects.AddRange(data.pendingEffects ?? Array.Empty<string>()); if (IsReady && string.Equals(CurrentMapId, data.mapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; NotifyChanged(); } return true; }
+        public bool ValidateStateJson(string json)
+        {
+            try
+            {
+                if (!GameSaveManager.IsValidPayloadObject(json, "mapId", "objects")) return false;
+                SaveData data = JsonUtility.FromJson<SaveData>(json);
+                if (data == null || !ValidateSnapshot(new MapStateSnapshot { mapId = data.mapId, objects = data.objects, connections = data.connections, connectionStrengths = data.connectionStrengths })) return false;
+                HashSet<string> maps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (MapArchive map in data.maps ?? Array.Empty<MapArchive>())
+                    if (map == null || string.IsNullOrWhiteSpace(map.mapId) || !maps.Add(map.mapId) || map.snapshot == null || map.snapshot.mapId != map.mapId || !ValidateSnapshot(map.snapshot)) return false;
+                return true;
+            }
+            catch { return false; }
+        }
+        private static bool ValidateSnapshot(MapStateSnapshot snapshot)
+        {
+            if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.mapId) || snapshot.objects == null) return false;
+            MapDefinition definition = null;
+            if (DataDrivenWorldLoader.Instance != null && !DataDrivenWorldLoader.Instance.TryGetMapDefinition(snapshot.mapId, out definition)) return false;
+            HashSet<string> ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (WorldObjectSnapshot item in snapshot.objects)
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.id) || !ids.Add(item.id) || item.mapId != snapshot.mapId || item.size.x < 1 || item.size.y < 1 ||
+                    float.IsNaN(item.elevation) || float.IsInfinity(item.elevation) || float.IsNaN(item.rotation) || float.IsInfinity(item.rotation)) return false;
+                if (definition != null && (item.cell.x < 0 || item.cell.y < 0 || (long)item.cell.x + item.size.x > definition.width || (long)item.cell.y + item.size.y > definition.height)) return false;
+            }
+            HashSet<string> links = new HashSet<string>(StringComparer.Ordinal);
+            string[] savedConnections = snapshot.connections ?? Array.Empty<string>();
+            float[] strengths = snapshot.connectionStrengths ?? Array.Empty<float>();
+            if (strengths.Length != 0 && strengths.Length != savedConnections.Length) return false;
+            for (int i = 0; i < savedConnections.Length; i++)
+            {
+                string[] endpoints = (savedConnections[i] ?? "").Split('|');
+                if (endpoints.Length != 2 || endpoints[0] == endpoints[1] || !ids.Contains(endpoints[0]) || !ids.Contains(endpoints[1]) || !links.Add(savedConnections[i])) return false;
+                if (i < strengths.Length && (float.IsNaN(strengths[i]) || float.IsInfinity(strengths[i]) || strengths[i] < 0 || strengths[i] > 1)) return false;
+            }
+            return true;
+        }
+        public bool RestoreStateJson(string json)
+        {
+            if (!ValidateStateJson(json)) return false;
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            archivedMaps.Clear(); archivedEffects.Clear();
+            foreach (MapArchive map in data.maps ?? Array.Empty<MapArchive>())
+            { archivedMaps[map.mapId] = map.snapshot; archivedEffects[map.mapId] = new List<string>(map.pendingEffects ?? Array.Empty<string>()); }
+            pendingRestore = new MapStateSnapshot { mapId = data.mapId, objects = data.objects, connections = data.connections ?? Array.Empty<string>(), connectionStrengths = data.connectionStrengths ?? Array.Empty<float>() };
+            pendingEffects.Clear(); pendingEffects.AddRange(data.pendingEffects ?? Array.Empty<string>());
+            if (IsReady && string.Equals(CurrentMapId, data.mapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; NotifyChanged(); }
+            return true;
+        }
         private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) { entry.state = Clone(saved); SyncTransform(entry); } }
         private void SyncTransform(WorldEntry entry) { if (entry.sceneObject == null) return; GridWorld world = FindAnyObjectByType<GridWorld>(); if (world != null) entry.sceneObject.transform.position = world.CellToWorld(entry.state.cell, entry.state.elevation); entry.sceneObject.transform.rotation = Quaternion.Euler(0, entry.state.rotation, 0); entry.sceneObject.GetComponent<GridObstacle>()?.RefreshFootprint(); }
         private bool IsConnectedToAny(string id) { foreach (string key in connections) if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal)) return true; return false; }

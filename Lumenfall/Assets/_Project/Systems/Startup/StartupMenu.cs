@@ -80,7 +80,7 @@ namespace Lumenfall.Startup
             // The latest save is the backdrop state. Providers registered by the scene are ready now.
             if (!string.IsNullOrWhiteSpace(backdropSlot) && !saves.Load(backdropSlot, false))
             {
-                message = "The latest save could not be loaded.";
+                message = saves.LastError;
             }
             if (!string.IsNullOrWhiteSpace(backdropSlot)) GameSaveOverlay.SetCurrentSlot(backdropSlot);
             ready = true;
@@ -213,9 +213,12 @@ namespace Lumenfall.Startup
                 slot = Slots[0];
             }
 
-            GameEventManager.Instance.ReloadDefinitions();
-            DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
-            if (worldLoader != null) worldLoader.ResetToStartingState();
+            if (!saves.ResetState(() =>
+            {
+                GameEventManager.Instance.ReloadDefinitions();
+                DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
+                if (worldLoader != null) worldLoader.ResetToStartingState();
+            })) { message = saves.LastError; return; }
             if (!saves.Save(slot))
             {
                 message = "Could not start a new game.";
@@ -240,7 +243,7 @@ namespace Lumenfall.Startup
             }
             else
             {
-                message = "That save could not be loaded.";
+                message = GameSaveManager.Instance.LastError;
             }
         }
 

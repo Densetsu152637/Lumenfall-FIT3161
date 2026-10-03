@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
@@ -41,6 +41,7 @@ namespace Lumenfall.GameEvents
             DontDestroyOnLoad(gameObject);
             saveManager = GameSaveManager.Instance;
             saveManager.LoadCompleted += OnLoadCompleted;
+            saveManager.OperationStarted += CancelPendingSave;
         }
 
         private void Update()
@@ -80,7 +81,7 @@ namespace Lumenfall.GameEvents
             UnsubscribeRuntime();
             UnsubscribeWorldState();
             UnsubscribePlayer();
-            if (saveManager != null) saveManager.LoadCompleted -= OnLoadCompleted;
+            if (saveManager != null) { saveManager.LoadCompleted -= OnLoadCompleted; saveManager.OperationStarted -= CancelPendingSave; }
             if (instance == this) instance = null;
         }
 
@@ -110,7 +111,9 @@ namespace Lumenfall.GameEvents
         private void OnWorldStateChanged(MapStateSnapshot _) => ScheduleSave();
         private void OnPlayerMoved(GridMover _, Vector2Int __) => ScheduleSave();
 
-        private void OnLoadCompleted(string _)
+        private void OnLoadCompleted(string _) => CancelPendingSave();
+
+        private void CancelPendingSave()
         {
             if (pendingSave == null) return;
             StopCoroutine(pendingSave);
@@ -155,7 +158,7 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            return saveManager != null && saveManager.HasSave(GameSaveOverlay.CurrentSlot);
+            return saveManager != null && saveManager.AutosaveAllowed && saveManager.HasSave(GameSaveOverlay.CurrentSlot);
         }
 
         private void UnsubscribeRuntime()

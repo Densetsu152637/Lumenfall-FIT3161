@@ -128,9 +128,11 @@ currently selected slot (defaulting to `save-1`); the startup menu updates that 
 slot is loaded or a new game starts. A larger menu can replace the overlay and call the same manager methods. The generated
 `DataDrivenWorldLoader` registers a provider that restores the active map and player grid cell.
 
-The current file schema is version `1`. It contains the event runtime JSON plus a sorted array of
-keyed provider payloads. Providers must be registered before `Load`; known payloads are restored in
-file order, while unknown keys are skipped for forward compatibility. Event state preserves flags,
+The current file schema is version `2`, adding an integrity hash to the event runtime JSON and
+keyed provider payloads. Actual schema `1` exports migrate in memory without changing their meaning;
+schema `0` and future versions are rejected. Providers must be registered before `Load`. Map content
+is prepared first, world objects are restored next, and saved player placement is finalized last.
+Unknown provider objects are retained across load/save (up to 128 provider entries and 8 MiB per file). Event state preserves flags,
 counters, quest states, and non-repeatable event history. Active conversations are intentionally not
 saved. A future schema change should add a migration before increasing the version, rather than
 silently accepting incompatible data.
@@ -173,6 +175,16 @@ skipped so saves remain loadable as systems are added; a registered provider tha
 payload fails the load and reports the key. For quest progress, prefer the built-in event runtime
 (`StartQuest`, `CompleteQuest`, and `QuestStatus`) unless the quest also owns custom world data such
 as spawned objects or a puzzle layout, which belongs in its own provider.
+
+`InspectSlot` returns missing/corrupt/truncated/unsupported/unavailable diagnostics without changing
+runtime state. `GetRecoveryCandidates` lists validated previous (`.bak`) and interrupted (`.tmp`)
+writes; `RecoverSave(slot, source)` explicitly restores a candidate and atomically promotes it only
+when all registered providers succeed. Original damaged bytes are kept in a unique `.preserved-*`
+file, and previous backups remain available. A failed load/recovery pauses autosave until successful
+load or an explicit Save. `ResetState(Action)` guards new-game/reset work; Save afterwards to resume.
+`OperationStarted` cancels pending autosaves, and `AutosaveAllowed` excludes load/reset callbacks.
+Providers can implement side-effect-free `ISaveStateValidator` and staged `ISaveStateRestorePhases`.
+Unregister by provider instance to avoid an old owner removing its replacement.
 
 Project-specific condition/action types can be registered without editing the runtime:
 
