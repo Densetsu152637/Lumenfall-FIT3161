@@ -1,0 +1,444 @@
+{
+  "schemaVersion": 1,
+  "events": [
+    {
+      "id": "chapter1.first_account",
+      "description": "Chapter 1: first account",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.first_account"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.first_account",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.key_handover",
+      "description": "Chapter 1: key handover",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.key_handover"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.key_handover",
+          "boolValue": true
+        },
+        {
+          "type": "SetFlag",
+          "key": "inventory.keyitem.dormitory-key",
+          "boolValue": true
+        },
+        {
+          "type": "SetFlag",
+          "key": "chapter1.mystery.unresolved",
+          "boolValue": true
+        }
+      ],
+      "metadata": [
+        {
+          "key": "keyItemReward",
+          "value": "dormitory-key"
+        }
+      ]
+    },
+    {
+      "id": "chapter1.group_discussion",
+      "description": "Chapter 1: group discussion",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.group_discussion"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.group_discussion",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.suite_entered",
+      "description": "Chapter 1: suite entered",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.suite_entered"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.suite_entered",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.room_guidance",
+      "description": "Chapter 1: room guidance",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.room_guidance"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.room_guidance",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.room_arrival",
+      "description": "Chapter 1: room arrival",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.room_arrival"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.room_arrival",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.sleep",
+      "description": "Chapter 1: sleep",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.sleep"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.sleep",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    },
+    {
+      "id": "chapter1.complete",
+      "description": "Chapter 1: complete",
+      "repeatable": false,
+      "conditions": [
+        {
+          "type": "ChapterOne",
+          "key": "chapter1.complete"
+        }
+      ],
+      "actions": [
+        {
+          "type": "SetFlag",
+          "key": "chapter1.complete",
+          "boolValue": true
+        }
+      ],
+      "metadata": []
+    }
+  ],
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "chapter1.reception_first",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Receptionist",
+          "text": "Welcome to the academy. Your arrival registration is ready, and the grounds are yours to explore. You're assigned to the five-student suite in Sirius.",
+          "nextNodeId": "line2"
+        },
+        {
+          "id": "line2",
+          "speaker": "Player",
+          "text": "Could I collect the suite key?",
+          "nextNodeId": "line3"
+        },
+        {
+          "id": "line3",
+          "speaker": "Receptionist",
+          "text": "I passed it to another student earlier. Stella was heading for magical engineering in the teaching building. Ask her first; she'll know the others.",
+          "nextNodeId": "line4"
+        },
+        {
+          "id": "line4",
+          "speaker": "Player",
+          "text": "Stella, then the rest of my dorm-mates. I'll come back if the key doesn't turn up.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.reception_reminder",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Receptionist",
+          "text": "Have you spoken with Stella in teaching, Cinna Cirra around the commons, Orio near the forest, and Katrina in the courtyard? Finish helping them, then bring everyone back here.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.reception_handover",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Stella",
+          "text": "We've all come back. You said one of us had the suite key.",
+          "nextNodeId": "line2"
+        },
+        {
+          "id": "line2",
+          "speaker": "Receptionist",
+          "text": "I'm sorry, but I haven't seen any of you before. The key is still here.",
+          "nextNodeId": "line3"
+        },
+        {
+          "id": "line3",
+          "speaker": "Cinna Cirra",
+          "text": "But you told our new dorm-mate you'd given it to another student.",
+          "nextNodeId": "line4"
+        },
+        {
+          "id": "line4",
+          "speaker": "Receptionist",
+          "text": "I don't remember that. Your assignment is correct, though. Here is the key to the Sirius suite.",
+          "nextNodeId": "line5"
+        },
+        {
+          "id": "line5",
+          "speaker": "Katrina",
+          "text": "We'll take it. We've spent enough of the day chasing this already.",
+          "nextNodeId": "line6"
+        },
+        {
+          "id": "line6",
+          "speaker": "Orio",
+          "text": "Let's sit down in Sirius before we decide what to do.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.reception_after",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Receptionist",
+          "text": "You have your Sirius suite key. The common area is open; your sleeping room is inside the residential suite.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.find_reception",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Player",
+          "text": "I should check my accommodation assignment with reception in the arrival building first.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.group_wait",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Stella",
+          "text": "This is the Sirius common area. Let's finish meeting everyone and collect the key before we settle in.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.group",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Stella",
+          "text": "You told us what reception said. Now they say none of us had ever been there.",
+          "nextNodeId": "line2"
+        },
+        {
+          "id": "line2",
+          "speaker": "Orio",
+          "text": "Maybe it was a mix-up. Maybe. I'd like to compare notes tomorrow when my brain isn't loading at two frames a second.",
+          "nextNodeId": "line3"
+        },
+        {
+          "id": "line3",
+          "speaker": "Katrina",
+          "text": "I want an explanation too. I also want a bed, and the bed is winning.",
+          "nextNodeId": "line4"
+        },
+        {
+          "id": "line4",
+          "speaker": "Cinna Cirra",
+          "text": "I don't think we imagined it. Could we stay together tonight, and ask again in the morning?",
+          "nextNodeId": "line5"
+        },
+        {
+          "id": "line5",
+          "speaker": "Player",
+          "text": "We'll remember what happened. We don't have to solve it tonight.",
+          "nextNodeId": "line6"
+        },
+        {
+          "id": "line6",
+          "speaker": "Stella",
+          "text": "Agreed. Bring the key to the residential door on the southeast side of the hall. I'll show you our suite and your room.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.guide",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Stella",
+          "text": "The key fits. This is our group living space; the five of us will share it.",
+          "nextNodeId": "line2"
+        },
+        {
+          "id": "line2",
+          "speaker": "Cinna Cirra",
+          "text": "It already feels a little less strange with everyone here.",
+          "nextNodeId": "line3"
+        },
+        {
+          "id": "line3",
+          "speaker": "Stella",
+          "text": "Your sleeping room is to the east, beside the courtyard window. Follow me across the suite, then choose to rest at the bed.",
+          "nextNodeId": "line4"
+        },
+        {
+          "id": "line4",
+          "speaker": "Orio",
+          "text": "Tomorrow we can worry about the receptionist. Tonight: save your energy.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.group_after",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Stella",
+          "text": "Your room is east of the suite living space. Rest at the bed when you're ready. We'll talk about reception tomorrow.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.wake",
+      "startNodeId": "line1",
+      "nodes": [
+        {
+          "id": "line1",
+          "speaker": "Player",
+          "text": "Morning light fills the room. For a moment it feels like arriving all over again.",
+          "nextNodeId": "line2"
+        },
+        {
+          "id": "line2",
+          "speaker": "Player",
+          "text": "The key is still here. So are the questions from yesterday.",
+          "nextNodeId": "line3"
+        },
+        {
+          "id": "line3",
+          "speaker": "Stella",
+          "text": "Morning. We made it through our first day together.",
+          "nextNodeId": "line4"
+        },
+        {
+          "id": "line4",
+          "speaker": "Player",
+          "text": "Chapter 1 complete.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "chapter1.sleep_prompt",
+      "startNodeId": "choice",
+      "nodes": [
+        {
+          "id": "choice",
+          "speaker": "Player",
+          "text": "The day's conversations keep circling in my head. Everyone is safe inside the suite. Rest until morning?",
+          "choices": [
+            {
+              "id": "sleep",
+              "text": "Go to sleep.",
+              "nextNodeId": "rest"
+            },
+            {
+              "id": "later",
+              "text": "Stay awake a little longer.",
+              "nextNodeId": "later"
+            }
+          ]
+        },
+        {
+          "id": "rest",
+          "speaker": "Player",
+          "text": "The receptionist's contradiction can wait. I close my eyes.",
+          "nextNodeId": ""
+        },
+        {
+          "id": "later",
+          "speaker": "Player",
+          "text": "I'll rest when I'm ready.",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ]
+}

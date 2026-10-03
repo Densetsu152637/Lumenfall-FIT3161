@@ -73,6 +73,9 @@ namespace Lumenfall.DataDriven
                 root.SetActive(false);
                 areaInstances.Add(area, root);
             }
+            ChapterOneInteraction chapter = GetComponent<ChapterOneInteraction>();
+            if (chapter == null) chapter = gameObject.AddComponent<ChapterOneInteraction>();
+            chapter.BindArea(LoadedMap, root, world);
             root.SetActive(true);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);

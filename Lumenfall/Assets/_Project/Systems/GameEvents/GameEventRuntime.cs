@@ -36,9 +36,11 @@ namespace Lumenfall.GameEvents
         public GameEventRuntime(GameEventCatalog catalog)
         {
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            ChapterOne = new ChapterOneStory(this);
         }
 
         public GameEventCatalog Catalog { get; }
+        public ChapterOneStory ChapterOne { get; }
         public DialogueSession ActiveDialogue { get; private set; }
 
         public event Action<GameEventDefinition> EventTriggered;
@@ -203,6 +205,7 @@ namespace Lumenfall.GameEvents
 
         public DialogueSession StartDialogue(string dialogueId)
         {
+            if (!ChapterOne.CanStartDialogue(dialogueId)) return null;
             if (!Catalog.TryGetDialogue(dialogueId, out DialogueDefinition definition))
             {
                 RaiseDiagnostic($"Cannot start unknown dialogue '{dialogueId}'.");

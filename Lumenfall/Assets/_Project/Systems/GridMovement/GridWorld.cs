@@ -35,6 +35,12 @@ namespace Lumenfall.GridMovement
         private readonly Dictionary<GridPortal, List<Vector2Int>> portalCells =
             new Dictionary<GridPortal, List<Vector2Int>>();
 
+        private readonly List<System.Func<Vector2Int, bool>> cellPermissions = new List<System.Func<Vector2Int, bool>>();
+        public void AddCellPermission(System.Func<Vector2Int, bool> permission)
+        { if (permission != null && !cellPermissions.Contains(permission)) cellPermissions.Add(permission); }
+        public void RemoveCellPermission(System.Func<Vector2Int, bool> permission) { cellPermissions.Remove(permission); }
+        private bool IsCellPermitted(Vector2Int cell)
+        { foreach (var permission in cellPermissions) if (!permission(cell)) return false; return true; }
         public float CellSize => cellSize;
         public bool RestrictToBounds => restrictToBounds;
         public Vector2Int BoundsMin => boundsMin;
@@ -81,7 +87,7 @@ namespace Lumenfall.GridMovement
 
         public bool IsCellBlocked(Vector2Int cell)
         {
-            return !IsWithinBounds(cell) || blockerCounts.ContainsKey(cell);
+            return !IsWithinBounds(cell) || !IsCellPermitted(cell) || blockerCounts.ContainsKey(cell);
         }
 
         public GridMover GetMoverAt(Vector2Int cell)
@@ -201,7 +207,7 @@ namespace Lumenfall.GridMovement
 
         internal bool CommitMove(GridMover mover, Vector2Int origin, Vector2Int destination)
         {
-            if (!moverReservations.TryGetValue(mover, out Vector2Int reserved) || reserved != destination)
+            if (!IsCellPermitted(destination) || !moverReservations.TryGetValue(mover, out Vector2Int reserved) || reserved != destination)
             {
                 return false;
             }
@@ -353,7 +359,7 @@ namespace Lumenfall.GridMovement
 
         private bool IsCellAvailable(Vector2Int cell, GridMover ignoredMover)
         {
-            if (!IsWithinBounds(cell) || blockerCounts.ContainsKey(cell))
+            if (!IsWithinBounds(cell) || !IsCellPermitted(cell) || blockerCounts.ContainsKey(cell))
             {
                 return false;
             }

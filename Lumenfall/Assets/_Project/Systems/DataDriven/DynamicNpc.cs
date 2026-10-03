@@ -48,6 +48,8 @@ namespace Lumenfall.DataDriven
             if (GameEventManager.Instance == null || GameEventManager.Instance.Runtime == null)
                 return DialogueId;
 
+            string storyDialogue = GameEventManager.Instance.Runtime.ChapterOne.SelectNpcDialogue(Id);
+            if (!string.IsNullOrWhiteSpace(storyDialogue)) return storyDialogue;
             List<string> choices = new List<string>(definition.dialogueIds ?? Array.Empty<string>());
             foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
             {
