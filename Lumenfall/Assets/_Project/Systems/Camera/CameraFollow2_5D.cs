@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lumenfall.Accessibility;
 
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
@@ -26,6 +27,21 @@ public class CameraFollow2_5D : MonoBehaviour
 
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
+    private bool reducedMotion;
+    private void OnEnable()
+    {
+        AccessibilitySettings.Changed += OnPreferencesChanged;
+        SetReducedMotion(AccessibilitySettings.Current.ReducedMotion);
+    }
+    private void OnDisable() => AccessibilitySettings.Changed -= OnPreferencesChanged;
+    private void OnPreferencesChanged(AccessibilitySnapshot value) => SetReducedMotion(value.ReducedMotion);
+    public void SetReducedMotion(bool value)
+    {
+        if (reducedMotion == value) return;
+        reducedMotion = value;
+        currentVelocity = Vector3.zero;
+        if (target != null) transform.position = target.position + offset;
+    }
 
     /// <summary>
     /// Updates the camera after the target has completed its movement for the
@@ -43,7 +59,7 @@ public class CameraFollow2_5D : MonoBehaviour
             target.position + offset;
 
         // Smoothly move the camera toward its desired position.
-        transform.position = Vector3.SmoothDamp(
+        transform.position = reducedMotion ? desiredPosition : Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref currentVelocity,
