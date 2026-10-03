@@ -212,6 +212,12 @@
     },
     {
       "id": "campus_student",
+      "ambientOnly": true,
+      "ambientSchedule": {
+        "enabled": false,
+        "phaseCounterKey": "ambient.phase.campus_student",
+        "stops": [{"x": 70, "y": 32}, {"x": 71, "y": 32}]
+      },
       "displayName": "Campus student",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
@@ -235,6 +241,12 @@
     },
     {
       "id": "forest_student",
+      "ambientOnly": true,
+      "ambientSchedule": {
+        "enabled": false,
+        "phaseCounterKey": "ambient.phase.forest_student",
+        "stops": [{"x": 12, "y": 16}, {"x": 13, "y": 16}]
+      },
       "displayName": "Forest student",
       "mapId": "eastForest",
       "asset": "NPCs/Elara.prefab",

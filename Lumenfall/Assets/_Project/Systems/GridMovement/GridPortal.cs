@@ -110,6 +110,13 @@ namespace Lumenfall.GridMovement
                 return false;
             }
 
+            // Authored content must never fall through to legacy destination modes when gated or incomplete.
+            if (content != null)
+            {
+                if (mover != DataDrivenWorldLoader.FindPlayerMover() || !OptionalTravelPolicy.GateAllows(content, Lumenfall.GameEvents.GameEventManager.Instance?.Runtime) ||
+                    content.destination == null || DataDrivenWorldLoader.Instance == null) return false;
+            }
+
             if (content != null && content.destination != null && DataDrivenWorldLoader.Instance != null)
             {
                 Vector2Int entryOffset = preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero;

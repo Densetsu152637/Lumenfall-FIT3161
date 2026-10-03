@@ -10,6 +10,10 @@ namespace Lumenfall.DataDriven
         public Vector2Int cell;
         public Vector2Int footprint = Vector2Int.one;
         public bool reserved;
+        [Tooltip("Reserved gates stay closed unless explicitly enabled and allowedFlag is true.")]
+        public bool allowReservedTravel;
+        public string allowedFlag;
+        public string[] requiredFlags = System.Array.Empty<string>();
         public PortalContentAsset destination;
         public Vector2Int arrivalOffset;
     }

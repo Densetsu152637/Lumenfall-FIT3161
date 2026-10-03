@@ -25,6 +25,9 @@ namespace Lumenfall.DataDriven
             if (definition == null) return;
             Id = definition.id; DisplayName = definition.displayName;
             if (string.IsNullOrEmpty(DialogueId)) DialogueId = initialDialogueId;
+            if (AmbientNpcPolicy.IsAmbient(definition) && definition.ambientSchedule != null &&
+                definition.ambientSchedule.enabled && GetComponent<AmbientNpcSchedule>() == null)
+                gameObject.AddComponent<AmbientNpcSchedule>();
             if (GetComponent<Collider>() == null) gameObject.AddComponent<SphereCollider>().isTrigger = true;
         }
         public void Configure(NpcDefinition definition, string dialogueId)
@@ -39,7 +42,7 @@ namespace Lumenfall.DataDriven
             if (gameObject.activeSelf != visible) gameObject.SetActive(visible);
         }
         private void Update()
-        { if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null || !Keyboard.current.eKey.wasPressedThisFrame || GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return; GridMover player = FindAnyObjectByType<GridMover>(); if (player == null) return; DynamicNpc nearest = null; float best = 2.01f; foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)) { float d = Vector3.Distance(player.transform.position, npc.transform.position); if (d <= best) { best = d; nearest = npc; } } if (nearest == this) Interact(); }
+        { if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null || !Keyboard.current.eKey.wasPressedThisFrame || GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return; GridMover player = DataDrivenWorldLoader.FindPlayerMover(); if (player == null) return; DynamicNpc nearest = null; float best = 2.01f; foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)) { float d = Vector3.Distance(player.transform.position, npc.transform.position); if (d <= best) { best = d; nearest = npc; } } if (nearest == this) Interact(); }
         public DialogueSession Interact()
         { if (GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
         private string SelectDialogue()
@@ -48,6 +51,8 @@ namespace Lumenfall.DataDriven
             if (GameEventManager.Instance == null || GameEventManager.Instance.Runtime == null)
                 return DialogueId;
 
+            if (definition.ambientOnly)
+                return AmbientNpcPolicy.SelectDialogue(definition, GameEventManager.Instance.Runtime, UnityEngine.Random.value);
             List<string> choices = new List<string>(definition.dialogueIds ?? Array.Empty<string>());
             foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
             {

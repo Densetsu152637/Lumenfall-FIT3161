@@ -22,13 +22,14 @@ namespace Lumenfall.Tests.World
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             Assert.That(loader, Is.Not.Null, "SampleScene should have a wired world loader.");
             Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
-            GridMover player = Object.FindAnyObjectByType<GridMover>();
+            GridMover player = DataDrivenWorldLoader.FindPlayerMover();
             Assert.That(player, Is.Not.Null, "SampleScene should have a player for portal and save checks.");
 
             GridPortal outward = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "eastForest");
             Assert.That(outward, Is.Not.Null, "Campus should have an authored eastForest portal.");
+            Assert.That(player.TryTeleportTo(outward.World, outward.FirstCell), Is.True);
             Assert.That(loader.SwitchArea(outward.Content, Vector2Int.zero), Is.True,
                 "The authored campus to eastForest route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
@@ -38,6 +39,7 @@ namespace Lumenfall.Tests.World
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "campus");
             Assert.That(returnPortal, Is.Not.Null, "eastForest should have an authored return portal to campus.");
+            Assert.That(player.TryTeleportTo(returnPortal.World, returnPortal.FirstCell), Is.True);
             Assert.That(loader.SwitchArea(returnPortal.Content, Vector2Int.zero), Is.True,
                 "The authored eastForest return route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
@@ -66,6 +68,7 @@ namespace Lumenfall.Tests.World
                     .First(portal => portal.Content != null && portal.Content.id == expected.portalId);
                 Assert.That(exit.Content.destination.cell + exit.Content.arrivalOffset, Is.EqualTo(expected.arrival),
                     expected.areaId + " should use the nearest walkable campus approach cell.");
+                Assert.That(player.TryTeleportTo(exit.World, exit.FirstCell), Is.True);
                 Assert.That(loader.SwitchArea(exit.Content, Vector2Int.zero), Is.True,
                     expected.areaId + " return route should accept its corrected campus arrival cell.");
                 Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
@@ -86,6 +89,7 @@ namespace Lumenfall.Tests.World
                     GridPortal livePortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                         .FirstOrDefault(portal => portal.Content == route);
                     Assert.That(livePortal, Is.Not.Null, "Area prefab did not activate portal " + route.id + ".");
+                    Assert.That(player.TryTeleportTo(livePortal.World, livePortal.FirstCell), Is.True);
                     Assert.That(loader.SwitchArea(route, Vector2Int.zero), Is.True,
                         area.definition.id + "/" + route.id + " should reach " + route.destination.area.definition.id + ".");
                     Assert.That(loader.CurrentArea, Is.EqualTo(route.destination.area));
