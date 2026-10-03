@@ -22,3 +22,14 @@ Approved cable/character/prop art, audio and animations; a dedicated Unity Play 
 ## Merge coordination
 
 First Light independently changes SpellCaster/QuestPuzzleMonitor subscription lifecycle and success dialogue. This branch changes scoped Weave reward handling, cable APIs, NPC selection and monitor target conditions. Reconcile those distinct sections when merging; both branches start main independently.
+
+## Implemented and validation
+
+- Completed terminal Weave lesson uses `spellRewardQuestId=stella_string_them_together`, requires Active quest and Completed First Light. Shared handler supports comma/semicolon spell lists and preserves Ampere fallback.
+- Structured NPC dialogue prioritizes Active, then NotStarted, then Completed; ambient weighting remains within equal priority.
+- Monitor requires powered source separately, exact relic/receiver link, and live effective power >=0.2. B02/campus authored target assets and parallel JSON declare the same threshold.
+- Cable strength follows current cells; recasting removes even dark/overlong cables and allows a valid retry. World save data keeps existing connections/provider format; live values derive from restored positions/power.
+- Four focused EditMode tests cover lesson abandonment/save flags, exact topology/power/distance/retry/persistence, Stella selection, and monitor completion. These sources compile offline; NUnit engine execution and Play Mode are not run.
+- Repository runtime-world validator passes (8 maps/7 NPCs), dialogue validator passes (6 quests/15 dialogues/9 events), and Python validator harness passes all 4 tests. Isolated runtime/GameEvents/EditMode compilation succeeds against shared read-only engine references, excluding baseline Lumenfall assemblies. Existing obsolete object-search/unassigned serialized-field compiler warnings remain.
+
+Completion feedback currently uses the existing spell cast status box and completed Stella conversation. Final cable artwork/animation, automatic completion celebration, and runtime visual acceptance remain manual presentation work.

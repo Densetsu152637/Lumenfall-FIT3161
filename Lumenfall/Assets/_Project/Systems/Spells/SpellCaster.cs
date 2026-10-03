@@ -25,6 +25,8 @@ namespace Lumenfall.Spells
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
+        public string LastCastFeedback { get; private set; }
+        private float feedbackUntil;
         public event Action<SpellId, string, bool> CastCompleted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
@@ -42,9 +44,15 @@ namespace Lumenfall.Spells
             if (session != null && session.IsCompleted)
             {
                 string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                string rewardQuestId = MetadataValue(session.Definition?.metadata, "spellRewardQuestId");
+                GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+                bool lessonActive = string.IsNullOrWhiteSpace(rewardQuestId) || runtime.GetQuestStatus(rewardQuestId) == QuestStatus.Active;
+                foreach (string value in (reward ?? string.Empty).Split(',', ';'))
+                    if (lessonActive && TryParseSpell(value, out SpellId spell) &&
+                        (spell != SpellId.Ampere || runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active) &&
+                        (spell != SpellId.Weave || (runtime.GetQuestStatus("stella_string_them_together") == QuestStatus.Active &&
+                            runtime.GetQuestStatus("stella_first_light") == QuestStatus.Completed)))
+                        runtime.SetFlag(SpellFlagPrefix + spell, true);
             }
             RefreshSelection();
         }
@@ -137,7 +145,10 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
-            if (!spellWheelOpen || InputBlockedByOverlay) return;
+            if (InputBlockedByOverlay) return;
+            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
+                GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
+            if (!spellWheelOpen) return;
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
 
@@ -182,6 +193,13 @@ namespace Lumenfall.Spells
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
             }
+            if (spell == SpellId.Weave)
+            {
+                bool connected = false;
+                foreach (WorldObjectSnapshot other in state.SnapshotObjects()) if (state.IsConnected(targetId, other.id)) connected = true;
+                LastCastFeedback = changed ? (connected ? "Cable connected. Keep the power relic on." : "Cable removed. Cast Weave again to reconnect.") : "No live cable: power the relic and keep endpoints within four tiles.";
+                feedbackUntil = Time.unscaledTime + 4f;
+            }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
         private void GrantSpellRewards(GameMetadataEntry[] metadata)
@@ -198,10 +216,23 @@ namespace Lumenfall.Spells
             if (state.TryGetObject(targetId, out WorldObjectSnapshot target))
                 foreach (string tag in target.tags ?? Array.Empty<string>())
                     if (tag.StartsWith("weave-with:", StringComparison.OrdinalIgnoreCase)) { intended = tag.Substring("weave-with:".Length); break; }
+            if (!string.IsNullOrWhiteSpace(intended))
+            {
+                // Recasting removes the authored cable even if its source is now dark or too far away.
+                if (state.IsConnected(targetId, intended)) return state.RemoveConnection(targetId, intended);
+                if (!state.TryGetObject(intended, out WorldObjectSnapshot partner) || (!partner.powered && !target.powered)) return false;
+                return state.AddConnection(targetId, intended);
+            }
+            WorldObjectSnapshot nearest = null;
+            float nearestDistance = float.MaxValue;
             foreach (WorldObjectSnapshot item in state.SnapshotObjects())
-                if (item.id != targetId && item.powered && (string.IsNullOrWhiteSpace(intended) || string.Equals(item.id, intended, StringComparison.Ordinal)))
-                    return state.AddConnection(targetId, item.id);
-            return false;
+            {
+                if (item.id == targetId || !item.powered) continue;
+                float distance = Vector2Int.Distance(target.cell, item.cell);
+                if (distance < nearestDistance) { nearest = item; nearestDistance = distance; }
+            }
+            if (nearest == null) return false;
+            return state.IsConnected(targetId, nearest.id) ? state.RemoveConnection(targetId, nearest.id) : state.AddConnection(targetId, nearest.id);
         }
         private static bool FreezeSlide(WorldStateService state, string id, Vector2Int direction)
         {

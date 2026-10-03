@@ -42,6 +42,8 @@ namespace Lumenfall.Quests
     {
         public string id;
         public string[] objectIds = Array.Empty<string>();
+        public string[] requiredConnections = Array.Empty<string>();
+        public float minimumEffectivePower;
         public string conditionMode = "All";
         public bool requiredPowered;
         public bool requiredConnected;
@@ -134,6 +136,12 @@ namespace Lumenfall.Quests
             foreach (QuestPuzzleTarget target in targets)
             {
                 if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
+                foreach (string connection in target.requiredConnections ?? Array.Empty<string>())
+                {
+                    string[] endpoints = (connection ?? string.Empty).Split('|');
+                    if (endpoints.Length != 2 || !state.IsConnected(endpoints[0], endpoints[1]) ||
+                        state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
+                }
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)

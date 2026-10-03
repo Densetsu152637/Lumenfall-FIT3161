@@ -49,6 +49,7 @@ namespace Lumenfall.DataDriven
                 return DialogueId;
 
             List<string> choices = new List<string>(definition.dialogueIds ?? Array.Empty<string>());
+            int bestQuestPriority = 0;
             foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
             {
                 if (item == null || string.IsNullOrWhiteSpace(item.dialogueId)) continue;
@@ -57,6 +58,11 @@ namespace Lumenfall.DataDriven
                 bool prerequisiteMatches = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) ||
                     StatusMatches(item.prerequisiteQuestId, item.prerequisiteQuestStatus);
                 if (!questMatches || !prerequisiteMatches) continue;
+                int priority = string.IsNullOrWhiteSpace(item.questId) ? 0 :
+                    (string.Equals(item.requiredQuestStatus, "Active", StringComparison.OrdinalIgnoreCase) ? 3 :
+                     string.Equals(item.requiredQuestStatus, "NotStarted", StringComparison.OrdinalIgnoreCase) ? 2 : 1);
+                if (priority < bestQuestPriority) continue;
+                if (priority > bestQuestPriority) { choices.Clear(); bestQuestPriority = priority; }
                 for (int i = 0; i < Mathf.Max(1, item.weight); i++) choices.Add(item.dialogueId);
             }
             return choices.Count == 0 ? null : choices[UnityEngine.Random.Range(0, choices.Count)];

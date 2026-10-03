@@ -231,6 +231,7 @@ MonoBehaviour:
       - circuit.stella.link
       requiredConnections:
       - relic.stella.power|circuit.stella.link
+      minimumEffectivePower: 0.2
       conditionMode: All
       requiredPowered: 0
       requiredConnected: 1

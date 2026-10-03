@@ -16,7 +16,7 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredConnected": true },
+        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredPowered": true, "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"], "minimumEffectivePower": 0.2 },
         { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
       ]
     },

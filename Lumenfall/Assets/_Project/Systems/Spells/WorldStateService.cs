@@ -72,14 +72,30 @@ namespace Lumenfall.Spells
         public bool TryGetObject(string id, out WorldObjectSnapshot snapshot) { if (entries.TryGetValue(id ?? string.Empty, out WorldEntry item)) { snapshot = Clone(item.state); return true; } snapshot = null; return false; }
         public WorldObjectSnapshot[] SnapshotObjects() { var result = new WorldObjectSnapshot[entries.Count]; int i = 0; foreach (WorldEntry e in entries.Values) result[i++] = Clone(e.state); return result; }
         public bool IsConnected(string a, string b) => connections.Contains(ConnectionKey(a, b));
-        public float GetConnectionStrength(string a, string b) { connectionStrengths.TryGetValue(ConnectionKey(a, b), out float value); return value; }
+        /// Cable strength follows live endpoint positions, including after movement and save restore.
+        public float GetConnectionStrength(string a, string b)
+        {
+            if (!IsConnected(a, b) || !entries.TryGetValue(a ?? string.Empty, out WorldEntry first) || !entries.TryGetValue(b ?? string.Empty, out WorldEntry second)) return 0f;
+            return 1f / (1f + Vector2Int.Distance(first.state.cell, second.state.cell));
+        }
+        public float GetConnectionEffectivePower(string a, string b)
+        {
+            if (!TryGetObject(a, out WorldObjectSnapshot first) || !TryGetObject(b, out WorldObjectSnapshot second) || (!first.powered && !second.powered)) return 0f;
+            return GetConnectionStrength(a, b);
+        }
+        public bool RemoveConnection(string a, string b)
+        {
+            string key = ConnectionKey(a, b);
+            if (!connections.Remove(key)) return false;
+            connectionStrengths.Remove(key); NotifyChanged(); return true;
+        }
         public bool EvaluatePuzzleTarget(PuzzleTargetDefinition target)
         {
             if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
             foreach (string requiredConnection in target.requiredConnections ?? Array.Empty<string>())
             {
                 string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
-                if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1])) return false;
+                if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1]) || GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
             }
             bool any = false, all = true;
             foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
