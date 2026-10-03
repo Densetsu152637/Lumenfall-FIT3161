@@ -85,6 +85,28 @@ namespace Lumenfall.Spells
             foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
             return string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? any : all;
         }
+        // Lost Echoes searches one explicit local target; optional markers additionally require an active search.
+        public bool CanRevealObject(string id, Vector2Int searchCell, int radius)
+        {
+            if (!IsReady || radius < 0 || !TryGetObject(id, out WorldObjectSnapshot target) ||
+                !string.Equals(target.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase) || !target.spellCompatible || target.revealed || !HasTag(target, "hidden") || !HasTag(target, "lost-echoes")) return false;
+            if (HasTag(target, "optional-recovery") && (!OptionalRecoveryRules.IsTargetId(id) || !GameEventManager.Instance.Runtime.GetFlag(OptionalRecoveryRules.SearchActiveFlag))) return false;
+            return Mathf.Abs(target.cell.x - searchCell.x) + Mathf.Abs(target.cell.y - searchCell.y) <= radius;
+        }
+        public bool TryRevealObject(string id, Vector2Int searchCell, int radius)
+        { return CanRevealObject(id, searchCell, radius) && SetProperty(id, value => value.revealed = true); }
+        public static bool HasTag(WorldObjectSnapshot target, string tag)
+        { return target != null && Array.Exists(target.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase)); }
+        // Runtime recovery markers are removed on disable/map change, so stale saved active flags cannot revive them.
+        public bool UnregisterRecoveryTarget(string id)
+        {
+            if (!OptionalRecoveryRules.IsTargetId(id) || !entries.TryGetValue(id, out WorldEntry entry) || !HasTag(entry.state, "optional-recovery")) return false;
+            entries.Remove(id);
+            foreach (string key in new List<string>(connections))
+                if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal))
+                { connections.Remove(key); connectionStrengths.Remove(key); }
+            NotifyChanged(); return true;
+        }
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
         { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }

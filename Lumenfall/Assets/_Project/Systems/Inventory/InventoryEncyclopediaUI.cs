@@ -24,7 +24,7 @@ namespace Lumenfall.Inventory
     {
         private const string CharacterFlagPrefix = "character.discovered.";
         private const string ItemFlagPrefix = "inventory.keyitem.";
-        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake" };
+        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake", "optional-recovered-item" };
         private static readonly Dictionary<string, CharacterEntry> CharacterEntries =
             new Dictionary<string, CharacterEntry>(StringComparer.OrdinalIgnoreCase)
             {
@@ -175,7 +175,7 @@ namespace Lumenfall.Inventory
             {
                 if (!IsKeyItemOwned(id)) continue;
                 shown = true;
-                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id, bodyStyle);
+                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id == "optional-recovered-item" ? "Recovered item (optional)" : id, bodyStyle);
             }
             if (!shown) GUILayout.Label("No key items discovered yet.", mutedStyle);
 

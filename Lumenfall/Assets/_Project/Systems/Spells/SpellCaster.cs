@@ -167,6 +167,7 @@ namespace Lumenfall.Spells
         {
             if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
             WorldStateService state = WorldStateService.Instance; if (state == null || !state.IsReady || !state.TryGetObject(targetId, out WorldObjectSnapshot target) || !target.spellCompatible) return false;
+            if (WorldStateService.HasTag(target, "optional-recovery") && spell != SpellId.LostEchoes) return false;
             bool changed = false;
             switch (spell)
             {
@@ -180,7 +181,9 @@ namespace Lumenfall.Spells
                 case SpellId.Rotara: changed = state.SetProperty(targetId, x => x.rotation = (Mathf.Round(x.rotation / 90f) * 90f + 90f) % 360f); break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
-                case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
+                case SpellId.LostEchoes:
+                    GridMover searcher = GetComponent<GridMover>();
+                    changed = searcher != null && state.TryRevealObject(targetId, searcher.CurrentCell, interactionRadius); break;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
@@ -222,10 +225,20 @@ namespace Lumenfall.Spells
             }
             return changed;
         }
-        private static bool Reveal(WorldStateService state, string id)
-        { bool changed = state.SetProperty(id, x => x.revealed = true); foreach (WorldObjectSnapshot item in state.SnapshotObjects()) if (Array.Exists(item.tags ?? Array.Empty<string>(), t => string.Equals(t, "hidden", StringComparison.OrdinalIgnoreCase))) changed |= state.SetProperty(item.id, x => x.revealed = true); return changed; }
         private string FindNearestTarget()
-        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible) { distance = d; best = item.id; } } return best; }
+        {
+            WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>();
+            if (state == null || player == null) return null;
+            string best = null; int distance = interactionRadius + 1;
+            foreach (WorldObjectSnapshot item in state.SnapshotObjects())
+            {
+                int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y);
+                if (!item.spellCompatible || (selectedSpell == SpellId.LostEchoes && !state.CanRevealObject(item.id, player.CurrentCell, interactionRadius)) ||
+                    (selectedSpell != SpellId.LostEchoes && WorldStateService.HasTag(item, "optional-recovery"))) continue;
+                if (d <= interactionRadius && (d < distance || (d == distance && string.CompareOrdinal(item.id, best) < 0))) { distance = d; best = item.id; }
+            }
+            return best;
+        }
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }
         private static Vector2Int ClampDirection(Vector2Int value) { if (value == Vector2Int.zero) return Vector2Int.up; return new Vector2Int(Mathf.Clamp(value.x, -1, 1), Mathf.Clamp(value.y, -1, 1)); }
     }
