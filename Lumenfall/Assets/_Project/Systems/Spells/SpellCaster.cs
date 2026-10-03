@@ -20,6 +20,7 @@ namespace Lumenfall.Spells
         private Vector2Int lastDirection = Vector2Int.up;
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
+        private readonly Lumenfall.Startup.UiNavigationInput wheelNavigation = new Lumenfall.Startup.UiNavigationInput();
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
@@ -57,11 +58,27 @@ namespace Lumenfall.Spells
                 return;
             }
             Mouse mouse = Mouse.current;
-            if (mouse != null && mouse.middleButton.wasPressedThisFrame)
+            Gamepad pad = Gamepad.current;
+            if (mouse?.middleButton.wasPressedThisFrame == true || Keyboard.current?.qKey.wasPressedThisFrame == true || pad?.rightShoulder.wasPressedThisFrame == true)
             {
                 spellWheelOpen = !spellWheelOpen;
                 wheelMovementLockOwned = spellWheelOpen;
-                GetComponent<GridMover>()?.SetMovementLocked(spellWheelOpen);
+                GetComponent<GridMover>()?.SetMovementLocked(this, spellWheelOpen);
+                if (spellWheelOpen) OverlayInputGate.Acquire(this); else OverlayInputGate.Release(this);
+            }
+            if (spellWheelOpen && !OverlayInputGate.IsBlockedExcept(this))
+            {
+                wheelNavigation.Read();
+                int offset = wheelNavigation.Horizontal != 0 ? wheelNavigation.Horizontal : wheelNavigation.Vertical;
+                if (offset != 0) SelectSpellByOffset(offset);
+                if (wheelNavigation.Cancel) { CloseSpellWheel(); return; }
+                if (wheelNavigation.Submit)
+                {
+                    string target = FindNearestTarget();
+                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                    CloseSpellWheel();
+                    return;
+                }
             }
             if (mouse != null && spellWheelOpen)
             {
@@ -120,16 +137,14 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
+        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void CloseSpellWheel()
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
-            // The inventory may have taken ownership of the same movement lock earlier
-            // in this frame. Release only the lock owned by the wheel in that case.
-            if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
-                GameEventManager.Instance?.Runtime?.ActiveDialogue == null)
-                GetComponent<GridMover>()?.SetMovementLocked(false);
+            // Legacy portal locks and sibling UI owner locks remain untouched.
+            if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
+            OverlayInputGate.Release(this);
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
@@ -158,7 +173,7 @@ namespace Lumenfall.Spells
                 GUI.Label(new Rect(item.x + 34f, item.y + 7f, item.width - 36f, 22f), spells[i].ToString());
                 GUI.color = previous;
             }
-            GUI.Label(new Rect(center.x - 145f, center.y + 160f, 290f, 22f), "Scroll: select   Right click: cast   Middle click: close");
+            GUI.Label(new Rect(center.x - 155f, center.y + 160f, 310f, 50f), "Arrows / stick / scroll: select\nEnter / A: cast   Q / RB / Esc / B: close");
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)

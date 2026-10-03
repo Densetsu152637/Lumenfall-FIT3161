@@ -9,6 +9,10 @@ namespace Lumenfall.DataDriven
     public sealed class DialogueOverlay : MonoBehaviour
     {
         private DialogueSession session;
+        private GameEventRuntime subscribedRuntime;
+        private readonly Lumenfall.Startup.UiNavigationInput navigation = new Lumenfall.Startup.UiNavigationInput();
+        private int selectedChoice;
+        private bool scrollToChoice;
         private GUIStyle panelStyle;
         private GUIStyle nameStyle;
         private GUIStyle textStyle;
@@ -28,45 +32,76 @@ namespace Lumenfall.DataDriven
 
         private void OnEnable()
         {
-            if (GameEventManager.Instance != null)
-            {
-                GameEventManager.Instance.Runtime.DialogueStarted += OnStarted;
-                GameEventManager.Instance.Runtime.DialogueEnded += OnEnded;
-            }
+            BindRuntime();
         }
 
         private void OnDisable()
         {
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
-            if (GameEventManager.Instance != null)
-            {
-                GameEventManager.Instance.Runtime.DialogueStarted -= OnStarted;
-                GameEventManager.Instance.Runtime.DialogueEnded -= OnEnded;
-            }
+            UnbindRuntime();
+            session = null;
+            OverlayInputGate.Release(this);
+        }
+
+        private void UnbindRuntime()
+        {
+            if (subscribedRuntime == null) return;
+            subscribedRuntime.DialogueStarted -= OnStarted;
+            subscribedRuntime.DialogueEnded -= OnEnded;
+            subscribedRuntime = null;
+        }
+        private void BindRuntime()
+        {
+            GameEventRuntime current = GameEventManager.Instance.Runtime;
+            if (current == subscribedRuntime) return;
+            if (session != null) OnEnded(session);
+            UnbindRuntime();
+            subscribedRuntime = current;
+            if (current == null) return;
+            current.DialogueStarted += OnStarted;
+            current.DialogueEnded += OnEnded;
+            if (current.ActiveDialogue != null) OnStarted(current.ActiveDialogue);
         }
 
         private void OnStarted(DialogueSession value)
         {
             session = value;
+            OverlayInputGate.Acquire(this);
             lockedMover = FindAnyObjectByType<GridMover>();
-            if (lockedMover != null) lockedMover.SetMovementLocked(true);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
             inputBlockedFrame = Time.frameCount;
             ResetReveal();
         }
         private void OnEnded(DialogueSession value)
         {
             if (session != value) return;
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
             session = null;
+            OverlayInputGate.Release(this);
             displayedText = string.Empty;
             nodeId = null;
         }
 
         private void Update()
         {
+            BindRuntime();
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
+            EnsureNode();
+            navigation.Read();
+            if (Time.frameCount > inputBlockedFrame && !OverlayInputGate.IsBlockedExcept(this))
+            {
+                if (navigation.Cancel) { session.End(); return; }
+                if (navigation.Vertical != 0 && session.AvailableChoices.Count > 0)
+                {
+                    selectedChoice = UiFocusIndex.Move(selectedChoice, navigation.Vertical, session.AvailableChoices.Count);
+                    scrollToChoice = true;
+                }
+                if (navigation.Vertical != 0 && session.AvailableChoices.Count == 0) scrollPosition.y = Mathf.Max(0f, scrollPosition.y + navigation.Vertical * 70f);
+                if (navigation.Submit || UnityEngine.InputSystem.Keyboard.current?.eKey.wasPressedThisFrame == true) Advance();
+            }
+            if (session == null || !session.IsActive) return;
             EnsureNode();
             int count = DialogueTextReveal.VisibleCharacterCount(displayedText);
             if (visibleCharacters >= count) return;
@@ -85,7 +120,8 @@ namespace Lumenfall.DataDriven
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
             EnsureStyles();
             EnsureNode();
-            if (Time.frameCount > inputBlockedFrame) HandleAdvanceInput();
+            bool previousEnabled = GUI.enabled;
+            GUI.enabled = previousEnabled && Time.frameCount > inputBlockedFrame && !OverlayInputGate.IsBlockedExcept(this);
             float width = Mathf.Min(Screen.width - 40f, 760f);
             // Generated frames are 3:1; preserve that ratio so their quiet center and border remain intact.
             float height = Mathf.Min(Screen.height * 0.42f, width / 3f);
@@ -107,29 +143,37 @@ namespace Lumenfall.DataDriven
                 for (int i = 0; i < session.AvailableChoices.Count; i++)
                 {
                     DialogueChoiceDefinition choice = session.AvailableChoices[i];
-                    if (GUILayout.Button(choice.text ?? choice.id, buttonStyle)) session.SelectChoice(choice.id);
+                    if (GUILayout.Button((i == selectedChoice ? "> " : "") + (choice.text ?? choice.id), buttonStyle, GUILayout.MinHeight(36f)))
+                    { session.SelectChoice(choice.id); break; }
+                    if (i == selectedChoice && scrollToChoice && Event.current.type == EventType.Repaint)
+                    {
+                        Rect row = GUILayoutUtility.GetLastRect();
+                        float viewport = Mathf.Max(40f, safeHeight - 34f);
+                        if (row.height > viewport || row.yMin < scrollPosition.y) scrollPosition.y = row.yMin;
+                        else if (row.yMax > scrollPosition.y + viewport) scrollPosition.y = Mathf.Max(0f, row.yMax - viewport);
+                        scrollToChoice = false;
+                    }
                 }
             }
             else if (complete && GUILayout.Button(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle))
             {
                 session.Continue();
             }
-            else if (!complete) GUILayout.Label("Press Space or E to reveal", hintStyle);
+            else if (!complete) GUILayout.Label("Space / E / A: reveal   Esc / B: close", hintStyle);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
+            GUI.enabled = previousEnabled;
         }
 
-        private void HandleAdvanceInput()
+        private void Advance()
         {
-            Event e = Event.current;
-            if (e.type != EventType.KeyDown || (e.keyCode != KeyCode.Space && e.keyCode != KeyCode.Return && e.keyCode != KeyCode.E)) return;
-            e.Use();
             if (visibleCharacters < DialogueTextReveal.VisibleCharacterCount(displayedText))
             {
                 visibleCharacters = DialogueTextReveal.VisibleCharacterCount(displayedText);
                 revealAccumulator = 0f;
             }
             else if (session.AvailableChoices.Count == 0) session.Continue();
+            else session.SelectChoice(session.AvailableChoices[UiFocusIndex.Move(selectedChoice, 0, session.AvailableChoices.Count)].id);
         }
 
         private void EnsureNode()
@@ -145,6 +189,9 @@ namespace Lumenfall.DataDriven
             visibleCharacters = 0;
             revealAccumulator = 0f;
             scrollPosition = Vector2.zero;
+            selectedChoice = 0;
+            scrollToChoice = true;
+            inputBlockedFrame = Time.frameCount;
         }
 
         private void EnsureStyles()

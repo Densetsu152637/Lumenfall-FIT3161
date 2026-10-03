@@ -13,6 +13,8 @@ namespace Lumenfall.Inventory
     public static class InventoryUiState
     {
         public static bool IsOpen { get; internal set; }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Reset() { IsOpen = false; }
     }
 
     /// Runtime inventory and character encyclopedia. It is bootstrapped after a scene loads so
@@ -49,8 +51,13 @@ namespace Lumenfall.Inventory
                 { SpellId.LostEchoes, "Reveal hidden points of interest." }
             };
 
-        private enum Page { Inventory, Encyclopedia }
+        private enum Page { Objectives, Inventory, Encyclopedia }
         private Page page;
+        private GameEventRuntime subscribedRuntime;
+        private readonly Lumenfall.Startup.UiNavigationInput navigation = new Lumenfall.Startup.UiNavigationInput();
+        private Vector2 scrollPosition;
+        private Lumenfall.Quests.QuestPuzzleDatabase objectiveDefinitions;
+        private int openedFrame;
         private GridMover lockedMover;
         private GUIStyle panelStyle;
         private GUIStyle headingStyle;
@@ -69,21 +76,22 @@ namespace Lumenfall.Inventory
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
+            TextAsset objectives = Resources.Load<TextAsset>("Quests/quest_puzzle_definitions");
+            if (objectives != null)
+            {
+                try { objectiveDefinitions = JsonUtility.FromJson<Lumenfall.Quests.QuestPuzzleDatabase>(objectives.text); }
+                catch (Exception exception) { Debug.LogWarning("Journal objectives could not be loaded: " + exception.Message, this); }
+            }
         }
 
         private void OnEnable()
         {
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime == null) return;
-            runtime.DialogueStarted += OnDialogueStarted;
-            runtime.StateRestored += OnStateRestored;
-            runtime.DialogueEnded += OnDialogueEnded;
-            runtime.QuestStatusChanged += OnQuestStatusChanged;
+            BindRuntime();
         }
 
         private void OnDisable()
         {
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            GameEventRuntime runtime = subscribedRuntime;
             if (runtime != null)
             {
                 runtime.DialogueStarted -= OnDialogueStarted;
@@ -91,30 +99,60 @@ namespace Lumenfall.Inventory
                 runtime.DialogueEnded -= OnDialogueEnded;
                 runtime.QuestStatusChanged -= OnQuestStatusChanged;
             }
+            subscribedRuntime = null;
             Close();
+        }
+
+        private void BindRuntime()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            if (runtime == subscribedRuntime) return;
+            if (subscribedRuntime != null)
+            {
+                subscribedRuntime.DialogueStarted -= OnDialogueStarted;
+                subscribedRuntime.StateRestored -= OnStateRestored;
+                subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+                subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
+            }
+            subscribedRuntime = runtime;
+            if (runtime == null) return;
+            runtime.DialogueStarted += OnDialogueStarted;
+            runtime.StateRestored += OnStateRestored;
+            runtime.DialogueEnded += OnDialogueEnded;
+            runtime.QuestStatusChanged += OnQuestStatusChanged;
         }
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !keyboard.tabKey.wasPressedThisFrame) return;
-            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
-            if (InventoryUiState.IsOpen) Close();
-            else Open();
+            BindRuntime();
+            bool toggle = Keyboard.current?.tabKey.wasPressedThisFrame == true || Gamepad.current?.selectButton.wasPressedThisFrame == true;
+            if (InventoryUiState.IsOpen)
+            {
+                navigation.Read();
+                if (Time.frameCount <= openedFrame || OverlayInputGate.IsBlockedExcept(this)) return;
+                if (toggle || navigation.Cancel) { Close(); return; }
+                if (navigation.Horizontal != 0) { page = (Page)UiFocusIndex.Move((int)page, navigation.Horizontal, 3); scrollPosition = Vector2.zero; }
+                scrollPosition.y = Mathf.Max(0f, scrollPosition.y + navigation.Vertical * 70f);
+            }
+            else if (toggle && !OverlayInputGate.IsBlocked) Open();
         }
 
         private void Open()
         {
-            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+            if (OverlayInputGate.IsBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             InventoryUiState.IsOpen = true;
+            OverlayInputGate.Acquire(this);
+            openedFrame = Time.frameCount;
+            scrollPosition = Vector2.zero;
             lockedMover = FindAnyObjectByType<GridMover>();
-            if (lockedMover != null) lockedMover.SetMovementLocked(true);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
         }
 
         private void Close()
         {
             InventoryUiState.IsOpen = false;
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            OverlayInputGate.Release(this);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
         }
 
@@ -150,21 +188,100 @@ namespace Lumenfall.Inventory
         {
             if (!InventoryUiState.IsOpen) return;
             EnsureStyles();
+            bool previousEnabled = GUI.enabled;
+            GUI.enabled = previousEnabled && !OverlayInputGate.IsBlockedExcept(this) && Time.frameCount > openedFrame;
             float width = Mathf.Min(Screen.width - 48f, 920f);
             float height = Mathf.Min(Screen.height - 48f, 640f);
             Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
             GUILayout.BeginArea(panel, panelStyle);
             GUILayout.Label("Journal", headingStyle);
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Objectives", page == Page.Objectives ? buttonStyle : GUI.skin.button)) { page = Page.Objectives; scrollPosition = Vector2.zero; }
             if (GUILayout.Button("Inventory", page == Page.Inventory ? buttonStyle : GUI.skin.button)) page = Page.Inventory;
             if (GUILayout.Button("Character encyclopedia", page == Page.Encyclopedia ? buttonStyle : GUI.skin.button)) page = Page.Encyclopedia;
             GUILayout.FlexibleSpace();
-            GUILayout.Label("Tab: close", mutedStyle, GUILayout.Width(100f));
+            if (GUILayout.Button("Close", GUILayout.Width(70f))) Close();
             GUILayout.EndHorizontal();
             GUILayout.Space(12f);
-            if (page == Page.Inventory) DrawInventory(); else DrawEncyclopedia();
+            GUILayout.Label("Left/Right or stick: page   Up/Down: scroll   Tab / Esc / B: close", mutedStyle);
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+            if (page == Page.Objectives) DrawObjectives(); else if (page == Page.Inventory) DrawInventory(); else DrawEncyclopedia();
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
+            GUI.enabled = previousEnabled;
         }
+
+        private void DrawObjectives()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            bool shown = false;
+            foreach (QuestStatus status in new[] { QuestStatus.Active, QuestStatus.Completed })
+            foreach (QuestDefinition quest in runtime.Catalog.Quests.Values)
+            {
+                if (runtime.GetQuestStatus(quest.id) != status) continue;
+                shown = true;
+                GUILayout.Label((quest.title ?? quest.id) + " - " + status, headingStyle);
+                string objective = MetadataValue(quest.metadata, "objective");
+                GUILayout.Label(string.IsNullOrWhiteSpace(objective) ? quest.description ?? "" : objective, bodyStyle);
+                string location = MetadataValue(quest.metadata, "location");
+                if (!string.IsNullOrWhiteSpace(location)) GUILayout.Label("Location: " + location, mutedStyle);
+                if (status == QuestStatus.Active)
+                foreach (var puzzle in objectiveDefinitions?.puzzles ?? Array.Empty<Lumenfall.Quests.QuestPuzzleDefinition>())
+                {
+                    if (puzzle == null || puzzle.questId != quest.id) continue;
+                    GUILayout.Label("Area: " + AreaName(puzzle.mapId), mutedStyle);
+                    foreach (var target in puzzle.targets ?? Array.Empty<Lumenfall.Quests.QuestPuzzleTarget>())
+                        if (target != null) GUILayout.Label(DescribeTarget(target), bodyStyle);
+                }
+                GUILayout.Space(14f);
+            }
+            if (!shown) GUILayout.Label("No quests accepted yet. Talk to nearby students to find your next objective.", mutedStyle);
+        }
+
+        private static string DescribeTarget(Lumenfall.Quests.QuestPuzzleTarget target)
+        {
+            List<string> conditions = new List<string>();
+            if (target.requiredPowered) conditions.Add("powered");
+            if (target.requiredConnected) conditions.Add("connected");
+            if (target.requiredRevealed) conditions.Add("revealed");
+            if (target.requiredFrozen) conditions.Add("frozen");
+            if (target.requiredAligned) conditions.Add("aligned");
+            if (target.requiredRotation >= 0) conditions.Add("rotation " + target.requiredRotation + " degrees");
+            if (target.requiredPositionX != int.MinValue && target.requiredPositionY != int.MinValue)
+                conditions.Add(target.requiredFrozen ? "reach the trial destination" : "at the quest destination");
+            List<string> labels = new List<string>();
+            foreach (string id in target.objectIds ?? Array.Empty<string>()) labels.Add(ObjectName(id));
+            string join = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? " or " : " and ";
+            return string.Join(join, labels) + ": " + (conditions.Count == 0 ? "follow the quest instructions" : string.Join(", ", conditions));
+        }
+
+        private static string AreaName(string id)
+        {
+            switch (id)
+            {
+                case "campus": return "Campus commons";
+                case "eastForest": return "East forest";
+                case "B01.Ground": return "Arrival building";
+                case "B02.Ground": return "Teaching building";
+                case "B03.Ground": return "Shared facilities";
+                case "B04.Ground": return "Sirius dormitory";
+                default: return ReadableId(id);
+            }
+        }
+        private static string ObjectName(string id)
+        {
+            switch (id)
+            {
+                case "relic.stella.power": return "Stella's power relic";
+                case "circuit.stella.link": return "Stella's circuit relic";
+                case "orientation.cinna.align": return "Cinna's orientation marker";
+                case "trial.cinna.ice": return "Cinna's ice trial";
+                case "mechanism.orio.rotate": return "Orio's mechanism";
+                case "keepsake.katrina.hidden": return "Katrina's keepsake";
+                default: return ReadableId(id);
+            }
+        }
+        private static string ReadableId(string id) => System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase((id ?? "Quest object").Replace('.', ' ').Replace('_', ' ').Replace('-', ' '));
 
         private void DrawInventory()
         {
