@@ -1,0 +1,7 @@
+{
+    "name": "Lumenfall.Camera.EditModeTests",
+    "rootNamespace": "Lumenfall.Tests.Camera",
+    "references": ["Lumenfall.Runtime"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

@@ -1,0 +1,6 @@
+{
+    "name": "Lumenfall.Camera.PlayModeTests",
+    "rootNamespace": "Lumenfall.Tests.Camera",
+    "references": ["Lumenfall.Runtime"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
