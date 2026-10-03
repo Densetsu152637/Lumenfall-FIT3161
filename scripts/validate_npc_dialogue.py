@@ -11,8 +11,17 @@ assert doc["schemaVersion"] == 1
 quests = {q["id"]: q for q in doc["quests"]}
 dialogues = {d["id"]: d for d in doc["dialogues"]}
 events = {e["id"]: e for e in doc["events"]}
-assert len(quests) == 6 and len(dialogues) == 15 and len(events) == 9
+assert len(quests) == 6 and len(dialogues) == 16 and len(events) == 9
 assert len(quests) == len(doc["quests"]) and len(dialogues) == len(doc["dialogues"])
+
+puzzles = json.loads((ROOT / "Lumenfall/Assets/Resources/Quests/quest_puzzle_definitions.json").read_text(encoding="utf-8"))["puzzles"]
+for puzzle in puzzles:
+    success_id = puzzle.get("successDialogueId")
+    if success_id:
+        assert success_id in dialogues, f"Missing puzzle success dialogue: {success_id}"
+        success = dialogues[success_id]
+        assert success["startNodeId"] in {node["id"] for node in success["nodes"]}
+        assert not any(node.get("onEnterActions") or any(choice.get("actions") for choice in node.get("choices", [])) for node in success["nodes"]), "Success feedback must not duplicate quest rewards"
 
 for qid in quests:
     d = dialogues.get(qid + "_dialogue")

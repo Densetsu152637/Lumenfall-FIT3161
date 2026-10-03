@@ -29,12 +29,34 @@ namespace Lumenfall.Spells
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
+        private GameEventManager progressionManager;
+        private GameEventRuntime progressionRuntime;
         private void OnEnable()
-        { SubscribeProgression(); RefreshSelection(); }
-        private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += RefreshSelection; }
+        {
+            progressionManager = GameEventManager.Instance;
+            progressionManager.RuntimeChanged += BindProgression;
+            BindProgression(progressionManager.Runtime);
+        }
+        private void BindProgression(GameEventRuntime runtime)
+        {
+            UnsubscribeProgression();
+            progressionRuntime = runtime;
+            if (runtime != null)
+            {
+                runtime.QuestStatusChanged += OnQuestStatusChanged;
+                runtime.DialogueEnded += OnDialogueEnded;
+                runtime.StateRestored += RefreshSelection;
+            }
+            RefreshSelection();
+        }
         private void UnsubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged -= OnQuestStatusChanged; runtime.DialogueEnded -= OnDialogueEnded; runtime.StateRestored -= RefreshSelection; }
+        {
+            if (progressionRuntime == null) return;
+            progressionRuntime.QuestStatusChanged -= OnQuestStatusChanged;
+            progressionRuntime.DialogueEnded -= OnDialogueEnded;
+            progressionRuntime.StateRestored -= RefreshSelection;
+            progressionRuntime = null;
+        }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
         { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
         private void OnDialogueEnded(DialogueSession session)
@@ -43,8 +65,8 @@ namespace Lumenfall.Spells
             {
                 string reward = MetadataValue(session.Definition?.metadata, "spellReward");
                 if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                    (spell != SpellId.Ampere || progressionRuntime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
+                    progressionRuntime.SetFlag(SpellFlagPrefix + spell, true);
             }
             RefreshSelection();
         }
@@ -128,12 +150,12 @@ namespace Lumenfall.Spells
             // The inventory may have taken ownership of the same movement lock earlier
             // in this frame. Release only the lock owned by the wheel in that case.
             if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
-                GameEventManager.Instance?.Runtime?.ActiveDialogue == null)
+                progressionRuntime?.ActiveDialogue == null)
                 GetComponent<GridMover>()?.SetMovementLocked(false);
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
-        { UnsubscribeProgression(); CloseSpellWheel(); }
+        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
 
         private void OnGUI()
         {
@@ -188,7 +210,7 @@ namespace Lumenfall.Spells
         {
             string reward = MetadataValue(metadata, "spellReward");
             foreach (string value in (reward ?? string.Empty).Split(',', ';'))
-                if (TryParseSpell(value, out SpellId spell)) GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                if (TryParseSpell(value, out SpellId spell)) progressionRuntime.SetFlag(SpellFlagPrefix + spell, true);
         }
         private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
         private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }

@@ -65,22 +65,29 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
+        public void FirstLightTerminalLessonAwardsAmpereThroughSpellCaster()
         {
-            GameEventRuntime runtime = CreateRuntime();
-            DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            session.SelectChoice("leave");
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("first-light-reward-test");
+            host.AddComponent<SpellCaster>();
+            try
+            {
+                DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                session.SelectChoice("leave");
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
 
-            session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
-            Assert.That(session.Continue(), Is.True);
-            Assert.That(session.IsCompleted, Is.True);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+                session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
+                Assert.That(session.Continue(), Is.True);
+                Assert.That(session.IsCompleted, Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+            }
+            finally { Object.DestroyImmediate(host); runtime.ResetState(); }
         }
 
         [Test]
