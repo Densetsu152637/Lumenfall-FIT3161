@@ -47,7 +47,8 @@ After approval:
 - `python scripts/validate_runtime_world.py` PASS: 8 maps, 7 NPCs.
 - `python -m unittest discover -s scripts/tests -v` PASS: 4 Python validator harness tests.
 - Scope manager independently reran those same two validators and four Python harness tests: PASS.
-- Full committed `git diff --check origin/main...HEAD` is required after final commit; final worker/manager handoff records its result and remote parity. New .meta empty fields contain no trailing whitespace.
+- Full committed `git diff --check origin/main...HEAD` PASS after implementation commit 02e6796e50705687ab1cbf042b5a60cacb67566f; working tree clean and exact remote/local HEAD parity verified with git ls-remote. New .meta empty fields contain no trailing whitespace.
+- `python -B scripts/validate_unity_project.py Lumenfall` reports exactly the three documented baseline ThirdParty faults: orphaned Polytope URP.meta, FantasyCastle ReadMe.txt not UTF-8, and Low Poly Tarvern Pack README conflict marker. No new metadata fault; unrelated ThirdParty files unchanged.
 - Compile helper scripts/response files/outputs remain ignored under this worktree's Lumenfall/Temp; shared references were read only. No Unity Editor/MCP/CLI, Play Mode or build launch occurred. Static/offline checks do not establish runtime, rendering or platform acceptance.
 
 ## Merge review
