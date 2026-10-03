@@ -13,7 +13,7 @@ Branch `codex/quest-string-them-together`, based on `origin/main` (8ceebfa).
 
 ## Baseline and design limits
 
-Both existing B02 endpoints are at (18,14)/(20,14), in W10 according to the map regions. This branch describes the existing engineering workbench without inventing relocation into W02. Connection attenuation is 1/(1+Euclidean tile distance); links below 0.2 are rejected at creation but stored strength needs live reevaluation.
+Both existing B02 endpoints are at (18,14)/(20,14), in W11 (the authored region at x=18,y=12,width=6,height=3) according to the map regions. This branch describes the existing engineering workbench without inventing relocation into W02. Connection attenuation is 1/(1+Euclidean tile distance); links below 0.2 are rejected at creation but stored strength needs live reevaluation.
 
 ## Remaining manual work
 
@@ -29,7 +29,9 @@ First Light independently changes SpellCaster/QuestPuzzleMonitor subscription li
 - Structured NPC dialogue prioritizes Active, then NotStarted, then Completed; ambient weighting remains within equal priority.
 - Monitor requires powered source separately, exact relic/receiver link, and live effective power >=0.2. B02/campus authored target assets and parallel JSON declare the same threshold.
 - Cable strength follows current cells; recasting removes even dark/overlong cables and allows a valid retry. World save data keeps existing connections/provider format; live values derive from restored positions/power.
-- Four focused EditMode tests cover lesson abandonment/save flags, exact topology/power/distance/retry/persistence, Stella selection, and monitor completion. These sources compile offline; NUnit engine execution and Play Mode are not run.
+- Four focused EditMode tests cover lesson abandonment/save flags, authored source-only power, exact topology/power/distance/retry/persistence, source-endpoint casting, removal feedback with stray cables, restored legacy creation strength, Stella selection, and durable monitor completion. These sources compile offline; NUnit engine execution and Play Mode are not run.
 - Repository runtime-world validator passes (8 maps/7 NPCs), dialogue validator passes (6 quests/15 dialogues/9 events), and Python validator harness passes all 4 tests. Isolated runtime/GameEvents/EditMode compilation succeeds against shared read-only engine references, excluding baseline Lumenfall assemblies. Existing obsolete object-search/unassigned serialized-field compiler warnings remain.
+
+Final independent review corrected map target/source-power parity and cable-removal feedback when unrelated links remain. B02/campus authored map targets now require the power relic itself to be powered, plus the exact live pair. GameEvents, runtime and all existing EditMode sources were recompiled offline; validators and all four Python harness tests passed again. The four Unity NUnit tests remain unexecuted.
 
 Completion feedback currently uses the existing spell cast status box and completed Stella conversation. Final cable artwork/animation, automatic completion celebration, and runtime visual acceptance remain manual presentation work.

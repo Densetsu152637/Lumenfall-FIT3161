@@ -54,7 +54,11 @@ namespace Lumenfall.Tests.GameEvents
 
         [Test] public void ExactCableNeedsLiveSourceAndDistanceAndSupportsRetry()
         {
-            PuzzleTargetDefinition target = new PuzzleTargetDefinition { objectIds = new[] { "relic.stella.power", "circuit.stella.link" }, requiredConnections = new[] { "relic.stella.power|circuit.stella.link" }, minimumEffectivePower = 0.2f };
+            WorldAreaAsset area = UnityEditor.AssetDatabase.LoadAssetAtPath<WorldAreaAsset>("Assets/_Project/World/Areas/B02.Ground.asset");
+            Assert.That(area, Is.Not.Null);
+            PuzzleTargetDefinition target = null;
+            foreach (PuzzleTargetDefinition authored in area.definition.puzzleTargets) if (authored.id == "quest.stella.string-them-together") target = authored;
+            Assert.That(target, Is.Not.Null);
             state.RegisterObject("decoy", null, new Vector2Int(19, 14), Vector2Int.one, true, null);
             state.SetProperty("relic.stella.power", x => x.powered = true);
             state.AddConnection("relic.stella.power", "decoy"); state.AddConnection("circuit.stella.link", "decoy");
@@ -63,7 +67,9 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.up), Is.True);
             Assert.That(state.EvaluatePuzzleTarget(target), Is.True);
             state.SetProperty("relic.stella.power", x => x.powered = false);
-            Assert.That(state.EvaluatePuzzleTarget(target), Is.False);
+            state.SetProperty("circuit.stella.link", x => x.powered = true);
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.False, "Receiver power cannot replace the authored source.");
+            state.SetProperty("circuit.stella.link", x => x.powered = false);
             state.SetProperty("relic.stella.power", x => x.powered = true);
             state.SetProperty("circuit.stella.link", x => x.cell = new Vector2Int(22, 14));
             Assert.That(state.GetConnectionEffectivePower("relic.stella.power", "circuit.stella.link"), Is.EqualTo(0.2f).Within(0.0001f));
@@ -72,11 +78,20 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(state.EvaluatePuzzleTarget(target), Is.False, "Existing cables must reevaluate moved endpoints.");
             Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.up), Is.True, "An invalid cable can be removed.");
             Assert.That(state.IsConnected("relic.stella.power", "circuit.stella.link"), Is.False);
+            Assert.That(caster.LastCastFeedback, Does.StartWith("Cable removed"), "Stray cables must not turn removal feedback into connection feedback.");
             Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.up), Is.False);
             state.SetProperty("circuit.stella.link", x => x.cell = new Vector2Int(20, 14));
             Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.up), Is.True);
             string save = state.CaptureStateJson(); state.RemoveConnection("relic.stella.power", "circuit.stella.link"); state.RestoreStateJson(save);
             Assert.That(state.EvaluatePuzzleTarget(target), Is.True);
+            Assert.That(caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.up), Is.True);
+            Assert.That(state.IsConnected("relic.stella.power", "circuit.stella.link"), Is.False);
+            Assert.That(caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.up), Is.True);
+            state.SetProperty("circuit.stella.link", x => x.cell = new Vector2Int(23, 14));
+            save = state.CaptureStateJson();
+            state.SetProperty("circuit.stella.link", x => x.cell = new Vector2Int(20, 14));
+            state.RestoreStateJson(save);
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.False, "Saved creation strength cannot bypass live distance after restore.");
         }
 
         [Test] public void StellaDeterministicallyHandsOffToNextOrActiveAssignment()
@@ -104,6 +119,11 @@ namespace Lumenfall.Tests.GameEvents
             state.AddConnection("relic.stella.power", "circuit.stella.link");
             monitor = Host("monitor-exact").AddComponent<QuestPuzzleMonitor>(); monitor.SendMessage("Update");
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
+            state.RemoveConnection("relic.stella.power", "circuit.stella.link");
+            state.SetProperty("relic.stella.power", x => x.powered = false);
+            Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); monitor.SendMessage("Update");
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed), "Completion remains durable after removing the cable.");
         }
         private GameObject Host(string name) { GameObject go = new GameObject(name); hosts.Add(go); return go; }
     }

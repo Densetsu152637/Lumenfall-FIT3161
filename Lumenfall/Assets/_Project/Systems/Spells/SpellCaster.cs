@@ -178,6 +178,7 @@ namespace Lumenfall.Spells
         {
             if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
             WorldStateService state = WorldStateService.Instance; if (state == null || !state.IsReady || !state.TryGetObject(targetId, out WorldObjectSnapshot target) || !target.spellCompatible) return false;
+            int previousCableCount = spell == SpellId.Weave ? CountConnections(state, targetId) : 0;
             bool changed = false;
             switch (spell)
             {
@@ -195,12 +196,17 @@ namespace Lumenfall.Spells
             }
             if (spell == SpellId.Weave)
             {
-                bool connected = false;
-                foreach (WorldObjectSnapshot other in state.SnapshotObjects()) if (state.IsConnected(targetId, other.id)) connected = true;
-                LastCastFeedback = changed ? (connected ? "Cable connected. Keep the power relic on." : "Cable removed. Cast Weave again to reconnect.") : "No live cable: power the relic and keep endpoints within four tiles.";
+                bool added = CountConnections(state, targetId) > previousCableCount;
+                LastCastFeedback = changed ? (added ? "Cable connected. Keep the power relic on." : "Cable removed. Cast Weave again to reconnect.") : "No live cable: power the relic and keep endpoints within four tiles.";
                 feedbackUntil = Time.unscaledTime + 4f;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
+        }
+        private static int CountConnections(WorldStateService state, string targetId)
+        {
+            int count = 0;
+            foreach (WorldObjectSnapshot other in state.SnapshotObjects()) if (state.IsConnected(targetId, other.id)) count++;
+            return count;
         }
         private void GrantSpellRewards(GameMetadataEntry[] metadata)
         {

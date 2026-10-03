@@ -190,12 +190,11 @@ MonoBehaviour:
     - id: quest.stella.string-them-together
       objectIds:
       - relic.stella.power
-      - circuit.stella.link
       requiredConnections:
       - relic.stella.power|circuit.stella.link
       minimumEffectivePower: 0.2
       conditionMode: All
-      requiredPowered: 0
+      requiredPowered: 1
       requiredConnected: 1
       requiredRevealed: 0
       requiredFrozen: 0

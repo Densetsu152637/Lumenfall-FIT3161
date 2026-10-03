@@ -146,7 +146,7 @@
   ],
   "puzzleTargets": [
     { "id": "quest.stella.first-light", "objectIds": ["relic.stella.power"], "requiredPowered": true },
-    { "id": "quest.stella.string-them-together", "objectIds": ["relic.stella.power", "circuit.stella.link"], "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"], "minimumEffectivePower": 0.2 }
+    { "id": "quest.stella.string-them-together", "objectIds": ["relic.stella.power"], "requiredPowered": true, "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"], "minimumEffectivePower": 0.2 }
   ],
   "portals": [
     {
