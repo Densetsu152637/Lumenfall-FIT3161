@@ -26,7 +26,7 @@ Optional flags audio.mystery/audio.sleeping/audio.woke and event metadata audioC
 - 13 portable audio NUnit methods executed through reflection runner and passed: mix boundaries/independence, context priority/ducking/pause, exact story flags/aliases, late sleep rejection, runtime replacement, repeated binding/disposal, map change during dialogue, reset/restore signal, metadata cue and missing/invalid media. UnityJsonRestore and UnitySettings tests compile but were not executed.
 - Manager baseline runtime-world validator passed: 8 maps/7 NPCs. Dialogue validator passed: 6 quests/15 dialogues/9 events. Python validator harness passed all 4 tests.
 - Manager project integrity scan reports only the 3 known baseline ThirdParty errors: orphan URP.meta, FantasyCastle UTF-16 ReadMe misread as UTF-8, Tarvern README conflict marker. No new audio metadata/config errors.
-- Incremental manager review covered context/mix/signals, service/source ownership, startup layout and final tests/handoff. Review found and fixed startup-paused empty voice pool reservation. Unstaged diff whitespace check passed; committed full-range check is required after final commit.
+- Incremental manager review covered context/mix/signals, service/source ownership, startup layout and final tests/handoff. Review found and fixed startup-paused empty voice pool reservation. Unstaged diff whitespace check and committed `git diff --check origin/main...HEAD` passed; working tree clean after publication.
 
 ## Remaining media and manual acceptance
 
