@@ -33,9 +33,10 @@
       "id": "cinna_cold_feet_warm_idea_monitor",
       "questId": "cinna_cold_feet_warm_idea",
       "completionEventId": "complete_cinna_cold_feet_warm_idea",
+      "successDialogueId": "cinna_cold_feet_success_dialogue",
       "mapId": "campus",
       "targets": [
-        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
+        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredVisitedTraps": 4, "requiredUninterruptedSlide": true, "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
       ]
     },
     {

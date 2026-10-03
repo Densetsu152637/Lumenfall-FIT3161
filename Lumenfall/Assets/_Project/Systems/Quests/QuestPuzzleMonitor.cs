@@ -33,6 +33,7 @@ namespace Lumenfall.Quests
         public string id;
         public string questId;
         public string completionEventId;
+        public string successDialogueId;
         public string mapId;
         public QuestPuzzleTarget[] targets = Array.Empty<QuestPuzzleTarget>();
     }
@@ -46,6 +47,8 @@ namespace Lumenfall.Quests
         public bool requiredPowered;
         public bool requiredConnected;
         public bool requiredRevealed;
+        public int requiredVisitedTraps;
+        public bool requiredUninterruptedSlide;
         public bool requiredFrozen;
         public bool requiredAligned;
         public int requiredRotation = -1;
@@ -65,6 +68,8 @@ namespace Lumenfall.Quests
         private QuestPuzzleDatabase database;
         private readonly HashSet<string> fired = new HashSet<string>(StringComparer.Ordinal);
         private float nextCheck;
+        private GameEventManager subscribedManager;
+        private GameEventRuntime subscribedRuntime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -83,19 +88,27 @@ namespace Lumenfall.Quests
             if (asset == null) { Debug.LogWarning($"Quest puzzle definitions missing at Resources/{ResourcePath}.json", this); return; }
             try { database = JsonUtility.FromJson<QuestPuzzleDatabase>(asset.text); }
             catch (Exception exception) { Debug.LogError($"Could not parse quest puzzle definitions: {exception.Message}", this); }
-            GameEventManager eventManager = GameEventManager.Instance;
-            GameEventRuntime runtime = eventManager == null ? null : eventManager.Runtime;
-            if (runtime != null)
-                runtime.StateRestored += OnStateRestored;
         }
 
-        private void OnDestroy()
+        private void OnEnable()
         {
-            GameEventManager eventManager = GameEventManager.Instance;
-            GameEventRuntime runtime = eventManager == null ? null : eventManager.Runtime;
-            if (runtime != null) runtime.StateRestored -= OnStateRestored;
-            if (instance == this) instance = null;
+            subscribedManager = GameEventManager.Instance;
+            subscribedManager.RuntimeChanged += OnRuntimeChanged;
+            OnRuntimeChanged(subscribedManager.Runtime);
         }
+        private void OnRuntimeChanged(GameEventRuntime runtime)
+        {
+            if (subscribedRuntime != null) subscribedRuntime.StateRestored -= OnStateRestored;
+            subscribedRuntime = runtime;
+            if (runtime != null) runtime.StateRestored += OnStateRestored;
+            fired.Clear();
+        }
+        private void OnDisable()
+        {
+            if (subscribedManager != null) subscribedManager.RuntimeChanged -= OnRuntimeChanged;
+            subscribedManager = null; OnRuntimeChanged(null);
+        }
+        private void OnDestroy() { if (instance == this) instance = null; }
 
         private void OnStateRestored() { fired.Clear(); }
 
@@ -103,6 +116,12 @@ namespace Lumenfall.Quests
         {
             if (database == null || Time.unscaledTime < nextCheck) return;
             nextCheck = Time.unscaledTime + 0.1f;
+            EvaluatePuzzles();
+        }
+
+        public void EvaluatePuzzles()
+        {
+            if (!isActiveAndEnabled || database == null) return;
             GameEventManager manager = GameEventManager.Instance;
             if (manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return;
             foreach (QuestPuzzleDefinition puzzle in database.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
@@ -116,7 +135,12 @@ namespace Lumenfall.Quests
                 if (fired.Contains(key)) continue;
                 if (!SceneMatches(puzzle.mapId) || !TargetsReady(puzzle.targets)) continue;
                 GameEventTriggerResult result = manager.Runtime.TriggerEvent(puzzle.completionEventId);
-                if (result.Succeeded) fired.Add(key);
+                if (result.Succeeded)
+                {
+                    fired.Add(key);
+                    if (!string.IsNullOrWhiteSpace(puzzle.successDialogueId))
+                    { manager.StartDialogue(puzzle.successDialogueId); return; }
+                }
             }
         }
 
@@ -152,6 +176,7 @@ namespace Lumenfall.Quests
             if (target.requiredPowered && !snapshot.powered) return false;
             if (target.requiredConnected && !IsConnectedToAny(state, snapshot.id)) return false;
             if (target.requiredRevealed && !snapshot.revealed) return false;
+            if (snapshot.visitedTrapCount < target.requiredVisitedTraps || (target.requiredUninterruptedSlide && snapshot.slideInterrupted)) return false;
             if (target.requiredFrozen && !snapshot.frozen) return false;
             if (target.requiredAligned && !snapshot.aligned) return false;
             if (target.requiredRotation >= 0 && !Mathf.Approximately(NormalizeAngle(snapshot.rotation), NormalizeAngle(target.requiredRotation))) return false;

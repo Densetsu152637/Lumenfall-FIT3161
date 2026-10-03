@@ -36,6 +36,7 @@ namespace Lumenfall.GameEvents
         }
 
         public GameEventRuntime Runtime { get; private set; }
+        public event Action<GameEventRuntime> RuntimeChanged;
         public GameEventCatalog Catalog => Runtime?.Catalog;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -93,6 +94,7 @@ namespace Lumenfall.GameEvents
         public void ReloadDefinitions()
         {
             Runtime = BuildRuntimeFromResources();
+            RuntimeChanged?.Invoke(Runtime);
         }
 
         private void EnsureInitialized()
@@ -100,6 +102,7 @@ namespace Lumenfall.GameEvents
             if (Runtime == null)
             {
                 Runtime = BuildRuntimeFromResources();
+                RuntimeChanged?.Invoke(Runtime);
             }
         }
 

@@ -13,6 +13,7 @@ namespace Lumenfall.Spells
     {
         public string id; public string mapId; public Vector2Int cell; public Vector2Int size = Vector2Int.one;
         public float elevation; public float rotation; public bool powered; public bool frozen; public bool revealed;
+        public int visitedTrapCount; public bool slideInterrupted;
         public bool aligned; public bool spellCompatible = true; public string[] tags = Array.Empty<string>();
     }
     [Serializable] public sealed class MapStateSnapshot { public string mapId; public WorldObjectSnapshot[] objects = Array.Empty<WorldObjectSnapshot>(); public string[] connections = Array.Empty<string>(); public float[] connectionStrengths = Array.Empty<float>(); }
@@ -62,6 +63,7 @@ namespace Lumenfall.Spells
         {
             if (string.IsNullOrWhiteSpace(id)) return;
             entries[id] = new WorldEntry { sceneObject = sceneObject, state = new WorldObjectSnapshot { id = id, mapId = CurrentMapId, cell = cell, size = size, elevation = sceneObject == null ? 0 : sceneObject.transform.position.y, rotation = sceneObject == null ? 0 : sceneObject.transform.eulerAngles.y, spellCompatible = compatible, tags = tags ?? Array.Empty<string>() } };
+            entries[id].authored = Clone(entries[id].state);
         }
         public void EndMapRebuild()
         {
@@ -82,35 +84,110 @@ namespace Lumenfall.Spells
                 if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1])) return false;
             }
             bool any = false, all = true;
-            foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
+            foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (s.visitedTrapCount >= target.requiredVisitedTraps) && (!target.requiredUninterruptedSlide || !s.slideInterrupted) && (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
             return string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? any : all;
         }
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
-        { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
+        {
+            if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false;
+            Vector2Int before = entry.state.cell; bool wasFrozen = entry.state.frozen; int visits = entry.state.visitedTrapCount; bool interrupted = entry.state.slideInterrupted;
+            mutate(entry.state);
+            if (IceSlideLane.HasLane(entry.authored.tags))
+            {
+                // Generic property mutation cannot forge trap evidence or authoring metadata.
+                entry.state.tags = (string[])entry.authored.tags.Clone();
+                entry.state.visitedTrapCount = visits; entry.state.slideInterrupted = interrupted;
+                entry.state.size = entry.authored.size;
+                if (entry.state.cell != before || (wasFrozen && !entry.state.frozen)) InterruptSlide(entry);
+                entry.state.cell = before;
+                if (!IceSlideLane.TryParse(entry.authored.tags, out IceSlideLane lane) || !lane.ContainsFootprint(entry.state.cell, entry.state.size))
+                    entry.state.cell = before;
+            }
+            SyncTransform(entry); NotifyChanged(); return true;
+        }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
         public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
         public bool AcknowledgeEffect(string key) => pendingEffects.Remove(key);
-        public bool TryMoveObject(string id, Vector2Int direction)
+        public bool TryMoveObject(string id, Vector2Int direction) => TryMoveObjectCore(id, direction, false);
+
+        public bool TrySlideIceObject(string id, Vector2Int direction)
+        {
+            if (!IsReady || !entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) ||
+                !IceSlideLane.TryParse(entry.authored.tags, out IceSlideLane lane) || entry.authored.cell != lane.Start) return false;
+            if (entry.state.visitedTrapCount == lane.TrapCount && !entry.state.slideInterrupted) return false;
+            if (direction != Vector2Int.right || entry.state.slideInterrupted || !lane.MatchesProgress(entry.state))
+            { InterruptSlide(entry); NotifyChanged(); return false; }
+            entry.state.frozen = true;
+            return TryMoveObjectCore(id, direction, true);
+        }
+
+        /// Reset uses the authored start, and never relocates a prop onto an occupied cell.
+        public bool ResetIceSlide(string id)
+        {
+            if (!IsReady || !entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) ||
+                !IceSlideLane.TryParse(entry.authored.tags, out IceSlideLane lane) || entry.authored.cell != lane.Start) return false;
+            if (!CanPlaceObject(entry, lane.Start)) return false;
+            entry.state.cell = lane.Start; entry.state.frozen = false;
+            entry.state.visitedTrapCount = 0; entry.state.slideInterrupted = false;
+            SyncTransform(entry); NotifyChanged(); return true;
+        }
+
+        private static void InterruptSlide(WorldEntry entry)
+        { entry.state.visitedTrapCount = 0; entry.state.slideInterrupted = true; }
+
+        private bool TryMoveObjectCore(string id, Vector2Int direction, bool orderedSlide)
         {
             if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || entry.sceneObject == null) return false;
+            if (direction == Vector2Int.zero || Mathf.Abs(direction.x) > 1 || Mathf.Abs(direction.y) > 1) return false;
+            Vector2Int destination = entry.state.cell + direction;
+            IceSlideLane lane = null;
+            if (IceSlideLane.HasLane(entry.authored.tags))
+            {
+                if (!orderedSlide || !IceSlideLane.TryParse(entry.authored.tags, out lane) || !lane.ContainsFootprint(destination, entry.state.size) ||
+                    entry.state.visitedTrapCount >= lane.TrapCount || destination != lane.TrapCell(entry.state.visitedTrapCount))
+                { InterruptSlide(entry); NotifyChanged(); return false; }
+            }
             GridWorld world = FindAnyObjectByType<GridWorld>(); if (world == null) return false;
             Vector2Int cell = entry.state.cell + direction; Vector2Int size = entry.state.size; GridObstacle obstacle = entry.sceneObject.GetComponent<GridObstacle>(); bool restoreObstacle = obstacle != null && obstacle.enabled; if (restoreObstacle) obstacle.enabled = false;
             bool available = true; for (int x = 0; x < Mathf.Max(1, size.x); x++) for (int y = 0; y < Mathf.Max(1, size.y); y++) if (!world.IsCellAvailable(cell + new Vector2Int(x, y))) available = false;
-            if (!available) { if (restoreObstacle) obstacle.enabled = true; return false; }
-            entry.state.cell = cell; entry.sceneObject.transform.position = world.CellToWorld(cell, entry.state.elevation); if (restoreObstacle) { obstacle.enabled = true; obstacle.RefreshFootprint(); } NotifyChanged(); return true;
+            if (!available) { if (restoreObstacle) obstacle.enabled = true; if (orderedSlide) { InterruptSlide(entry); NotifyChanged(); } return false; }
+            entry.state.cell = cell; if (orderedSlide) entry.state.visitedTrapCount++; entry.sceneObject.transform.position = world.CellToWorld(cell, entry.state.elevation); if (restoreObstacle) { obstacle.enabled = true; obstacle.RefreshFootprint(); } NotifyChanged(); return true;
+        }
+        private static bool CanPlaceObject(WorldEntry entry, Vector2Int cell)
+        {
+            if (entry.sceneObject == null) return false;
+            GridWorld world = FindAnyObjectByType<GridWorld>(); if (world == null) return false;
+            GridObstacle obstacle = entry.sceneObject.GetComponent<GridObstacle>(); bool enabled = obstacle != null && obstacle.enabled;
+            if (enabled) obstacle.enabled = false;
+            bool available = true;
+            for (int x = 0; x < Mathf.Max(1, entry.state.size.x); x++)
+                for (int y = 0; y < Mathf.Max(1, entry.state.size.y); y++)
+                    if (!world.IsCellAvailable(cell + new Vector2Int(x, y))) available = false;
+            if (enabled) obstacle.enabled = true;
+            return available;
         }
         public string CaptureStateJson()
         { if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); } List<MapArchive> maps = new List<MapArchive>(); foreach (KeyValuePair<string, MapStateSnapshot> pair in archivedMaps) maps.Add(new MapArchive { mapId = pair.Key, snapshot = pair.Value, pendingEffects = archivedEffects.TryGetValue(pair.Key, out List<string> effects) ? effects.ToArray() : Array.Empty<string>() }); return JsonUtility.ToJson(new SaveData { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths(), pendingEffects = pendingEffects.ToArray(), maps = maps.ToArray() }); }
         public bool RestoreStateJson(string json) { SaveData data; try { data = JsonUtility.FromJson<SaveData>(json); } catch { return false; } if (data == null) return false; archivedMaps.Clear(); archivedEffects.Clear(); foreach (MapArchive map in data.maps ?? Array.Empty<MapArchive>()) { if (map == null || string.IsNullOrWhiteSpace(map.mapId)) continue; archivedMaps[map.mapId] = map.snapshot; archivedEffects[map.mapId] = new List<string>(map.pendingEffects ?? Array.Empty<string>()); } pendingRestore = new MapStateSnapshot { mapId = data.mapId, objects = data.objects ?? Array.Empty<WorldObjectSnapshot>(), connections = data.connections ?? Array.Empty<string>(), connectionStrengths = data.connectionStrengths ?? Array.Empty<float>() }; pendingEffects.Clear(); pendingEffects.AddRange(data.pendingEffects ?? Array.Empty<string>()); if (IsReady && string.Equals(CurrentMapId, data.mapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; NotifyChanged(); } return true; }
-        private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) { entry.state = Clone(saved); SyncTransform(entry); } }
+        private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) { Vector2Int previousCell = entry.state.cell; entry.state = Clone(saved);
+                if (IceSlideLane.HasLane(entry.authored.tags))
+                {
+                    entry.state.tags = (string[])entry.authored.tags.Clone(); entry.state.size = entry.authored.size;
+                    if (!IceSlideLane.TryParse(entry.authored.tags, out IceSlideLane lane) || !lane.MatchesProgress(entry.state))
+                    { entry.state.cell = entry.authored.cell; entry.state.frozen = false; InterruptSlide(entry); }
+                    // A restore must not create an overlap; failed placement retains authored/current placement and requires reset.
+                    if (!CanPlaceObject(entry, entry.state.cell))
+                    { entry.state.cell = previousCell; entry.state.frozen = false; InterruptSlide(entry); }
+                }
+                SyncTransform(entry); } }
         private void SyncTransform(WorldEntry entry) { if (entry.sceneObject == null) return; GridWorld world = FindAnyObjectByType<GridWorld>(); if (world != null) entry.sceneObject.transform.position = world.CellToWorld(entry.state.cell, entry.state.elevation); entry.sceneObject.transform.rotation = Quaternion.Euler(0, entry.state.rotation, 0); entry.sceneObject.GetComponent<GridObstacle>()?.RefreshFootprint(); }
         private bool IsConnectedToAny(string id) { foreach (string key in connections) if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal)) return true; return false; }
         private void NotifyChanged() { if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
         private MapStateSnapshot CaptureSnapshot() { return new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths() }; }
         private float[] CaptureConnectionStrengths() { float[] values = new float[connections.Count]; int i = 0; foreach (string key in connections) values[i++] = connectionStrengths.TryGetValue(key, out float value) ? value : 1f; return values; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;
-        private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, aligned = s.aligned, spellCompatible = s.spellCompatible, tags = s.tags ?? Array.Empty<string>() };
-        private sealed class WorldEntry { public GameObject sceneObject; public WorldObjectSnapshot state; }
+        private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, aligned = s.aligned, visitedTrapCount = s.visitedTrapCount, slideInterrupted = s.slideInterrupted, spellCompatible = s.spellCompatible, tags = s.tags == null ? Array.Empty<string>() : (string[])s.tags.Clone() };
+        private sealed class WorldEntry { public GameObject sceneObject; public WorldObjectSnapshot state; public WorldObjectSnapshot authored; }
         [Serializable] private sealed class SaveData { public string mapId; public WorldObjectSnapshot[] objects = Array.Empty<WorldObjectSnapshot>(); public string[] connections = Array.Empty<string>(); public float[] connectionStrengths = Array.Empty<float>(); public string[] pendingEffects = Array.Empty<string>(); public MapArchive[] maps = Array.Empty<MapArchive>(); }
         [Serializable] private sealed class MapArchive { public string mapId; public MapStateSnapshot snapshot; public string[] pendingEffects = Array.Empty<string>(); }
     }

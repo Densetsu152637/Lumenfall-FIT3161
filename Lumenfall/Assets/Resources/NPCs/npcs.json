@@ -137,24 +137,6 @@
       "layerSymbol": "c",
       "dialogue": [
         {
-          "dialogueId": "cinna_out_of_alignment_dialogue",
-          "questId": "cinna_out_of_alignment",
-          "requiredQuestStatus": "NotStarted",
-          "weight": 5
-        },
-        {
-          "dialogueId": "cinna_out_of_alignment_dialogue",
-          "questId": "cinna_out_of_alignment",
-          "requiredQuestStatus": "Active",
-          "weight": 5
-        },
-        {
-          "dialogueId": "cinna_out_of_alignment_dialogue",
-          "questId": "cinna_out_of_alignment",
-          "requiredQuestStatus": "Completed",
-          "weight": 5
-        },
-        {
           "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
           "questId": "cinna_cold_feet_warm_idea",
           "requiredQuestStatus": "NotStarted",

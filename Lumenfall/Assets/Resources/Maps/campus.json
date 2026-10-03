@@ -155,7 +155,7 @@
     { "id": "relic.stella.power", "type": "relic", "x": 44, "y": 35, "blocks": false, "tags": ["ampere", "weave", "weave-with:circuit.stella.link"] },
     { "id": "circuit.stella.link", "type": "relic", "x": 46, "y": 35, "blocks": false, "tags": ["weave", "weave-with:relic.stella.power"] },
     { "id": "orientation.cinna.align", "type": "orientation", "x": 40, "y": 22, "blocks": false, "tags": ["vis"] },
-    { "id": "trial.cinna.ice", "type": "surface", "x": 20, "y": 34, "blocks": false, "tags": ["glaciate", "slide-goal:24,34"] },
+    { "id": "trial.cinna.ice", "type": "surface", "x": 20, "y": 34, "blocks": false, "tags": ["glaciate", "slide-goal:24,34", "slide-lane:20,34,24,34"] },
     { "id": "mechanism.orio.rotate", "type": "mechanism", "x": 57, "y": 25, "blocks": false, "tags": ["rotara"] },
     { "id": "keepsake.katrina.hidden", "type": "keepsake", "x": 31, "y": 42, "blocks": false, "tags": ["hidden", "lost-echoes"] }
   ],
@@ -163,7 +163,7 @@
     { "id": "quest.stella.first-light", "objectIds": ["relic.stella.power"], "requiredPowered": true },
     { "id": "quest.stella.string-them-together", "objectIds": ["relic.stella.power", "circuit.stella.link"], "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"] },
     { "id": "quest.cinna.out-of-alignment", "objectIds": ["orientation.cinna.align"], "requiredAligned": true },
-    { "id": "quest.cinna.cold-feet-warm-idea", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 },
+    { "id": "quest.cinna.cold-feet-warm-idea", "objectIds": ["trial.cinna.ice"], "requiredVisitedTraps": 4, "requiredUninterruptedSlide": true, "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 },
     { "id": "quest.orio.patch-notes", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 },
     { "id": "quest.katrina.something-borrowed", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true }
   ],

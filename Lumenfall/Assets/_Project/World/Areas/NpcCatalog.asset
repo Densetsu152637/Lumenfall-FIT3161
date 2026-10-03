@@ -118,24 +118,6 @@ MonoBehaviour:
     hideWhenQuestCompleted: 
     dialogueIds: []
     dialogue:
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: NotStarted
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: Active
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: Completed
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
     - dialogueId: cinna_cold_feet_warm_idea_dialogue
       questId: cinna_cold_feet_warm_idea
       requiredQuestStatus: NotStarted

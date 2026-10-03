@@ -17,6 +17,8 @@ namespace Lumenfall.Spells
         [SerializeField, Min(1)] private int interactionRadius = 2;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
+        private GameEventManager progressionManager;
+        private GameEventRuntime progressionRuntime;
         private Vector2Int lastDirection = Vector2Int.up;
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
@@ -30,11 +32,18 @@ namespace Lumenfall.Spells
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
         private void OnEnable()
-        { SubscribeProgression(); RefreshSelection(); }
-        private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += RefreshSelection; }
+        { progressionManager = GameEventManager.Instance; progressionManager.RuntimeChanged += OnRuntimeChanged; OnRuntimeChanged(progressionManager.Runtime); }
+        private void OnRuntimeChanged(GameEventRuntime runtime)
+        {
+            UnsubscribeProgression(); progressionRuntime = runtime;
+            if (runtime != null) { runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += RefreshSelection; }
+            RefreshSelection();
+        }
         private void UnsubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged -= OnQuestStatusChanged; runtime.DialogueEnded -= OnDialogueEnded; runtime.StateRestored -= RefreshSelection; }
+        {
+            if (progressionRuntime != null) { progressionRuntime.QuestStatusChanged -= OnQuestStatusChanged; progressionRuntime.DialogueEnded -= OnDialogueEnded; progressionRuntime.StateRestored -= RefreshSelection; }
+            progressionRuntime = null;
+        }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
         { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
         private void OnDialogueEnded(DialogueSession session)
@@ -42,7 +51,14 @@ namespace Lumenfall.Spells
             if (session != null && session.IsCompleted)
             {
                 string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
+                string rewardQuest = MetadataValue(session.Definition?.metadata, "spellRewardQuestId");
+                string prerequisite = MetadataValue(session.Definition?.metadata, "spellRewardPrerequisiteQuestId");
+                string lessonNodes = MetadataValue(session.Definition?.metadata, "spellRewardNodeIds");
+                GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+                bool lessonAllowed = (string.IsNullOrEmpty(rewardQuest) || runtime.GetQuestStatus(rewardQuest) == QuestStatus.Active) &&
+                    (string.IsNullOrEmpty(prerequisite) || runtime.GetQuestStatus(prerequisite) == QuestStatus.Completed) &&
+                    (string.IsNullOrEmpty(lessonNodes) || Array.IndexOf(lessonNodes.Split(','), session.CurrentNode?.id) >= 0);
+                if (lessonAllowed && TryParseSpell(reward, out SpellId spell) &&
                     (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
                     GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
             }
@@ -79,6 +95,7 @@ namespace Lumenfall.Spells
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
             Vector2Int inputDirection = new Vector2Int((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0), (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0)); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
+            if (keyboard.rKey.wasPressedThisFrame) ResetIceTrial(FindNearestTarget());
             if (keyboard.digit1Key.wasPressedThisFrame) SelectSpell(SpellId.Ampere);
             if (keyboard.digit2Key.wasPressedThisFrame) SelectSpell(SpellId.Weave);
             if (keyboard.digit3Key.wasPressedThisFrame) SelectSpell(SpellId.Gravitate);
@@ -133,7 +150,7 @@ namespace Lumenfall.Spells
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
-        { UnsubscribeProgression(); CloseSpellWheel(); }
+        { if (progressionManager != null) progressionManager.RuntimeChanged -= OnRuntimeChanged; progressionManager = null; UnsubscribeProgression(); CloseSpellWheel(); }
 
         private void OnGUI()
         {
@@ -167,6 +184,7 @@ namespace Lumenfall.Spells
         {
             if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
             WorldStateService state = WorldStateService.Instance; if (state == null || !state.IsReady || !state.TryGetObject(targetId, out WorldObjectSnapshot target) || !target.spellCompatible) return false;
+            if (IceSlideLane.HasLane(target.tags) && (spell != SpellId.Glaciate || !ColdFeetActive)) return false;
             bool changed = false;
             switch (spell)
             {
@@ -183,6 +201,16 @@ namespace Lumenfall.Spells
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
+        }
+        private static bool ColdFeetActive => GameEventManager.Instance.Runtime.GetQuestStatus("cinna_cold_feet_warm_idea") == QuestStatus.Active &&
+            GameEventManager.Instance.Runtime.GetQuestStatus("cinna_out_of_alignment") == QuestStatus.Completed;
+        public bool ResetIceTrial(string targetId)
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (InputBlockedByOverlay || !ColdFeetActive || state == null || !state.TryGetObject(targetId, out WorldObjectSnapshot target)) return false;
+            GridMover mover = GetComponent<GridMover>();
+            if (mover != null && Mathf.Abs(target.cell.x - mover.CurrentCell.x) + Mathf.Abs(target.cell.y - mover.CurrentCell.y) > interactionRadius) return false;
+            return state.ResetIceSlide(targetId);
         }
         private void GrantSpellRewards(GameMetadataEntry[] metadata)
         {
@@ -205,6 +233,18 @@ namespace Lumenfall.Spells
         }
         private static bool FreezeSlide(WorldStateService state, string id, Vector2Int direction)
         {
+            if (state.TryGetObject(id, out WorldObjectSnapshot laneTarget) && IceSlideLane.HasLane(laneTarget.tags))
+            {
+                if (!IceSlideLane.TryParse(laneTarget.tags, out IceSlideLane lane)) return false;
+                bool moved = false;
+                for (int i = 0; i < lane.TrapCount; i++)
+                {
+                    if (!state.TryGetObject(id, out WorldObjectSnapshot current) || current.cell == lane.Goal) break;
+                    if (!state.TrySlideIceObject(id, direction)) break;
+                    moved = true;
+                }
+                return moved;
+            }
             bool changed = state.SetProperty(id, x => x.frozen = true);
             Vector2Int? goal = null;
             if (state.TryGetObject(id, out WorldObjectSnapshot target))

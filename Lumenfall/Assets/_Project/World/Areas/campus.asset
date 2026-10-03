@@ -183,6 +183,7 @@ MonoBehaviour:
       tags:
       - glaciate
       - slide-goal:24,34
+      - slide-lane:20,34,24,34
       compatibleWithSpells: 1
     - id: mechanism.orio.rotate
       prefab: {fileID: 0}
@@ -261,6 +262,8 @@ MonoBehaviour:
       requiredPowered: 0
       requiredConnected: 0
       requiredRevealed: 0
+      requiredVisitedTraps: 4
+      requiredUninterruptedSlide: 1
       requiredFrozen: 1
       requiredAligned: 0
       requiredRotation: -1
