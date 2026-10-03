@@ -15135,6 +15135,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8597618520780364311}
+  - component: {fileID: 910030001}
   m_Layer: 0
   m_Name: B02.Ground
   m_TagString: Untagged
@@ -35867,3 +35868,16 @@ MonoBehaviour:
       prerequisiteQuestStatus: Completed
       weight: 5
   initialDialogueId: 
+--- !u!114 &910030001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4115630932725841253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17f89b81e164512b2b0d4e136121fc4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.ReservedAreaRegions
+  area: {fileID: 11400000, guid: 62ab6d591089bc842afc7cf6ccd98292, type: 2}

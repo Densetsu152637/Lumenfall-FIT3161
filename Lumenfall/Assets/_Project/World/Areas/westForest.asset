@@ -64,13 +64,13 @@ MonoBehaviour:
         height: 12
       walkable: 1
     - id: F06
-      name: Deep forest boundary
+      name: Reserved F06
       rect:
         x: 2
         y: 20
         width: 4
         height: 8
-      walkable: 1
+      walkable: 0
     B01:
       x: 0
       y: 0

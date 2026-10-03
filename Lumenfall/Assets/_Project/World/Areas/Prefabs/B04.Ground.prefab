@@ -30330,6 +30330,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6071418812616929085}
+  - component: {fileID: 910030001}
   m_Layer: 0
   m_Name: B04.Ground
   m_TagString: Untagged
@@ -35468,3 +35469,16 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!114 &910030001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982450690963271766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17f89b81e164512b2b0d4e136121fc4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.ReservedAreaRegions
+  area: {fileID: 11400000, guid: d03ed5a3b7f9f3e43ad14c8e3dc4104d, type: 2}

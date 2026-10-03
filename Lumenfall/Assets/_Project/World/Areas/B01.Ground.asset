@@ -56,29 +56,29 @@ MonoBehaviour:
         height: 3
       walkable: 1
     - id: S04
-      name: S04
+      name: Reserved S04
       rect:
         x: 26
         y: 2
         width: 6
         height: 3
-      walkable: 1
+      walkable: 0
     - id: S05
-      name: S05
+      name: Reserved S05
       rect:
         x: 2
         y: 7
         width: 6
         height: 3
-      walkable: 1
+      walkable: 0
     - id: S06
-      name: S06
+      name: Reserved S06
       rect:
         x: 10
         y: 7
         width: 6
         height: 3
-      walkable: 1
+      walkable: 0
     B01:
       x: 0
       y: 0
@@ -112,8 +112,8 @@ MonoBehaviour:
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
-      arrivalOffset: {x: 58, y: 71}
-      reserved: 1
+      arrivalOffset: {x: 40, y: 79}
+      reserved: 0
   areaPrefab: {fileID: 414310012204407207, guid: 674b00eb5a3d7fc49bbb0dc240b82542, type: 3}
   portals:
   - {fileID: 11400000, guid: 14784508c4d2cf948946e594564fd637, type: 2}

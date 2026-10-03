@@ -12,5 +12,6 @@ namespace Lumenfall.DataDriven
         public bool reserved;
         public PortalContentAsset destination;
         public Vector2Int arrivalOffset;
+        public Vector2Int ClampedFootprint => new Vector2Int(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y));
     }
 }

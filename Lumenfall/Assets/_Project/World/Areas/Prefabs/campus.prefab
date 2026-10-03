@@ -1984,6 +1984,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7880011013163449690}
+  - component: {fileID: 910030001}
   m_Layer: 0
   m_Name: campus
   m_TagString: Untagged
@@ -2021,6 +2022,7 @@ Transform:
   - {fileID: 4518465112764482280}
   - {fileID: 3657757726145975122}
   - {fileID: 1428265897385660252}
+  - {fileID: 910030011}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8041338600417705477
@@ -8250,3 +8252,76 @@ DefaultAsset:
   m_Message: This default asset was generated because the worker process has crashed
     during last import.
   m_IsWarning: 1
+--- !u!1 &910030010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910030011}
+  - component: {fileID: 910030012}
+  m_Layer: 0
+  m_Name: P.C05.B01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910030011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910030010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 40, y: 0, z: 80}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7880011013163449690}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910030012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910030010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
+  world: {fileID: 0}
+  useTransformAsAnchor: 0
+  anchorCell: {x: 40, y: 80}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 1}
+  portalId: P.C05.B01
+  destinationMode: 0
+  destinationPortal: {fileID: 0}
+  destinationWorld: {fileID: 0}
+  destinationCell: {x: 0, y: 0}
+  destinationScene:
+  destinationPortalId:
+  content: {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
+  preserveEntryOffset: 1
+  arrivalOffset: {x: 0, y: -1}
+  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
+--- !u!114 &910030001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7035163530281894877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17f89b81e164512b2b0d4e136121fc4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.ReservedAreaRegions
+  area: {fileID: 11400000, guid: 53c679ec98be46b47bb4677a059d5bf3, type: 2}

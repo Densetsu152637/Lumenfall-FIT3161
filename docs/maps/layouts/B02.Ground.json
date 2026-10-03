@@ -59,14 +59,14 @@
     },
     {
       "id": "W05",
-      "name": "W05",
+      "name": "Reserved W05",
       "rect": {
         "x": 2,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "W06",
@@ -92,47 +92,47 @@
     },
     {
       "id": "W08",
-      "name": "W08",
+      "name": "Reserved W08",
       "rect": {
         "x": 26,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "W09",
-      "name": "W09",
+      "name": "Reserved W09",
       "rect": {
         "x": 2,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "W10",
-      "name": "W10",
+      "name": "Reserved W10",
       "rect": {
         "x": 10,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "W11",
-      "name": "W11",
+      "name": "Reserved W11",
       "rect": {
         "x": 18,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     }
   ],
   "spawn": {

@@ -48,36 +48,36 @@
     },
     {
       "id": "S04",
-      "name": "S04",
+      "name": "Reserved S04",
       "rect": {
         "x": 26,
         "y": 2,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "S05",
-      "name": "S05",
+      "name": "Reserved S05",
       "rect": {
         "x": 2,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "S06",
-      "name": "S06",
+      "name": "Reserved S06",
       "rect": {
         "x": 10,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     }
   ],
   "spawn": {
@@ -92,9 +92,9 @@
       "y": 2,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B01",
-      "arrivalOffsetX": 58,
-      "arrivalOffsetY": 71,
-      "reserved": true,
+      "arrivalOffsetX": 40,
+      "arrivalOffsetY": 79,
+      "reserved": false,
       "width": 1,
       "height": 1
     }

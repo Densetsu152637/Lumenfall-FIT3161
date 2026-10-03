@@ -445,14 +445,15 @@
     },
     {
       "id": "P.C05.B01",
-      "x": 56,
-      "y": 66,
+      "x": 40,
+      "y": 80,
       "destinationScene": "B01.Ground",
       "destinationPortalId": "P.B01.C05",
-      "arrivalOffsetX": 20,
-      "arrivalOffsetY": 58,
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1,
       "width": 1,
-      "height": 1
+      "height": 1,
+      "reserved": false
     },
     {
       "id": "P.C05.B02",

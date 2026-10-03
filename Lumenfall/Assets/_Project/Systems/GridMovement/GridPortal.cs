@@ -52,29 +52,32 @@ namespace Lumenfall.GridMovement
             : anchorCell;
         public Vector2Int FirstCell => AnchorCell + footprintOffset;
         public Vector2Int Cell => FirstCell;
-        public Vector2Int FootprintSize => footprintSize;
+        public Vector2Int FootprintSize => new Vector2Int(Mathf.Max(1, footprintSize.x), Mathf.Max(1, footprintSize.y));
         public string PortalId => portalId;
         public GridPortalDestinationMode DestinationMode => destinationMode;
         public PortalContentAsset Content => content;
 
         public void Configure(PortalContentAsset portalContent, GridWorld targetWorld)
         {
+            if (world != null) world.UnregisterPortal(this);
             content = portalContent;
             world = targetWorld;
             portalId = portalContent == null ? string.Empty : portalContent.id;
             anchorCell = portalContent == null ? Vector2Int.zero : portalContent.cell;
-            footprintSize = portalContent == null ? Vector2Int.one : portalContent.footprint;
+            footprintSize = portalContent == null ? Vector2Int.one : portalContent.ClampedFootprint;
+            footprintOffset = Vector2Int.zero;
             useTransformAsAnchor = false;
             destinationMode = GridPortalDestinationMode.PortalReference;
-            if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
+            if (isActiveAndEnabled) RefreshFootprint();
         }
 
         public void Configure(string id, int width, int height, string scene, string targetId, Vector2Int offset)
         {
+            content = null;
             portalId = id; footprintSize = new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height));
             destinationMode = GridPortalDestinationMode.ScenePortalId; destinationScene = scene;
             destinationPortalId = targetId; arrivalOffset = offset; ResolveWorld();
-            if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
+            if (isActiveAndEnabled) RefreshFootprint();
         }
 
         private void Reset()
@@ -91,7 +94,7 @@ namespace Lumenfall.GridMovement
                 return;
             }
 
-            world.RegisterPortal(this, EnumeratePortalCells());
+            RefreshFootprint();
         }
 
         private void OnDisable()
@@ -104,16 +107,18 @@ namespace Lumenfall.GridMovement
 
         public bool TryEnter(GridMover mover)
         {
-            if (mover == null || mover.IsMoving || mover.IsMovementLocked || mover.World != world ||
+            if (!isActiveAndEnabled || (content != null && content.reserved) ||
+                mover == null || mover.IsMoving || mover.IsMovementLocked || mover.World != world ||
                 !ContainsCell(mover.CurrentCell))
             {
                 return false;
             }
 
-            if (content != null && content.destination != null && DataDrivenWorldLoader.Instance != null)
+            if (content != null)
             {
                 Vector2Int entryOffset = preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero;
-                return DataDrivenWorldLoader.Instance.SwitchArea(content, entryOffset);
+                return DataDrivenWorldLoader.Instance != null &&
+                    DataDrivenWorldLoader.Instance.SwitchArea(content, entryOffset);
             }
 
             switch (destinationMode)
@@ -150,16 +155,16 @@ namespace Lumenfall.GridMovement
         {
             Vector2Int first = FirstCell;
             return candidate.x >= first.x && candidate.y >= first.y &&
-                   candidate.x < first.x + footprintSize.x &&
-                   candidate.y < first.y + footprintSize.y;
+                   candidate.x < first.x + FootprintSize.x &&
+                   candidate.y < first.y + FootprintSize.y;
         }
 
         public IEnumerable<Vector2Int> EnumeratePortalCells()
         {
             Vector2Int first = FirstCell;
-            for (int x = 0; x < footprintSize.x; x++)
+            for (int x = 0; x < FootprintSize.x; x++)
             {
-                for (int y = 0; y < footprintSize.y; y++)
+                for (int y = 0; y < FootprintSize.y; y++)
                 {
                     yield return first + new Vector2Int(x, y);
                 }
@@ -169,8 +174,8 @@ namespace Lumenfall.GridMovement
         public Vector2Int GetArrivalCell(Vector2Int sourceEntryOffset)
         {
             Vector2Int mappedOffset = new Vector2Int(
-                Mathf.Clamp(sourceEntryOffset.x, 0, footprintSize.x - 1),
-                Mathf.Clamp(sourceEntryOffset.y, 0, footprintSize.y - 1));
+                Mathf.Clamp(sourceEntryOffset.x, 0, FootprintSize.x - 1),
+                Mathf.Clamp(sourceEntryOffset.y, 0, FootprintSize.y - 1));
             return FirstCell + mappedOffset;
         }
 
@@ -184,7 +189,8 @@ namespace Lumenfall.GridMovement
             ResolveWorld();
             if (world != null)
             {
-                world.RegisterPortal(this, EnumeratePortalCells());
+                world.UnregisterPortal(this);
+                if (content == null || !content.reserved) world.RegisterPortal(this, EnumeratePortalCells());
             }
         }
 
@@ -198,7 +204,8 @@ namespace Lumenfall.GridMovement
             GridPortal[] allPortals = FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude);
             foreach (GridPortal portal in allPortals)
             {
-                if (string.Equals(portal.portalId, id, StringComparison.Ordinal))
+                if (portal.isActiveAndEnabled && (portal.Content == null || !portal.Content.reserved) &&
+                    string.Equals(portal.portalId, id, StringComparison.Ordinal))
                 {
                     return portal;
                 }
@@ -209,7 +216,8 @@ namespace Lumenfall.GridMovement
 
         private bool EnterReferencedPortal(GridMover mover)
         {
-            if (destinationPortal == null || destinationPortal.World == null)
+            if (destinationPortal == null || !destinationPortal.isActiveAndEnabled || destinationPortal.World == null ||
+                (destinationPortal.Content != null && destinationPortal.Content.reserved))
             {
                 Debug.LogError($"{name} does not have a valid destination portal.", this);
                 return false;

@@ -6,6 +6,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
+using Lumenfall.Spells;
 
 namespace Lumenfall.Startup
 {
@@ -24,7 +25,8 @@ namespace Lumenfall.Startup
 
         private Page page;
         private bool ready;
-        private bool seededBlankSave;
+        private static StartupMenu instance;
+        public static bool IsOpen => instance != null;
         private bool confirmOverwrite;
         private string backdropSlot;
         private string message;
@@ -38,7 +40,7 @@ namespace Lumenfall.Startup
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (FindAnyObjectByType<StartupMenu>() == null)
+            if (FindAnyObjectByType<StartupMenu>(FindObjectsInactive.Include) == null)
             {
                 GameObject menuObject = new GameObject("[StartupMenu]");
                 menuObject.AddComponent<StartupMenu>();
@@ -47,6 +49,8 @@ namespace Lumenfall.Startup
 
         private void Awake()
         {
+            if (instance != null && instance != this) { Destroy(gameObject); return; }
+            instance = this;
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
@@ -62,21 +66,6 @@ namespace Lumenfall.Startup
             yield return null;
             GameSaveManager saves = GameSaveManager.Instance;
             backdropSlot = saves.FindMostRecentSlot(Slots);
-            if (backdropSlot == null)
-            {
-                // Reloading definitions gives the first save a clean event runtime state.
-                GameEventManager.Instance.ReloadDefinitions();
-                backdropSlot = FirstEmptySlot(saves);
-                if (backdropSlot != null && saves.Save(backdropSlot))
-                {
-                    seededBlankSave = true;
-                }
-                else
-                {
-                    message = "Unable to create a starting save.";
-                }
-            }
-
             // The latest save is the backdrop state. Providers registered by the scene are ready now.
             if (!string.IsNullOrWhiteSpace(backdropSlot) && !saves.Load(backdropSlot, false))
             {
@@ -93,6 +82,8 @@ namespace Lumenfall.Startup
 
         private void OnDestroy()
         {
+            if (instance != this) return;
+            instance = null;
             Time.timeScale = previousTimeScale;
             SetGameplayInput(true);
             foreach (Texture2D texture in buttonTextures.Values)
@@ -199,9 +190,8 @@ namespace Lumenfall.Startup
         private void StartNewGame()
         {
             GameSaveManager saves = GameSaveManager.Instance;
-            string slot = seededBlankSave && !string.IsNullOrWhiteSpace(backdropSlot)
-                ? backdropSlot
-                : FirstEmptySlot(saves);
+            if (!ready) return;
+            string slot = FirstEmptySlot(saves);
             if (slot == null)
             {
                 if (!confirmOverwrite)
@@ -213,9 +203,11 @@ namespace Lumenfall.Startup
                 slot = Slots[0];
             }
 
-            GameEventManager.Instance.ReloadDefinitions();
-            DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
-            if (worldLoader != null) worldLoader.ResetToStartingState();
+            if (!TryPrepareNewGame())
+            {
+                message = "The starting world is not ready.";
+                return;
+            }
             if (!saves.Save(slot))
             {
                 message = "Could not start a new game.";
@@ -224,10 +216,27 @@ namespace Lumenfall.Startup
             backdropSlot = slot;
             saves.MarkPlayed(slot);
             GameSaveOverlay.SetCurrentSlot(slot);
-            seededBlankSave = false;
             confirmOverwrite = false;
             message = string.Empty;
             CloseMenu();
+        }
+
+        /// <summary>Resets the loaded production world without writing or selecting a save slot.</summary>
+        public bool TryPrepareNewGame()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            GridMover player = FindAnyObjectByType<GridMover>();
+            if (loader == null || !loader.isActiveAndEnabled || loader.CurrentArea == null ||
+                loader.LoadedMap == null || WorldStateService.Instance == null || player == null ||
+                !player.isActiveAndEnabled || player.World == null || player.IsMoving)
+                return false;
+
+            // Keep the runtime owner so spell rewards, dialogue and puzzle subscriptions survive.
+            if (!loader.TryResetToStartingState()) return false;
+            GameEventManager.Instance.Runtime.ResetState();
+            return loader.LoadedMap != null && loader.LoadedMap.spawn != null &&
+                WorldStateService.Instance != null && WorldStateService.Instance.IsReady &&
+                player.CurrentCell == new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y);
         }
 
         private void LoadSlot(string slot)
@@ -246,6 +255,7 @@ namespace Lumenfall.Startup
 
         private void CloseMenu()
         {
+            ready = false;
             SetGameplayInput(true);
             Destroy(gameObject);
         }

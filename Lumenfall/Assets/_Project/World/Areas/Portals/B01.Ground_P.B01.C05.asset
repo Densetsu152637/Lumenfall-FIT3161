@@ -16,6 +16,6 @@ MonoBehaviour:
   area: {fileID: 11400000, guid: cc94a384b2f43314f9af20e26bc7374b, type: 2}
   cell: {x: 8, y: 2}
   footprint: {x: 1, y: 1}
-  reserved: 1
+  reserved: 0
   destination: {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
-  arrivalOffset: {x: 2, y: 5}
+  arrivalOffset: {x: 0, y: -1}

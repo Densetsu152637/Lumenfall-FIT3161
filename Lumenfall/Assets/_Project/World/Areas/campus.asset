@@ -406,12 +406,12 @@ MonoBehaviour:
       arrivalOffset: {x: 40, y: 56}
       reserved: 0
     - id: P.C05.B01
-      x: 56
-      y: 66
+      x: 40
+      y: 80
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: 14784508c4d2cf948946e594564fd637, type: 2}
-      arrivalOffset: {x: 20, y: 58}
+      arrivalOffset: {x: 8, y: 1}
       reserved: 0
     - id: P.C05.B02
       x: 12

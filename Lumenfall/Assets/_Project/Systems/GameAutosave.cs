@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
@@ -155,7 +155,7 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            return saveManager != null && saveManager.HasSave(GameSaveOverlay.CurrentSlot);
+            return !Lumenfall.Startup.StartupMenu.IsOpen && saveManager != null && saveManager.HasSave(GameSaveOverlay.CurrentSlot);
         }
 
         private void UnsubscribeRuntime()

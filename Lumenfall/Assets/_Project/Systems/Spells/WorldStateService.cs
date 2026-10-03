@@ -65,9 +65,26 @@ namespace Lumenfall.Spells
         }
         public void EndMapRebuild()
         {
+            PrepareMapRebuild();
             rebuilding = false; IsReady = true;
-            if (pendingRestore != null && string.Equals(pendingRestore.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; }
             MapRebuilt?.Invoke(new MapRebuildEvent(CurrentMapId)); NotifyChanged();
+        }
+        /// <summary>Applies archived transforms while a loader validates staged arrival, without publishing a map change.</summary>
+        public void PrepareMapRebuild()
+        {
+            if (!rebuilding) return;
+            if (pendingRestore != null && string.Equals(pendingRestore.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase))
+            { ApplySnapshot(pendingRestore); pendingRestore = null; }
+        }
+        /// <summary>Finishes a rejected rebuild after the loader has re-registered and prepared the previous map.</summary>
+        public void CancelMapRebuild(bool previousReady)
+        { rebuilding = false; IsReady = previousReady; }
+        /// <summary>Clears old-game history after a fresh authored starting map has passed arrival validation.</summary>
+        public void ResetPreparedMap()
+        {
+            if (!rebuilding) return;
+            archivedMaps.Clear(); archivedEffects.Clear(); connections.Clear(); connectionStrengths.Clear();
+            pendingEffects.Clear(); pendingRestore = null;
         }
         public bool TryGetObject(string id, out WorldObjectSnapshot snapshot) { if (entries.TryGetValue(id ?? string.Empty, out WorldEntry item)) { snapshot = Clone(item.state); return true; } snapshot = null; return false; }
         public WorldObjectSnapshot[] SnapshotObjects() { var result = new WorldObjectSnapshot[entries.Count]; int i = 0; foreach (WorldEntry e in entries.Values) result[i++] = Clone(e.state); return result; }

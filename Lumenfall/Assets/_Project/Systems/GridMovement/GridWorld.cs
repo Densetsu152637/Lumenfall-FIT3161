@@ -42,6 +42,9 @@ namespace Lumenfall.GridMovement
         public void ConfigureBounds(int width, int height)
         { boundsMin = Vector2Int.zero; boundsSize = new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height)); restrictToBounds = true; }
 
+        internal void RestoreBounds(bool restricted, Vector2Int minimum, Vector2Int size)
+        { restrictToBounds = restricted; boundsMin = minimum; boundsSize = size; }
+
         public Vector3 CellToWorld(Vector2Int cell, float elevation = 0f)
         {
             return transform.TransformPoint(new Vector3(cell.x * cellSize, elevation, cell.y * cellSize));

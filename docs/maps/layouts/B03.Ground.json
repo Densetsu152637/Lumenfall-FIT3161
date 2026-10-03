@@ -37,14 +37,14 @@
     },
     {
       "id": "N03",
-      "name": "N03",
+      "name": "Reserved N03",
       "rect": {
         "x": 18,
         "y": 2,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N04",
@@ -59,14 +59,14 @@
     },
     {
       "id": "N05",
-      "name": "N05",
+      "name": "Reserved N05",
       "rect": {
         "x": 2,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N06",
@@ -92,58 +92,58 @@
     },
     {
       "id": "N08",
-      "name": "N08",
+      "name": "Reserved N08",
       "rect": {
         "x": 26,
         "y": 7,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N09",
-      "name": "N09",
+      "name": "Reserved N09",
       "rect": {
         "x": 2,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N10",
-      "name": "N10",
+      "name": "Reserved N10",
       "rect": {
         "x": 10,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N11",
-      "name": "N11",
+      "name": "Reserved N11",
       "rect": {
         "x": 18,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     },
     {
       "id": "N12",
-      "name": "N12",
+      "name": "Reserved N12",
       "rect": {
         "x": 26,
         "y": 12,
         "width": 6,
         "height": 3
       },
-      "walkable": true
+      "walkable": false
     }
   ],
   "spawn": {

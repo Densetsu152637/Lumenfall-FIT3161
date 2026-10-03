@@ -14,6 +14,63 @@ namespace Lumenfall.Tests.World
 {
     public sealed class AuthoredWorldPlayModeTests
     {
+        private string previousSlot;
+        private float previousTimeScale;
+        private GameAutosave autosave;
+        private bool autosaveWasEnabled;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            previousSlot = GameSaveOverlay.CurrentSlot;
+            previousTimeScale = Time.timeScale;
+            string isolatedSlot = "authored-route-test-" + System.Guid.NewGuid().ToString("N");
+            Assert.That(GameSaveManager.Instance.HasSave(isolatedSlot), Is.False);
+            GameSaveOverlay.SetCurrentSlot(isolatedSlot);
+            autosave = Object.FindAnyObjectByType<GameAutosave>();
+            if (autosave != null)
+            {
+                autosaveWasEnabled = autosave.enabled;
+                autosave.StopAllCoroutines();
+                autosave.enabled = false;
+            }
+            CancelBackdropInitialization();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            // Preserve the runtime authority and subscriptions while giving every route fixture
+            // deterministic quest state independent of the previously selected save or test.
+            GameEventManager.Instance.Runtime.ResetState();
+            yield return null;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => CancelBackdropInitialization();
+
+        private static void CancelBackdropInitialization()
+        {
+            foreach (Lumenfall.Startup.StartupMenu startup in Object.FindObjectsByType<Lumenfall.Startup.StartupMenu>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                startup.StopAllCoroutines();
+        }
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            foreach (Lumenfall.Startup.StartupMenu startup in Object.FindObjectsByType<Lumenfall.Startup.StartupMenu>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                startup.StopAllCoroutines();
+                Object.Destroy(startup.gameObject);
+            }
+            GameObject autosaveHost = autosave == null ? null : autosave.gameObject;
+            if (autosave != null) Object.Destroy(autosave);
+            yield return null;
+            // Recreating the original owner clears cancelled coroutine handles and subscriptions
+            // before the user's selection is restored. This fixture never saves or deletes a slot.
+            if (autosaveHost != null) autosaveHost.AddComponent<GameAutosave>().enabled = autosaveWasEnabled;
+            GameSaveOverlay.SetCurrentSlot(previousSlot);
+            Time.timeScale = previousTimeScale;
+        }
+
         [UnityTest]
         public IEnumerator SampleWorldLoadsRoutesRestoresAndRefreshesQuestGatedNpcs()
         {
@@ -28,7 +85,7 @@ namespace Lumenfall.Tests.World
 
             GridPortal startingReturn = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
-            Assert.That(loader.SwitchArea(startingReturn.Content, Vector2Int.zero), Is.True,
+            Assert.That(TravelFrom(loader, player, startingReturn.Content), Is.True,
                 "The forest start should be able to reach campus.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
 
@@ -36,7 +93,7 @@ namespace Lumenfall.Tests.World
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "westForest");
             Assert.That(outward, Is.Not.Null, "Campus should have an authored westForest portal.");
-            Assert.That(loader.SwitchArea(outward.Content, Vector2Int.zero), Is.True,
+            Assert.That(TravelFrom(loader, player, outward.Content), Is.True,
                 "The authored campus to westForest route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
 
@@ -45,7 +102,7 @@ namespace Lumenfall.Tests.World
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "campus");
             Assert.That(returnPortal, Is.Not.Null, "westForest should have an authored return portal to campus.");
-            Assert.That(loader.SwitchArea(returnPortal.Content, Vector2Int.zero), Is.True,
+            Assert.That(TravelFrom(loader, player, returnPortal.Content), Is.True,
                 "The authored westForest return route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             string legacySavedWorld = savedWorld.Replace("westForest", "eastForest");
@@ -61,6 +118,7 @@ namespace Lumenfall.Tests.World
 
             var migratedReturns = new[]
             {
+                new { areaId = "B01.Ground", portalId = "P.B01.C05", arrival = new Vector2Int(40, 79) },
                 new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(11, 68) },
                 new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(7, 38) },
                 new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(47, 6) }
@@ -74,7 +132,7 @@ namespace Lumenfall.Tests.World
                     .First(portal => portal.Content != null && portal.Content.id == expected.portalId);
                 Assert.That(exit.Content.destination.cell + exit.Content.arrivalOffset, Is.EqualTo(expected.arrival),
                     expected.areaId + " should use the nearest walkable campus approach cell.");
-                Assert.That(loader.SwitchArea(exit.Content, Vector2Int.zero), Is.True,
+                Assert.That(TravelFrom(loader, player, exit.Content), Is.True,
                     expected.areaId + " return route should accept its corrected campus arrival cell.");
                 Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             }
@@ -99,13 +157,13 @@ namespace Lumenfall.Tests.World
                     GridPortal livePortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                         .FirstOrDefault(portal => portal.Content == route);
                     Assert.That(livePortal, Is.Not.Null, "Area prefab did not activate portal " + route.id + ".");
-                    Assert.That(loader.SwitchArea(route, Vector2Int.zero), Is.True,
+                    Assert.That(TravelFrom(loader, player, route), Is.True,
                         area.definition.id + "/" + route.id + " should reach " + route.destination.area.definition.id + ".");
                     Assert.That(loader.CurrentArea, Is.EqualTo(route.destination.area));
                     activeRouteCount++;
                 }
             }
-            Assert.That(activeRouteCount, Is.EqualTo(8), "All active forest, campus, and building portal edges should be traversable.");
+            Assert.That(activeRouteCount, Is.EqualTo(10), "All active forest, campus, and building portal edges should be traversable.");
 
             WorldAreaAsset campus = allAreas.Single(area => area.definition.id == "campus");
             loader.Load(campus, catalog);
@@ -211,6 +269,15 @@ namespace Lumenfall.Tests.World
             Assert.That(b02Exit.TryEnter(player), Is.True, "The B02 exit must return the player to campus.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(11, 68)));
+        }
+
+        private static bool TravelFrom(DataDrivenWorldLoader loader, GridMover player, PortalContentAsset content)
+        {
+            GridPortal source = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content == content);
+            Assert.That(player.TryTeleportTo(source.World, source.FirstCell), Is.True,
+                "The travel API requires the player to stand on the live source portal.");
+            return loader.SwitchArea(content, Vector2Int.zero);
         }
 
         private static bool CanReach(GridWorld world, Vector2Int from, Vector2Int destination)
