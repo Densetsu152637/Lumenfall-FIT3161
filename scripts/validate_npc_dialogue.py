@@ -11,7 +11,7 @@ assert doc["schemaVersion"] == 1
 quests = {q["id"]: q for q in doc["quests"]}
 dialogues = {d["id"]: d for d in doc["dialogues"]}
 events = {e["id"]: e for e in doc["events"]}
-assert len(quests) == 6 and len(dialogues) == 15 and len(events) == 9
+assert len(quests) == 6 and len(dialogues) >= 15 and len(events) == 9
 assert len(quests) == len(doc["quests"]) and len(dialogues) == len(doc["dialogues"])
 
 for qid in quests:

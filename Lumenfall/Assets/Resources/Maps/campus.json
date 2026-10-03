@@ -165,7 +165,7 @@
     { "id": "quest.cinna.out-of-alignment", "objectIds": ["orientation.cinna.align"], "requiredAligned": true },
     { "id": "quest.cinna.cold-feet-warm-idea", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 },
     { "id": "quest.orio.patch-notes", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 },
-    { "id": "quest.katrina.something-borrowed", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true }
+    { "id": "quest.katrina.something-borrowed", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 31, "requiredPositionY": 42 }
   ],
   "portals": [
     {

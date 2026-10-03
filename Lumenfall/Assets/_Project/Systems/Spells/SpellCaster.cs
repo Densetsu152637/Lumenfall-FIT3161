@@ -25,6 +25,9 @@ namespace Lumenfall.Spells
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
+        public string LastSearchFeedback { get; private set; }
+        private float searchFeedbackUntil;
+        public event Action<string> SearchFeedbackChanged;
         public event Action<SpellId, string, bool> CastCompleted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
@@ -36,18 +39,8 @@ namespace Lumenfall.Spells
         private void UnsubscribeProgression()
         { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged -= OnQuestStatusChanged; runtime.DialogueEnded -= OnDialogueEnded; runtime.StateRestored -= RefreshSelection; }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
-        { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
-        private void OnDialogueEnded(DialogueSession session)
-        {
-            if (session != null && session.IsCompleted)
-            {
-                string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
-            }
-            RefreshSelection();
-        }
+        { RefreshSelection(); }
+        private void OnDialogueEnded(DialogueSession session) { RefreshSelection(); }
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
@@ -73,6 +66,7 @@ namespace Lumenfall.Spells
             {
                 string target = FindNearestTarget();
                 if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                else if (selectedSpell == SpellId.LostEchoes) SearchFeedback("No new trace within two cells. Search near Katrina's garden alcove.");
                 CloseSpellWheel();
             }
 
@@ -137,7 +131,10 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
-            if (!spellWheelOpen || InputBlockedByOverlay) return;
+            if (InputBlockedByOverlay) return;
+            if (Time.unscaledTime < searchFeedbackUntil)
+                GUI.Box(new Rect(20f, Screen.height - 74f, Mathf.Min(620f, Screen.width - 40f), 48f), LastSearchFeedback);
+            if (!spellWheelOpen) return;
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
 
@@ -180,18 +177,16 @@ namespace Lumenfall.Spells
                 case SpellId.Rotara: changed = state.SetProperty(targetId, x => x.rotation = (Mathf.Round(x.rotation / 90f) * 90f + 90f) % 360f); break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
-                case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
+                case SpellId.LostEchoes:
+                    GridMover player = GetComponent<GridMover>();
+                    changed = player != null && state.TryRevealObject(targetId, player.CurrentCell, interactionRadius);
+                    SearchFeedback(changed ? "An echo reveals a hidden point nearby." :
+                        target.revealed ? "This point is already revealed. Search for another nearby trace." :
+                        "No trace here. Stand within two cells of a hidden Lost Echoes point.");
+                    break;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
-        private void GrantSpellRewards(GameMetadataEntry[] metadata)
-        {
-            string reward = MetadataValue(metadata, "spellReward");
-            foreach (string value in (reward ?? string.Empty).Split(',', ';'))
-                if (TryParseSpell(value, out SpellId spell)) GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
-        }
-        private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
-        private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }
         private static bool WeaveToPowered(WorldStateService state, string targetId)
         {
             string intended = null;
@@ -222,10 +217,10 @@ namespace Lumenfall.Spells
             }
             return changed;
         }
-        private static bool Reveal(WorldStateService state, string id)
-        { bool changed = state.SetProperty(id, x => x.revealed = true); foreach (WorldObjectSnapshot item in state.SnapshotObjects()) if (Array.Exists(item.tags ?? Array.Empty<string>(), t => string.Equals(t, "hidden", StringComparison.OrdinalIgnoreCase))) changed |= state.SetProperty(item.id, x => x.revealed = true); return changed; }
+        private void SearchFeedback(string message)
+        { LastSearchFeedback = message; searchFeedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
         private string FindNearestTarget()
-        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible) { distance = d; best = item.id; } } return best; }
+        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }
         private static Vector2Int ClampDirection(Vector2Int value) { if (value == Vector2Int.zero) return Vector2Int.up; return new Vector2Int(Mathf.Clamp(value.x, -1, 1), Mathf.Clamp(value.y, -1, 1)); }
     }

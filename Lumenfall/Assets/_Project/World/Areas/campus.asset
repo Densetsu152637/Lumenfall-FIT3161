@@ -290,8 +290,8 @@ MonoBehaviour:
       requiredFrozen: 0
       requiredAligned: 0
       requiredRotation: -1
-      requiredPositionX: -2147483648
-      requiredPositionY: -2147483648
+      requiredPositionX: 31
+      requiredPositionY: 42
     portals:
     - id: P.A01.C01
       x: 50

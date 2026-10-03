@@ -78,7 +78,6 @@ namespace Lumenfall.Inventory
             runtime.DialogueStarted += OnDialogueStarted;
             runtime.StateRestored += OnStateRestored;
             runtime.DialogueEnded += OnDialogueEnded;
-            runtime.QuestStatusChanged += OnQuestStatusChanged;
         }
 
         private void OnDisable()
@@ -89,7 +88,6 @@ namespace Lumenfall.Inventory
                 runtime.DialogueStarted -= OnDialogueStarted;
                 runtime.StateRestored -= OnStateRestored;
                 runtime.DialogueEnded -= OnDialogueEnded;
-                runtime.QuestStatusChanged -= OnQuestStatusChanged;
             }
             Close();
         }
@@ -130,12 +128,6 @@ namespace Lumenfall.Inventory
         {
             if (session == null || !session.IsCompleted) return;
             GrantMetadataItem(session.Definition?.metadata);
-        }
-
-        private static void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
-        {
-            if (current != QuestStatus.Completed || quest == null) return;
-            GrantMetadataItem(quest.metadata);
         }
 
         private static void GrantMetadataItem(GameMetadataEntry[] metadata)

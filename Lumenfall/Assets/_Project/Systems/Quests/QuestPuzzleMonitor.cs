@@ -33,6 +33,7 @@ namespace Lumenfall.Quests
         public string id;
         public string questId;
         public string completionEventId;
+        public string successDialogueId;
         public string mapId;
         public QuestPuzzleTarget[] targets = Array.Empty<QuestPuzzleTarget>();
     }
@@ -103,8 +104,14 @@ namespace Lumenfall.Quests
         {
             if (database == null || Time.unscaledTime < nextCheck) return;
             nextCheck = Time.unscaledTime + 0.1f;
+            EvaluatePuzzles();
+        }
+
+        public int EvaluatePuzzles()
+        {
             GameEventManager manager = GameEventManager.Instance;
-            if (manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return;
+            if (database == null || manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return 0;
+            int completed = 0;
             foreach (QuestPuzzleDefinition puzzle in database.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
             {
                 if (puzzle == null || string.IsNullOrWhiteSpace(puzzle.questId) || string.IsNullOrWhiteSpace(puzzle.completionEventId)) continue;
@@ -116,8 +123,18 @@ namespace Lumenfall.Quests
                 if (fired.Contains(key)) continue;
                 if (!SceneMatches(puzzle.mapId) || !TargetsReady(puzzle.targets)) continue;
                 GameEventTriggerResult result = manager.Runtime.TriggerEvent(puzzle.completionEventId);
-                if (result.Succeeded) fired.Add(key);
+                if (result.Succeeded)
+                {
+                    fired.Add(key);
+                    completed++;
+                    if (!string.IsNullOrWhiteSpace(puzzle.successDialogueId))
+                    {
+                        manager.Runtime.StartDialogue(puzzle.successDialogueId);
+                        if (manager.Runtime.ActiveDialogue != null) break;
+                    }
+                }
             }
+            return completed;
         }
 
         private static bool SceneMatches(string mapId)
