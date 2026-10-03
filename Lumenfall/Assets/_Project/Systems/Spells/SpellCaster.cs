@@ -35,7 +35,7 @@ namespace Lumenfall.Spells
         { SubscribeProgression(); RefreshSelection(); }
         // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
         private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
+        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.RotaraGearMechanism.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
         private void UnsubscribeProgression()
         { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
@@ -52,10 +52,19 @@ namespace Lumenfall.Spells
         {
             if (session != null && session.IsCompleted)
             {
-                string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                string lessonQuest = MetadataValue(session.Definition?.metadata, "spellRewardQuestId");
+                if (!string.IsNullOrWhiteSpace(lessonQuest))
+                {
+                    if (subscribedRuntime?.GetQuestStatus(lessonQuest) == QuestStatus.Active)
+                        GrantSpellRewards(session.Definition.metadata);
+                }
+                else
+                {
+                    string reward = MetadataValue(session.Definition?.metadata, "spellReward");
+                    if (TryParseSpell(reward, out SpellId spell) &&
+                        (spell != SpellId.Ampere || subscribedRuntime?.GetQuestStatus("stella_first_light") == QuestStatus.Active))
+                        subscribedRuntime?.SetFlag(SpellFlagPrefix + spell, true);
+                }
             }
             RefreshSelection();
         }
@@ -198,7 +207,11 @@ namespace Lumenfall.Spells
                     break;
                 case SpellId.Weave: changed = WeaveToPowered(state, targetId); break;
                 case SpellId.Gravitate: changed = state.TryMoveObject(targetId, ClampDirection(direction)); break;
-                case SpellId.Rotara: changed = state.SetProperty(targetId, x => x.rotation = (Mathf.Round(x.rotation / 90f) * 90f + 90f) % 360f); break;
+                case SpellId.Rotara:
+                    if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
+                        float.IsNaN(target.rotation) || float.IsInfinity(target.rotation)) break;
+                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
+                    break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
@@ -209,7 +222,7 @@ namespace Lumenfall.Spells
         {
             string reward = MetadataValue(metadata, "spellReward");
             foreach (string value in (reward ?? string.Empty).Split(',', ';'))
-                if (TryParseSpell(value, out SpellId spell)) GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                if (TryParseSpell(value, out SpellId spell)) subscribedRuntime?.SetFlag(SpellFlagPrefix + spell, true);
         }
         private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
         private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }

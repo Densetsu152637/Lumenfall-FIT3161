@@ -12,17 +12,18 @@ using Lumenfall.Spells;
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Gear presentation and hand-turn interaction for Rotara mechanisms. World state stays the
-    /// authority: F turns it by hand until Rotara is learned, then casts the spell picked on the Q wheel at the gear;
-    /// either way the stored rotation changes and the gear animates towards it.
-    /// While the dial sits on its target the aligned flag is set, which lets Orio's dialogue confirm the patch.
+    /// Gear presentation for authored Rotara mechanisms. Orio teaches Rotara before the player
+    /// casts the selected spell at the gear. Live world state, rather than a saved readiness flag,
+    /// verifies the exact forest mechanism when Orio confirms the patch.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RotaraGearMechanism : MonoBehaviour
     {
         private const string RotaraTag = "rotara";
         private const string QuestId = "orio_patch_notes";
-        private const string PuzzleMapId = "westForest";
+        public const string PuzzleMapId = "westForest";
+        public const string PuzzleObjectId = "mechanism.orio.rotate";
+        public const string AlignmentCondition = "OrioMechanismAligned";
         private const string AlignedFlag = "orio.patch_notes.mechanism_aligned";
         private const int StepDegrees = 90;
         private const int FallbackRequiredRotation = 90;
@@ -53,6 +54,7 @@ namespace Lumenfall.Quests
         /// <summary>Called by the area loader so every authored Rotara mechanism is presented as a gear.</summary>
         public static void AttachTo(GameObject areaRoot)
         {
+            RegisterQuestConditions(GameEventManager.Instance?.Runtime);
             if (areaRoot == null) return;
             foreach (WorldObjectRegistration registration in areaRoot.GetComponentsInChildren<WorldObjectRegistration>(true))
                 if (registration.GetComponent<RotaraGearMechanism>() == null && HasRotaraTag(registration.Tags))
@@ -64,6 +66,7 @@ namespace Lumenfall.Quests
             objectId = GetComponent<WorldObjectRegistration>().ObjectId;
             requiredRotation = ResolveRequiredRotation(objectId);
             BuildPresentation();
+            RegisterQuestConditions(GameEventManager.Instance?.Runtime);
         }
 
         // Area switches and save restores reactivate the area, so the gear snaps to stored state instead of spinning.
@@ -75,20 +78,13 @@ namespace Lumenfall.Quests
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !KeyBindings.WasPressed(GameAction.Interact)) return;
             WorldStateService state = WorldStateService.Instance;
             if (state == null || !state.IsReady || !state.TryGetObject(objectId, out WorldObjectSnapshot snapshot) || !PlayerInRange(snapshot) || IsAnimating(snapshot)) return;
-            // The gear stays inert until Orio has explained it.
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime == null || runtime.GetQuestStatus(QuestId) == QuestStatus.NotStarted) return;
-            // Once Rotara is learned, F uses whichever spell is picked on the Q wheel; Rotara turns the gear as before.
+            if (string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(objectId, PuzzleObjectId, StringComparison.Ordinal) &&
+                (runtime == null || runtime.GetQuestStatus(QuestId) == QuestStatus.NotStarted)) return;
+            // Acceptance alone never substitutes a hand turn for the completed Rotara lesson.
             SpellCaster caster = player.GetComponent<SpellCaster>();
-            if (caster != null && caster.IsSpellUnlocked(SpellId.Rotara)) { caster.CastSelectedAt(objectId); return; }
-            // Before that, only Orio's gear can be turned by hand.
-            if (!string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase)) return;
-            int stepsPerTurn = 360 / StepDegrees;
-            state.SetProperty(objectId, item =>
-            {
-                int step = Mathf.RoundToInt(item.rotation / StepDegrees);
-                item.rotation = ((step + 1) % stepsPerTurn + stepsPerTurn) % stepsPerTurn * StepDegrees;
-            });
+            if (caster != null && caster.IsSpellUnlocked(SpellId.Rotara)) caster.CastSelectedAt(objectId);
         }
 
         private void LateUpdate()
@@ -120,11 +116,15 @@ namespace Lumenfall.Quests
                 SetColor(pointer, solved ? SolvedColor : PointerColor);
             }
 
-            // Only the puzzle map's gear reports to Orio; other Rotara mechanisms are decorative.
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            bool aligned = IsSolved(snapshot);
-            if (runtime != null && string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) && runtime.GetFlag(AlignedFlag) != aligned)
-                runtime.SetFlag(AlignedFlag, aligned);
+            RegisterQuestConditions(runtime);
+            // Preserve the legacy feedback flag, but never use it as completion authority.
+            if (runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Active &&
+                string.Equals(objectId, PuzzleObjectId, StringComparison.Ordinal))
+            {
+                bool aligned = IsQuestReady(state, runtime);
+                if (runtime.GetFlag(AlignedFlag) != aligned) runtime.SetFlag(AlignedFlag, aligned);
+            }
         }
 
         private bool PlayerInRange(WorldObjectSnapshot snapshot)
@@ -139,7 +139,57 @@ namespace Lumenfall.Quests
         }
 
         private bool IsAnimating(WorldObjectSnapshot snapshot) => hasDisplayedAngle && Mathf.Abs(Mathf.DeltaAngle(displayedAngle, snapshot.rotation)) > 0.5f;
-        private bool IsSolved(WorldObjectSnapshot snapshot) => NormalizeAngle(Mathf.RoundToInt(snapshot.rotation)) == NormalizeAngle(requiredRotation);
+        private bool IsSolved(WorldObjectSnapshot snapshot) => RotationMatches(snapshot.rotation, requiredRotation);
+
+        /// <summary>Registers a stateless resolver; it retains no gear, map instance or old runtime.</summary>
+        public static void RegisterQuestConditions(GameEventRuntime runtime)
+        {
+            runtime?.RegisterConditionHandler(AlignmentCondition, (condition, current) =>
+                string.Equals(condition.key, PuzzleObjectId, StringComparison.Ordinal) &&
+                IsQuestReady(WorldStateService.Instance, current));
+        }
+
+        public static bool IsQuestReady(WorldStateService state, GameEventRuntime runtime) =>
+            runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Active &&
+            runtime.GetFlag("spell.unlocked.Rotara") && state != null && state.IsReady &&
+            state.TryGetObject(PuzzleObjectId, out WorldObjectSnapshot snapshot) &&
+            MatchesQuestTarget(state.CurrentMapId, snapshot);
+
+        public static bool MatchesQuestTarget(string mapId, WorldObjectSnapshot snapshot) =>
+            string.Equals(mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) && snapshot != null &&
+            string.Equals(snapshot.mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(snapshot.id, PuzzleObjectId, StringComparison.Ordinal) && snapshot.spellCompatible &&
+            HasRotaraTag(snapshot.tags) && RotationMatches(snapshot.rotation, FallbackRequiredRotation);
+
+        public static bool RotationMatches(float angle, int required) =>
+            !float.IsNaN(angle) && !float.IsInfinity(angle) &&
+            Math.Abs(NormalizeDegrees(angle) - NormalizeDegrees(required)) < 0.001f;
+
+        public static float NextQuarterTurn(float angle) =>
+            NormalizeDegrees((float)Math.Round(NormalizeDegrees(angle) / StepDegrees, MidpointRounding.ToEven) * StepDegrees + StepDegrees);
+
+        private static float NormalizeDegrees(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
+
+        private void OnGUI()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (state == null || !state.IsReady || InventoryUiState.IsOpen ||
+                GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
+                !state.TryGetObject(objectId, out WorldObjectSnapshot snapshot) || !PlayerInRange(snapshot)) return;
+            string status = RotationMatches(snapshot.rotation, requiredRotation) ? "At target. Return to Orio to confirm." :
+                "Each Rotara cast turns clockwise by 90 degrees. Overshot? Keep turning to retry.";
+            if (!string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) || objectId != PuzzleObjectId)
+                status = "Practice mechanism; this does not complete Orio's forest puzzle.";
+            else if (!GameEventManager.Instance.Runtime.GetFlag("spell.unlocked.Rotara"))
+                status = "Finish Orio's Rotara lesson before casting.";
+            else if (GameEventManager.Instance.Runtime.GetQuestStatus(QuestId) == QuestStatus.Completed)
+                status = "Patch confirmed. Further turns are practice; completion is saved.";
+            GUI.Box(new Rect(16f, Screen.height - 108f, 590f, 92f), "Rotara mechanism");
+            GUI.Label(new Rect(28f, Screen.height - 84f, 566f, 24f),
+                $"Current: {NormalizeDegrees(snapshot.rotation):0} degrees | Target: {requiredRotation} degrees | " +
+                KeyBindings.GetKeyLabel(GameAction.Interact) + ": cast selected spell (choose Rotara on the spell wheel)");
+            GUI.Label(new Rect(28f, Screen.height - 58f, 566f, 36f), status);
+        }
 
         private void BuildPresentation()
         {
@@ -234,7 +284,6 @@ namespace Lumenfall.Quests
             return false;
         }
 
-        private static int NormalizeAngle(int angle) { angle %= 360; return angle < 0 ? angle + 360 : angle; }
         private static void SetColor(GameObject target, Color color)
         {
             Renderer renderer = target == null ? null : target.GetComponent<Renderer>();
