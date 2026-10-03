@@ -169,6 +169,7 @@ MonoBehaviour:
       blocks: 0
       tags:
       - vis
+      - vis-target:90
       compatibleWithSpells: 1
     - id: trial.cinna.ice
       prefab: {fileID: 0}
@@ -250,7 +251,7 @@ MonoBehaviour:
       requiredRevealed: 0
       requiredFrozen: 0
       requiredAligned: 1
-      requiredRotation: -1
+      requiredRotation: 90
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
     - id: quest.cinna.cold-feet-warm-idea

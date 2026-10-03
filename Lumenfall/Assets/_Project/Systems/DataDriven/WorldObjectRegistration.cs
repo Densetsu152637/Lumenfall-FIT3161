@@ -12,12 +12,14 @@ namespace Lumenfall.DataDriven
         [SerializeField] private Vector2Int size = Vector2Int.one;
         [SerializeField] private bool spellCompatible = true;
         [SerializeField] private string[] tags = Array.Empty<string>();
+        private float authoredRotation;
+        private void Awake() { authoredRotation = transform.eulerAngles.y; }
         public string ObjectId => objectId;
         public Vector2Int Cell => cell;
         public Vector2Int Size => size;
         public void Configure(string id, Vector2Int at, Vector2Int footprint, bool compatible, string[] objectTags)
-        { objectId = id; cell = at; size = footprint; spellCompatible = compatible; tags = objectTags ?? Array.Empty<string>(); }
+        { objectId = id; cell = at; size = footprint; spellCompatible = compatible; tags = objectTags ?? Array.Empty<string>(); authoredRotation = transform.eulerAngles.y; }
         private void OnEnable()
-        { if (WorldStateService.Instance != null) WorldStateService.Instance.RegisterObject(objectId, gameObject, cell, size, spellCompatible, tags); }
+        { if (WorldStateService.Instance != null) WorldStateService.Instance.RegisterObject(objectId, gameObject, cell, size, spellCompatible, tags, authoredRotation); }
     }
 }

@@ -22,6 +22,8 @@ namespace Lumenfall.Spells
         private bool wheelMovementLockOwned;
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
+        private const string AlignmentQuestId = "cinna_out_of_alignment";
+        private const string AlignmentObjectId = "orientation.cinna.align";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
@@ -39,14 +41,25 @@ namespace Lumenfall.Spells
         { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
         private void OnDialogueEnded(DialogueSession session)
         {
-            if (session != null && session.IsCompleted)
-            {
-                string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
-            }
+            if (session != null && session.IsCompleted && CanGrantLessonReward(session.Definition.metadata))
+                GrantSpellRewards(session.Definition.metadata);
             RefreshSelection();
+        }
+        private static bool CanGrantLessonReward(GameMetadataEntry[] metadata)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            string questId = MetadataValue(metadata, "spellRewardQuestId");
+            if (string.IsNullOrWhiteSpace(questId))
+            {
+                // Preserve the original First Light terminal lesson contract.
+                if (!string.Equals(MetadataValue(metadata, "spellReward"), "Ampere", StringComparison.OrdinalIgnoreCase)) return false;
+                questId = "stella_first_light";
+            }
+            if (runtime.GetQuestStatus(questId) != QuestStatus.Active) return false;
+            string prerequisite = MetadataValue(metadata, "spellRewardPrerequisite");
+            if (string.IsNullOrWhiteSpace(prerequisite)) return true;
+            string[] parts = prerequisite.Split(':');
+            return parts.Length == 2 && Enum.TryParse(parts[1], true, out QuestStatus status) && runtime.GetQuestStatus(parts[0]) == status;
         }
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
@@ -78,6 +91,7 @@ namespace Lumenfall.Spells
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
+            if (keyboard.rKey.wasPressedThisFrame && IsNearAlignmentMarker()) ResetActiveAlignmentPuzzle();
             Vector2Int inputDirection = new Vector2Int((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0), (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0)); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
             if (keyboard.digit1Key.wasPressedThisFrame) SelectSpell(SpellId.Ampere);
             if (keyboard.digit2Key.wasPressedThisFrame) SelectSpell(SpellId.Weave);
@@ -137,7 +151,9 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
-            if (!spellWheelOpen || InputBlockedByOverlay) return;
+            if (Time.timeScale <= 0f || InputBlockedByOverlay) return;
+            DrawAlignmentFeedback();
+            if (!spellWheelOpen) return;
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
 
@@ -179,7 +195,11 @@ namespace Lumenfall.Spells
                 case SpellId.Gravitate: changed = state.TryMoveObject(targetId, ClampDirection(direction)); break;
                 case SpellId.Rotara: changed = state.SetProperty(targetId, x => x.rotation = (Mathf.Round(x.rotation / 90f) * 90f + 90f) % 360f); break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
-                case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
+                case SpellId.Vis:
+                    if (TryGetVisRotation(target, out float visRotation) &&
+                        (!target.aligned || !Mathf.Approximately(NormalizeRotation(target.rotation), visRotation)))
+                        changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = visRotation; });
+                    break;
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
@@ -192,6 +212,55 @@ namespace Lumenfall.Spells
         }
         private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
         private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }
+        private static bool TryGetVisRotation(WorldObjectSnapshot target, out float rotation)
+        {
+            rotation = NormalizeRotation(Mathf.Round(target.rotation / 90f) * 90f);
+            if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "vis", StringComparison.OrdinalIgnoreCase))) return false;
+            bool authored = false;
+            foreach (string tag in target.tags ?? Array.Empty<string>())
+            {
+                if (tag == null || !tag.StartsWith("vis-target", StringComparison.OrdinalIgnoreCase)) continue;
+                if (authored || !tag.StartsWith("vis-target:", StringComparison.OrdinalIgnoreCase) ||
+                    !int.TryParse(tag.Substring("vis-target:".Length), System.Globalization.NumberStyles.Integer,
+                        System.Globalization.CultureInfo.InvariantCulture, out int angle) || angle % 90 != 0) return false;
+                rotation = ((angle % 360) + 360) % 360;
+                authored = true;
+            }
+            return true;
+        }
+        private static float NormalizeRotation(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
+        public bool ResetActiveAlignmentPuzzle()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (Time.timeScale <= 0f || InputBlockedByOverlay ||
+                GameEventManager.Instance.Runtime.GetQuestStatus(AlignmentQuestId) != QuestStatus.Active ||
+                state == null || !state.IsReady || !string.Equals(state.CurrentMapId, "campus", StringComparison.OrdinalIgnoreCase)) return false;
+            return state.ResetAlignmentObject(AlignmentObjectId);
+        }
+        private bool IsNearAlignmentMarker()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            GridMover player = GetComponent<GridMover>();
+            return state != null && state.IsReady && state.CurrentMapId == "campus" && player != null &&
+                state.TryGetObject(AlignmentObjectId, out WorldObjectSnapshot marker) &&
+                Mathf.Abs(marker.cell.x - player.CurrentCell.x) + Mathf.Abs(marker.cell.y - player.CurrentCell.y) <= interactionRadius;
+        }
+        private void DrawAlignmentFeedback()
+        {
+            if (!IsNearAlignmentMarker()) return;
+            QuestStatus status = GameEventManager.Instance.Runtime.GetQuestStatus(AlignmentQuestId);
+            if (status != QuestStatus.Active && status != QuestStatus.Completed) return;
+            WorldStateService.Instance.TryGetObject(AlignmentObjectId, out WorldObjectSnapshot marker);
+            Rect panel = new Rect(16f, Screen.height - 116f, 420f, 100f);
+            GUI.Box(panel, "Out of Alignment — target: aligned at 90°");
+            GUI.Label(new Rect(panel.x + 12f, panel.y + 27f, 396f, 22f),
+                $"Marker: {(marker.aligned ? "aligned" : "not aligned")}, facing {NormalizeRotation(marker.rotation):0.##}°");
+            if (status == QuestStatus.Active)
+            {
+                if (GUI.Button(new Rect(panel.x + 12f, panel.y + 57f, 240f, 28f), "Reset marker to its start (R)")) ResetActiveAlignmentPuzzle();
+            }
+            else GUI.Label(new Rect(panel.x + 12f, panel.y + 57f, 396f, 28f), "Complete. Cinna's next trial is at (20, 34).");
+        }
         private static bool WeaveToPowered(WorldStateService state, string targetId)
         {
             string intended = null;

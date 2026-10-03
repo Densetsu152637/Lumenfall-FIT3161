@@ -42,7 +42,7 @@ registry = {n["id"]: n for n in npcs}
 assert {"stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio", "campus_student", "forest_student"} <= registry.keys()
 for nid in ("stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio"):
     entries = registry[nid]["dialogue"]
-    assert len(entries) == (6 if nid != "orio" else 3)
+    assert len(entries) == (3 if nid in {"orio", "cinna_cirra_trial"} else 6)
     for entry in entries:
         assert entry["dialogueId"] in dialogues and entry["requiredQuestStatus"] in {"NotStarted", "Active", "Completed"}
 for nid, prefix in (("campus_student", "ambient_courtyard_student"), ("forest_student", "ambient_forest_student")):

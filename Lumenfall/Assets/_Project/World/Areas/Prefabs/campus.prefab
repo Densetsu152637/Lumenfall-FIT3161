@@ -27091,6 +27091,7 @@ MonoBehaviour:
   spellCompatible: 1
   tags:
   - vis
+  - vis-target:90
 --- !u!1 &2939032905722258503
 GameObject:
   m_ObjectHideFlags: 0
@@ -87096,24 +87097,6 @@ MonoBehaviour:
     hideWhenQuestCompleted: 
     dialogueIds: []
     dialogue:
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: NotStarted
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: Active
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
-    - dialogueId: cinna_out_of_alignment_dialogue
-      questId: cinna_out_of_alignment
-      requiredQuestStatus: Completed
-      prerequisiteQuestId: 
-      prerequisiteQuestStatus: 
-      weight: 5
     - dialogueId: cinna_cold_feet_warm_idea_dialogue
       questId: cinna_cold_feet_warm_idea
       requiredQuestStatus: NotStarted

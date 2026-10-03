@@ -24,6 +24,7 @@ namespace Lumenfall.Spells
     {
         public static WorldStateService Instance { get; private set; }
         private readonly Dictionary<string, WorldEntry> entries = new Dictionary<string, WorldEntry>(StringComparer.Ordinal);
+        private readonly Dictionary<string, float> authoredRotations = new Dictionary<string, float>(StringComparer.Ordinal);
         private readonly HashSet<string> connections = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, float> connectionStrengths = new Dictionary<string, float>(StringComparer.Ordinal);
         private readonly List<string> pendingEffects = new List<string>();
@@ -52,16 +53,30 @@ namespace Lumenfall.Spells
         public void BeginMapRebuild(string mapId)
         {
             if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); }
-            rebuilding = true; IsReady = false; CurrentMapId = mapId ?? string.Empty; entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; puzzleTargets = Array.Empty<PuzzleTargetDefinition>();
+            rebuilding = true; IsReady = false; CurrentMapId = mapId ?? string.Empty; entries.Clear(); authoredRotations.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; puzzleTargets = Array.Empty<PuzzleTargetDefinition>();
             if (archivedMaps.TryGetValue(CurrentMapId, out MapStateSnapshot saved)) pendingRestore = saved;
             if (archivedEffects.TryGetValue(CurrentMapId, out List<string> effects)) pendingEffects.AddRange(effects);
         }
-        public void ResetAllState() { archivedMaps.Clear(); archivedEffects.Clear(); entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; CurrentMapId = string.Empty; IsReady = false; }
+        public void ResetAllState() { archivedMaps.Clear(); archivedEffects.Clear(); entries.Clear(); authoredRotations.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; CurrentMapId = string.Empty; IsReady = false; }
         public void RegisterPuzzleTargets(PuzzleTargetDefinition[] definitions) { puzzleTargets = definitions ?? Array.Empty<PuzzleTargetDefinition>(); }
-        public void RegisterObject(string id, GameObject sceneObject, Vector2Int cell, Vector2Int size, bool compatible, string[] tags)
+        public void RegisterObject(string id, GameObject sceneObject, Vector2Int cell, Vector2Int size, bool compatible, string[] tags, float? authoredRotation = null)
         {
             if (string.IsNullOrWhiteSpace(id)) return;
-            entries[id] = new WorldEntry { sceneObject = sceneObject, state = new WorldObjectSnapshot { id = id, mapId = CurrentMapId, cell = cell, size = size, elevation = sceneObject == null ? 0 : sceneObject.transform.position.y, rotation = sceneObject == null ? 0 : sceneObject.transform.eulerAngles.y, spellCompatible = compatible, tags = tags ?? Array.Empty<string>() } };
+            entries[id] = new WorldEntry { sceneObject = sceneObject, state = new WorldObjectSnapshot { id = id, mapId = CurrentMapId, cell = cell, size = size, elevation = sceneObject == null ? 0 : sceneObject.transform.position.y, rotation = authoredRotation ?? (sceneObject == null ? 0 : sceneObject.transform.eulerAngles.y), spellCompatible = compatible, tags = tags ?? Array.Empty<string>() } };
+            authoredRotations[id] = entries[id].state.rotation;
+            if (authoredRotation.HasValue) SyncTransform(entries[id]);
+        }
+        // Alignment reset changes only this marker, never progression or another puzzle.
+        public bool ResetAlignmentObject(string id)
+        {
+            if (!IsReady || !entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) ||
+                !authoredRotations.TryGetValue(id, out float rotation)) return false;
+            if (!entry.state.aligned && Mathf.Approximately(entry.state.rotation, rotation)) return false;
+            entry.state.rotation = rotation;
+            entry.state.aligned = false;
+            SyncTransform(entry);
+            NotifyChanged();
+            return true;
         }
         public void EndMapRebuild()
         {
@@ -82,7 +97,7 @@ namespace Lumenfall.Spells
                 if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1])) return false;
             }
             bool any = false, all = true;
-            foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
+            foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.Approximately(NormalizeRotation(s.rotation), NormalizeRotation(target.requiredRotation))) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
             return string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? any : all;
         }
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
@@ -102,12 +117,23 @@ namespace Lumenfall.Spells
         public string CaptureStateJson()
         { if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); } List<MapArchive> maps = new List<MapArchive>(); foreach (KeyValuePair<string, MapStateSnapshot> pair in archivedMaps) maps.Add(new MapArchive { mapId = pair.Key, snapshot = pair.Value, pendingEffects = archivedEffects.TryGetValue(pair.Key, out List<string> effects) ? effects.ToArray() : Array.Empty<string>() }); return JsonUtility.ToJson(new SaveData { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths(), pendingEffects = pendingEffects.ToArray(), maps = maps.ToArray() }); }
         public bool RestoreStateJson(string json) { SaveData data; try { data = JsonUtility.FromJson<SaveData>(json); } catch { return false; } if (data == null) return false; archivedMaps.Clear(); archivedEffects.Clear(); foreach (MapArchive map in data.maps ?? Array.Empty<MapArchive>()) { if (map == null || string.IsNullOrWhiteSpace(map.mapId)) continue; archivedMaps[map.mapId] = map.snapshot; archivedEffects[map.mapId] = new List<string>(map.pendingEffects ?? Array.Empty<string>()); } pendingRestore = new MapStateSnapshot { mapId = data.mapId, objects = data.objects ?? Array.Empty<WorldObjectSnapshot>(), connections = data.connections ?? Array.Empty<string>(), connectionStrengths = data.connectionStrengths ?? Array.Empty<float>() }; pendingEffects.Clear(); pendingEffects.AddRange(data.pendingEffects ?? Array.Empty<string>()); if (IsReady && string.Equals(CurrentMapId, data.mapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; NotifyChanged(); } return true; }
-        private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) { entry.state = Clone(saved); SyncTransform(entry); } }
+        private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) {
+                // Saves own mutable progress; current prefab authoring owns identity and targeting.
+                WorldObjectSnapshot restored = Clone(saved);
+                restored.id = entry.state.id;
+                restored.mapId = entry.state.mapId;
+                restored.size = entry.state.size;
+                restored.spellCompatible = entry.state.spellCompatible;
+                restored.tags = entry.state.tags;
+                entry.state = restored;
+                SyncTransform(entry);
+            } }
         private void SyncTransform(WorldEntry entry) { if (entry.sceneObject == null) return; GridWorld world = FindAnyObjectByType<GridWorld>(); if (world != null) entry.sceneObject.transform.position = world.CellToWorld(entry.state.cell, entry.state.elevation); entry.sceneObject.transform.rotation = Quaternion.Euler(0, entry.state.rotation, 0); entry.sceneObject.GetComponent<GridObstacle>()?.RefreshFootprint(); }
         private bool IsConnectedToAny(string id) { foreach (string key in connections) if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal)) return true; return false; }
         private void NotifyChanged() { if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
         private MapStateSnapshot CaptureSnapshot() { return new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths() }; }
         private float[] CaptureConnectionStrengths() { float[] values = new float[connections.Count]; int i = 0; foreach (string key in connections) values[i++] = connectionStrengths.TryGetValue(key, out float value) ? value : 1f; return values; }
+        private static float NormalizeRotation(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;
         private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, aligned = s.aligned, spellCompatible = s.spellCompatible, tags = s.tags ?? Array.Empty<string>() };
         private sealed class WorldEntry { public GameObject sceneObject; public WorldObjectSnapshot state; }
