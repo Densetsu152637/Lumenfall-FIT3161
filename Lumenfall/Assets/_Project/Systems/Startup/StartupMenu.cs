@@ -6,6 +6,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
+using Lumenfall.Audio;
 
 namespace Lumenfall.Startup
 {
@@ -18,7 +19,7 @@ namespace Lumenfall.Startup
     public sealed class StartupMenu : MonoBehaviour
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
-        private const string MasterVolumeKey = "lumenfall.master-volume";
+
 
         private enum Page { Main, Load, Settings }
 
@@ -28,7 +29,6 @@ namespace Lumenfall.Startup
         private bool confirmOverwrite;
         private string backdropSlot;
         private string message;
-        private float masterVolume;
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
@@ -50,8 +50,6 @@ namespace Lumenfall.Startup
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
-            masterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumeKey, 1f));
-            AudioListener.volume = masterVolume;
             SetGameplayInput(false);
             LoadButtonTextures();
             StartCoroutine(InitializeAfterSceneSystems());
@@ -164,21 +162,18 @@ namespace Lumenfall.Startup
 
         private void DrawSettings(Rect panel)
         {
-            GUI.Label(new Rect(panel.x + 54f, panel.y + 130f, 220f, 40f), "MASTER VOLUME", BodyStyle());
-            float newVolume = GUI.HorizontalSlider(new Rect(panel.x + 54f, panel.y + 192f, panel.width - 108f, 30f),
-                masterVolume, 0f, 1f);
-            if (!Mathf.Approximately(newVolume, masterVolume))
+            AudioBus[] buses = { AudioBus.Master, AudioBus.Music, AudioBus.Sfx, AudioBus.Ambience };
+            for (int i = 0; i < buses.Length; i++)
             {
-                masterVolume = newVolume;
-                AudioListener.volume = masterVolume;
-                PlayerPrefs.SetFloat(MasterVolumeKey, masterVolume);
-                PlayerPrefs.Save();
+                AudioBus bus = buses[i]; float volume = AudioMixSettings.GetVolume(bus);
+                float y = panel.y + 108f + i * 86f;
+                GUI.Label(new Rect(panel.x + 54f, y, panel.width - 108f, 32f),
+                    $"{bus.ToString().ToUpperInvariant()} VOLUME  {Mathf.RoundToInt(volume * 100f)}%", BodyStyle());
+                float next = GUI.HorizontalSlider(new Rect(panel.x + 54f, y + 38f, panel.width - 108f, 30f), volume, 0f, 1f);
+                if (!Mathf.Approximately(next, volume)) AudioMixSettings.SetVolume(bus, next);
             }
-            GUI.Label(new Rect(panel.x + 54f, panel.y + 224f, panel.width - 108f, 40f),
-                $"{Mathf.RoundToInt(masterVolume * 100f)}%", BodyStyle());
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK")) page = Page.Main;
         }
-
         private bool Button(string textureKey, Rect rect, string fallbackLabel)
         {
             bool clicked = GUI.Button(rect, GUIContent.none, GUI.skin.button);
@@ -193,6 +188,7 @@ namespace Lumenfall.Startup
             {
                 GUI.Label(rect, fallbackLabel, ButtonStyle());
             }
+            if (clicked) AudioFeedbackService.PlayUi(AudioUiCue.Confirm);
             return clicked;
         }
 
