@@ -88,6 +88,16 @@ namespace Lumenfall.Spells
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
         { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
+        /// Removes only the named cable; unrelated connections and object state remain intact.
+        public bool RemoveConnection(string a, string b)
+        {
+            if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b) || a == b) return false;
+            string key = ConnectionKey(a, b);
+            if (!connections.Remove(key)) return false;
+            connectionStrengths.Remove(key);
+            NotifyChanged();
+            return true;
+        }
         public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
         public bool AcknowledgeEffect(string key) => pendingEffects.Remove(key);
         public bool TryMoveObject(string id, Vector2Int direction)
