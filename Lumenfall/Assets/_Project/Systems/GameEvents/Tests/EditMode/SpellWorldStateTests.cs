@@ -39,7 +39,7 @@ namespace Lumenfall.Tests.GameEvents
         [Test]
         public void AmpereTogglesAndQueuesDurableEffectUntilAcknowledged()
         {
-            GameObject target = Register("relic", new Vector2Int(2, 2), Vector2Int.one, null); UnlockForTest(SpellId.Ampere); SpellCaster caster = target.AddComponent<SpellCaster>(); state.EndMapRebuild();
+            GameObject target = Register("relic", new Vector2Int(2, 2), Vector2Int.one, new[] { "ampere" }); UnlockForTest(SpellId.Ampere); SpellCaster caster = CreateCaster(new Vector2Int(2, 1)); state.EndMapRebuild();
             Assert.That(caster.Cast(SpellId.Ampere, "relic", Vector2Int.up), Is.True); Assert.That(state.TryGetObject("relic", out WorldObjectSnapshot on) && on.powered, Is.True);
             Assert.That(caster.Cast(SpellId.Ampere, "relic", Vector2Int.up), Is.True); Assert.That(state.TryGetObject("relic", out WorldObjectSnapshot off) && !off.powered, Is.True);
             Assert.That(state.AcknowledgeEffect("lightning:relic:off"), Is.True);
@@ -49,7 +49,7 @@ namespace Lumenfall.Tests.GameEvents
         public void WeaveUsesDeclaredEndpointAndPersistsAttenuation()
         {
             Register("power", new Vector2Int(2, 2), Vector2Int.one, new[] { "weave-with:link" }); Register("link", new Vector2Int(4, 2), Vector2Int.one, new[] { "weave-with:power" }); state.EndMapRebuild();
-            state.SetProperty("power", x => x.powered = true); UnlockForTest(SpellId.Weave); SpellCaster caster = created[1].AddComponent<SpellCaster>(); Assert.That(caster.Cast(SpellId.Weave, "link", Vector2Int.right), Is.True);
+            state.SetProperty("power", x => x.powered = true); UnlockForTest(SpellId.Weave); SpellCaster caster = CreateCaster(new Vector2Int(3, 3)); Assert.That(caster.Cast(SpellId.Weave, "link", Vector2Int.right), Is.True);
             Assert.That(state.IsConnected("power", "link"), Is.True); Assert.That(state.GetConnectionStrength("power", "link"), Is.GreaterThan(0.2f).And.LessThan(1f));
             string save = state.CaptureStateJson(); state.ResetAllState(); state.BeginMapRebuild("test-map"); Register("power", new Vector2Int(2, 2), Vector2Int.one, new[] { "weave-with:link" }); Register("link", new Vector2Int(4, 2), Vector2Int.one, new[] { "weave-with:power" }); state.EndMapRebuild(); Assert.That(state.RestoreStateJson(save), Is.True); Assert.That(state.GetConnectionStrength("power", "link"), Is.GreaterThan(0.2f));
         }
@@ -74,11 +74,11 @@ namespace Lumenfall.Tests.GameEvents
                 state.BeginMapRebuild("B02.Ground");
                 RunPuzzleMonitor(monitor);
                 Register("relic.stella.power", new Vector2Int(3, 4), Vector2Int.one,
-                    new[] { "weave-with:circuit.stella.link" });
+                    new[] { "ampere", "weave", "weave-with:circuit.stella.link" });
                 Register("circuit.stella.link", new Vector2Int(6, 4), Vector2Int.one,
-                    new[] { "weave-with:relic.stella.power" });
+                    new[] { "ampere", "weave", "weave-with:relic.stella.power" });
                 state.EndMapRebuild();
-                SpellCaster caster = created[1].AddComponent<SpellCaster>();
+                SpellCaster caster = CreateCaster(new Vector2Int(4, 4));
                 EditModeLifecycle.Call(caster, "OnEnable");
 
                 DialogueSession firstLight = runtime.StartDialogue("stella_first_light_dialogue");
@@ -131,8 +131,16 @@ namespace Lumenfall.Tests.GameEvents
         [Test]
         public void GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker()
         {
-            GameObject ice = Register("ice", new Vector2Int(2, 4), Vector2Int.one, new[] { "slide-goal:5,4" }); UnlockForTest(SpellId.Glaciate); SpellCaster caster = ice.AddComponent<SpellCaster>(); state.EndMapRebuild(); Assert.That(caster.Cast(SpellId.Glaciate, "ice", Vector2Int.right), Is.True); Assert.That(state.TryGetObject("ice", out WorldObjectSnapshot moved) && moved.cell == new Vector2Int(5, 4), Is.True);
+            GameObject ice = Register("ice", new Vector2Int(2, 4), Vector2Int.one, new[] { "slide-goal:5,4" }); UnlockForTest(SpellId.Glaciate); SpellCaster caster = CreateCaster(new Vector2Int(2, 3)); state.EndMapRebuild(); Assert.That(caster.Cast(SpellId.Glaciate, "ice", Vector2Int.right), Is.True); Assert.That(state.TryGetObject("ice", out WorldObjectSnapshot moved) && moved.cell == new Vector2Int(5, 4), Is.True);
             state.BeginMapRebuild("footprint"); GameObject block = Register("wide", new Vector2Int(2, 2), new Vector2Int(2, 1), null); GridObstacle obstacle = block.AddComponent<GridObstacle>(); obstacle.Configure(grid, new Vector2Int(2, 1)); GameObject blocker = Register("blocker", new Vector2Int(4, 2), Vector2Int.one, null); GridObstacle blockerObstacle = blocker.AddComponent<GridObstacle>(); blockerObstacle.Configure(grid, Vector2Int.one); state.EndMapRebuild(); Assert.That(state.TryMoveObject("wide", Vector2Int.right), Is.False);
+        }
+
+        private SpellCaster CreateCaster(Vector2Int cell)
+        {
+            GameObject host = new GameObject("test-caster"); created.Add(host);
+            GridMover mover = host.AddComponent<GridMover>();
+            Assert.That(mover.TryTeleportTo(grid, cell), Is.True);
+            return host.AddComponent<SpellCaster>();
         }
 
         private GameObject Register(string id, Vector2Int cell, Vector2Int size, string[] tags)

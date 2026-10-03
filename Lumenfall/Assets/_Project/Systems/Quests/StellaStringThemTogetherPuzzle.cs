@@ -130,6 +130,13 @@ namespace Lumenfall.Quests
                 state.RegisterObject(id, relicViews[i], Cells[i], Vector2Int.one, false,
                     new[] { "stella-sequence", "switch:" + (i + 1) });
             }
+            string[] ids = new string[Cells.Length];
+            for (int i = 0; i < ids.Length; i++) ids[i] = ObjectId(i);
+            state.RegisterAdditionalPuzzleTarget(new Lumenfall.DataDriven.PuzzleTargetDefinition
+            { id = "quest.stella.first-light.board", objectIds = ids, requiredPowered = true });
+            string[] legacyEffectPrefixes = new string[Cells.Length];
+            for (int i = 0; i < legacyEffectPrefixes.Length; i++) legacyEffectPrefixes[i] = "stella-relic:" + (i + 1) + ":";
+            state.RegisterPuzzleEffectPrefixes("quest.stella.first-light.board", legacyEffectPrefixes);
             RefreshViews();
         }
 
@@ -213,7 +220,7 @@ namespace Lumenfall.Quests
                 if ((mask & (1 << i)) == 0 || !state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot)) continue;
                 bool next = !snapshot.powered;
                 state.SetProperty(ObjectId(i), item => item.powered = next);
-                state.QueueEffect("stella-relic:" + (i + 1) + ":" + (next ? "on" : "off"));
+                state.QueueEffect("stella-relic:" + ObjectId(i) + ":" + (next ? "on" : "off"));
             }
             RefreshViews();
             TryCompleteIfSolved();
@@ -222,7 +229,7 @@ namespace Lumenfall.Quests
         private void TryCompleteIfSolved()
         {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active) return;
+            if (state == null || !state.IsReady || runtime == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active) return;
             for (int i = 0; i < Cells.Length; i++)
                 if (!state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) || !snapshot.powered) return;
             runtime.TriggerEvent("complete_stella_first_light");

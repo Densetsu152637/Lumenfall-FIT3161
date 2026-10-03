@@ -6,6 +6,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Spells
 {
@@ -27,6 +28,10 @@ namespace Lumenfall.Spells
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public event Action<SpellId, string, bool> CastCompleted;
+        public event Action<SpellCastFeedback> CastFeedback;
+        public SpellCastFeedback LastCastFeedback { get; private set; }
+        private float feedbackUntil;
+        private string resetMessage;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
@@ -73,7 +78,7 @@ namespace Lumenfall.Spells
             if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             {
                 string target = FindNearestTarget();
-                if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                Cast(selectedSpell, target, DirectionFromPlayer());
                 CloseSpellWheel();
             }
 
@@ -121,7 +126,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
+        private bool InputBlockedByOverlay => StartupMenu.IsVisible || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void CloseSpellWheel()
         {
             if (!spellWheelOpen) return;
@@ -138,6 +143,7 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
+            DrawTargetFeedback();
             if (!spellWheelOpen || InputBlockedByOverlay) return;
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
@@ -164,10 +170,15 @@ namespace Lumenfall.Spells
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)
         { if (!icons.TryGetValue(spell, out Texture2D icon)) icons[spell] = icon = Resources.Load<Texture2D>(GetIconResourcePath(spell)); return icon; }
-        public bool Cast(SpellId spell, string targetId, Vector2Int direction)
+        /// Direct integrations obey the same range, unlock, overlay and authored tag rules as input.
+        public bool Cast(SpellId spell, string targetId, Vector2Int direction) => TryCast(spell, targetId, direction).Changed;
+
+        public SpellCastFeedback TryCast(SpellId spell, string targetId, Vector2Int direction)
         {
-            if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
-            WorldStateService state = WorldStateService.Instance; if (state == null || !state.IsReady || !state.TryGetObject(targetId, out WorldObjectSnapshot target) || !target.spellCompatible) return false;
+            SpellCastOutcome outcome = CheckCast(spell, targetId);
+            if (outcome != SpellCastOutcome.Applied) return CompleteCast(spell, targetId, outcome);
+            WorldStateService state = WorldStateService.Instance;
+            state.TryGetObject(targetId, out WorldObjectSnapshot target);
             bool changed = false;
             switch (spell)
             {
@@ -183,7 +194,65 @@ namespace Lumenfall.Spells
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
             }
-            CastCompleted?.Invoke(spell, targetId, changed); return changed;
+            outcome = changed ? SpellCastOutcome.Applied : (spell == SpellId.Gravitate || (spell == SpellId.Glaciate && !AtSlideGoal(target))) ? SpellCastOutcome.MovementBlocked : SpellCastOutcome.NoChange;
+            return CompleteCast(spell, targetId, outcome);
+        }
+
+        public SpellCastOutcome CheckCast(SpellId spell, string targetId)
+        {
+            if (Time.timeScale <= 0f || InputBlockedByOverlay) return SpellCastOutcome.InputBlocked;
+            if (!IsSpellUnlocked(spell)) return SpellCastOutcome.LockedSpell;
+            WorldStateService state = WorldStateService.Instance;
+            if (state == null || !state.IsReady) return SpellCastOutcome.WorldUnavailable;
+            if (string.IsNullOrWhiteSpace(targetId)) return SpellCastOutcome.NoTarget;
+            if (!state.TryGetObject(targetId, out WorldObjectSnapshot target)) return SpellCastOutcome.UnknownTarget;
+            GridMover player = GetComponent<GridMover>();
+            if (player == null || player.World == null) return SpellCastOutcome.CasterUnavailable;
+            if (SpellTargetRules.Distance(player.CurrentCell, target) > interactionRadius) return SpellCastOutcome.OutOfRange;
+            if (!SpellTargetRules.Accepts(target, spell)) return SpellCastOutcome.IncompatibleTarget;
+            return SpellCastOutcome.Applied;
+        }
+
+        private SpellCastFeedback CompleteCast(SpellId spell, string targetId, SpellCastOutcome outcome)
+        {
+            LastCastFeedback = new SpellCastFeedback(spell, targetId, outcome);
+            feedbackUntil = Time.unscaledTime + 3f; resetMessage = null;
+            WorldStateService.Instance?.ReportCastFeedback(LastCastFeedback);
+            CastFeedback?.Invoke(LastCastFeedback);
+            CastCompleted?.Invoke(spell, targetId, LastCastFeedback.Changed);
+            return LastCastFeedback;
+        }
+
+        public bool ResetNearbyPuzzle()
+        {
+            if (Time.timeScale <= 0f || InputBlockedByOverlay) return false;
+            WorldStateService state = WorldStateService.Instance;
+            string targetId = FindNearestPuzzleTarget();
+            if (state == null || !state.IsReady || string.IsNullOrEmpty(targetId)) return false;
+            foreach (Lumenfall.DataDriven.PuzzleTargetDefinition target in state.PuzzleTargets)
+                if (target != null && Array.IndexOf(target.objectIds ?? Array.Empty<string>(), targetId) >= 0 && state.ResetPuzzle(target.id))
+                { resetMessage = "Puzzle restored. Completed quests remain completed."; feedbackUntil = Time.unscaledTime + 3f; return true; }
+            resetMessage = "Reset blocked. Clear the authored cells and try again."; feedbackUntil = Time.unscaledTime + 3f;
+            return false;
+        }
+
+        private void DrawTargetFeedback()
+        {
+            if (InputBlockedByOverlay) return;
+            WorldStateService state = WorldStateService.Instance;
+            string targetId = FindNearestTarget() ?? FindNearestPuzzleTarget();
+            WorldObjectFeedback feedback = state?.GetObjectFeedback(targetId);
+            string message = Time.unscaledTime < feedbackUntil ? resetMessage ?? LastCastFeedback?.Message : null;
+            if (feedback != null)
+            {
+                WorldObjectFeedback preview = state.GetTargetFeedback(targetId, CheckCast(selectedSpell, targetId) == SpellCastOutcome.Applied);
+                state.TryGetObject(targetId, out WorldObjectSnapshot viewTarget);
+                string status = feedback.State == ObjectFeedbackState.Restored || !viewTarget.spellCompatible ? feedback.State.ToString() : preview.State.ToString();
+                message = (message == null ? "" : message + "\n") + targetId + ": " + status;
+                bool puzzle = Array.Exists(state.PuzzleTargets, target => target != null && Array.IndexOf(target.objectIds ?? Array.Empty<string>(), targetId) >= 0);
+                if (puzzle && GUI.Button(new Rect(18f, Screen.height - 138f, 152f, 28f), "Reset nearby puzzle")) ResetNearbyPuzzle();
+            }
+            if (!string.IsNullOrEmpty(message)) GUI.Box(new Rect(18f, Screen.height - 100f, Mathf.Min(470f, Screen.width - 36f), 60f), message);
         }
         private void GrantSpellRewards(GameMetadataEntry[] metadata)
         {
@@ -198,7 +267,7 @@ namespace Lumenfall.Spells
             string intended = null;
             if (state.TryGetObject(targetId, out WorldObjectSnapshot target))
                 foreach (string tag in target.tags ?? Array.Empty<string>())
-                    if (tag.StartsWith("weave-with:", StringComparison.OrdinalIgnoreCase)) { intended = tag.Substring("weave-with:".Length); break; }
+                    if (tag != null && tag.StartsWith("weave-with:", StringComparison.OrdinalIgnoreCase)) { intended = tag.Substring("weave-with:".Length); break; }
             foreach (WorldObjectSnapshot item in state.SnapshotObjects())
                 if (item.id != targetId && item.powered && (string.IsNullOrWhiteSpace(intended) || string.Equals(item.id, intended, StringComparison.Ordinal)))
                     return state.AddConnection(targetId, item.id);
@@ -210,7 +279,7 @@ namespace Lumenfall.Spells
             Vector2Int? goal = null;
             if (state.TryGetObject(id, out WorldObjectSnapshot target))
                 foreach (string tag in target.tags ?? Array.Empty<string>())
-                    if (tag.StartsWith("slide-goal:", StringComparison.OrdinalIgnoreCase))
+                    if (tag != null && tag.StartsWith("slide-goal:", StringComparison.OrdinalIgnoreCase))
                     {
                         string[] parts = tag.Substring("slide-goal:".Length).Split(','); int x, y;
                         if (parts.Length == 2 && int.TryParse(parts[0], out x) && int.TryParse(parts[1], out y)) goal = new Vector2Int(x, y);
@@ -224,9 +293,42 @@ namespace Lumenfall.Spells
             return changed;
         }
         private static bool Reveal(WorldStateService state, string id)
-        { bool changed = state.SetProperty(id, x => x.revealed = true); foreach (WorldObjectSnapshot item in state.SnapshotObjects()) if (Array.Exists(item.tags ?? Array.Empty<string>(), t => string.Equals(t, "hidden", StringComparison.OrdinalIgnoreCase))) changed |= state.SetProperty(item.id, x => x.revealed = true); return changed; }
+        { return state.SetProperty(id, x => x.revealed = true); }
         private string FindNearestTarget()
-        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible) { distance = d; best = item.id; } } return best; }
+        {
+            WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>();
+            if (state == null || !state.IsReady || player == null || player.World == null) return null;
+            string best = null, fallback = null; int distance = interactionRadius + 1, fallbackDistance = distance;
+            foreach (WorldObjectSnapshot item in state.SnapshotObjects())
+            {
+                int d = SpellTargetRules.Distance(player.CurrentCell, item);
+                if (d > interactionRadius || !item.spellCompatible) continue;
+                if (d < fallbackDistance) { fallback = item.id; fallbackDistance = d; }
+                if (d < distance && SpellTargetRules.Accepts(item, selectedSpell)) { best = item.id; distance = d; }
+            }
+            return best ?? fallback;
+        }
+        private string FindNearestPuzzleTarget()
+        {
+            WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>();
+            if (state == null || !state.IsReady || player == null || player.World == null) return null;
+            string best = null; int distance = interactionRadius + 1;
+            foreach (Lumenfall.DataDriven.PuzzleTargetDefinition puzzle in state.PuzzleTargets)
+                foreach (string id in puzzle?.objectIds ?? Array.Empty<string>())
+                    if (state.TryGetObject(id, out WorldObjectSnapshot item))
+                    { int d = SpellTargetRules.Distance(player.CurrentCell, item); if (d < distance) { best = id; distance = d; } }
+            return best;
+        }
+        private static bool AtSlideGoal(WorldObjectSnapshot target)
+        {
+            foreach (string tag in target.tags ?? Array.Empty<string>())
+                if (tag != null && tag.StartsWith("slide-goal:", StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] parts = tag.Substring("slide-goal:".Length).Split(',');
+                    if (parts.Length == 2 && int.TryParse(parts[0], out int x) && int.TryParse(parts[1], out int y)) return target.cell == new Vector2Int(x, y);
+                }
+            return false;
+        }
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }
         private static Vector2Int ClampDirection(Vector2Int value) { if (value == Vector2Int.zero) return Vector2Int.up; return new Vector2Int(Mathf.Clamp(value.x, -1, 1), Mathf.Clamp(value.y, -1, 1)); }
     }

@@ -222,12 +222,14 @@ namespace Lumenfall.Tests.GameEvents
             runtime.SetFlag("spell.unlocked.Ampere", true);
             GameObject spellHost = new GameObject("quest-hint-test-spell");
             created.Add(spellHost);
+            GridMover spellMover = spellHost.AddComponent<GridMover>();
+            Assert.That(spellMover.TryTeleportTo(grid, Vector2Int.zero), Is.True);
             SpellCaster caster = spellHost.AddComponent<SpellCaster>();
             EditModeLifecycle.Call(caster, "OnEnable");
             BeginMap("campus");
             GameObject spellTarget = new GameObject("quest-hint-test-spell-target");
             created.Add(spellTarget);
-            world.RegisterObject("hint-test-relic", spellTarget, Vector2Int.one, Vector2Int.one, true, Array.Empty<string>());
+            world.RegisterObject("hint-test-relic", spellTarget, Vector2Int.one, Vector2Int.one, true, new[] { "ampere" });
             stateEnd();
             Assert.That(caster.Cast(SpellId.Ampere, "hint-test-relic", Vector2Int.right), Is.True);
             Assert.That(((WorldObjectSnapshot)ReadObject("hint-test-relic")).powered, Is.True);
