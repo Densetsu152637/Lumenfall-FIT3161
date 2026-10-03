@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Diagnostics;
 
 namespace Lumenfall.DataDriven
 {
@@ -56,6 +57,7 @@ namespace Lumenfall.DataDriven
 
         public void Load(WorldAreaAsset area, NpcCatalogAsset catalog)
         {
+            using var loadTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldLoad);
             if (area == null || area.areaPrefab == null) { Debug.LogError("Assign an authored area prefab to this World Area asset.", this); return; }
             if (world == null) world = FindAnyObjectByType<GridWorld>();
             if (CurrentArea != null && areaInstances.TryGetValue(CurrentArea, out GameObject previous)) previous.SetActive(false);
@@ -67,13 +69,15 @@ namespace Lumenfall.DataDriven
             if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height);
             if (!areaInstances.TryGetValue(area, out GameObject root))
             {
+                using var instantiateTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldInstantiate);
                 Transform parent = contentRoot == null ? transform : contentRoot;
                 root = Instantiate(area.areaPrefab, parent);
                 root.name = area.definition.id + " (Authored Area)";
                 root.SetActive(false);
                 areaInstances.Add(area, root);
             }
-            root.SetActive(true);
+            using (PerformanceDiagnostics.Measure(PerformanceMetric.WorldActivate))
+                root.SetActive(true);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
             WorldStateService.Instance?.EndMapRebuild();

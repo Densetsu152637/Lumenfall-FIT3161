@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "unity_version": "6000.4.10f1",
+  "required_metrics": [
+    "WorldLoad",
+    "WorldInstantiate",
+    "WorldActivate",
+    "WorldBeginRebuild",
+    "WorldEndRebuild",
+    "WorldObjectProperty",
+    "WorldObjectMove",
+    "WorldConnection",
+    "WorldEffectQueue",
+    "NpcBuildPath"
+  ],
+  "checks": [
+    {
+      "id": "startup-route",
+      "title": "New-game entry and authored world",
+      "procedure": "From a fresh slot enter the production scene twice. Verify exactly one player, grid, camera, loader, dialogue, caster, monitor and save authority; begin at authored forest spawn."
+    },
+    {
+      "id": "chapter-portals",
+      "title": "Required route and portal bounce",
+      "procedure": "Walk forest/campus/B01.Ground/B02.Ground/B04.Ground in both directions; record arrival cells, collision safety and no immediate bounce. Force unavailable destination/blocked arrival and verify previous area/cell restoration."
+    },
+    {
+      "id": "reserved-gates",
+      "title": "Reserved room and expansion gates",
+      "procedure": "Try every reserved room/expansion entrance; verify blocked travel and readable unavailable feedback, without partial relocation or story-key bypass."
+    },
+    {
+      "id": "first-light",
+      "title": "First Light / Ampere",
+      "procedure": "Accept First Light; complete terminal lesson before solving. Verify locked spell before lesson, powered intended B02 relic only completes Active quest, unrelated target fails, success repeats grant nothing."
+    },
+    {
+      "id": "string-them-together",
+      "title": "String Them Together / Weave",
+      "procedure": "After First Light accept String; complete terminal lesson. Connect intended endpoints, verify source power/distance attenuation and minimum power; unrelated cable, unpowered source and moving apart fail. Recast/remove/retry and restore."
+    },
+    {
+      "id": "out-of-alignment",
+      "title": "Out of Alignment / Vis",
+      "procedure": "Accept and finish terminal lesson. Verify correct authored normalized rotation AND aligned state on intended marker; wrong angle/aligned-only/unrelated target fail; reset Active puzzle and retry."
+    },
+    {
+      "id": "cold-feet",
+      "title": "Cold Feet, Warm Idea / Glaciate",
+      "procedure": "After alignment complete terminal lesson. Traverse ordered traps within authored bounded lane; frozen flag or goal alone fails; wrong direction, blockers, safe exit, partial reset and mid-sequence save obey policy."
+    },
+    {
+      "id": "patch-notes",
+      "title": "Patch Notes / Rotara and Gravitate",
+      "procedure": "Accept Orio forest quest and finish terminal lesson before rotation. Verify quarter turns/wraparound, intended target angle, retry and restore; campus duplicate cannot complete forest quest. Record Gravitate lesson/target behavior if authored."
+    },
+    {
+      "id": "something-borrowed",
+      "title": "Something Borrowed / Lost Echoes",
+      "procedure": "Complete Katrina terminal lesson. Reveal/search locally around intended keepsake, verify initial hidden/restored revealed state, unrelated reveal cannot complete, generic item reward exactly once."
+    },
+    {
+      "id": "key-sleep-wake",
+      "title": "Receptionist, key mystery and Chapter 1 ending",
+      "procedure": "Record receptionist introduction and all four friend/six quest gates. Check contradictory key handover, key possession/locked dorm, return and sleep/wake; chapter-complete flag remains durable and repeated interaction is idempotent."
+    },
+    {
+      "id": "save-round-trip",
+      "title": "Before/after-save restoration",
+      "procedure": "Record map/cell, quests, event/key/item flags, unlocked spells, object rotation/power/frozen/reveal/alignment and cables. Save before each lesson and during puzzles, reload and compare; completed quests remain complete after object reset."
+    },
+    {
+      "id": "invalid-save",
+      "title": "Missing/corrupt/incompatible saves",
+      "procedure": "Use copied test slots for missing, truncated/corrupt, incompatible version and migration fixtures. Verify actionable failure, recovery/backup policy, atomic write and provider rollback; never silently reset valid progress."
+    },
+    {
+      "id": "input-locks",
+      "title": "Overlay and input ownership",
+      "procedure": "Open dialogue, wheel, journal, startup/settings in supported order. Verify movement/spell/interaction blocked, opening E cannot skip first node, close/cancel releases only its own lock, disable/re-enable cleans subscriptions."
+    },
+    {
+      "id": "grid-collision",
+      "title": "Grid bounds, footprints and diagonal corners",
+      "procedure": "Attempt edge exits, occupied footprints, diagonal corner cutting and blocked paths. Verify authoritative GridWorld rejection and no overlap during portal arrival/NPC movement."
+    },
+    {
+      "id": "presentation-accessibility",
+      "title": "Rendering, camera, settings and navigation",
+      "procedure": "On target device verify names/props/signage, camera teleport/interior bounds/occlusion restoration, text scale/contrast/read speed/reduced motion, long choices/scrolling and keyboard/gamepad focus. Persist settings and restart."
+    },
+    {
+      "id": "audio",
+      "title": "Audio contexts and saved mix",
+      "procedure": "Verify approved forest/campus/interior/dialogue/mystery/sleep-wake media, spell/step/UI/quest cues, volume persistence and no invalid assets. Record unavailable approved assets as fail or blocked, not pass."
+    },
+    {
+      "id": "performance",
+      "title": "Measured performance and diagnostic overhead",
+      "procedure": "Capture cold/warm activation of every required map, map rebuild/object effects/loading and NPC pathfinding with diagnostics disabled/enabled. Record target hardware, scenario/capture paths and approved mean/max budgets for each metric; include representative stress/retry cases."
+    },
+    {
+      "id": "platform-build",
+      "title": "Licensed target build and final device smoke test",
+      "procedure": "Build exact full commit with Unity 6000.4.10f1 for each declared target platform under licensed acceptance. Record build identifier, device/OS, log/capture evidence and complete this matrix on the built player; offline compilation is insufficient."
+    }
+  ]
+}

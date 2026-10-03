@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Lumenfall.Diagnostics;
 
 namespace Lumenfall.GridMovement
 {
@@ -149,6 +150,7 @@ namespace Lumenfall.GridMovement
 
         private bool BuildPath()
         {
+            using var pathTiming = PerformanceDiagnostics.Measure(PerformanceMetric.NpcBuildPath);
             queuedDirections.Clear();
             if (!GridPathfinder.TryFindPath(
                     destinationWorld,

@@ -21,4 +21,24 @@ Only narrow instrumentation blocks in DataDrivenWorldLoader, WorldStateService a
 
 ## Current evidence and gaps
 
-Plan committed before implementation. No runtime, build, visual, platform or performance claim is made. The complete acceptance matrix and diagnostics are being implemented in this branch. Final evidence will replace this section.
+Implemented bounded default-disabled diagnostics with ten fixed buckets, elapsed count/total/mean/max and work totals. Disabled scopes do not read the clock/acquire a lock/allocate. Reset/enable generation prevents old scopes contaminating new sessions, counter saturation prevents wraparound, and SubsystemRegistration disables/resets collection when domain reload is disabled. Existing loader Load/Instantiate/SetActive, world Begin/End rebuild/property/move/connection/effect queue and navigator BuildPath have narrow synchronous timing scopes; no gameplay rule or serialized field changed.
+
+Implemented [18-case acceptance matrix](../release/chapter-one-acceptance.json), [usage/capture workflow](../release/README.md) and `scripts/release_acceptance.py`: new records always pending, no evidence overwrite, complete environment/full commit required, every case must pass with evidence, ten metrics require disabled/enabled captures and approved finite mean/max budgets. The report validates recorded evidence and does not verify human observations. All six quests, route/key/sleep, saved state/recovery, input locks, collision/portal bounce, presentation/settings/audio, performance and platform builds are included.
+
+Added 13 pure collector NUnit tests, five Unity hook integration tests and 11 Python gate tests. `scripts/test_performance_diagnostics.ps1` plus `PerformanceCollectorHarness.cs` makes the pure collector tests reproducible with explicit read-only reference project.
+
+### Exact offline checks (2026-10-03)
+
+- `python -m unittest discover -s scripts/tests -v`: 15 tests PASS (11 new gate cases plus four existing validator cases).
+- `python scripts/validate_npc_dialogue.py`: PASS, six quests/15 dialogues/nine events.
+- `python scripts/validate_runtime_world.py`: PASS, eight maps/seven NPCs.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_performance_diagnostics.ps1 -ReferenceProject 'D:/Git Repositories/Lumenfall-FIT3161/Lumenfall'`: 13 actual repository NUnit collector tests PASS; 100,000 warmed scopes each enabled/disabled allocated zero bytes on the installed .NET 8.0.16 runtime only.
+- Offline Roslyn compiled current GameEvents, Runtime, EditMode and PlayMode test sources with Unity 6000.4.10f1 installed compiler, shared read-only Bee/NUnit references, all imported `Lumenfall.*` refs excluded, and outputs/rsp files in this branch's Temp. Existing serialization/obsolete-API warnings remain. The branch-local fallback compiler files are Temp artifacts; content-validation owns the reusable compiler contract.
+- `python scripts/validate_unity_project.py Lumenfall`: same three baseline ThirdParty issues (orphaned URP metadata, FantasyCastle UTF-8 read failure, Tavern README conflict marker). No new metadata/GUID issue reported; those unrelated files were left intact.
+- Manager reviewed actual diagnostics/hooks/test/tool diffs. Full committed `git diff --check origin/main...HEAD` must pass before final handoff.
+
+### Pending acceptance and merge
+
+Five Unity hook tests are compiled but unexecuted. No shared Editor, Unity MCP/CLI, Play Mode or licensed build was run. CPU timings, actual chapter completion/save/portal behavior, rendering/audio/device/input navigation, platform binaries and performance budgets remain pending. No numeric game budget/platform claim is fabricated. Collect artifacts against the final integrated full commit and rerun every declared target platform matrix.
+
+Loader, WorldStateService and GridNpcNavigator changes consist only of timing scopes/imports; retain owner behavior from route/save/spell/NPC branches when resolving merges. This branch creates no competing state/provider manager, area JSON loader, scene wiring, optimizations or CI scripts. No data/assets/prefabs are changed beyond metadata for new diagnostic/test source files. Root owns final worktree archive/removal after remote HEAD parity verification.

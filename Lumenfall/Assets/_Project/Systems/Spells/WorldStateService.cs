@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
+using Lumenfall.Diagnostics;
 
 namespace Lumenfall.Spells
 {
@@ -51,6 +52,7 @@ namespace Lumenfall.Spells
 
         public void BeginMapRebuild(string mapId)
         {
+            using var rebuildTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldBeginRebuild, entries.Count);
             if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); }
             rebuilding = true; IsReady = false; CurrentMapId = mapId ?? string.Empty; entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; puzzleTargets = Array.Empty<PuzzleTargetDefinition>();
             if (archivedMaps.TryGetValue(CurrentMapId, out MapStateSnapshot saved)) pendingRestore = saved;
@@ -65,6 +67,7 @@ namespace Lumenfall.Spells
         }
         public void EndMapRebuild()
         {
+            using var rebuildTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldEndRebuild, entries.Count);
             rebuilding = false; IsReady = true;
             if (pendingRestore != null && string.Equals(pendingRestore.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase)) { ApplySnapshot(pendingRestore); pendingRestore = null; }
             MapRebuilt?.Invoke(new MapRebuildEvent(CurrentMapId)); NotifyChanged();
@@ -86,12 +89,13 @@ namespace Lumenfall.Spells
             return string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? any : all;
         }
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
-        { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
-        public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
-        public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
+        { using var propertyTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldObjectProperty); if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
+        public bool AddConnection(string a, string b) { using var connectionTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldConnection); if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
+        public void QueueEffect(string key) { using var effectTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldEffectQueue); if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
         public bool AcknowledgeEffect(string key) => pendingEffects.Remove(key);
         public bool TryMoveObject(string id, Vector2Int direction)
         {
+            using var moveTiming = PerformanceDiagnostics.Measure(PerformanceMetric.WorldObjectMove);
             if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || entry.sceneObject == null) return false;
             GridWorld world = FindAnyObjectByType<GridWorld>(); if (world == null) return false;
             Vector2Int cell = entry.state.cell + direction; Vector2Int size = entry.state.size; GridObstacle obstacle = entry.sceneObject.GetComponent<GridObstacle>(); bool restoreObstacle = obstacle != null && obstacle.enabled; if (restoreObstacle) obstacle.enabled = false;
