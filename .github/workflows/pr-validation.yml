@@ -52,6 +52,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install validation dependencies
+        run: python -m pip install -r scripts/requirements-validation.txt
+
       - name: Test the validation harness
         run: python -m unittest discover --start-directory scripts/tests --verbose
 
@@ -66,6 +69,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - suite: Authored runtime assets
+            script: validate_authored_content.py
           - suite: Runtime world
             script: validate_runtime_world.py
           - suite: Quest and NPC dialogue
@@ -84,6 +89,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+
+      - name: Install validation dependencies
+        run: python -m pip install -r scripts/requirements-validation.txt
 
       - name: Validate authored content
         env:

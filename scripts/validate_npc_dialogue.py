@@ -1,66 +1,67 @@
-"""Validate the authored quest and ambient dialogue package."""
-import json
+#!/usr/bin/env python3
+"""Validate authored quest/dialogue semantics without fixing catalogue cardinalities."""
+import argparse
 from pathlib import Path
+from validate_authored_content import DEFAULT_PROJECT, STATUSES, read_json, validate_dialogues
 
-ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "Lumenfall/Assets/Resources/GameEvents/quest_npc_dialogue.json"
-NPC_DATA = ROOT / "Lumenfall/Assets/Resources/NPCs/npcs.json"
-doc = json.loads(DATA.read_text(encoding="utf-8"))
-npcs = json.loads(NPC_DATA.read_text(encoding="utf-8"))["npcs"]
-assert doc["schemaVersion"] == 1
-quests = {q["id"]: q for q in doc["quests"]}
-dialogues = {d["id"]: d for d in doc["dialogues"]}
-events = {e["id"]: e for e in doc["events"]}
-assert len(quests) == 6 and len(dialogues) == 15 and len(events) == 9
-assert len(quests) == len(doc["quests"]) and len(dialogues) == len(doc["dialogues"])
 
-for qid in quests:
-    d = dialogues.get(qid + "_dialogue")
-    assert d and d["startNodeId"] in {n["id"] for n in d["nodes"]}
-    nodes = {n["id"]: n for n in d["nodes"]}
-    start = nodes[d["startNodeId"]]
-    choices = {c["id"]: c for c in start.get("choices", [])}
-    assert {"accept", "active", "done"} <= choices.keys()
-    assert any(a.get("type") == "StartQuest" and a.get("key") == qid for a in choices["accept"].get("actions", []))
-    assert any(c.get("conditions", [{}])[0].get("value") == "Active" for c in [choices["active"]])
-    assert any(c.get("conditions", [{}])[0].get("value") == "Completed" for c in [choices["done"]])
-    ev = events["complete_" + qid]
-    assert ev["conditions"] == [{"type": "QuestStatus", "key": qid, "value": "Active"}]
-    assert ev["actions"] == [{"type": "CompleteQuest", "key": qid}]
+def validate_npc_dialogue(project):
+    resources = project / 'Assets/Resources'
+    docs = [read_json(p) for p in sorted((project / 'Assets').rglob('Resources/GameEvents/*.json'))]
+    database = read_json(resources / 'NPCs/npcs.json')
+    npcs = database.get('npcs', [])
+    errors = []
+    catalog = validate_dialogues(docs, npcs, errors)
+    for qid in catalog['quests']:
+        dialogue = catalog['dialogues'].get(qid + '_dialogue')
+        if not dialogue:
+            continue  # Story/optional quests can use a different authored dialogue graph.
+        nodes = {node['id']: node for node in dialogue.get('nodes', [])}
+        start = nodes.get(dialogue.get('startNodeId'), {})
+        choices = {choice.get('id'): choice for choice in start.get('choices', [])}
+        for choice_id, status in (('accept', 'NotStarted'), ('active', 'Active'), ('done', 'Completed')):
+            choice = choices.get(choice_id)
+            if not choice or not any(c.get('type', '').lower() == 'queststatus' and c.get('key') == qid and str(c.get('value', '')).lower() == status.lower() and not c.get('negate') for c in choice.get('conditions', [])):
+                errors.append(f'{qid}: missing {choice_id} branch guarded by {status}')
+        if not any(a.get('type', '').lower() == 'startquest' and a.get('key') == qid for a in choices.get('accept', {}).get('actions', [])):
+            errors.append(f'{qid}: accept branch does not start its quest')
+        event = catalog['events'].get('complete_' + qid)
+        if not event or not any(c.get('type', '').lower() == 'queststatus' and c.get('key') == qid and str(c.get('value', '')).lower() == 'active' and not c.get('negate') for c in event.get('conditions', [])):
+            errors.append(f'{qid}: completion event lacks Active guard')
+        if not event or not any(a.get('type', '').lower() == 'completequest' and a.get('key') == qid for a in event.get('actions', [])):
+            errors.append(f'{qid}: completion event does not complete its quest')
+    for npc in npcs:
+        if not npc.get('layerSymbol'):
+            continue
+        layers = [layer for layer in database.get('layers', []) if layer.get('mapId') == npc.get('mapId')]
+        if len(layers) != 1:
+            errors.append(f'{npc["id"]}: expected one NPC layer')
+            continue
+        rows = (resources / 'NPCs' / layers[0]['tileFile']).read_text(encoding='utf-8-sig').splitlines()
+        matches = [(x, y) for y, row in enumerate(rows) for x, glyph in enumerate(row) if glyph == npc['layerSymbol']]
+        if not matches:
+            errors.append(f'{npc["id"]}: layer symbol absent')
+        source = (resources / 'Maps' / (npc['mapId'] + '.txt')).read_text(encoding='utf-8-sig').splitlines()
+        for x, y in matches:
+            if y >= len(source) or x >= len(source[y]) or source[y][x] in 'WBT':
+                errors.append(f'{npc["id"]}: layer marker on blocked/out-of-bounds source cell {x},{y}')
+    return errors, catalog
 
-assert dialogues["stella_string_them_together_dialogue"]["nodes"][0]["choices"][0]["conditions"][0] == {"type": "QuestStatus", "key": "stella_first_light", "value": "Completed"}
-assert dialogues["cinna_cold_feet_warm_idea_dialogue"]["nodes"][0]["choices"][0]["conditions"][0] == {"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Completed"}
 
-for d in dialogues.values():
-    if d.get("metadata", [{}])[0].get("key") == "ambient":
-        for n in d["nodes"]:
-            for c in n.get("choices", []):
-                assert not c.get("actions"), d["id"]
-            assert not n.get("onEnterActions"), d["id"]
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('project', nargs='?', type=Path, default=DEFAULT_PROJECT)
+    args = parser.parse_args(argv)
+    try:
+        errors, catalog = validate_npc_dialogue(args.project.resolve())
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        errors, catalog = [f'Malformed or missing dialogue content: {exc}'], {}
+    for error in errors:
+        print('FAIL: ' + error)
+    if catalog:
+        print('Validated ' + ', '.join(f'{len(catalog[kind])} {kind}' for kind in ('quests', 'dialogues', 'events')))
+    return int(bool(errors))
 
-registry = {n["id"]: n for n in npcs}
-assert {"stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio", "campus_student", "forest_student"} <= registry.keys()
-for nid in ("stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio"):
-    entries = registry[nid]["dialogue"]
-    assert len(entries) == (6 if nid != "orio" else 3)
-    for entry in entries:
-        assert entry["dialogueId"] in dialogues and entry["requiredQuestStatus"] in {"NotStarted", "Active", "Completed"}
-for nid, prefix in (("campus_student", "ambient_courtyard_student"), ("forest_student", "ambient_forest_student")):
-    entries = registry[nid]["dialogue"]
-    assert [e["dialogueId"] for e in entries] == [prefix, prefix + "_2", prefix + "_3"]
-    assert {e["weight"] for e in entries} == {1}
-assert len(registry) >= 5
 
-# Every authored layer marker must resolve to the record's declared symbol and a non-blocking source cell.
-for npc in npcs:
-    if not npc.get("layerSymbol"):
-        continue
-    layer = next(x for x in json.loads(NPC_DATA.read_text(encoding="utf-8"))["layers"] if x["mapId"] == npc["mapId"])
-    rows = (ROOT / "Lumenfall/Assets/Resources/NPCs" / layer["tileFile"]).read_text(encoding="utf-8").splitlines()
-    matches = [(x, y) for y, row in enumerate(rows) for x, glyph in enumerate(row) if glyph == npc["layerSymbol"]]
-    assert matches, f"{npc['id']} layer symbol is absent"
-    marker_x, marker_y = matches[0]
-    map_rows = ROOT / "Lumenfall/Assets/Resources/Maps" / (layer["mapId"] + ".txt")
-    source = map_rows.read_text(encoding="utf-8").splitlines()
-    assert source[marker_y][marker_x] not in "WBT", f"{npc['id']} is on a blocking source cell"
-print(f"validated {len(quests)} quests, {len(dialogues)} dialogues, {len(events)} events")
+if __name__ == '__main__':
+    raise SystemExit(main())

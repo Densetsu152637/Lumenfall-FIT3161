@@ -11,17 +11,15 @@ checks are never left pending by path filters.
 | --- | --- |
 | `Workflow lint` | actionlint 1.7.12 checks workflow syntax, expressions, action inputs, and shell scripts. The downloaded binary is verified against the official release checksums. |
 | `Repository integrity` | Python harness regression tests, Unity metadata/GUIDs, JSON, enabled build scenes, case-safe paths, merge conflicts, and tracked generated files. |
+| `Content / Authored runtime assets` | Runtime WorldArea/NpcCatalog/prefab parity, transforms, active GUID portal graph/arrivals, monitor references, lesson gates and supported optional metadata gates. |
 | `Content / Runtime world` | Shipped map dimensions/glyphs, portal targets, NPC assets, and dialogue/quest references. |
 | `Content / Quest and NPC dialogue` | Authored quest lifecycle branches, prerequisites, completion events, ambient dialogue, and NPC markers. |
-| `Content / NPC layers` | Shapes and exact mirrors of the six authoring/runtime NPC layers. |
+| `Content / NPC layers` | Shapes and exact mirrors of authoring/runtime NPC layers. |
 | `Content / Garden and portals` | Garden bounds, walkability, tree blocks, Katrina placement, reserved markers, and reciprocal east-gate portals. |
 | `Unity EditMode tests` | `Lumenfall.GameEvents.Tests`: event execution, dialogue, quest lifecycle, spell state, save-slot policy, and text reveal. |
 | `Unity PlayMode tests` | `Lumenfall.World.PlayModeTests`: SampleScene startup, all active authored routes, world save/restore, and quest-gated NPC refresh. |
 
-The first six checks need no Unity editor, license, or Python dependencies. Python
-is fixed to 3.12 in CI. All four content checks run independently, and both Unity
-modes run after the fast checks pass. A failure in one matrix job does not cancel
-its siblings.
+The workflow lint, integrity and content checks need no Unity Editor or license. Python is fixed to 3.12 in CI; `scripts/requirements-validation.txt` pins PyYAML for Unity YAML inspection. The harness also runs PowerShell portability fixtures when PowerShell is available (hosted Ubuntu runners provide `pwsh`). Content checks run independently, and both Unity modes run after the fast checks pass. A failure in one matrix job does not cancel its siblings.
 
 Unity uses the version in `Lumenfall/ProjectSettings/ProjectVersion.txt` (currently
 `6000.4.10f1`) through GameCI. Each mode selects its first-party test assembly;
@@ -59,8 +57,10 @@ branch. Keep the normal `pull_request` trigger; do not expose secrets with
 From the repository root:
 
 ```sh
+python -m pip install -r scripts/requirements-validation.txt
 python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
+python scripts/validate_authored_content.py Lumenfall
 python scripts/validate_runtime_world.py
 python scripts/validate_npc_dialogue.py
 python scripts/validate_npc_layers.py
@@ -81,7 +81,7 @@ python scripts/validate_unity_results.py artifacts/playmode --assembly Lumenfall
 source maps and fully connected planned regions. Current authoring maps include
 rulers/row labels and reserved future areas, so it is not a required CI check.
 `validate_runtime_world.py` prints pending legacy portal arrivals as diagnostics;
-the PlayMode suite checks the active routes in the shipped prefabs.
+the authored runtime validator checks the shipped prefab/component graph. The licensed PlayMode suite exercises travel when run.
 
 The garden validator checks gameplay content invariants; the original task's
 temporary recovery snapshot and frozen forest byte hash are removed so legitimate
@@ -91,6 +91,12 @@ long decorative divider lines while retaining real conflict-marker checks.
 
 ## Recommended branch protection
 
-Require all eight check names listed above on `main`, plus pull requests and any
+Require all check names listed above on `main`, plus pull requests and any
 reviews required by the team. The Unity checks require configured license secrets;
 do not treat a missing license as a passing test run.
+
+## Runtime content baseline and offline compilation
+
+The authored runtime check intentionally exposes existing source/baked and route/lesson failures. They are recorded in `docs/implementation/feature-content-validation-ci.md`; a failing check must not be treated as a successful gameplay audit. Planned glyph-ineligible and reserved portals are excluded from live-route checks unless a live component references them. Custom condition/action types remain extensible; built-in quest/event/dialogue references are checked with runtime-compatible case handling.
+
+For clean-worktree offline compilation without launching Unity, see `docs/runtime-data-contract.md`. Supply an explicit read-only imported reference project; the helper compiles current asmdef membership and filters all stale first-party references. `-PrepareOnly` is used by portability fixtures and does not claim a successful C# compile.
