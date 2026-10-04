@@ -62,11 +62,15 @@ The navigator recalculates if a dynamic actor enters its queued route. `Destinat
 
 ## Portals and rooms
 
-Add `GridPortal` to an entrance and set its Footprint Size. Portals may cover one tile or a
-rectangle of tiles, do not block those tiles, and trigger only after a mover finishes stepping
-onto one. When Preserve Entry Offset is enabled, entering the second tile of a wide doorway maps
-to the second tile of its destination doorway. Arrival portals are suppressed until the mover
-leaves, preventing linked door areas from immediately bouncing the player back.
+Add `GridPortal` to an entrance and place its transform on the desired transmission centre cell.
+Positive/Negative X and Positive/Negative Z Extension define the inclusive trigger rectangle
+around that centre; all four values default to zero for a one-cell portal. For example, Positive X
+`1`, Positive Z `1`, Negative X `0`, Negative Z `0` covers offsets `(0,0)` through `(1,1)`.
+Portals do not block their cells and trigger only after a mover finishes stepping onto one. When
+Preserve Entry Offset is enabled, the mover's signed offset from the source centre is applied to
+the destination centre and clamped to the destination portal's extensions. Arrival portals are
+suppressed until the mover leaves, preventing linked door areas from immediately bouncing the
+player back. The purple sphere in the Scene view marks the transmission centre.
 
 Destination modes:
 

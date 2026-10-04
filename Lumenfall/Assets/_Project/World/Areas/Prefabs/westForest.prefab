@@ -6654,7 +6654,7 @@ GameObject:
   - component: {fileID: 818997195381239700}
   - component: {fileID: 9093596682764038696}
   m_Layer: 0
-  m_Name: P.F03.A01
+  m_Name: P.F00
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6669,7 +6669,7 @@ Transform:
   m_GameObject: {fileID: 5000023135876501481}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 16.5, y: 0, z: 47.5}
+  m_LocalPosition: {x: 17, y: 0, z: 48}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6688,21 +6688,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
-  useTransformAsAnchor: 0
-  anchorCell: {x: 16, y: 48}
-  footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 3, y: 1}
-  portalId: P.F03.A01
-  destinationMode: 0
-  destinationPortal: {fileID: 0}
-  destinationWorld: {fileID: 0}
-  destinationCell: {x: 0, y: 0}
-  destinationScene: 
-  destinationPortalId: 
-  content: {fileID: 11400000, guid: 604ce7d6f1e05024b9b0731771c6a743, type: 2}
+  extendPositiveX: 1
+  extendNegativeX: 1
+  extendPositiveZ: 0
+  extendNegativeZ: 0
+  legacyFootprintSize: {x: 0, y: 0}
+  content: {fileID: 11400000, guid: 10000000000000000000000000000000, type: 2}
   preserveEntryOffset: 0
-  arrivalOffset: {x: 0, y: 1}
   gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
+  gizmoFillOpacity: 0.22
 --- !u!1 &5059881383791756345
 GameObject:
   m_ObjectHideFlags: 0
@@ -7926,13 +7920,13 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3915963700153847924}
+  - {fileID: 1256844025697885124}
   - {fileID: 3771662217064198606}
   - {fileID: 7277242931873526314}
   - {fileID: 8400811793211186654}
   - {fileID: 8186830751964586151}
   - {fileID: 7155209205548814260}
   - {fileID: 9096886839323157170}
-  - {fileID: 1256844025697885124}
   - {fileID: 2706232107409681376}
   - {fileID: 7683222926791166031}
   m_Father: {fileID: 0}

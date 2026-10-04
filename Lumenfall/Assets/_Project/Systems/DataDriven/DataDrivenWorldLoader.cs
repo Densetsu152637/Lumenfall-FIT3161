@@ -78,7 +78,6 @@ namespace Lumenfall.DataDriven
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
-            StellaReturnPortal.RegisterForMap(LoadedMap.id, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -123,7 +122,15 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset previousArea = CurrentArea;
             Load(destinationPortal.area, npcCatalog);
             GridPortal target = FindLivePortal(destinationPortal);
-            Vector2Int arrival = destinationPortal.cell + sourcePortal.arrivalOffset + sourceEntryOffset;
+            if (target == null)
+            {
+                Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
+                if (previousArea != null) Load(previousArea, npcCatalog);
+                return false;
+            }
+            // The live destination GridPortal is authoritative for its origin and footprint.
+            // PortalContentAsset only supplies the connection and optional legacy offset.
+            Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;

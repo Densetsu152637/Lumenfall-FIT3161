@@ -27,7 +27,7 @@ namespace Lumenfall.Tests.World
             Assert.That(player, Is.Not.Null, "SampleScene should have a player for portal and save checks.");
 
             GridPortal startingReturn = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+                .Single(portal => portal.Content != null && portal.Content.id == "P.F00");
             Assert.That(loader.SwitchArea(startingReturn.Content, Vector2Int.zero), Is.True,
                 "The forest start should be able to reach campus.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
@@ -61,9 +61,9 @@ namespace Lumenfall.Tests.World
 
             var migratedReturns = new[]
             {
-                new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(11, 68) },
-                new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(7, 38) },
-                new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(47, 6) }
+                new { areaId = "B02.Ground", portalId = "P.B02.00" },
+                new { areaId = "B03.Ground", portalId = "P.B03.00" },
+                new { areaId = "B04.Ground", portalId = "P.B04.00" }
             };
             foreach (var expected in migratedReturns)
             {
@@ -72,8 +72,6 @@ namespace Lumenfall.Tests.World
                 yield return null;
                 GridPortal exit = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                     .First(portal => portal.Content != null && portal.Content.id == expected.portalId);
-                Assert.That(exit.Content.destination.cell + exit.Content.arrivalOffset, Is.EqualTo(expected.arrival),
-                    expected.areaId + " should use the nearest walkable campus approach cell.");
                 Assert.That(loader.SwitchArea(exit.Content, Vector2Int.zero), Is.True,
                     expected.areaId + " return route should accept its corrected campus arrival cell.");
                 Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
@@ -84,7 +82,7 @@ namespace Lumenfall.Tests.World
             foreach (WorldAreaAsset area in allAreas)
             {
                 PortalContentAsset[] activeRoutes = area.areaPrefab.GetComponentsInChildren<GridPortal>(true)
-                    .Select(portal => portal.Content).Where(content => content != null && !content.reserved).ToArray();
+                    .Select(portal => portal.Content).Where(content => content != null && !content.disabled).ToArray();
                 foreach (PortalContentAsset route in activeRoutes)
                 {
                     Assert.That(route.destination, Is.Not.Null,
@@ -105,7 +103,7 @@ namespace Lumenfall.Tests.World
                     activeRouteCount++;
                 }
             }
-            Assert.That(activeRouteCount, Is.EqualTo(8), "All active forest, campus, and building portal edges should be traversable.");
+            Assert.That(activeRouteCount, Is.EqualTo(10), "All active forest, campus, and building portal edges should be traversable.");
 
             WorldAreaAsset campus = allAreas.Single(area => area.definition.id == "campus");
             loader.Load(campus, catalog);
@@ -148,9 +146,8 @@ namespace Lumenfall.Tests.World
             yield return null;
 
             GridPortal gate = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
-            Assert.That(gate.Content.cell, Is.EqualTo(new Vector2Int(16, 48)));
-            Assert.That(gate.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+                .Single(portal => portal.Content != null && portal.Content.id == "P.F00");
+            Assert.That(gate.FootprintSize, Is.EqualTo(new Vector2Int(3, 1)));
             foreach (Vector2Int gateCell in gate.EnumeratePortalCells())
             {
                 Assert.That(gate.World.GetPortalAt(gateCell), Is.SameAs(gate));
@@ -172,7 +169,7 @@ namespace Lumenfall.Tests.World
             for (int offset = 0; offset < 2; offset++)
             {
                 GridPortal campusGate = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                    .Single(portal => portal.Content != null && portal.Content.id == "P.A01.F03");
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.C00");
                 Vector2Int entry = new Vector2Int(25 + offset, 5);
                 Assert.That(campusGate.FootprintSize, Is.EqualTo(new Vector2Int(2, 1)));
                 Assert.That(campusGate.World.GetPortalAt(entry), Is.SameAs(campusGate),
@@ -185,7 +182,7 @@ namespace Lumenfall.Tests.World
                 Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
                 Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(17 + offset, 47)));
                 GridPortal forestReturn = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                    .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.F00");
                 Assert.That(forestReturn.Content.destination, Is.SameAs(campusGate.Content));
                 Assert.That(player.TryTeleportTo(forestReturn.World, new Vector2Int(16, 48)), Is.True);
                 Assert.That(forestReturn.TryEnter(player), Is.True);
@@ -194,7 +191,7 @@ namespace Lumenfall.Tests.World
             }
 
             GridPortal b02Entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
+                .Single(portal => portal.Content != null && portal.Content.id == "P.C02");
             Assert.That(CanReach(gate.World, player.CurrentCell, b02Entrance.FirstCell), Is.True,
                 "The campus route from the forest arrival to B02 must be walkable.");
             Assert.That(player.TryTeleportTo(b02Entrance.World, b02Entrance.FirstCell), Is.True);
@@ -202,7 +199,7 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("B02.Ground"));
             Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(10, 5)));
             GridPortal b02Exit = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                .Single(portal => portal.Content != null && portal.Content.id == "P.B02.C05");
+                .Single(portal => portal.Content != null && portal.Content.id == "P.B02.00");
             Assert.That(CanReach(b02Exit.World, player.CurrentCell, new Vector2Int(12, 5)), Is.True,
                 "The B02 landing must reach Stella's interaction side.");
             Assert.That(CanReach(b02Exit.World, player.CurrentCell, b02Exit.FirstCell), Is.True,
@@ -253,9 +250,8 @@ namespace Lumenfall.Tests.World
                 loader.Load(campus, catalog);
                 yield return null;
                 GridPortal entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                    .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
-                Assert.That(entrance.Content.cell, Is.EqualTo(new Vector2Int(19, 46)));
-                Assert.That(entrance.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.C02");
+                Assert.That(entrance.FootprintSize, Is.EqualTo(new Vector2Int(3, 1)));
                 Assert.That(entrance.World.IsCellBlocked(new Vector2Int(x, 46)), Is.False);
 
                 GridMover player = Object.FindAnyObjectByType<GridMover>();
