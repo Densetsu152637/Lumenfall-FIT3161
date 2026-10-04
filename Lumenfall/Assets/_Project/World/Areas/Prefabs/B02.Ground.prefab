@@ -4500,7 +4500,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
   world: {fileID: 0}
-  footprintSize: {x: 1, y: 1}
+  extendPositiveX: 0
+  extendNegativeX: 0
+  extendPositiveZ: 0
+  extendNegativeZ: 0
+  legacyFootprintSize: {x: 0, y: 0}
   content: {fileID: 11400000, guid: 10000000000000000000000000000007, type: 2}
   preserveEntryOffset: 1
   gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
@@ -15828,6 +15832,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Stella
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 0082b4c6b634fa649b7d7c409a5d1451, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 5197bd3e79eddcd4d9ac7756e90c423c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

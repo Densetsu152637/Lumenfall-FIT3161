@@ -75,6 +75,7 @@ namespace Lumenfall.DataDriven
                 areaInstances.Add(area, root);
             }
             root.SetActive(true);
+            RotaraGearMechanism.AttachTo(root);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);

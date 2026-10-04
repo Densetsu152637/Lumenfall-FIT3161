@@ -80,6 +80,26 @@ class UnityProjectValidatorTests(unittest.TestCase):
 
         self.assertTrue(any("Invalid JSON" in error and "broken.json" in error for error in errors))
 
+    def test_utf16_text_with_byte_order_mark_is_readable(self) -> None:
+        asset = self.create_asset("Vendor/ReadMe.txt", "5" * 32)
+        asset.write_text("Vendor notes\n", encoding="utf-16")
+
+        self.assertEqual([], validate_project(self.project))
+
+    def test_decorative_rule_is_not_a_merge_marker(self) -> None:
+        asset = self.create_asset("Vendor/README.txt", "6" * 32)
+        asset.write_text("=" * 72 + "\nTitle\n" + "=" * 72 + "\n", encoding="utf-8")
+
+        self.assertEqual([], validate_project(self.project))
+
+    def test_merge_conflict_markers_are_reported(self) -> None:
+        asset = self.create_asset("notes.txt", "7" * 32)
+        asset.write_text("<<<<<<< HEAD\nours\n=======\ntheirs\n>>>>>>> branch\n", encoding="utf-8")
+
+        errors = validate_project(self.project)
+
+        self.assertTrue(any("merge-conflict marker" in error and "notes.txt" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

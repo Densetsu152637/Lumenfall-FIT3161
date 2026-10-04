@@ -4,7 +4,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Controls;
 using Lumenfall.Spells;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Inventory
 {
@@ -49,9 +51,11 @@ namespace Lumenfall.Inventory
                 { SpellId.LostEchoes, "Reveal hidden points of interest." }
             };
 
-        private enum Page { Inventory, Encyclopedia }
+        private enum Page { Inventory, Encyclopedia, Settings }
         private Page page;
+        private readonly GameSettingsPanel settingsPanel = new GameSettingsPanel();
         private GridMover lockedMover;
+        private GameEventRuntime subscribedRuntime;
         private GUIStyle panelStyle;
         private GUIStyle headingStyle;
         private GUIStyle bodyStyle;
@@ -73,31 +77,49 @@ namespace Lumenfall.Inventory
 
         private void OnEnable()
         {
+            SubscribeRuntime();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeRuntime();
+            Close();
+        }
+
+        // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
+        private void SubscribeRuntime()
+        {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime == null) return;
+            if (runtime == null || runtime == subscribedRuntime) return;
+            UnsubscribeRuntime();
+            subscribedRuntime = runtime;
             runtime.DialogueStarted += OnDialogueStarted;
             runtime.StateRestored += OnStateRestored;
             runtime.DialogueEnded += OnDialogueEnded;
             runtime.QuestStatusChanged += OnQuestStatusChanged;
         }
 
-        private void OnDisable()
+        private void UnsubscribeRuntime()
         {
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime != null)
-            {
-                runtime.DialogueStarted -= OnDialogueStarted;
-                runtime.StateRestored -= OnStateRestored;
-                runtime.DialogueEnded -= OnDialogueEnded;
-                runtime.QuestStatusChanged -= OnQuestStatusChanged;
-            }
-            Close();
+            if (subscribedRuntime == null) return;
+            subscribedRuntime.DialogueStarted -= OnDialogueStarted;
+            subscribedRuntime.StateRestored -= OnStateRestored;
+            subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
+            subscribedRuntime = null;
         }
 
         private void Update()
         {
+            SubscribeRuntime();
+            // While a control is being rebound, every key (including the journal key) belongs to the rebind.
+            if (InventoryUiState.IsOpen && settingsPanel.IsRebinding)
+            {
+                settingsPanel.Tick();
+                return;
+            }
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !keyboard.tabKey.wasPressedThisFrame) return;
+            if (keyboard == null || !KeyBindings.WasPressed(GameAction.Journal)) return;
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             if (InventoryUiState.IsOpen) Close();
             else Open();
@@ -105,7 +127,7 @@ namespace Lumenfall.Inventory
 
         private void Open()
         {
-            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null) return;
             InventoryUiState.IsOpen = true;
             lockedMover = FindAnyObjectByType<GridMover>();
             if (lockedMover != null) lockedMover.SetMovementLocked(true);
@@ -114,6 +136,7 @@ namespace Lumenfall.Inventory
         private void Close()
         {
             InventoryUiState.IsOpen = false;
+            settingsPanel.CancelRebind();
             if (lockedMover != null) lockedMover.SetMovementLocked(false);
             lockedMover = null;
         }
@@ -158,12 +181,30 @@ namespace Lumenfall.Inventory
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Inventory", page == Page.Inventory ? buttonStyle : GUI.skin.button)) page = Page.Inventory;
             if (GUILayout.Button("Character encyclopedia", page == Page.Encyclopedia ? buttonStyle : GUI.skin.button)) page = Page.Encyclopedia;
+            if (GUILayout.Button("Settings", page == Page.Settings ? buttonStyle : GUI.skin.button)) page = Page.Settings;
             GUILayout.FlexibleSpace();
-            GUILayout.Label("Tab: close", mutedStyle, GUILayout.Width(100f));
+            bool returnToMenu = GUILayout.Button("Main menu", GUILayout.Width(120f));
+            GUILayout.Label(KeyBindings.GetKeyLabel(GameAction.Journal) + ": close", mutedStyle, GUILayout.Width(120f));
             GUILayout.EndHorizontal();
             GUILayout.Space(12f);
-            if (page == Page.Inventory) DrawInventory(); else DrawEncyclopedia();
+            if (page == Page.Inventory) DrawInventory();
+            else if (page == Page.Encyclopedia) DrawEncyclopedia();
+            else DrawSettings(height);
             GUILayout.EndArea();
+            if (returnToMenu)
+            {
+                Close();
+                StartupMenu.ReturnToMainMenu();
+            }
+        }
+
+        private void DrawSettings(float panelHeight)
+        {
+            GUILayout.Label("Audio", headingStyle);
+            settingsPanel.DrawVolume(bodyStyle);
+            GUILayout.Space(16f);
+            GUILayout.Label("Controls", headingStyle);
+            settingsPanel.DrawControls(bodyStyle, GUI.skin.button, mutedStyle, Mathf.Max(120f, panelHeight - 340f));
         }
 
         private void DrawInventory()
