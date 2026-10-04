@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
@@ -18,9 +19,8 @@ namespace Lumenfall.Startup
     public sealed class StartupMenu : MonoBehaviour
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
-        private const string MasterVolumeKey = "lumenfall.master-volume";
 
-        private enum Page { Main, Load, Settings }
+        private enum Page { Main, Load, Settings, Controls }
 
         private Page page;
         private bool ready;
@@ -28,7 +28,7 @@ namespace Lumenfall.Startup
         private bool confirmOverwrite;
         private string backdropSlot;
         private string message;
-        private float masterVolume;
+        private readonly GameSettingsPanel settings = new GameSettingsPanel();
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
@@ -45,13 +45,24 @@ namespace Lumenfall.Startup
             }
         }
 
+        /// <summary>
+        /// Saves the current slot and reopens the menu over the world. The menu then reloads the most recent save as its
+        /// backdrop, so returning loses no progress and Load or Start behave exactly as they do on launch.
+        /// </summary>
+        public static void ReturnToMainMenu()
+        {
+            if (FindAnyObjectByType<StartupMenu>() != null) return;
+            GameSaveManager saves = GameSaveManager.Instance;
+            if (saves.HasSave(GameSaveOverlay.CurrentSlot)) saves.Save(GameSaveOverlay.CurrentSlot);
+            new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
+        }
+
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
-            masterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumeKey, 1f));
-            AudioListener.volume = masterVolume;
+            GameSettingsPanel.ApplySavedVolume();
             SetGameplayInput(false);
             LoadButtonTextures();
             StartCoroutine(InitializeAfterSceneSystems());
@@ -89,7 +100,9 @@ namespace Lumenfall.Startup
         private void Update()
         {
             if (ready) SetGameplayInput(false);
+            settings.Tick();
         }
+
 
         private void OnDestroy()
         {
@@ -114,16 +127,17 @@ namespace Lumenfall.Startup
             GUI.color = previous;
 
             float panelWidth = Mathf.Min(560f, Screen.width - 48f);
-            float panelHeight = page == Page.Main ? 540f : 620f;
+            float panelHeight = page == Page.Main ? 540f : page == Page.Controls ? Mathf.Min(720f, Screen.height - 40f) : 620f;
             Rect panel = new Rect((Screen.width - panelWidth) * 0.5f, (Screen.height - panelHeight) * 0.5f,
                 panelWidth, panelHeight);
             GUI.Box(panel, GUIContent.none, GUI.skin.window);
             GUI.Label(new Rect(panel.x + 24f, panel.y + 22f, panel.width - 48f, 56f),
-                page == Page.Main ? "LUMENFALL" : page == Page.Load ? "LOAD GAME" : "SETTINGS",
+                page == Page.Main ? "LUMENFALL" : page == Page.Load ? "LOAD GAME" : page == Page.Controls ? "CONTROLS" : "SETTINGS",
                 HeaderStyle());
 
             if (page == Page.Main) DrawMain(panel);
             else if (page == Page.Load) DrawLoad(panel);
+            else if (page == Page.Controls) DrawControls(panel);
             else DrawSettings(panel);
         }
 
@@ -165,18 +179,32 @@ namespace Lumenfall.Startup
         private void DrawSettings(Rect panel)
         {
             GUI.Label(new Rect(panel.x + 54f, panel.y + 130f, 220f, 40f), "MASTER VOLUME", BodyStyle());
+            float masterVolume = GameSettingsPanel.MasterVolume;
             float newVolume = GUI.HorizontalSlider(new Rect(panel.x + 54f, panel.y + 192f, panel.width - 108f, 30f),
                 masterVolume, 0f, 1f);
-            if (!Mathf.Approximately(newVolume, masterVolume))
-            {
-                masterVolume = newVolume;
-                AudioListener.volume = masterVolume;
-                PlayerPrefs.SetFloat(MasterVolumeKey, masterVolume);
-                PlayerPrefs.Save();
-            }
+            if (!Mathf.Approximately(newVolume, masterVolume)) GameSettingsPanel.MasterVolume = newVolume;
             GUI.Label(new Rect(panel.x + 54f, panel.y + 224f, panel.width - 108f, 40f),
-                $"{Mathf.RoundToInt(masterVolume * 100f)}%", BodyStyle());
+                $"{Mathf.RoundToInt(newVolume * 100f)}%", BodyStyle());
+            if (GUI.Button(new Rect(panel.x + 86f, panel.y + 290f, panel.width - 172f, 56f), "CONTROLS", ButtonStyle()))
+            {
+                page = Page.Controls;
+                settings.Message = "Click an action, then press the key you want.";
+            }
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK")) page = Page.Main;
+        }
+
+        private void DrawControls(Rect panel)
+        {
+            Rect area = new Rect(panel.x + 30f, panel.y + 92f, panel.width - 60f, panel.height - 92f - 124f);
+            GUILayout.BeginArea(area);
+            settings.DrawControls(RowStyle(), KeyStyle(), BodyStyle(), area.height - 96f);
+            GUILayout.EndArea();
+            if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK"))
+            {
+                settings.CancelRebind();
+                settings.Message = string.Empty;
+                page = Page.Settings;
+            }
         }
 
         private bool Button(string textureKey, Rect rect, string fallbackLabel)
@@ -329,6 +357,8 @@ namespace Lumenfall.Startup
 
         private static GUIStyle HeaderStyle() => new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 28, normal = { textColor = Color.white } };
         private static GUIStyle BodyStyle() => new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 18, normal = { textColor = Color.white } };
+        private static GUIStyle RowStyle() => new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 17, normal = { textColor = Color.white } };
+        private static GUIStyle KeyStyle() => new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontSize = 16 };
         private static GUIStyle ButtonStyle() => new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontSize = 20 };
     }
 }

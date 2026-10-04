@@ -34,6 +34,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(ChoiceIds(active), Does.Contain("active"), questId);
                 Assert.That(ChoiceIds(active), Does.Not.Contain("accept"), questId);
 
+                if (questId == "orio_patch_notes") runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
                 Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
                 DialogueSession completed = runtime.StartDialogue(questId + "_dialogue");
                 Assert.That(ChoiceIds(completed), Does.Contain("done"), questId);
@@ -125,28 +126,6 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
-        {
-            GameEventManager manager = GameEventManager.Instance;
-            manager.Runtime.ResetState();
-            GameObject host = new GameObject("later-spell-progression-test");
-            try
-            {
-                SpellCaster caster = host.AddComponent<SpellCaster>();
-                DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
-                Assert.That(dialogue.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
-                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
-            }
-            finally
-            {
-                Object.DestroyImmediate(host);
-            }
-        }
-
-        [Test]
         public void AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery()
         {
             GameEventManager manager = GameEventManager.Instance;
@@ -196,7 +175,10 @@ namespace Lumenfall.Tests.GameEvents
                 out GameEventDatabaseDefinition database, out string error), Is.True, error);
             GameEventCatalog catalog = new GameEventCatalog(new[] { database });
             Assert.That(catalog.IsValid, Is.True, string.Join("\n", catalog.ValidationMessages));
-            return new GameEventRuntime(catalog);
+            GameEventRuntime runtime = new GameEventRuntime(catalog);
+            // Catalogue-only traversal; the real map/object/angle condition has separate behavior coverage.
+            runtime.RegisterConditionHandler("OrioMechanismAligned", (condition, current) => current.GetFlag("orio.patch_notes.mechanism_aligned"));
+            return runtime;
         }
 
         private static void StartAndComplete(GameEventRuntime runtime, string questId)

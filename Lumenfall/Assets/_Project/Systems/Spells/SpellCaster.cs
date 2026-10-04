@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 
 namespace Lumenfall.Spells
 {
-    /// Applies the seven documented spells to live world state. Middle mouse opens the spell wheel,
-    /// the wheel selects a spell, and right mouse casts at the nearest compatible object.
+    /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default) or middle mouse opens the spell wheel,
+    /// the wheel selects a spell, and right mouse (or the interact key at a mechanism) casts at the nearest compatible object.
     [DisallowMultipleComponent]
     public sealed class SpellCaster : MonoBehaviour
     {
@@ -20,6 +21,7 @@ namespace Lumenfall.Spells
         private Vector2Int lastDirection = Vector2Int.up;
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
+        private GameEventRuntime subscribedRuntime;
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
@@ -34,27 +36,56 @@ namespace Lumenfall.Spells
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
         private void OnEnable()
         { SubscribeProgression(); RefreshSelection(); }
+        // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
         private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += RefreshSelection; }
+        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.RotaraGearMechanism.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
         private void UnsubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged -= OnQuestStatusChanged; runtime.DialogueEnded -= OnDialogueEnded; runtime.StateRestored -= RefreshSelection; }
+        { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
+        // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
+        private void OnProgressionRestored()
+        {
+            if (subscribedRuntime != null)
+                foreach (QuestDefinition quest in subscribedRuntime.Catalog.Quests.Values)
+                    if (quest != null && subscribedRuntime.GetQuestStatus(quest.id) == QuestStatus.Completed) GrantSpellRewards(quest.metadata);
+            RefreshSelection();
+        }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
-        { RefreshSelection(); }
-        private void OnDialogueEnded(DialogueSession session) { RefreshSelection(); }
+        { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
+        private void OnDialogueEnded(DialogueSession session)
+        {
+            if (session != null && session.IsCompleted)
+            {
+                string lessonQuest = MetadataValue(session.Definition?.metadata, "spellRewardQuestId");
+                if (!string.IsNullOrWhiteSpace(lessonQuest))
+                {
+                    if (subscribedRuntime?.GetQuestStatus(lessonQuest) == QuestStatus.Active)
+                        GrantSpellRewards(session.Definition.metadata);
+                }
+                else
+                {
+                    string reward = MetadataValue(session.Definition?.metadata, "spellReward");
+                    if (TryParseSpell(reward, out SpellId spell) &&
+                        (spell != SpellId.Ampere || subscribedRuntime?.GetQuestStatus("stella_first_light") == QuestStatus.Active))
+                        subscribedRuntime?.SetFlag(SpellFlagPrefix + spell, true);
+                }
+            }
+            RefreshSelection();
+        }
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
+            SubscribeProgression();
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
                 CloseSpellWheel();
                 return;
             }
             Mouse mouse = Mouse.current;
-            if (mouse != null && mouse.middleButton.wasPressedThisFrame)
+            Keyboard keyboard = Keyboard.current;
+            if ((mouse != null && mouse.middleButton.wasPressedThisFrame) || KeyBindings.WasPressed(GameAction.SpellWheel))
             {
-                spellWheelOpen = !spellWheelOpen;
-                wheelMovementLockOwned = spellWheelOpen;
-                GetComponent<GridMover>()?.SetMovementLocked(spellWheelOpen);
+                if (spellWheelOpen) CloseSpellWheel();
+                else OpenSpellWheel();
             }
             if (mouse != null && spellWheelOpen)
             {
@@ -70,16 +101,15 @@ namespace Lumenfall.Spells
                 CloseSpellWheel();
             }
 
-            Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
-            Vector2Int inputDirection = new Vector2Int((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0), (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0)); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
-            if (keyboard.digit1Key.wasPressedThisFrame) SelectSpell(SpellId.Ampere);
-            if (keyboard.digit2Key.wasPressedThisFrame) SelectSpell(SpellId.Weave);
-            if (keyboard.digit3Key.wasPressedThisFrame) SelectSpell(SpellId.Gravitate);
-            if (keyboard.digit4Key.wasPressedThisFrame) SelectSpell(SpellId.Rotara);
-            if (keyboard.digit5Key.wasPressedThisFrame) SelectSpell(SpellId.Glaciate);
-            if (keyboard.digit6Key.wasPressedThisFrame) SelectSpell(SpellId.Vis);
-            if (keyboard.digit7Key.wasPressedThisFrame) SelectSpell(SpellId.LostEchoes);
+            Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
+            if (KeyBindings.WasPressed(GameAction.Spell1)) SelectSpell(SpellId.Ampere);
+            if (KeyBindings.WasPressed(GameAction.Spell2)) SelectSpell(SpellId.Weave);
+            if (KeyBindings.WasPressed(GameAction.Spell3)) SelectSpell(SpellId.Gravitate);
+            if (KeyBindings.WasPressed(GameAction.Spell4)) SelectSpell(SpellId.Rotara);
+            if (KeyBindings.WasPressed(GameAction.Spell5)) SelectSpell(SpellId.Glaciate);
+            if (KeyBindings.WasPressed(GameAction.Spell6)) SelectSpell(SpellId.Vis);
+            if (KeyBindings.WasPressed(GameAction.Spell7)) SelectSpell(SpellId.LostEchoes);
         }
 
         private SpellId[] AvailableSpells
@@ -115,6 +145,16 @@ namespace Lumenfall.Spells
         }
 
         private bool InputBlockedByOverlay => InventoryUiState.IsOpen || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
+        private void OpenSpellWheel()
+        {
+            if (spellWheelOpen || InputBlockedByOverlay || AvailableSpells.Length == 0) return;
+            spellWheelOpen = true;
+            wheelMovementLockOwned = true;
+            GetComponent<GridMover>()?.SetMovementLocked(true);
+        }
+        /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
+        public bool CastSelectedAt(string targetId)
+        { CloseSpellWheel(); return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
         private void CloseSpellWheel()
         {
             if (!spellWheelOpen) return;
@@ -149,13 +189,13 @@ namespace Lumenfall.Spells
                 Rect item = new Rect(position.x - 52f, position.y - 16f, 104f, 32f);
                 Color previous = GUI.color;
                 GUI.color = spells[i] == selectedSpell ? new Color(0.55f, 1f, 0.65f, 1f) : Color.white;
-                GUI.Box(item, string.Empty);
+                if (GUI.Button(item, string.Empty)) { selectedSpell = spells[i]; GUI.color = previous; CloseSpellWheel(); return; }
                 Texture2D icon = LoadIcon(spells[i]);
                 if (icon != null) GUI.DrawTexture(new Rect(item.x + 4f, item.y + 3f, 26f, 26f), icon, ScaleMode.ScaleToFit, true);
                 GUI.Label(new Rect(item.x + 34f, item.y + 7f, item.width - 36f, 22f), spells[i].ToString());
                 GUI.color = previous;
             }
-            GUI.Label(new Rect(center.x - 145f, center.y + 160f, 290f, 22f), "Scroll: select   Right click: cast   Middle click: close");
+            GUI.Label(new Rect(center.x - 165f, center.y + 160f, 330f, 22f), "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism");
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)
@@ -174,7 +214,11 @@ namespace Lumenfall.Spells
                     break;
                 case SpellId.Weave: changed = WeaveToPowered(state, targetId); break;
                 case SpellId.Gravitate: changed = state.TryMoveObject(targetId, ClampDirection(direction)); break;
-                case SpellId.Rotara: changed = state.SetProperty(targetId, x => x.rotation = (Mathf.Round(x.rotation / 90f) * 90f + 90f) % 360f); break;
+                case SpellId.Rotara:
+                    if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
+                        float.IsNaN(target.rotation) || float.IsInfinity(target.rotation)) break;
+                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
+                    break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes:
@@ -187,6 +231,14 @@ namespace Lumenfall.Spells
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
+        private void GrantSpellRewards(GameMetadataEntry[] metadata)
+        {
+            string reward = MetadataValue(metadata, "spellReward");
+            foreach (string value in (reward ?? string.Empty).Split(',', ';'))
+                if (TryParseSpell(value, out SpellId spell)) subscribedRuntime?.SetFlag(SpellFlagPrefix + spell, true);
+        }
+        private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
+        private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }
         private static bool WeaveToPowered(WorldStateService state, string targetId)
         {
             string intended = null;

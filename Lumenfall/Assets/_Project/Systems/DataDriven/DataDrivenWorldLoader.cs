@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Quests;
 
 namespace Lumenfall.DataDriven
 {
@@ -74,8 +75,11 @@ namespace Lumenfall.DataDriven
                 areaInstances.Add(area, root);
             }
             root.SetActive(true);
+            RotaraGearMechanism.AttachTo(root);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
+            StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
+            StellaReturnPortal.RegisterForMap(LoadedMap.id, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -102,7 +106,7 @@ namespace Lumenfall.DataDriven
         public bool RestoreStateJson(string json)
         {
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
-            WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
+            WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
             if (area == null) return false;
             Load(area, npcCatalog);
             GridMover player = FindAnyObjectByType<GridMover>();
@@ -124,6 +128,11 @@ namespace Lumenfall.DataDriven
             if (player.TryTeleportTo(world, arrival, target)) return true;
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;
+        }
+
+        private static string NormalizeMapId(string id)
+        {
+            return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
         }
 
         private WorldAreaAsset FindArea(string id)

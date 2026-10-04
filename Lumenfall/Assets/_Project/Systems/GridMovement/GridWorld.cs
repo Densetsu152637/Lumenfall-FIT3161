@@ -81,7 +81,7 @@ namespace Lumenfall.GridMovement
 
         public bool IsCellBlocked(Vector2Int cell)
         {
-            return !IsWithinBounds(cell) || blockerCounts.ContainsKey(cell);
+            return !IsWithinBounds(cell) || (blockerCounts.ContainsKey(cell) && !portals.ContainsKey(cell));
         }
 
         public GridMover GetMoverAt(Vector2Int cell)
@@ -353,7 +353,10 @@ namespace Lumenfall.GridMovement
 
         private bool IsCellAvailable(Vector2Int cell, GridMover ignoredMover)
         {
-            if (!IsWithinBounds(cell) || blockerCounts.ContainsKey(cell))
+            // An active portal is always an enterable surface. Authored portal glyphs can overlap
+            // baked wall/threshold obstacles, but the mover must be able to finish a step on the
+            // portal cell before GridPortal.TryEnter can perform the area transition.
+            if (!IsWithinBounds(cell) || (blockerCounts.ContainsKey(cell) && !portals.ContainsKey(cell)))
             {
                 return false;
             }

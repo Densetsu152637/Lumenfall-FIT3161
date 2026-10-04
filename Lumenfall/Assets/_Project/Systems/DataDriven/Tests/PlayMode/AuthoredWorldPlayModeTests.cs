@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using Lumenfall.DataDriven;
@@ -27,22 +27,23 @@ namespace Lumenfall.Tests.World
 
             GridPortal outward = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
-                    portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "eastForest");
-            Assert.That(outward, Is.Not.Null, "Campus should have an authored eastForest portal.");
+                    portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "westForest");
+            Assert.That(outward, Is.Not.Null, "Campus should have an authored westForest portal.");
             Assert.That(loader.SwitchArea(outward.Content, Vector2Int.zero), Is.True,
-                "The authored campus to eastForest route should accept its migrated arrival cell.");
-            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+                "The authored campus to westForest route should accept its migrated arrival cell.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
 
             string savedWorld = loader.CaptureStateJson();
             GridPortal returnPortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .FirstOrDefault(portal => portal.Content != null && portal.Content.destination != null &&
                     portal.Content.destination.area != null && portal.Content.destination.area.definition.id == "campus");
-            Assert.That(returnPortal, Is.Not.Null, "eastForest should have an authored return portal to campus.");
+            Assert.That(returnPortal, Is.Not.Null, "westForest should have an authored return portal to campus.");
             Assert.That(loader.SwitchArea(returnPortal.Content, Vector2Int.zero), Is.True,
-                "The authored eastForest return route should accept its migrated arrival cell.");
+                "The authored westForest return route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
-            Assert.That(loader.RestoreStateJson(savedWorld), Is.True, "World save should restore the saved area and cell.");
-            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+            string legacySavedWorld = savedWorld.Replace("westForest", "eastForest");
+            Assert.That(loader.RestoreStateJson(legacySavedWorld), Is.True, "A legacy eastForest save should migrate and restore the saved area and cell.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("westForest"));
 
             FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
             FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -111,12 +112,81 @@ namespace Lumenfall.Tests.World
             Assert.That(trial.gameObject.activeSelf, Is.True,
                 "The trial NPC should appear at its explicit authored coordinates.");
 
-            loader.Load(availableAreas.Single(area => area.definition.id == "eastForest"), catalog);
+            loader.Load(availableAreas.Single(area => area.definition.id == "westForest"), catalog);
             yield return null;
             loader.Load(campus, catalog);
             yield return null;
             Assert.That(trial.gameObject.activeSelf, Is.True,
                 "Quest-gated visibility should persist when revisiting an area.");
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerCanWalkThroughWestForestGateToCampus()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            Assert.That(loader, Is.Not.Null);
+            FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
+            NpcCatalogAsset catalog = (NpcCatalogAsset)catalogField.GetValue(loader);
+            WorldAreaAsset[] availableAreas = (WorldAreaAsset[])areasField.GetValue(loader);
+            loader.Load(availableAreas.Single(area => area.definition.id == "westForest"), catalog);
+            yield return null;
+
+            GridPortal gate = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                .Single(portal => portal.Content != null && portal.Content.id == "P.F03.A01");
+            Assert.That(gate.Content.cell, Is.EqualTo(new Vector2Int(16, 48)));
+            Assert.That(gate.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+            foreach (Vector2Int gateCell in gate.EnumeratePortalCells())
+            {
+                Assert.That(gate.World.GetPortalAt(gateCell), Is.SameAs(gate));
+                Assert.That(gate.World.IsCellBlocked(gateCell), Is.False,
+                    $"WestForest gate cell {gateCell} must be enterable even when its threshold overlaps a baked obstacle.");
+            }
+
+            GridMover player = Object.FindAnyObjectByType<GridMover>();
+            Assert.That(player.TryTeleportTo(gate.World, new Vector2Int(16, 47)), Is.True,
+                "The player should be able to stand immediately before the westForest gate.");
+            Assert.That(gate.World.CanTraverse(new Vector2Int(16, 47), new Vector2Int(16, 48)), Is.True,
+                "The player should be able to step onto the westForest gate portal.");
+            Assert.That(player.TryTeleportTo(gate.World, new Vector2Int(16, 48)), Is.True);
+            Assert.That(gate.TryEnter(player), Is.True,
+                "Entering the registered westForest gate should perform the area transition.");
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
+            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(25, 6)));
+        }
+
+        [UnityTest]
+        public IEnumerator ThreeWideCampusPortalEntersB02FromEveryCell()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
+            NpcCatalogAsset catalog = (NpcCatalogAsset)catalogField.GetValue(loader);
+            WorldAreaAsset[] availableAreas = (WorldAreaAsset[])areasField.GetValue(loader);
+            WorldAreaAsset campus = availableAreas.Single(area => area.definition.id == "campus");
+
+            for (int x = 19; x <= 21; x++)
+            {
+                loader.Load(campus, catalog);
+                yield return null;
+                GridPortal entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
+                    .Single(portal => portal.Content != null && portal.Content.id == "P.C05.B02");
+                Assert.That(entrance.Content.cell, Is.EqualTo(new Vector2Int(19, 46)));
+                Assert.That(entrance.Content.footprint, Is.EqualTo(new Vector2Int(3, 1)));
+                Assert.That(entrance.World.IsCellBlocked(new Vector2Int(x, 46)), Is.False);
+
+                GridMover player = Object.FindAnyObjectByType<GridMover>();
+                Assert.That(player.TryTeleportTo(entrance.World, new Vector2Int(x, 46)), Is.True);
+                Assert.That(entrance.TryEnter(player), Is.True, $"Campus B02 entrance cell ({x},46) should transition.");
+                Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("B02.Ground"));
+                Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(8, 3)));
+            }
         }
     }
 }

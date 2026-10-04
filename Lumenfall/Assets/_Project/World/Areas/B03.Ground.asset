@@ -160,7 +160,7 @@ MonoBehaviour:
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: b0caa62ccb2f27a4486d399e5832aa9b, type: 2}
-      arrivalOffset: {x: 53, y: 7}
+      arrivalOffset: {x: 7, y: 38}
       reserved: 0
   areaPrefab: {fileID: 7944633704773725778, guid: 597f6dce0f02cc14cb855e9a69f2fb40, type: 3}
   portals:

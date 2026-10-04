@@ -16,8 +16,13 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredConnected": true },
-        { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
+        { "id": "all_five_relics", "objectIds": [
+          "stella.string-together.relic.1",
+          "stella.string-together.relic.2",
+          "stella.string-together.relic.3",
+          "stella.string-together.relic.4",
+          "stella.string-together.relic.5"
+        ], "requiredPowered": true }
       ]
     },
     {
@@ -36,15 +41,6 @@
       "mapId": "campus",
       "targets": [
         { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
-      ]
-    },
-    {
-      "id": "orio_patch_notes_monitor",
-      "questId": "orio_patch_notes",
-      "completionEventId": "complete_orio_patch_notes",
-      "mapId": "eastForest",
-      "targets": [
-        { "id": "rotara_mechanism", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
       ]
     },
     {

@@ -25,7 +25,10 @@ for qid in quests:
     assert any(c.get("conditions", [{}])[0].get("value") == "Active" for c in [choices["active"]])
     assert any(c.get("conditions", [{}])[0].get("value") == "Completed" for c in [choices["done"]])
     ev = events["complete_" + qid]
-    assert ev["conditions"] == [{"type": "QuestStatus", "key": qid, "value": "Active"}]
+    expected = [{"type": "QuestStatus", "key": qid, "value": "Active"}]
+    if qid == "orio_patch_notes":
+        expected.append({"type": "OrioMechanismAligned", "key": "mechanism.orio.rotate"})
+    assert ev["conditions"] == expected
     assert ev["actions"] == [{"type": "CompleteQuest", "key": qid}]
 
 assert dialogues["stella_string_them_together_dialogue"]["nodes"][0]["choices"][0]["conditions"][0] == {"type": "QuestStatus", "key": "stella_first_light", "value": "Completed"}

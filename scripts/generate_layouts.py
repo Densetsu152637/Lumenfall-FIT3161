@@ -32,7 +32,7 @@ def make_building(b,ids):
  return {'width':36,'height':24,'tiles':[''.join(x) for x in tiles],'regions':regs,'spawn':{'x':2,'y':2}}
 def build():
  areas=inventory(); by={a['id']:a for a in areas}; placements={'B01':(12,56,20,14),'B02':(10,12,26,20),'B03':(40,8,30,18),'B04':(72,48,20,24)}
- cre=[{'id':i,'name':n,'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for i,n,r in [('A01','East gate forecourt',(43,35,14,10)),('C01','Campus commons',(30,28,40,28)),('C02','Orientation terrace',(34,18,18,8)),('C03','Orientation trial strip',(15,30,12,8)),('C04','Garden walk',(60,55,18,10)),('C05','Campus path loop',(25,25,50,40))]]
+ cre=[{'id':i,'name':n,'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for i,n,r in [('A01','West gate forecourt',(43,35,14,10)),('C01','Campus commons',(30,28,40,28)),('C02','Orientation terrace',(34,18,18,8)),('C03','Orientation trial strip',(15,30,12,8)),('C04','Garden walk',(60,55,18,10)),('C05','Campus path loop',(25,25,50,40))]]
  cre += [{'id':b,'name':b,'rect':dict(zip(('x','y','width','height'),r)),'walkable':True} for b,r in placements.items()]
  campus=region_map(100,80,cre); ct=[list(r) for r in campus['tiles']]; campus['tiles']=ct
  for b,(x,y,w,h) in placements.items():
@@ -79,12 +79,12 @@ def build():
     ft[y][x]=ft[y+1][x]=ft[y][x+1]=ft[y+1][x+1]='T'
  owner={'S':'B01','W':'B02','N':'B03','D':'B04'}
  fmap={b+'.Ground':make_building(b,[a['id'] for a in areas if a['kind']=='room' and owner[a['id'][0]]==b]) for b in placements}
- for a in areas: a.update({'floor':'Ground','mapId':'eastForest' if a['id'].startswith('F') else ('campus' if a['kind'] in ('outdoor','building') else owner[a['id'][0]]+'.Ground'),'regionId':a['id'],'portals':[]})
- links=[('F01','F02','eastForest',(9,15),(8,15)),('F02','F03','eastForest',(31,15),(30,15)),('F02','F04','eastForest',(20,12),(25,11)),('F02','F05','eastForest',(15,17),(18,18)),('F04','F06','eastForest',(25,5),(25,4)),('F03','A01','campus',(41,15),(43,40)),('A01','C01','campus',(50,35),(50,35)),('C01','C02','campus',(42,28),(42,26)),('C01','C03','campus',(30,34),(27,34)),('C01','C04','campus',(60,50),(60,55)),('C01','C05','campus',(35,40),(35,39))]
+ for a in areas: a.update({'floor':'Ground','mapId':'westForest' if a['id'].startswith('F') else ('campus' if a['kind'] in ('outdoor','building') else owner[a['id'][0]]+'.Ground'),'regionId':a['id'],'portals':[]})
+ links=[('F01','F02','westForest',(9,15),(8,15)),('F02','F03','westForest',(31,15),(30,15)),('F02','F04','westForest',(20,12),(25,11)),('F02','F05','westForest',(15,17),(18,18)),('F04','F06','westForest',(25,5),(25,4)),('F03','A01','campus',(41,15),(43,40)),('A01','C01','campus',(50,35),(50,35)),('C01','C02','campus',(42,28),(42,26)),('C01','C03','campus',(30,34),(27,34)),('C01','C04','campus',(60,50),(60,55)),('C01','C05','campus',(35,40),(35,39))]
  for b,(x,y,w,h) in placements.items(): links.append(('C05',b,b+'.Ground',(x+13,y),(x+8,y+2)))
  for s,t,dm,c1,c2 in links:
   for a,c,d,tm in ((by[s],c1,t,dm),(by[t],c2,s,by[s]['mapId'])): a['portals'].append({'id':f'P.{a["id"]}.{d}','cell':{'x':c[0],'y':c[1]},'destination':{'mapId':tm,'regionId':d,'cell':{'x':(c2 if a is by[s] else c1)[0],'y':(c2 if a is by[s] else c1)[1]}},'state':'open','requires':None})
- return {'schema':'lumenfall.tile-layout/2','coordinateSystem':'rows north-to-south; Unity (x,z)=(x,y); cellSize=1','tileLegend':LEGEND,'worldMaps':{'campus':campus,'eastForest':forest},'floorMaps':fmap,'areas':areas}
+ return {'schema':'lumenfall.tile-layout/2','coordinateSystem':'rows north-to-south; Unity (x,z)=(x,y); cellSize=1','tileLegend':LEGEND,'worldMaps':{'campus':campus,'westForest':forest},'floorMaps':fmap,'areas':areas}
 def main():
  d=build(); root=OUT/'layouts'; root.mkdir(parents=True,exist_ok=True); maps={**d['worldMaps'],**d['floorMaps']}; (root/'legend.json').write_text(json.dumps(LEGEND,indent=2)+'\n')
  manifest={'schema':d['schema'],'coordinateSystem':d['coordinateSystem'],'legendFile':'legend.json','maps':{},'areas':d['areas']}
