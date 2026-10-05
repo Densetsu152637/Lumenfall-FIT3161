@@ -8,6 +8,7 @@
 [Rr]ecordings/
 [Bb]uild/
 [Bb]uilds/
+dist/
 
 # IDE and generated project files
 .vscode/

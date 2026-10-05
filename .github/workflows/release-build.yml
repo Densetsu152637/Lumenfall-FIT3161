@@ -1,0 +1,143 @@
+name: Release game bundle
+
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A tag push and publishing its release can both trigger this workflow.
+# Serialize them so they cannot race while attaching the same assets.
+concurrency:
+  group: release-build-${{ github.event.release.tag_name || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  repository-integrity:
+    name: Validate release sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+          persist-credentials: false
+
+      - name: Test repository and bundle tooling
+        run: python3 -m unittest discover --start-directory scripts/tests --verbose
+
+      - name: Validate Unity project structure
+        run: python3 scripts/validate_unity_project.py Lumenfall
+
+  build-windows:
+    name: Build Windows x64 player
+    needs: repository-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+          persist-credentials: false
+
+      - name: Verify Unity license secrets
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -z "$UNITY_LICENSE" ]] && missing+=(UNITY_LICENSE)
+          [[ -z "$UNITY_EMAIL" ]] && missing+=(UNITY_EMAIL)
+          [[ -z "$UNITY_PASSWORD" ]] && missing+=(UNITY_PASSWORD)
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing repository secrets: ${missing[*]}. See .github/CI.md."
+            exit 1
+          fi
+
+      - name: Restore Windows Unity Library cache
+        uses: actions/cache@v5
+        with:
+          path: Lumenfall/Library
+          key: unity-release-windows-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-${{ github.sha }}
+          restore-keys: |
+            unity-release-windows-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-
+
+      - name: Build game
+        id: unity-build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Lumenfall
+          unityVersion: auto
+          targetPlatform: StandaloneWindows64
+          buildName: Lumenfall
+          buildsPath: build
+          versioning: None
+
+      - name: Bundle player and calculate checksum
+        shell: bash
+        env:
+          BUNDLE_VERSION: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          python3 scripts/package_game.py build/StandaloneWindows64 dist \
+            --version "$BUNDLE_VERSION" --commit "$(git rev-parse HEAD)"
+
+      - name: Upload downloadable bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: Lumenfall-windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build diagnostics
+        if: ${{ always() && steps.unity-build.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: unity-windows-build-logs
+          path: |
+            build/**/*.log
+            Lumenfall/Logs/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish-release:
+    name: Attach bundle to GitHub Release
+    needs: build-windows
+    if: ${{ github.event_name == 'release' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download completed bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: Lumenfall-windows-x64
+          path: dist
+
+      - name: Create release if needed and upload assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" > /dev/null; then
+            options=()
+            [[ "$RELEASE_TAG" == *-* ]] && options+=(--prerelease)
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes \
+              --title "$RELEASE_TAG" "${options[@]}"
+          fi
+          gh release upload "$RELEASE_TAG" dist/*.zip dist/*.sha256 --clobber
