@@ -25,6 +25,35 @@ Actions**:
 - `UNITY_EMAIL`: the Unity account email used to activate it
 - `UNITY_PASSWORD`: the Unity account password used to activate it
 
+### Upload the license file directly
+
+You can use the whole `.ulf` file without opening it or copying its XML. Install
+[GitHub CLI](https://cli.github.com/) and run `gh auth login`, then put these local
+values in the ignored repository-root `.env`:
+
+```dotenv
+UNITY_LICENSE_FILE='C:/ProgramData/Unity/Unity_lic.ulf'
+UNITY_EMAIL='your Unity account email'
+UNITY_PASSWORD='your Unity account password'
+```
+
+From the repository root, run:
+
+```sh
+python scripts/configure_unity_secrets.py --check
+python scripts/configure_unity_secrets.py
+```
+
+The helper reads the complete license file and uploads it as `UNITY_LICENSE`,
+along with the two account secrets, using GitHub CLI's encrypted secret storage.
+Secret values are passed through stdin and are never printed or put into command
+arguments. GitHub Actions still uses the same three secrets; it does not read your
+local `.env` or local license path. `.ulf` is the Unity license extension.
+
+Use `--env-file <path>` for a `.env` in another checkout, `--license-file <path>`
+to override the license file location, or `--repo owner/name` for another repository.
+Relative `UNITY_LICENSE_FILE` paths are resolved beside `.env`.
+
 GitHub does not pass repository secrets to workflows created from forks. Contributors
 who need the Unity job to run should use a branch in this repository, or a maintainer
 can rerun a trusted contribution from an in-repository branch.
