@@ -7,6 +7,7 @@ using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
+using Lumenfall.Quests;
 
 namespace Lumenfall.Startup
 {
@@ -19,6 +20,7 @@ namespace Lumenfall.Startup
     public sealed class StartupMenu : MonoBehaviour
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
+        private const string QuestHintsEnabledKey = "lumenfall.quest-hints-enabled";
 
         private enum Page { Main, Load, Settings, Controls }
 
@@ -28,12 +30,22 @@ namespace Lumenfall.Startup
         private bool confirmOverwrite;
         private string backdropSlot;
         private string message;
+        private bool questHintsEnabled;
         private readonly GameSettingsPanel settings = new GameSettingsPanel();
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
         private readonly Dictionary<string, Texture2D> buttonTextures = new Dictionary<string, Texture2D>();
         private float previousTimeScale = 1f;
+
+        public static bool IsVisible
+        {
+            get
+            {
+                StartupMenu menu = FindAnyObjectByType<StartupMenu>();
+                return menu != null && menu.isActiveAndEnabled && menu.ready;
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -62,6 +74,8 @@ namespace Lumenfall.Startup
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
+            questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
+            QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
             GameSettingsPanel.ApplySavedVolume();
             SetGameplayInput(false);
             LoadButtonTextures();
@@ -148,7 +162,11 @@ namespace Lumenfall.Startup
             float y = panel.y + 112f;
             if (Button("start", new Rect(x, y, width, 72f), "START")) StartNewGame();
             if (Button("load", new Rect(x, y + 88f, width, 72f), "LOAD")) page = Page.Load;
-            if (Button("options", new Rect(x, y + 176f, width, 72f), "SETTINGS")) page = Page.Settings;
+            if (Button("options", new Rect(x, y + 176f, width, 72f), "SETTINGS"))
+            {
+                questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
+                page = Page.Settings;
+            }
             if (Button("exit", new Rect(x, y + 264f, width, 72f), "EXIT")) Application.Quit();
             if (!string.IsNullOrEmpty(message)) GUI.Label(new Rect(panel.x + 30f, panel.yMax - 68f, panel.width - 60f, 42f), message, BodyStyle());
         }
@@ -184,8 +202,17 @@ namespace Lumenfall.Startup
                 masterVolume, 0f, 1f);
             if (!Mathf.Approximately(newVolume, masterVolume)) GameSettingsPanel.MasterVolume = newVolume;
             GUI.Label(new Rect(panel.x + 54f, panel.y + 224f, panel.width - 108f, 40f),
-                $"{Mathf.RoundToInt(newVolume * 100f)}%", BodyStyle());
-            if (GUI.Button(new Rect(panel.x + 86f, panel.y + 290f, panel.width - 172f, 56f), "CONTROLS", ButtonStyle()))
+                $"{Mathf.RoundToInt(GameSettingsPanel.MasterVolume * 100f)}%", BodyStyle());
+            bool hintsEnabled = GUI.Toggle(new Rect(panel.x + 54f, panel.y + 278f, panel.width - 108f, 40f),
+                questHintsEnabled, "SHOW QUEST HINTS");
+            if (hintsEnabled != questHintsEnabled)
+            {
+                questHintsEnabled = hintsEnabled;
+                QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
+                PlayerPrefs.SetInt(QuestHintsEnabledKey, questHintsEnabled ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+            if (GUI.Button(new Rect(panel.x + 86f, panel.y + 350f, panel.width - 172f, 56f), "CONTROLS", ButtonStyle()))
             {
                 page = Page.Controls;
                 settings.Message = "Click an action, then press the key you want.";

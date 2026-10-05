@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lumenfall.GameEvents;
+using Lumenfall.DataDriven;
 using Lumenfall.Spells;
 using Lumenfall.Inventory;
 using NUnit.Framework;
@@ -66,9 +67,94 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            GameEventRuntime runtime = manager.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("stella-follow-up-selection-test");
+            try
+            {
+                StartAndComplete(runtime, "stella_first_light");
+                DynamicNpc stella = host.AddComponent<DynamicNpc>();
+                stella.Configure(new NpcDefinition
+                {
+                    id = "stella",
+                    dialogue = new[]
+                    {
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_first_light_dialogue",
+                            questId = "stella_first_light",
+                            requiredQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "NotStarted",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Active",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Completed",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        }
+                    }
+                }, null);
+
+                DialogueSession session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("accept"));
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
+                session.End();
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("active"));
+                session.End();
+                Assert.That(runtime.TriggerEvent("complete_stella_string_them_together").Succeeded, Is.True);
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("done"));
+            }
+            finally
+            {
+                if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
+                runtime.ResetState();
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
         {
-            GameEventRuntime runtime = CreateRuntime();
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("dialogue-spell-reward-test");
+            SpellCaster caster = host.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
+            try
+            {
             DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
             Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
             Assert.That(session.IsCompleted, Is.False);
@@ -82,6 +168,14 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(session.Continue(), Is.True);
             Assert.That(session.IsCompleted, Is.True);
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+            }
+            finally
+            {
+                EditModeLifecycle.Call(caster, "OnDisable");
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                Object.DestroyImmediate(host);
+                runtime.ResetState();
+            }
         }
 
         [Test]
@@ -104,6 +198,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
+                EditModeLifecycle.Call(caster, "OnEnable");
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
@@ -121,6 +216,31 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            manager.Runtime.ResetState();
+            GameObject host = new GameObject("later-spell-progression-test");
+            try
+            {
+                SpellCaster caster = host.AddComponent<SpellCaster>();
+                EditModeLifecycle.Call(caster, "OnEnable");
+                DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(dialogue.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+            }
+            finally
+            {
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -131,7 +251,8 @@ namespace Lumenfall.Tests.GameEvents
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
             GameObject uiObject = new GameObject("inventory-test-ui");
-            uiObject.AddComponent<InventoryEncyclopediaUI>();
+            InventoryEncyclopediaUI ui = uiObject.AddComponent<InventoryEncyclopediaUI>();
+            EditModeLifecycle.Call(ui, "OnEnable");
             try
             {
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
@@ -149,6 +270,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                EditModeLifecycle.Call(ui, "OnDisable");
                 Object.DestroyImmediate(uiObject);
             }
         }

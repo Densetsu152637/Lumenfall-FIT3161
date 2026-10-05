@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="29" result="Failed(Child)" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.144895">
+  <test-suite type="TestSuite" id="1000" name="Lumenfall" fullname="Lumenfall" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.144895" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1042" name="Lumenfall.GameEvents.Tests.dll" fullname="D:/Git Repositories/Lumenfall-FIT3161/Lumenfall/Library/ScriptAssemblies/Lumenfall.GameEvents.Tests.dll" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.133907" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="45212" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1043" name="Lumenfall" fullname="Lumenfall" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.133272" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1044" name="Tests" fullname="Lumenfall.Tests" runstate="Runnable" testcasecount="29" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.132867" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1045" name="GameEvents" fullname="Lumenfall.Tests.GameEvents" runstate="Runnable" testcasecount="29" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.132669" total="29" passed="20" failed="9" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1001" name="GameEventRuntimeTests" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.077119" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1006" name="Catalog_RejectsBrokenDialogueLinks" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.Catalog_RejectsBrokenDialogueLinks" methodname="Catalog_RejectsBrokenDialogueLinks" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1675694578" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.017852" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" methodname="DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1052977227" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.011663" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="ExportAndImport_RestoresGlobalState" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ExportAndImport_RestoresGlobalState" methodname="ExportAndImport_RestoresGlobalState" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1694963483" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.006442" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="NonRepeatableEvent_OnlyTriggersOnce" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.NonRepeatableEvent_OnlyTriggersOnce" methodname="NonRepeatableEvent_OnlyTriggersOnce" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1707888254" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.001061" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="QuestLifecycleEvent_RunsWhenQuestCompletes" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.QuestLifecycleEvent_RunsWhenQuestCompletes" methodname="QuestLifecycleEvent_RunsWhenQuestCompletes" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="502358856" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000588" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="ShippedSample_CompletesNpcDialogueAndQuestFlow" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ShippedSample_CompletesNpcDialogueAndQuestFlow" methodname="ShippedSample_CompletesNpcDialogueAndQuestFlow" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1223018547" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.019685" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ShippedSampleJson_ParsesAndHasValidReferences" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ShippedSampleJson_ParsesAndHasValidReferences" methodname="ShippedSampleJson_ParsesAndHasValidReferences" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="683683755" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.002244" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1009" name="GameSaveSlotPolicyTests" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.002936" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1011" name="InvalidMarkerFallsBackToNewestValidSave" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests.InvalidMarkerFallsBackToNewestValidSave" methodname="InvalidMarkerFallsBackToNewestValidSave" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" seed="1511739264" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.001624" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests.ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" methodname="ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" seed="181592532" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000373" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1012" name="QuestDialogueContentTests" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.006606" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1013" name="QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests.QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" methodname="QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" seed="1466595236" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.003528" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests.QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" methodname="QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" seed="1487572762" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.002271" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1015" name="QuestDialogueLifecycleTests" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.026587" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1023" name="AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" methodname="AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="370683665" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.009465" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" methodname="DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1728620376" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.001975" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" methodname="EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1074428909" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000723" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" methodname="EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="911255354" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.002001" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" methodname="FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="618649232" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.003323" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="GravitateArrivesThroughAuthoredLaterQuestCompletion" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.GravitateArrivesThroughAuthoredLaterQuestCompletion" methodname="GravitateArrivesThroughAuthoredLaterQuestCompletion" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="562906457" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000743" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="SpellRewardFlagsSurviveRuntimeSaveRoundTrip" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.SpellRewardFlagsSurviveRuntimeSaveRoundTrip" methodname="SpellRewardFlagsSurviveRuntimeSaveRoundTrip" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="364891359" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.001846" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" methodname="SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1439614831" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.001433" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" methodname="StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="304731791" result="Passed" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.003289" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1025" name="QuestHintOverlayTests" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" testcasecount="5" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.013513" total="5" passed="0" failed="5" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1027" name="ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" methodname="ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="2096825694" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.008703" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: quest-hint-test-world. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SetUp () [0x00078] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:42 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1029" name="ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" methodname="ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="384217518" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000711" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: quest-hint-test-world. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SetUp () [0x00078] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:42 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1026" name="FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" methodname="FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="432322159" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000530" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: quest-hint-test-world. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SetUp () [0x00078] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:42 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1028" name="MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" methodname="MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="644224264" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000457" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: quest-hint-test-world. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SetUp () [0x00078] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:42 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1030" name="SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" methodname="SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="1590893676" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000411" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: quest-hint-test-world. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SetUp () [0x00078] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:42 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1031" name="SpellWorldStateTests" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.004312" total="4" passed="0" failed="4" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1032" name="AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" methodname="AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="1574856368" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.002001" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: test-spell-state. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.SpellWorldStateTests.SetUp () [0x00055] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\SpellWorldStateTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1035" name="GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" methodname="GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="712260312" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000373" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: test-spell-state. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.SpellWorldStateTests.SetUp () [0x00055] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\SpellWorldStateTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1034" name="StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" methodname="StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="723067809" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000259" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: test-spell-state. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.SpellWorldStateTests.SetUp () [0x00055] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\SpellWorldStateTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1033" name="WeaveUsesDeclaredEndpointAndPersistsAttenuation" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.WeaveUsesDeclaredEndpointAndPersistsAttenuation" methodname="WeaveUsesDeclaredEndpointAndPersistsAttenuation" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="1799088557" result="Failed" label="Error" start-time="2026-10-01 11:59:12Z" end-time="2026-10-01 11:59:12Z" duration="0.000522" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : System.Reflection.TargetInvocationException : Exception has been thrown by the target of an invocation.
+  ----> System.InvalidOperationException : The following game object is invoking the DontDestroyOnLoad method: test-spell-state. Notice that DontDestroyOnLoad can only be used in play mode and, as such, cannot be part of an editor script.]]></message>
+                  <stack-trace><![CDATA[--SetUp
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00083] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+  at Lumenfall.Tests.GameEvents.EditModeLifecycle.Call (UnityEngine.MonoBehaviour component, System.String method) [0x00000] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\QuestHintOverlayTests.cs:366 
+  at Lumenfall.Tests.GameEvents.SpellWorldStateTests.SetUp () [0x00055] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\SpellWorldStateTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 
+--InvalidOperationException
+  at (wrapper managed-to-native) UnityEngine.Object.DontDestroyOnLoad_Injected(intptr)
+  at UnityEngine.Object.DontDestroyOnLoad (UnityEngine.Object target) [0x00023] in <82d1d45c517f4141b90705b5d74c5160>:0 
+  at Lumenfall.Spells.WorldStateService.Awake () [0x0002c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\Spells\WorldStateService.cs:48 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <f713e1c3c5f545ce9b1df47230f4f853>:0 ]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:/Users/Nicholas/AppData/LocalLow/DefaultCompany/Lumenfall\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

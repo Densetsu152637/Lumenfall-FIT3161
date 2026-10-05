@@ -188,8 +188,8 @@
   "portals": [
     {
       "id": "P.B02.C05",
-      "x": 8,
-      "y": 2,
+      "x": 10,
+      "y": 6,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B02",
       "arrivalOffsetX": 11,

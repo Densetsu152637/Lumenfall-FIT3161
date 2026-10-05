@@ -153,15 +153,7 @@ MonoBehaviour:
     B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
     objects: []
     puzzleTargets: []
-    portals:
-    - id: P.B03.C05
-      x: 8
-      y: 2
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: b0caa62ccb2f27a4486d399e5832aa9b, type: 2}
-      arrivalOffset: {x: 7, y: 38}
-      reserved: 0
+    portals: []
   areaPrefab: {fileID: 7944633704773725778, guid: 597f6dce0f02cc14cb855e9a69f2fb40, type: 3}
   portals:
-  - {fileID: 11400000, guid: 34a8113bdba92cf45916471fd6ca67cb, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000008, type: 2}

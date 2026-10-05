@@ -15,10 +15,10 @@ MonoBehaviour:
   npcs:
   - id: stella
     displayName: Stella
-    prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
+    prefab: {fileID: 4655114116753613850, guid: 4b2d83e02be67174d9855a0ca84402a9, type: 3}
     mapId: B02.Ground
-    x: 19
-    y: 14
+    x: 12
+    y: 4
     layerSymbol: s
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 

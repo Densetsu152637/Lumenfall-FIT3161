@@ -6,6 +6,7 @@ using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
+using Lumenfall.Quests;
 
 namespace Lumenfall.DataDriven
 {
@@ -41,17 +42,33 @@ namespace Lumenfall.DataDriven
             if (gameObject.activeSelf != visible) gameObject.SetActive(visible);
         }
         private void Update()
-        { if (Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked || !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return; GridMover player = FindAnyObjectByType<GridMover>(); if (player == null) return; DynamicNpc nearest = null; float best = 2.01f; foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)) { float d = Vector3.Distance(player.transform.position, npc.transform.position); if (d <= best) { best = d; nearest = npc; } } if (nearest == this) Interact(); }
+        {
+            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
+                DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
+                !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
+                GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
+
+            GridMover player = FindAnyObjectByType<GridMover>();
+            if (player == null) return;
+            DynamicNpc nearest = null;
+            float best = 2.01f;
+            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                float distance = Vector3.Distance(player.transform.position, npc.transform.position);
+                if (distance <= best) { best = distance; nearest = npc; }
+            }
+            if (nearest == this) Interact();
+        }
 
         private void OnGUI()
         {
-            if (Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
+            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;
             float best = 2.01f;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }
@@ -79,7 +96,7 @@ namespace Lumenfall.DataDriven
             return interactionKeyTexture;
         }
         public DialogueSession Interact()
-        { if (GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
+        { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
         private string SelectDialogue()
         {
             if (definition == null) return DialogueId;
@@ -87,6 +104,7 @@ namespace Lumenfall.DataDriven
                 return DialogueId;
 
             List<string> choices = new List<string>(definition.dialogueIds ?? Array.Empty<string>());
+            List<string> prerequisiteChoices = new List<string>();
             foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
             {
                 if (item == null || string.IsNullOrWhiteSpace(item.dialogueId)) continue;
@@ -95,8 +113,12 @@ namespace Lumenfall.DataDriven
                 bool prerequisiteMatches = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) ||
                     StatusMatches(item.prerequisiteQuestId, item.prerequisiteQuestStatus);
                 if (!questMatches || !prerequisiteMatches) continue;
-                for (int i = 0; i < Mathf.Max(1, item.weight); i++) choices.Add(item.dialogueId);
+                List<string> eligible = string.IsNullOrWhiteSpace(item.prerequisiteQuestId) ? choices : prerequisiteChoices;
+                for (int i = 0; i < Mathf.Max(1, item.weight); i++) eligible.Add(item.dialogueId);
             }
+            // A newly available prerequisite-gated dialogue is the NPC's follow-up beat. Keep
+            // completed earlier quests from competing with it in the weighted random selection.
+            if (prerequisiteChoices.Count > 0) choices = prerequisiteChoices;
             return choices.Count == 0 ? null : choices[UnityEngine.Random.Range(0, choices.Count)];
         }
 

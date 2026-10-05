@@ -7,7 +7,13 @@
       "completionEventId": "complete_stella_first_light",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "repaired_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true }
+        { "id": "all_generated_relics_lit", "objectIds": [
+          "stella.string-together.relic.1",
+          "stella.string-together.relic.2",
+          "stella.string-together.relic.3",
+          "stella.string-together.relic.4",
+          "stella.string-together.relic.5"
+        ], "requiredPowered": true }
       ]
     },
     {
@@ -16,13 +22,11 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "all_five_relics", "objectIds": [
-          "stella.string-together.relic.1",
-          "stella.string-together.relic.2",
-          "stella.string-together.relic.3",
-          "stella.string-together.relic.4",
-          "stella.string-together.relic.5"
-        ], "requiredPowered": true }
+        { "id": "powered_source_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true },
+        { "id": "relic_to_circuit_link", "objectIds": [
+          "relic.stella.power",
+          "circuit.stella.link"
+        ], "requiredConnections": ["relic.stella.power|circuit.stella.link"] }
       ]
     },
     {
@@ -40,7 +44,7 @@
       "completionEventId": "complete_cinna_cold_feet_warm_idea",
       "mapId": "campus",
       "targets": [
-        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
+        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 34, "requiredPositionY": 67 }
       ]
     },
     {
@@ -50,7 +54,7 @@
       "successDialogueId": "katrina_keepsake_recovered",
       "mapId": "C04.Recess",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 12, "requiredPositionY": 9 }
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 42, "requiredPositionY": 60 }
       ]
     }
   ]

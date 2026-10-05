@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Lumenfall.DataDriven
 {
@@ -7,10 +8,14 @@ namespace Lumenfall.DataDriven
     {
         public string id;
         public WorldAreaAsset area;
-        public Vector2Int cell;
-        public Vector2Int footprint = Vector2Int.one;
-        public bool reserved;
+        [FormerlySerializedAs("reserved")]
+        [Tooltip("Prevents this portal from being used until gameplay or quest logic enables it.")]
+        public bool disabled;
         public PortalContentAsset destination;
-        public Vector2Int arrivalOffset;
+
+        public void SetDisabled(bool value)
+        {
+            disabled = value;
+        }
     }
 }

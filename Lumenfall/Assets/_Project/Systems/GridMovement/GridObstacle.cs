@@ -100,7 +100,9 @@ namespace Lumenfall.GridMovement
             }
         }
 
-        private void OnDrawGizmosSelected()
+        // Keep occupied cells visible while authoring so blocked areas can be laid out without
+        // selecting every obstacle individually in the Scene view.
+        private void OnDrawGizmos()
         {
             ResolveWorld();
             if (world == null)
