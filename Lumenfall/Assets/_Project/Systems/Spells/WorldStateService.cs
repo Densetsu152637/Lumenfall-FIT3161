@@ -157,7 +157,6 @@ namespace Lumenfall.Spells
                 Mathf.Abs(target.cell.x - searchCell.x) + Mathf.Abs(target.cell.y - searchCell.y) > radius) return false;
             return SetProperty(id, value => value.revealed = true);
         }
-        public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < MinimumCableStrength) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
         public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
         public bool AcknowledgeEffect(string key) => pendingEffects.Remove(key);

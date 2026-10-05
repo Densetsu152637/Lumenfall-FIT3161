@@ -30,6 +30,8 @@ namespace Lumenfall.Spells
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
+        public string LastSearchFeedback { get; private set; }
+        public event Action<string> SearchFeedbackChanged;
         /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
@@ -365,7 +367,7 @@ namespace Lumenfall.Spells
             return changed;
         }
         private void SearchFeedback(string message)
-        { LastSearchFeedback = message; searchFeedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
+        { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
         private string FindNearestTarget()
         { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }
