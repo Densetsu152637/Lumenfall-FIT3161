@@ -54,13 +54,37 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Read Unity version
+        id: unity-version
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          import os
+          import sys
+
+          project_version = Path("Lumenfall/ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8")
+          matches = [line for line in project_version.splitlines() if line.startswith("m_EditorVersion:")]
+          pattern = re.compile(r"m_EditorVersion:\s*(\d+\.\d+\.\d+[abfp]\d+)\s*")
+          if len(matches) != 1 or (match := pattern.fullmatch(matches[0])) is None:
+              print("::error::ProjectVersion.txt must contain exactly one valid m_EditorVersion.")
+              sys.exit(1)
+
+          version = match.group(1)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"version={version}\n")
+          print(f"Using Unity version {version} for the test image.")
+
       - name: Restore Unity Library cache
-        uses: actions/cache@v5
+        id: unity-library
+        uses: actions/cache/restore@v5
         with:
           path: Lumenfall/Library
-          key: unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}
+          key: unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-${{ github.sha }}
           restore-keys: |
-            unity-library-${{ runner.os }}-
+            unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-
+            unity-library-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}
 
       - name: Verify Unity license secrets
         shell: bash
@@ -88,8 +112,10 @@ jobs:
         with:
           projectPath: Lumenfall
           unityVersion: auto
+          customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-base-3
           testMode: editmode
           artifactsPath: artifacts/editmode
+          githubToken: ''
 
       - name: Upload Unity test results
         if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
@@ -99,3 +125,10 @@ jobs:
           path: ${{ steps.unity-tests.outputs.artifactsPath }}
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Save Unity Library cache
+        if: ${{ !cancelled() && steps.unity-library.outputs.cache-hit != 'true' && hashFiles('artifacts/editmode/editmode-results.xml') != '' }}
+        uses: actions/cache/save@v5
+        with:
+          path: Lumenfall/Library
+          key: ${{ steps.unity-library.outputs.cache-primary-key }}

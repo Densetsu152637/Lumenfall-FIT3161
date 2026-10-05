@@ -22,6 +22,15 @@ the Unity toolchain is provided by GameCI. If extraction runs out of space again
 compare the before and after `df -h /` diagnostics in the job log. Unity tests still
 run and continue to fail when the required license secrets are missing.
 
+The EditMode job reads and validates `m_EditorVersion` from `ProjectVersion.txt` and
+uses the matching GameCI Ubuntu base image, which omits build modules the tests do not
+need. Its Unity `Library` cache is keyed by Unity version, packages, and commit; it
+restores only caches for the same Unity/package set and saves a new cache after an
+EditMode XML result exists. The test runner's GitHub Checks reporter is disabled
+because the artifact upload is the supported result record and the reporter requires
+Checks API write access. Test failures still fail the job, and XML results remain
+available as artifacts.
+
 ## One-time Unity license setup
 
 The Unity job deliberately fails rather than silently skipping tests when licensing is
