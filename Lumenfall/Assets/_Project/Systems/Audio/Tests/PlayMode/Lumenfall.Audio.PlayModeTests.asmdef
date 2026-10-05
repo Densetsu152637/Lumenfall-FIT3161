@@ -1,0 +1,11 @@
+{
+    "name": "Lumenfall.Audio.PlayModeTests",
+    "rootNamespace": "Lumenfall.Tests.Audio",
+    "references": [
+        "Lumenfall.Runtime",
+        "Lumenfall.GameEvents"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

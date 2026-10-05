@@ -502,3 +502,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e915cf0b38ae93d48b7e939a25f79ab4, type: 2}
   - {fileID: 11400000, guid: ea2cb3ab9a2f7654cba69c0a4119fc8b, type: 2}
   - {fileID: 11400000, guid: 2be54a9befd2bc74d977c47039777a07, type: 2}
+  audioProfile: {fileID: 11400000, guid: 207ac13907f64d6a89bd2a8f769e39b7, type: 2}

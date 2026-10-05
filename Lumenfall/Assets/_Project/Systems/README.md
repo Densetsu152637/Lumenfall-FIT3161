@@ -7,6 +7,7 @@ to find and review.
 Current systems:
 
 - `Camera` — player camera behaviour.
+- `Audio` — area music and ambience profiles, transitions, and playback tests.
 - `GameEvents` — event, quest, dialogue, persistence, resource data, and EditMode tests.
 - `GridMovement` — grid world, movement, pathfinding, portals, input, and presentation.
 

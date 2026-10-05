@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using Lumenfall.DataDriven;
+using Lumenfall.Audio;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using NUnit.Framework;
@@ -13,15 +14,30 @@ namespace Lumenfall.Tests.World
 {
     public sealed class AuthoredWorldPlayModeTests
     {
+        [UnityTearDown]
+        public IEnumerator UnloadWorld()
+        {
+            Scene scene = SceneManager.GetSceneByName("SampleScene");
+            if (scene.IsValid() && scene.isLoaded) yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
         [UnityTest]
         public IEnumerator SampleWorldLoadsRoutesRestoresAndRefreshesQuestGatedNpcs()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            // Keep the bootstrap scene that owns Unity's PlayMode test runner alive.
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Additive);
+            SceneManager.SetActiveScene(SceneManager.GetSceneByName("SampleScene"));
             yield return null;
+            // The startup backdrop can restore a real save; this fixture needs fresh quest state.
+            GameEventManager.Instance.ReloadDefinitions();
 
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             Assert.That(loader, Is.Not.Null, "SampleScene should have a wired world loader.");
             Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
+            AreaAudioController audio = loader.GetComponent<AreaAudioController>();
+            Assert.That(audio, Is.Not.Null, "SampleScene should have area audio wired to its loader.");
+            Assert.That(audio.CurrentProfile, Is.SameAs(loader.CurrentArea.audioProfile));
+            Assert.That(audio.CurrentProfile.ambience, Is.Not.Null);
             GridMover player = Object.FindAnyObjectByType<GridMover>();
             Assert.That(player, Is.Not.Null, "SampleScene should have a player for portal and save checks.");
 
@@ -32,6 +48,7 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.SwitchArea(outward.Content, Vector2Int.zero), Is.True,
                 "The authored campus to eastForest route should accept its migrated arrival cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+            Assert.That(audio.CurrentProfile, Is.SameAs(loader.CurrentArea.audioProfile));
 
             string savedWorld = loader.CaptureStateJson();
             GridPortal returnPortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
@@ -43,6 +60,7 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             Assert.That(loader.RestoreStateJson(savedWorld), Is.True, "World save should restore the saved area and cell.");
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("eastForest"));
+            Assert.That(audio.CurrentProfile, Is.SameAs(loader.CurrentArea.audioProfile), "Save restore should also restore audio.");
 
             FieldInfo catalogField = typeof(DataDrivenWorldLoader).GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic);
             FieldInfo areasField = typeof(DataDrivenWorldLoader).GetField("availableAreas", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -89,6 +107,7 @@ namespace Lumenfall.Tests.World
                     Assert.That(loader.SwitchArea(route, Vector2Int.zero), Is.True,
                         area.definition.id + "/" + route.id + " should reach " + route.destination.area.definition.id + ".");
                     Assert.That(loader.CurrentArea, Is.EqualTo(route.destination.area));
+                    Assert.That(audio.CurrentProfile, Is.SameAs(loader.CurrentArea.audioProfile));
                     activeRouteCount++;
                 }
             }

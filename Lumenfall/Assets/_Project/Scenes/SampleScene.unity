@@ -674,6 +674,7 @@ GameObject:
   - component: {fileID: 533968956}
   - component: {fileID: 533968955}
   - component: {fileID: 533968954}
+  - component: {fileID: 533968957}
   m_Layer: 0
   m_Name: World Content
   m_TagString: Untagged
@@ -715,6 +716,18 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d03ed5a3b7f9f3e43ad14c8e3dc4104d, type: 2}
   contentRoot: {fileID: 956136189}
   world: {fileID: 1980000002}
+--- !u!114 &533968957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 533968953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f7c2577081439d9cc224369c973d2d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Audio.AreaAudioController
 --- !u!4 &533968956
 Transform:
   m_ObjectHideFlags: 0

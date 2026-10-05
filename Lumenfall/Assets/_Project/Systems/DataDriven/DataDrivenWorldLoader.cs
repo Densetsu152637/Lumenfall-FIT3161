@@ -21,6 +21,7 @@ namespace Lumenfall.DataDriven
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
+        public event Action<WorldAreaAsset> AreaChanged;
         public string SaveKey => "data-driven-world";
 
         private void Awake()
@@ -35,6 +36,15 @@ namespace Lumenfall.DataDriven
             if (world == null) world = FindAnyObjectByType<GridWorld>();
             if (startingArea == null) { Debug.LogError("Assign a starting World Area asset in the Inspector.", this); return; }
             Load(startingArea, npcCatalog);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            // Scene reloads must release this provider without creating a new save manager at shutdown.
+            GameSaveManager saves = FindAnyObjectByType<GameSaveManager>();
+            if (saves != null) saves.UnregisterProvider(SaveKey);
+            Instance = null;
         }
 
         private void Update()
@@ -77,12 +87,14 @@ namespace Lumenfall.DataDriven
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
             WorldStateService.Instance?.EndMapRebuild();
+            AreaChanged?.Invoke(CurrentArea);
         }
 
         public void Clear()
         {
             foreach (GameObject item in areaInstances.Values) if (item != null) { item.SetActive(false); Destroy(item); }
             areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null;
+            AreaChanged?.Invoke(null);
         }
 
         public void ResetToStartingState()
