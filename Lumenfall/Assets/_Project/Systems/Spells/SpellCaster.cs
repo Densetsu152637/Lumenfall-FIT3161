@@ -29,7 +29,11 @@ namespace Lumenfall.Spells
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
+        /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
+        /// circuit object ties the thread to it.
+        public string HeldThread { get; private set; }
         private float feedbackUntil;
+        private const string CircuitTag = "circuit";
         public event Action<SpellId, string, bool> CastCompleted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
@@ -75,6 +79,9 @@ namespace Lumenfall.Spells
         private void Update()
         {
             SubscribeProgression();
+            // A held thread belongs to Weave on the current map; switching spells or maps drops it.
+            if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
+                HeldThread = null;
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
                 CloseSpellWheel();
@@ -208,11 +215,12 @@ namespace Lumenfall.Spells
             switch (spell)
             {
                 case SpellId.Ampere:
+                    if (WorldStateService.IsConductor(target)) { ShowFeedback("This relic holds no charge of its own. Weave it to a powered relic."); break; }
                     bool nextPower = !target.powered;
                     changed = state.SetProperty(targetId, x => x.powered = nextPower);
                     if (changed) state.QueueEffect("lightning:" + targetId + ":" + (nextPower ? "on" : "off"));
                     break;
-                case SpellId.Weave: changed = WeaveToPowered(state, targetId); break;
+                case SpellId.Weave: changed = HasTag(target, CircuitTag) ? WeaveCircuit(state, targetId) : WeaveToPowered(state, targetId); break;
                 case SpellId.Gravitate: changed = state.TryMoveObject(targetId, ClampDirection(direction)); break;
                 case SpellId.Rotara:
                     if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
@@ -223,13 +231,42 @@ namespace Lumenfall.Spells
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes: changed = Reveal(state, targetId); break;
             }
-            if (spell == SpellId.Weave)
+            if (spell == SpellId.Weave && !HasTag(target, CircuitTag))
             {
                 bool added = CountConnections(state, targetId) > previousCableCount;
-                LastCastFeedback = changed ? (added ? "Cable connected. Keep the power relic on." : "Cable removed. Cast Weave again to reconnect.") : "No live cable: power the relic and keep endpoints within four tiles.";
-                feedbackUntil = Time.unscaledTime + 4f;
+                ShowFeedback(changed ? (added ? "Cable connected. Keep the power relic on." : "Cable removed. Cast Weave again to reconnect.") : "No live cable: power the relic and keep endpoints within four tiles.");
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
+        }
+        private void ShowFeedback(string message) { LastCastFeedback = message; feedbackUntil = Time.unscaledTime + 4f; }
+        private static bool HasTag(WorldObjectSnapshot item, string tag) => Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
+        /// Circuit objects are wired by hand: the first cast holds a thread, each later cast ties it to the next
+        /// object and keeps holding it there so a chain can be drawn relay by relay. Casting on a linked pair cuts it.
+        private bool WeaveCircuit(WorldStateService state, string targetId)
+        {
+            if (HeldThread == null || !state.TryGetObject(HeldThread, out _))
+            {
+                HeldThread = targetId;
+                ShowFeedback("Thread held. Cast Weave on another relic within four tiles to tie it.");
+                return false;
+            }
+            string from = HeldThread;
+            if (from == targetId) { HeldThread = null; ShowFeedback("Thread released."); return false; }
+            if (state.IsConnected(from, targetId))
+            {
+                HeldThread = null;
+                ShowFeedback("Cable cut. Cast Weave on a relic to hold a new thread.");
+                return state.RemoveConnection(from, targetId);
+            }
+            if (!state.AddConnection(from, targetId))
+            {
+                ShowFeedback("Too far: tie the thread to a relic within four tiles. Still holding the thread.");
+                return false;
+            }
+            HeldThread = targetId;
+            bool lit = state.TryGetObject(targetId, out WorldObjectSnapshot tied) && tied.powered;
+            ShowFeedback(lit ? "Cable tied and carrying power. Keep weaving from here." : "Cable tied. It lights once the chain reaches a powered relic.");
+            return true;
         }
         private static int CountConnections(WorldStateService state, string targetId)
         {

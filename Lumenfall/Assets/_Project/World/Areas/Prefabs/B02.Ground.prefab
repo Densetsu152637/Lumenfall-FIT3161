@@ -291,7 +291,7 @@ Transform:
   m_GameObject: {fileID: 368135597057073207}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15, y: 0, z: 3}
+  m_LocalPosition: {x: 14, y: 0, z: 3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -388,12 +388,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: circuit.stella.link
-  cell: {x: 15, y: 3}
+  cell: {x: 14, y: 3}
   size: {x: 1, y: 1}
   spellCompatible: 1
   tags:
   - weave
-  - weave-with:relic.stella.power
+  - circuit
+  - conductor
 --- !u!1 &432633003456574429
 GameObject:
   m_ObjectHideFlags: 0
@@ -7310,7 +7311,7 @@ Transform:
   m_GameObject: {fileID: 4386612126888928766}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10, y: 0, z: 3}
+  m_LocalPosition: {x: 11, y: 0, z: 3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7407,13 +7408,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldObjectRegistration
   objectId: relic.stella.power
-  cell: {x: 10, y: 3}
+  cell: {x: 11, y: 3}
   size: {x: 1, y: 1}
   spellCompatible: 1
   tags:
   - ampere
   - weave
-  - weave-with:circuit.stella.link
+  - circuit
 --- !u!1 &4444954153093771525
 GameObject:
   m_ObjectHideFlags: 0

@@ -148,6 +148,22 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, "stella_string_them_together", StringComparison.Ordinal))
+            {
+                if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
+                    StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string circuitHint, out Vector2Int circuitCell))
+                {
+                    hint = circuitHint;
+                    if (circuitCell != default)
+                    {
+                        string direction = DirectionToCell(circuitCell);
+                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                    }
+                }
+                else hint = "Return to Stella's room and weave power from her relic to all five board relics.";
+                return;
+            }
+
             if (selectedPuzzle == null || selectedPuzzle.targets == null)
             {
                 hint = string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal)
