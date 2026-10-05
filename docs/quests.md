@@ -34,4 +34,15 @@ Potential side content includes restoring power to the dormitory grid and locati
 
 ## Runtime puzzle targets
 
-The runtime target registry maps Stella’s two stable object IDs to `B02.Ground` (W02), Cinna’s trial and alignment targets plus Katrina’s keepsake to `campus` (C02/C03/C04), and Orio’s mechanism to `eastForest` (F04). First Light requires `relic.stella.power` to be powered; String Them Together requires that relic and `circuit.stella.link` to share their authored Weave connection; Out of Alignment requires `orientation.cinna.align` to be aligned; Cold Feet, Warm Idea requires `trial.cinna.ice` to be frozen at `(24,34)`; Patch Notes requires `mechanism.orio.rotate` to reach rotation 90; and Something Borrowed requires `keepsake.katrina.hidden` to be revealed at grid cell `(31,42)`. Each monitor waits until its quest is Active before triggering the existing completion event, so a solved object remains available when the player accepts the quest later.
+The runtime target registry maps the Stella Weave endpoints `relic.stella.power` and `circuit.stella.link` to `B02.Ground` (W02); First Light uses five additional IDs generated and registered by its runtime board. These are distinct sets of objects: String Them Together uses the two stable map-authored endpoints, while First Light uses its five generated toggle relics. Cinna’s trial and alignment targets and Katrina’s keepsake are on `campus` (C02/C03/C04), and Orio’s mechanism is on `westForest` (F04). First Light requires all five generated Stella toggle relics to be powered; String Them Together requires `relic.stella.power` to be powered and connected to `circuit.stella.link`; Out of Alignment requires `orientation.cinna.align` to be aligned; Cold Feet, Warm Idea requires `trial.cinna.ice` to be frozen at `(34,67)`; Patch Notes requires `mechanism.orio.rotate` to reach rotation 90; and Something Borrowed requires `keepsake.katrina.hidden` to be revealed at grid cell `(42,60)`. The quest-puzzle monitor evaluates its target only while that quest is Active; First Light’s custom board also emits the shared completion event when all five generated relics are powered.
+
+## Implementation trackers
+
+Detailed implementation and completion assessments are maintained separately for each quest:
+
+- [Stella: First Light](quest-implementation/stella-first-light.md)
+- [Stella: String Them Together](quest-implementation/stella-string-them-together.md)
+- [Cinna Cirra: Out of Alignment](quest-implementation/cinna-out-of-alignment.md)
+- [Cinna Cirra: Cold Feet, Warm Idea](quest-implementation/cinna-cold-feet-warm-idea.md)
+- [Orio: Patch Notes](quest-implementation/orio-patch-notes.md)
+- [Katrina: Something Borrowed](quest-implementation/katrina-something-borrowed.md)

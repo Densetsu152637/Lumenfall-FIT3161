@@ -7,7 +7,13 @@
       "completionEventId": "complete_stella_first_light",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "repaired_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true }
+        { "id": "all_generated_relics_lit", "objectIds": [
+          "stella.string-together.relic.1",
+          "stella.string-together.relic.2",
+          "stella.string-together.relic.3",
+          "stella.string-together.relic.4",
+          "stella.string-together.relic.5"
+        ], "requiredPowered": true }
       ]
     },
     {
@@ -16,8 +22,11 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredPowered": true, "requiredConnected": true, "requiredConnections": ["relic.stella.power|circuit.stella.link"], "minimumEffectivePower": 0.2 },
-        { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
+        { "id": "powered_source_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true },
+        { "id": "relic_to_circuit_link", "objectIds": [
+          "relic.stella.power",
+          "circuit.stella.link"
+        ], "requiredConnections": ["relic.stella.power|circuit.stella.link"] }
       ]
     },
     {
@@ -35,16 +44,7 @@
       "completionEventId": "complete_cinna_cold_feet_warm_idea",
       "mapId": "campus",
       "targets": [
-        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
-      ]
-    },
-    {
-      "id": "orio_patch_notes_monitor",
-      "questId": "orio_patch_notes",
-      "completionEventId": "complete_orio_patch_notes",
-      "mapId": "eastForest",
-      "targets": [
-        { "id": "rotara_mechanism", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
+        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 34, "requiredPositionY": 67 }
       ]
     },
     {
@@ -53,7 +53,7 @@
       "completionEventId": "complete_katrina_something_borrowed",
       "mapId": "campus",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 31, "requiredPositionY": 42 }
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 42, "requiredPositionY": 60 }
       ]
     }
   ]

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 
 namespace Lumenfall.GridMovement
 {
@@ -113,10 +114,10 @@ namespace Lumenfall.GridMovement
                 return;
             }
 
-            bool sprinting = activeSprintAction != null && activeSprintAction.IsPressed();
+            bool sprinting = ReadSprint();
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
 
-            Vector2Int direction = QuantiseDirection(activeMoveAction.ReadValue<Vector2>());
+            Vector2Int direction = QuantiseDirection(ReadMove());
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
@@ -148,7 +149,7 @@ namespace Lumenfall.GridMovement
 
             // Start the next tile in the completion frame so held movement has no
             // stop/start frame for the follow camera to expose as visible jitter.
-            Vector2Int direction = QuantiseDirection(activeMoveAction.ReadValue<Vector2>());
+            Vector2Int direction = QuantiseDirection(ReadMove());
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
@@ -156,7 +157,7 @@ namespace Lumenfall.GridMovement
             }
 
             heldDirection = direction;
-            bool sprinting = activeSprintAction != null && activeSprintAction.IsPressed();
+            bool sprinting = ReadSprint();
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
             TryMoveHeldDirection();
         }
@@ -167,6 +168,27 @@ namespace Lumenfall.GridMovement
             {
                 nextRepeatTime = Time.unscaledTime + repeatInterval;
             }
+        }
+
+        // Keyboard movement comes only from the player's key bindings, so a rebound key stops moving the player;
+        // the input actions still supply gamepad input.
+        private Vector2 ReadMove()
+        {
+            Vector2 keys = KeyBindings.MoveVector();
+            if (keys != Vector2.zero) return keys;
+            return IsKeyboardDriven(activeMoveAction) ? Vector2.zero : activeMoveAction.ReadValue<Vector2>();
+        }
+
+        private bool ReadSprint()
+        {
+            if (KeyBindings.IsPressed(GameAction.Sprint)) return true;
+            return activeSprintAction != null && !IsKeyboardDriven(activeSprintAction) && activeSprintAction.IsPressed();
+        }
+
+        private static bool IsKeyboardDriven(InputAction action)
+        {
+            InputControl control = action.activeControl;
+            return control != null && control.device is Keyboard;
         }
 
         private Vector2Int QuantiseDirection(Vector2 value)
