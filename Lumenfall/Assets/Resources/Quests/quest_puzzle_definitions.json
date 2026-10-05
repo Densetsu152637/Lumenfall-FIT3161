@@ -26,7 +26,7 @@
         { "id": "relic_to_circuit_link", "objectIds": [
           "relic.stella.power",
           "circuit.stella.link"
-        ], "requiredConnections": ["relic.stella.power|circuit.stella.link"] }
+        ], "requiredConnections": ["relic.stella.power|circuit.stella.link"], "minimumEffectivePower": 0.2 }
       ]
     },
     {

@@ -247,13 +247,14 @@
     {
       "id": "quest.stella.string-them-together",
       "objectIds": [
-        "relic.stella.power",
-        "circuit.stella.link"
+        "relic.stella.power"
       ],
+      "requiredPowered": true,
       "requiredConnected": true,
       "requiredConnections": [
         "relic.stella.power|circuit.stella.link"
-      ]
+      ],
+      "minimumEffectivePower": 0.2
     },
     {
       "id": "quest.cinna.out-of-alignment",
