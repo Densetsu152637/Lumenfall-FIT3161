@@ -97,9 +97,13 @@ namespace Lumenfall.Spells
 
             if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             {
-                string target = FindNearestTarget();
-                if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
-                else if (selectedSpell == SpellId.LostEchoes) SearchFeedback("No new trace within two cells. Search near Katrina's garden alcove.");
+                // Lost Echoes searches the area around the player, so it needs no target.
+                if (selectedSpell == SpellId.LostEchoes) CastLostEchoes();
+                else
+                {
+                    string target = FindNearestTarget();
+                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                }
                 CloseSpellWheel();
             }
 
@@ -205,6 +209,31 @@ namespace Lumenfall.Spells
             }
             GUI.Label(new Rect(center.x - 165f, center.y + 160f, 330f, 22f), "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism");
         }
+        /// <summary>
+        /// Casts Lost Echoes as an area search: every hidden, spell-compatible object within the interaction radius of
+        /// the caster is revealed. Any object authored with the <c>hidden</c> tag is a target, so it is not tied to a quest.
+        /// </summary>
+        public bool CastLostEchoes()
+        {
+            CloseSpellWheel();
+            if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
+            WorldStateService state = WorldStateService.Instance;
+            if (state == null || !state.IsReady) return false;
+            List<string> revealed = new List<string>();
+            RevealHiddenAroundPlayer(state, false, revealed);
+            foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
+            return revealed.Count > 0;
+        }
+        private int RevealHiddenAroundPlayer(WorldStateService state, bool targetAlreadyRevealed, List<string> revealed = null)
+        {
+            GridMover player = GetComponent<GridMover>();
+            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, interactionRadius, revealed);
+            SearchFeedback(found == 1 ? "An echo reveals something hidden nearby." :
+                found > 1 ? $"Echoes reveal {found} hidden things nearby." :
+                targetAlreadyRevealed ? "This spot is already revealed. Search somewhere else." :
+                $"No hidden traces within {interactionRadius} cells. Move closer and try again.");
+            return found;
+        }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)
         { if (!icons.TryGetValue(spell, out Texture2D icon)) icons[spell] = icon = Resources.Load<Texture2D>(GetIconResourcePath(spell)); return icon; }
@@ -230,11 +259,7 @@ namespace Lumenfall.Spells
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes:
-                    GridMover player = GetComponent<GridMover>();
-                    changed = player != null && state.TryRevealObject(targetId, player.CurrentCell, interactionRadius);
-                    SearchFeedback(changed ? "An echo reveals a hidden point nearby." :
-                        target.revealed ? "This point is already revealed. Search for another nearby trace." :
-                        "No trace here. Stand within two cells of a hidden Lost Echoes point.");
+                    changed = RevealHiddenAroundPlayer(state, target.revealed) > 0;
                     break;
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;

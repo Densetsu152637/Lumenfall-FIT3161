@@ -46,7 +46,7 @@ namespace Lumenfall.Tests.GameEvents
             state.RegisterObject("incompatible", incompatible, Cell, Vector2Int.one, false, EchoTags);
             state.EndMapRebuild();
             Assert.That(state.TryRevealObject(Keepsake, Cell + new Vector2Int(2, 1), 2), Is.False);
-            Assert.That(state.TryRevealObject("hidden-only", Cell, 2), Is.False);
+            Assert.That(state.TryRevealObject("hidden-only", Cell, 2), Is.True, "Lost Echoes reveals any hidden object, not only quest-tagged ones.");
             Assert.That(state.TryRevealObject("visible", Cell, 2), Is.False);
             Assert.That(state.TryRevealObject("incompatible", Cell, 2), Is.False);
             Assert.That(state.TryRevealObject(Keepsake, Cell + new Vector2Int(1, 1), 2), Is.True);
@@ -63,9 +63,24 @@ namespace Lumenfall.Tests.GameEvents
             SpellCaster caster = player.AddComponent<SpellCaster>();
             Runtime.SetFlag("spell.unlocked.LostEchoes", true); state.EndMapRebuild();
             Assert.That(caster.Cast(SpellId.LostEchoes, Keepsake, Vector2Int.up), Is.False);
-            Assert.That(caster.LastSearchFeedback, Does.Contain("within two cells"));
+            Assert.That(caster.LastSearchFeedback, Does.Contain("No hidden traces within 2 cells"));
             Assert.That(caster.Cast(SpellId.LostEchoes, "visible", Vector2Int.up), Is.False);
             Assert.That(state.TryGetObject(Keepsake, out WorldObjectSnapshot target) && target.revealed, Is.False);
+        }
+
+        [Test]
+        public void AreaSearchRevealsEveryHiddenObjectInRangeOnTheCurrentMapOnly()
+        {
+            Register("near", Cell + Vector2Int.right, new[] { "hidden" });
+            Register("edge", Cell + new Vector2Int(1, 1), EchoTags);
+            Register("far", Cell + new Vector2Int(2, 1), new[] { "hidden" });
+            Register("plain", Cell, null);
+            state.EndMapRebuild();
+            var revealed = new List<string>();
+            Assert.That(state.RevealHiddenAround(Cell, 2, revealed), Is.EqualTo(2));
+            Assert.That(revealed, Is.EquivalentTo(new[] { "near", "edge" }));
+            Assert.That(state.TryGetObject("far", out WorldObjectSnapshot far) && far.revealed, Is.False);
+            Assert.That(state.RevealHiddenAround(Cell, 2), Is.Zero, "Already revealed objects are not revealed twice.");
         }
 
         [Test]

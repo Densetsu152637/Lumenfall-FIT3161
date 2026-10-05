@@ -14,8 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.PortalContentAsset
   id: P.CAMPUS.RECESS
   area: {fileID: 11400000, guid: 53c679ec98be46b47bb4677a059d5bf3, type: 2}
-  cell: {x: 39, y: 49}
-  footprint: {x: 1, y: 1}
-  reserved: 0
+  disabled: 0
   destination: {fileID: 11400000, guid: 42f1409a7873441491c207fcaa1f0f1f, type: 2}
-  arrivalOffset: {x: 0, y: 0}

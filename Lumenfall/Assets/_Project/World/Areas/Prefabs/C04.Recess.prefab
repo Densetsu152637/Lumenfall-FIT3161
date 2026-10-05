@@ -44,4 +44,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55f36377360f4cfcb5310785fdd0b4e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Quests.KatrinaRecessRoom
-  katrinaAnimator: {fileID: 9100000, guid: 5197bd3e79eddcd4d9ac7756e90c423c, type: 2}

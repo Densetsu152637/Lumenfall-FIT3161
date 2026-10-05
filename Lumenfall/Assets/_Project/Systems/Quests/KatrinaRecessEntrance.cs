@@ -14,6 +14,8 @@ namespace Lumenfall.Quests
     {
         public const string PortalId = "P.CAMPUS.RECESS";
         private const string MapId = "campus";
+        // Portal content assets only describe connections; a GridPortal's cell is its transform position.
+        private static readonly Vector2Int EntranceCell = new Vector2Int(39, 49);
         private static readonly Color PortalColor = new Color(0.68f, 0.58f, 1f);
         private static KatrinaRecessEntrance instance;
 
@@ -105,12 +107,12 @@ namespace Lumenfall.Quests
                 }
                 ring = visual.transform;
             }
-            portal.Configure(content, world);
             // Sit the ring on the player's ground height so raised campus tiles cannot bury it.
             GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
             float elevation = input == null ? 0f : world.WorldToElevation(input.transform.position);
-            portalObject.transform.position = world.CellToWorld(content.cell, elevation + 0.03f);
-            if (!world.IsCellAvailable(content.cell)) Debug.LogWarning($"Recess entrance cell {content.cell} is blocked on campus.", this);
+            portalObject.transform.position = world.CellToWorld(EntranceCell, elevation + 0.03f);
+            portal.Configure(content, world);
+            if (!world.IsCellAvailable(EntranceCell)) Debug.LogWarning($"Recess entrance cell {EntranceCell} is blocked on campus.", this);
         }
     }
 }

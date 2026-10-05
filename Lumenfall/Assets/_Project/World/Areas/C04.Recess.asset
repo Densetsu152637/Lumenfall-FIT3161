@@ -68,7 +68,6 @@ MonoBehaviour:
       blocks: 0
       tags:
       - hidden
-      - lost-echoes
       compatibleWithSpells: 1
     - id: recess.planter.1
       prefab: {fileID: 0}
@@ -132,15 +131,7 @@ MonoBehaviour:
       requiredRotation: -1
       requiredPositionX: 12
       requiredPositionY: 9
-    portals:
-    - id: P.RECESS.CAMPUS
-      x: 7
-      y: 1
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 5c6583157f574a3ba761c6ce4fc0a078, type: 2}
-      arrivalOffset: {x: 0, y: 0}
-      reserved: 0
+    portals: []
   areaPrefab: {fileID: 4252721467926123666, guid: 1147a7632c714765a99d9561ca68854b, type: 3}
   portals:
   - {fileID: 11400000, guid: 42f1409a7873441491c207fcaa1f0f1f, type: 2}

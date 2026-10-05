@@ -101,11 +101,29 @@ namespace Lumenfall.Spells
         }
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
         { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
+        /// <summary>Lost Echoes is general purpose: any spell-compatible object authored with the <c>hidden</c> tag.</summary>
         public static bool IsLostEchoesTarget(WorldObjectSnapshot target)
         {
             return target != null && target.spellCompatible &&
-                Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "hidden", StringComparison.OrdinalIgnoreCase)) &&
-                Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "lost-echoes", StringComparison.OrdinalIgnoreCase));
+                Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "hidden", StringComparison.OrdinalIgnoreCase));
+        }
+        /// <summary>Reveals every unrevealed Lost Echoes target on the current map within a Manhattan radius.</summary>
+        public int RevealHiddenAround(Vector2Int searchCell, int radius, List<string> revealedIds = null)
+        {
+            if (!IsReady || radius < 0) return 0;
+            List<string> found = new List<string>();
+            foreach (WorldEntry entry in entries.Values)
+            {
+                WorldObjectSnapshot target = entry.state;
+                if (target == null || target.revealed || !IsLostEchoesTarget(target) ||
+                    !string.Equals(target.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase) ||
+                    Mathf.Abs(target.cell.x - searchCell.x) + Mathf.Abs(target.cell.y - searchCell.y) > radius) continue;
+                found.Add(target.id);
+            }
+            int count = 0;
+            foreach (string id in found)
+                if (SetProperty(id, value => value.revealed = true)) { count++; revealedIds?.Add(id); }
+            return count;
         }
         public bool TryRevealObject(string id, Vector2Int searchCell, int radius)
         {

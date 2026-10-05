@@ -51,7 +51,7 @@ namespace Lumenfall.Quests
             EnsureStyles();
 
             string body = runtime.GetFlag(KeepsakeFlag)
-                ? "You have the keepsake. Return it to Katrina in the garden recess."
+                ? "You have the keepsake. Return it to Katrina on campus."
                 : $"1. Press {KeyBindings.GetKeyLabel(GameAction.Spell7)} to select Lost Echoes " +
                   $"(or {KeyBindings.GetKeyLabel(GameAction.SpellWheel)} for the spell wheel).\n" +
                   "2. Stand within two cells of a hidden spot.\n" +

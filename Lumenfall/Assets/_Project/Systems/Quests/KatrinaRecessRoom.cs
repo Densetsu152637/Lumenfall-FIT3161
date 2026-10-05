@@ -8,17 +8,16 @@ using Lumenfall.Spells;
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Builds Katrina's garden recess (<c>C04.Recess</c>) from its area definition, places Katrina from the NPC
-    /// catalog, and registers the hidden keepsake. The landing stone is a two-way portal back to campus. It sits on
-    /// the area prefab root so registration runs inside the loader's map rebuild and saved reveal state is restored
-    /// like any other authored object.
+    /// Builds Katrina's garden recess (<c>C04.Recess</c>) from its area definition and registers its hidden objects
+    /// for Lost Echoes. Katrina herself stands on campus. The landing stone is a two-way portal back to campus. It
+    /// sits on the area prefab root so registration runs inside the loader's map rebuild and saved reveal state is
+    /// restored like any other authored object.
     /// </summary>
     public sealed class KatrinaRecessRoom : MonoBehaviour
     {
         public const string MapId = "C04.Recess";
         public const string ReturnPortalId = "P.RECESS.CAMPUS";
-        private const string KatrinaNpcId = "katrina";
-        private const string LostEchoesTag = "lost-echoes";
+        private const string HiddenTag = "hidden";
         private static readonly Color FloorColor = new Color(0.22f, 0.31f, 0.2f);
         private static readonly Color HedgeColor = new Color(0.15f, 0.36f, 0.19f);
         private static readonly Color PlanterColor = new Color(0.42f, 0.28f, 0.16f);
@@ -26,10 +25,7 @@ namespace Lumenfall.Quests
         private static readonly Color StoneColor = new Color(0.55f, 0.55f, 0.6f);
         private static readonly Color PortalColor = new Color(0.68f, 0.58f, 1f);
 
-        [Tooltip("Animator controller for Katrina's model, matching the campus Katarina placement.")]
-        [SerializeField] private RuntimeAnimatorController katrinaAnimator;
-
-        private readonly Dictionary<string, GameObject> echoObjects = new Dictionary<string, GameObject>(StringComparer.Ordinal);
+        private readonly Dictionary<string, GameObject> hiddenObjects = new Dictionary<string, GameObject>(StringComparer.Ordinal);
         private Transform geometry;
         private GameObject portalObject;
         private Transform ring;
@@ -43,7 +39,7 @@ namespace Lumenfall.Quests
             if (map == null || !string.Equals(map.id, MapId, StringComparison.OrdinalIgnoreCase)) return;
             world = FindAnyObjectByType<GridWorld>();
             if (world == null) return;
-            if (geometry == null) Build(map, loader.CurrentArea, loader.LoadedNpcs);
+            if (geometry == null) Build(map, loader.CurrentArea);
             RegisterEchoObjects(map);
         }
 
@@ -52,18 +48,18 @@ namespace Lumenfall.Quests
             if (ring != null && portalObject != null && portalObject.activeSelf) ring.Rotate(0f, 85f * Time.unscaledDeltaTime, 0f, Space.Self);
         }
 
-        // Spell-relevant objects (tagged lost-echoes) are registered each time the area activates so the loader's
+        // Hidden objects (any object tagged hidden) are registered each time the area activates so the loader's
         // pending save restore applies to them; blocking objects only need their GridObstacle.
         private void RegisterEchoObjects(MapDefinition map)
         {
             WorldStateService state = WorldStateService.Instance;
             if (state == null) return;
             foreach (MapObjectDefinition item in map.objects ?? Array.Empty<MapObjectDefinition>())
-                if (item != null && echoObjects.TryGetValue(item.id ?? string.Empty, out GameObject view))
+                if (item != null && hiddenObjects.TryGetValue(item.id ?? string.Empty, out GameObject view))
                     state.RegisterObject(item.id, view, new Vector2Int(item.x, item.y), new Vector2Int(Mathf.Max(1, item.width), Mathf.Max(1, item.height)), item.compatibleWithSpells, item.tags);
         }
 
-        private void Build(MapDefinition map, WorldAreaAsset area, NpcDatabaseDefinition npcs)
+        private void Build(MapDefinition map, WorldAreaAsset area)
         {
             geometry = new GameObject("Recess Geometry").transform;
             geometry.SetParent(transform, false);
@@ -81,17 +77,16 @@ namespace Lumenfall.Quests
                 if (item == null) continue;
                 Vector2Int cell = new Vector2Int(item.x, item.y);
                 Vector2Int footprint = new Vector2Int(Mathf.Max(1, item.width), Mathf.Max(1, item.height));
-                if (Array.Exists(item.tags ?? Array.Empty<string>(), tag => string.Equals(tag, LostEchoesTag, StringComparison.OrdinalIgnoreCase)))
-                    echoObjects[item.id] = BuildKeepsake(item.id, cell);
+                if (Array.Exists(item.tags ?? Array.Empty<string>(), tag => string.Equals(tag, HiddenTag, StringComparison.OrdinalIgnoreCase)))
+                    hiddenObjects[item.id] = BuildHiddenMarker(item.id, cell);
                 else if (item.blocks)
                     BuildPlanter(item.id, cell, footprint, size);
             }
 
-            BuildKatrina(npcs);
-
             PortalContentAsset content = FindPortal(area, ReturnPortalId);
             if (content == null) { Debug.LogError($"Missing authored portal content '{ReturnPortalId}'.", this); return; }
-            landingCell = content.cell;
+            // A GridPortal's cell is its transform position; the landing stone sits on the recess spawn cell.
+            landingCell = map.spawn != null ? new Vector2Int(map.spawn.x, map.spawn.y) : new Vector2Int(7, 1);
             Part(PrimitiveType.Cylinder, "Landing Stone", world.CellToWorld(landingCell, 0.02f), new Vector3(0.9f * size, 0.02f, 0.9f * size), StoneColor);
             // Built active inside the map rebuild so the loader finds it and suppresses re-entry on arrival.
             portalObject = new GameObject("Recess Return Portal");
@@ -105,30 +100,9 @@ namespace Lumenfall.Quests
             ring = visual.transform;
         }
 
-        // Katrina is spawned from her catalog record (Katarina model, cell, status-based dialogue) the way Orio's model
-        // carries a DynamicNpc in the forest area.
-        private void BuildKatrina(NpcDatabaseDefinition npcs)
+        private GameObject BuildHiddenMarker(string id, Vector2Int cell)
         {
-            NpcDefinition katrina = Array.Find(npcs?.npcs ?? Array.Empty<NpcDefinition>(), npc =>
-                npc != null && npc.id == KatrinaNpcId && string.Equals(npc.mapId, MapId, StringComparison.OrdinalIgnoreCase));
-            if (katrina == null || katrina.prefab == null) { Debug.LogError($"NPC catalog has no '{KatrinaNpcId}' record with a prefab for {MapId}.", this); return; }
-            Vector2Int cell = new Vector2Int(katrina.x, katrina.y);
-            GameObject npc = Instantiate(katrina.prefab, geometry);
-            npc.name = katrina.displayName;
-            npc.transform.position = world.CellToWorld(cell);
-            npc.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            Animator animator = npc.GetComponentInChildren<Animator>();
-            if (animator != null && katrinaAnimator != null) animator.runtimeAnimatorController = katrinaAnimator;
-            npc.AddComponent<DynamicNpc>().Configure(katrina, null);
-            GameObject blocker = new GameObject(katrina.displayName + " obstacle");
-            blocker.transform.SetParent(geometry, false);
-            blocker.transform.position = world.CellToWorld(cell);
-            blocker.AddComponent<GridObstacle>().Configure(world, Vector2Int.one);
-        }
-
-        private GameObject BuildKeepsake(string id, Vector2Int cell)
-        {
-            // A bare marker: the keepsake is picked up as soon as Lost Echoes finds it, so the spot keeps its unfound
+            // A bare marker: a hidden item is picked up as soon as Lost Echoes finds it, so the spot keeps its unfound
             // look and nothing appears on the map after the reveal.
             GameObject root = new GameObject(id);
             root.transform.SetParent(geometry, false);
