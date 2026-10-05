@@ -78,7 +78,14 @@ It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 It requires the same three Unity secrets described above. The Windows build cache
 is separate from the EditMode cache.
 
-After this workflow is merged, either:
+After this workflow is merged, it runs automatically on every push to `main`,
+including the merge that adds the workflow. A successful build creates a
+`main-<workflow-run-id>` prerelease with the runnable ZIP and checksum. Its tag
+points to the exact pushed commit. These prereleases do not replace the latest
+stable release, and rerunning the same workflow updates the same release assets.
+Each main push builds independently, so a newer push does not cancel an older one.
+
+You can also:
 
 - Push a version tag such as `v0.1.0` to build the tagged commit and automatically
   create a GitHub Release with generated notes. Tags containing a hyphen, such as
@@ -106,14 +113,17 @@ access releases; this repository is currently private.
 
 Every ZIP includes launch instructions, the repository license, and
 `build-info.json` with the source commit, triggering tag/ref, Unity version, and
-platform. Player version settings are preserved; changing the release tag does
-not change `PlayerSettings.bundleVersion`. Windows is the only bundled platform.
+platform. Main builds use their `main-<workflow-run-id>` identifier as the bundle
+version. All builds check out the exact event commit or release tag, even if the
+branch advances while the workflow is queued. Player version settings are
+preserved; changing the release tag does not change `PlayerSettings.bundleVersion`.
+Windows is the only bundled platform.
 
 Packaging fails before publication if the executable, engine DLL, scene data,
 managed assemblies, or Mono runtime are missing or empty. Successful bundles and
 available build logs are retained as workflow artifacts for 14 days. Releases keep
 their attached assets independently of that retention period. A failed build
-does not create a release on a tag push; an already-published release remains
+does not create a release on a main or tag push; an already-published release remains
 visible without the bundle until a successful rerun. Reruns replace the same
 named ZIP/checksum assets and preserve existing release notes.
 
