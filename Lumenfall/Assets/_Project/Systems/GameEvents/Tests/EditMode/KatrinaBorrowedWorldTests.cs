@@ -15,7 +15,8 @@ namespace Lumenfall.Tests.GameEvents
         private GridWorld grid;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
         private const string Keepsake = "keepsake.katrina.hidden";
-        private static readonly Vector2Int Cell = new Vector2Int(31, 42);
+        private static readonly Vector2Int Cell = new Vector2Int(12, 9);
+        private const string RecessMapId = "C04.Recess";
         private static readonly string[] EchoTags = { "hidden", "lost-echoes" };
 
         [SetUp]
@@ -133,7 +134,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             state.BeginMapRebuild("eastForest"); Register(Keepsake, Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
-            state.BeginMapRebuild("campus"); Register(Keepsake, Cell + Vector2Int.right, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
+            state.BeginMapRebuild(RecessMapId); Register(Keepsake, Cell + Vector2Int.right, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             state.SetProperty(Keepsake, value => value.cell = Cell);
             Runtime.ResetState(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

@@ -46,11 +46,11 @@
     {
       "id": "katrina_something_borrowed_monitor",
       "questId": "katrina_something_borrowed",
-      "completionEventId": "complete_katrina_something_borrowed",
+      "completionEventId": "found_katrina_keepsake",
       "successDialogueId": "katrina_keepsake_recovered",
-      "mapId": "campus",
+      "mapId": "C04.Recess",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 31, "requiredPositionY": 42 }
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 12, "requiredPositionY": 9 }
       ]
     }
   ]

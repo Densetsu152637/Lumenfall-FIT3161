@@ -259,11 +259,11 @@
     {
       "id": "katrina",
       "displayName": "Katrina",
-      "mapId": "campus",
+      "mapId": "C04.Recess",
       "asset": "NPCs/Elara.prefab",
-      "x": 40,
-      "y": 68,
-      "layerSymbol": "k",
+      "x": 9,
+      "y": 2,
+      "layerSymbol": "",
       "dialogue": [
         {
           "dialogueId": "katrina_something_borrowed_dialogue",

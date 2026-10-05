@@ -197,20 +197,6 @@ MonoBehaviour:
       tags:
       - rotara
       compatibleWithSpells: 1
-    - id: keepsake.katrina.hidden
-      prefab: {fileID: 0}
-      type: keepsake
-      x: 42
-      y: 60
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 90
-      blocks: 0
-      tags:
-      - hidden
-      - lost-echoes
-      compatibleWithSpells: 1
     puzzleTargets:
     - id: quest.stella.first-light
       objectIds:
@@ -279,20 +265,15 @@ MonoBehaviour:
       requiredRotation: 180
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
-    - id: quest.katrina.something-borrowed
-      objectIds:
-      - keepsake.katrina.hidden
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 1
-      requiredFrozen: 0
-      requiredAligned: 0
-      requiredRotation: -1
-      requiredPositionX: 31
-      requiredPositionY: 42
     portals:
+    - id: P.CAMPUS.RECESS
+      x: 39
+      y: 49
+      width: 1
+      height: 1
+      destination: {fileID: 11400000, guid: 42f1409a7873441491c207fcaa1f0f1f, type: 2}
+      arrivalOffset: {x: 0, y: 0}
+      reserved: 0
     - id: P.A01.C01
       x: 35
       y: 41
@@ -502,3 +483,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e915cf0b38ae93d48b7e939a25f79ab4, type: 2}
   - {fileID: 11400000, guid: ea2cb3ab9a2f7654cba69c0a4119fc8b, type: 2}
   - {fileID: 11400000, guid: 2be54a9befd2bc74d977c47039777a07, type: 2}
+  - {fileID: 11400000, guid: 5c6583157f574a3ba761c6ce4fc0a078, type: 2}

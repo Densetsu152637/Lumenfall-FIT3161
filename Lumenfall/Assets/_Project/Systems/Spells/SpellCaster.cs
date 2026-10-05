@@ -24,6 +24,7 @@ namespace Lumenfall.Spells
         private GameEventRuntime subscribedRuntime;
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
+        private const string SpellLessonFlagPrefix = "spell.lesson.";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
@@ -126,10 +127,16 @@ namespace Lumenfall.Spells
             }
         }
         public bool IsSpellUnlocked(SpellId spell) { return Array.IndexOf(AvailableSpells, spell) >= 0; }
+        /// <summary>True once the spell is permanently learned; lesson-only access during its quest does not count.</summary>
+        public bool IsSpellLearned(SpellId spell)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            return IsSpellUnlocked(spell) && runtime != null && runtime.GetFlag(SpellFlagPrefix + spell);
+        }
         private bool IsProgressionUnlocked(SpellId spell)
         {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            return runtime != null && runtime.GetFlag(SpellFlagPrefix + spell);
+            return runtime != null && (runtime.GetFlag(SpellFlagPrefix + spell) || runtime.GetFlag(SpellLessonFlagPrefix + spell));
         }
 
         private void SelectSpell(SpellId spell)

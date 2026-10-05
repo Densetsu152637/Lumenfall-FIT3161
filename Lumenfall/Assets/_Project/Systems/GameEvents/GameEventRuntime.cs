@@ -411,7 +411,11 @@ namespace Lumenfall.GameEvents
 
             ActiveDialogue = null;
             if (session.IsCompleted && LessonRequirementsMet(session.Definition.metadata))
+            {
                 GrantSpellRewards(session.Definition.metadata);
+                // A lesson-only spell can be cast during its quest but is not learned until the quest completes.
+                GrantSpellFlags(session.Definition.metadata, "spellLesson", "spell.lesson.");
+            }
             DialogueEnded?.Invoke(session);
         }
 
@@ -440,13 +444,18 @@ namespace Lumenfall.GameEvents
 
         private void GrantSpellRewards(GameMetadataEntry[] metadata)
         {
+            GrantSpellFlags(metadata, "spellReward", "spell.unlocked.");
+        }
+
+        private void GrantSpellFlags(GameMetadataEntry[] metadata, string metadataKey, string flagPrefix)
+        {
             // GameEvents stays independent of the runtime spell assembly; flags are the existing
             // progression contract. Only canonical spell IDs are accepted, including case variants.
             string[] spellIds = { "Ampere", "Weave", "Gravitate", "Rotara", "Glaciate", "Vis", "LostEchoes" };
-            foreach (string reward in (MetadataValue(metadata, "spellReward") ?? string.Empty).Split(',', ';'))
+            foreach (string reward in (MetadataValue(metadata, metadataKey) ?? string.Empty).Split(',', ';'))
                 foreach (string spell in spellIds)
                     if (string.Equals(reward.Trim(), spell, StringComparison.OrdinalIgnoreCase))
-                        SetFlag("spell.unlocked." + spell, true);
+                        SetFlag(flagPrefix + spell, true);
         }
 
         private static string MetadataValue(GameMetadataEntry[] metadata, string key)

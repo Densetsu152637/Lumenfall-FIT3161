@@ -104,7 +104,6 @@ namespace Lumenfall.Inventory
             subscribedRuntime.DialogueStarted -= OnDialogueStarted;
             subscribedRuntime.StateRestored -= OnStateRestored;
             subscribedRuntime.DialogueEnded -= OnDialogueEnded;
-            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
             subscribedRuntime = null;
         }
 
@@ -219,7 +218,7 @@ namespace Lumenfall.Inventory
             bool spellsShown = false;
             foreach (SpellId spell in (SpellId[])Enum.GetValues(typeof(SpellId)))
             {
-                if (caster == null || !caster.IsSpellUnlocked(spell)) continue;
+                if (caster == null || !caster.IsSpellLearned(spell)) continue;
                 spellsShown = true;
                 GUILayout.BeginHorizontal(GUILayout.Height(42f));
                 Texture2D icon = Resources.Load<Texture2D>(SpellCaster.GetIconResourcePath(spell));

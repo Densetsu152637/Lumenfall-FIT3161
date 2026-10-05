@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Lumenfall.GameEvents;
 using NUnit.Framework;
 using UnityEngine;
@@ -10,6 +11,7 @@ namespace Lumenfall.Tests.GameEvents
         private const string Quest = "katrina_something_borrowed";
         private const string Item = "inventory.keyitem.katrina-keepsake";
         private const string Spell = "spell.unlocked.LostEchoes";
+        private const string Lesson = "spell.lesson.LostEchoes";
 
         [Test]
         public void LessonRequiresTerminalContinueAndActiveQuest()
@@ -28,8 +30,28 @@ namespace Lumenfall.Tests.GameEvents
             session = runtime.StartDialogue(Quest + "_dialogue");
             session.SelectChoice("active");
             Assert.That(session.Continue(), Is.True);
-            Assert.That(runtime.GetFlag(Spell), Is.True);
+            Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson lends Lost Echoes for the search.");
+            Assert.That(runtime.GetFlag(Spell), Is.False, "Lost Echoes is only learned when the quest completes.");
             Assert.That(runtime.GetFlag(Item), Is.False, "Teaching cannot recover the item.");
+        }
+
+        [Test]
+        public void FindingMarksKeepsakeCarriedAndReturningItCompletesAndTeaches()
+        {
+            GameEventRuntime runtime = AuthoredRuntime();
+            runtime.StartQuest(Quest);
+            DialogueSession session = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(session.AvailableChoices.Any(c => c.id == "report"), Is.False, "Nothing to return yet.");
+            session.End();
+            Assert.That(runtime.TriggerEvent("found_katrina_keepsake").Succeeded, Is.True);
+            Assert.That(runtime.GetFlag(Item), Is.True);
+            Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active), "Finding is not completion.");
+            Assert.That(runtime.GetFlag(Spell), Is.False);
+            session = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(session.AvailableChoices.Any(c => c.id == "active"), Is.False);
+            session.SelectChoice("report");
+            Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
+            Assert.That(runtime.GetFlag(Spell), Is.True, "Returning the keepsake teaches Lost Echoes.");
         }
 
         [Test]

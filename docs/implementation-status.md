@@ -68,7 +68,7 @@ The quest registry currently contains these six main quests and monitor targets:
 | Cinna Cirra: Out of Alignment | `campus`, `orientation.cinna.align` | Vis | Decide object category and alignment rule, implement readable success/failure feedback. |
 | Cinna Cirra: Cold Feet, Warm Idea | `campus`, `trial.cinna.ice` | Glaciate | Build bounded slide lane and trap order, test reset and safe exit. |
 | Orio: Patch Notes | `westForest`, `mechanism.orio.rotate` | Rotara | Author final mechanism configuration and rotation presentation. |
-| Katrina: Something Borrowed | `campus`, `keepsake.katrina.hidden` | Lost Echoes | Decide keepsake identity/family history and local search/reveal feedback. |
+| Katrina: Something Borrowed | `C04.Recess` (entered from campus `(39,49)`), `keepsake.katrina.hidden` | Lost Echoes | Decide keepsake identity/family history and local search/reveal feedback. |
 
 `docs/quests.md`, `docs/spells.md`, and `docs/npc-dialogue.md` explicitly leave several of those details unresolved. Do not turn those prose concepts into hard requirements until the design decision is recorded. The dialogue package intentionally starts quests but does not complete them; the puzzle monitor must complete them after a successful target evaluation.
 

@@ -11,7 +11,7 @@ assert doc["schemaVersion"] == 1
 quests = {q["id"]: q for q in doc["quests"]}
 dialogues = {d["id"]: d for d in doc["dialogues"]}
 events = {e["id"]: e for e in doc["events"]}
-assert len(quests) == 6 and len(dialogues) >= 15 and len(events) == 9
+assert len(quests) == 6 and len(dialogues) >= 15 and len(events) == 10
 assert len(quests) == len(doc["quests"]) and len(dialogues) == len(doc["dialogues"])
 
 for qid in quests:
@@ -30,6 +30,13 @@ for qid in quests:
         expected.append({"type": "OrioMechanismAligned", "key": "mechanism.orio.rotate"})
     assert ev["conditions"] == expected
     assert ev["actions"] == [{"type": "CompleteQuest", "key": qid}]
+
+# Katrina's keepsake is carried back: the reveal only marks it found, and returning it completes the quest.
+found = events["found_katrina_keepsake"]
+assert found["conditions"] == [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Active"}]
+assert found["actions"] == [{"type": "SetFlag", "key": "inventory.keyitem.katrina-keepsake", "boolValue": True}]
+katrina_choices = {c["id"]: c for c in dialogues["katrina_something_borrowed_dialogue"]["nodes"][0]["choices"]}
+assert katrina_choices["report"]["actions"] == [{"type": "TriggerEvent", "key": "complete_katrina_something_borrowed"}]
 
 assert dialogues["stella_string_them_together_dialogue"]["nodes"][0]["choices"][0]["conditions"][0] == {"type": "QuestStatus", "key": "stella_first_light", "value": "Completed"}
 assert dialogues["cinna_cold_feet_warm_idea_dialogue"]["nodes"][0]["choices"][0]["conditions"][0] == {"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Completed"}
