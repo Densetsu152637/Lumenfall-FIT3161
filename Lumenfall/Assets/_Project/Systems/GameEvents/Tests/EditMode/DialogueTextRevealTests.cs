@@ -22,6 +22,41 @@ namespace Lumenfall.GameEvents.Tests
         }
 
         [Test]
+        public void AttributedTagsStayBalancedAtEveryPartialBoundary()
+        {
+            const string text = "<b><color=#f00>red</color></b> next";
+            string[] expected =
+            {
+                "",
+                "<b><color=#f00>r</color></b>",
+                "<b><color=#f00>re</color></b>",
+                "<b><color=#f00>red</color></b>",
+                "<b><color=#f00>red</color></b> "
+            };
+
+            for (int visibleCharacters = 0; visibleCharacters < expected.Length; visibleCharacters++)
+            {
+                Assert.That(
+                    DialogueTextReveal.Reveal(text, visibleCharacters),
+                    Is.EqualTo(expected[visibleCharacters]),
+                    "Unexpected output after revealing " + visibleCharacters + " characters.");
+            }
+
+            Assert.That(
+                DialogueTextReveal.Reveal(text, DialogueTextReveal.VisibleCharacterCount(text)),
+                Is.EqualTo(text));
+        }
+
+        [TestCase("<color=#f00>red</color><br/>")]
+        [TestCase("Text<b></b>")]
+        public void FullRevealPreservesTrailingMarkup(string text)
+        {
+            int total = DialogueTextReveal.VisibleCharacterCount(text);
+            Assert.That(DialogueTextReveal.Reveal(text, total), Is.EqualTo(text));
+            Assert.That(DialogueTextReveal.Reveal(text, total + 100), Is.EqualTo(text));
+        }
+
+        [Test]
         public void EmptyAndFullRevealAreStable()
         {
             const string text = "Hello";
