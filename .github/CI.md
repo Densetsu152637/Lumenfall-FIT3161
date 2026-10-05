@@ -14,6 +14,14 @@ The workflow contains two checks:
    `Lumenfall/Assets/_Project/Systems/*/Tests` with GameCI and uploads the XML test
    results for 14 days.
 
+Both Unity jobs first print the runner's available disk space, then reclaim space on
+the disposable GitHub-hosted Ubuntu runner by removing unrelated preinstalled .NET,
+Android, GHC, ghcup, and CodeQL SDKs and unused Docker images. They fail closed on
+self-hosted runners. The step leaves the workspace and cached Unity `Library` intact;
+the Unity toolchain is provided by GameCI. If extraction runs out of space again,
+compare the before and after `df -h /` diagnostics in the job log. Unity tests still
+run and continue to fail when the required license secrets are missing.
+
 ## One-time Unity license setup
 
 The Unity job deliberately fails rather than silently skipping tests when licensing is
