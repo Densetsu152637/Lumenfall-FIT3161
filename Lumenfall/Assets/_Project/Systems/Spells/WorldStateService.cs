@@ -23,6 +23,11 @@ namespace Lumenfall.Spells
     public sealed class WorldStateService : MonoBehaviour, ISaveStateProvider
     {
         public static WorldStateService Instance { get; private set; }
+        /// Cables weaker than this are refused, and conductors cannot draw power through them.
+        public const float MinimumCableStrength = 0.2f;
+        /// Objects with this tag hold no charge of their own: they are powered only while a chain of live cables
+        /// links them to a powered object without the tag, so Ampere and direct power changes do not stick.
+        public const string ConductorTag = "conductor";
         private readonly Dictionary<string, WorldEntry> entries = new Dictionary<string, WorldEntry>(StringComparer.Ordinal);
         // Area prefabs are cached and reused by the loader; enabled flags survive entry rebuilds.
         private readonly Dictionary<Renderer, bool> authoredRendererStates = new Dictionary<Renderer, bool>();
@@ -85,15 +90,34 @@ namespace Lumenfall.Spells
         }
         public bool TryGetObject(string id, out WorldObjectSnapshot snapshot) { if (entries.TryGetValue(id ?? string.Empty, out WorldEntry item)) { snapshot = Clone(item.state); return true; } snapshot = null; return false; }
         public WorldObjectSnapshot[] SnapshotObjects() { var result = new WorldObjectSnapshot[entries.Count]; int i = 0; foreach (WorldEntry e in entries.Values) result[i++] = Clone(e.state); return result; }
+        public bool TryGetSceneObject(string id, out GameObject sceneObject) { sceneObject = entries.TryGetValue(id ?? string.Empty, out WorldEntry item) ? item.sceneObject : null; return sceneObject != null; }
+        /// Connection keys use the "a|b" form that puzzle targets declare in requiredConnections.
+        public string[] SnapshotConnections() => new List<string>(connections).ToArray();
         public bool IsConnected(string a, string b) => connections.Contains(ConnectionKey(a, b));
-        public float GetConnectionStrength(string a, string b) { connectionStrengths.TryGetValue(ConnectionKey(a, b), out float value); return value; }
+        /// Cable strength follows live endpoint positions, including after movement and save restore.
+        public float GetConnectionStrength(string a, string b)
+        {
+            if (!IsConnected(a, b) || !entries.TryGetValue(a ?? string.Empty, out WorldEntry first) || !entries.TryGetValue(b ?? string.Empty, out WorldEntry second)) return 0f;
+            return 1f / (1f + Vector2Int.Distance(first.state.cell, second.state.cell));
+        }
+        public float GetConnectionEffectivePower(string a, string b)
+        {
+            if (!TryGetObject(a, out WorldObjectSnapshot first) || !TryGetObject(b, out WorldObjectSnapshot second) || (!first.powered && !second.powered)) return 0f;
+            return GetConnectionStrength(a, b);
+        }
+        public bool RemoveConnection(string a, string b)
+        {
+            string key = ConnectionKey(a, b);
+            if (!connections.Remove(key)) return false;
+            connectionStrengths.Remove(key); NotifyChanged(); return true;
+        }
         public bool EvaluatePuzzleTarget(PuzzleTargetDefinition target)
         {
             if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
             foreach (string requiredConnection in target.requiredConnections ?? Array.Empty<string>())
             {
                 string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
-                if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1])) return false;
+                if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1]) || GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
             }
             bool any = false, all = true;
             foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(s.rotation) % 360 == target.requiredRotation % 360) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
@@ -134,6 +158,7 @@ namespace Lumenfall.Spells
             return SetProperty(id, value => value.revealed = true);
         }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
+        public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < MinimumCableStrength) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
         public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
         public bool AcknowledgeEffect(string key) => pendingEffects.Remove(key);
         public bool TryMoveObject(string id, Vector2Int direction)
@@ -166,7 +191,30 @@ namespace Lumenfall.Spells
                     entry.renderers[i].enabled = entry.rendererEnabledStates[i] && entry.state.revealed;
         }
         private bool IsConnectedToAny(string id) { foreach (string key in connections) if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal)) return true; return false; }
-        private void NotifyChanged() { if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
+        public static bool IsConductor(WorldObjectSnapshot item) => item != null && Array.Exists(item.tags ?? Array.Empty<string>(), tag => string.Equals(tag, ConductorTag, StringComparison.OrdinalIgnoreCase));
+        private void PropagateConductorPower()
+        {
+            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal);
+            Queue<string> frontier = new Queue<string>();
+            foreach (KeyValuePair<string, WorldEntry> pair in entries)
+                if (pair.Value.state.powered && !IsConductor(pair.Value.state)) { reached.Add(pair.Key); frontier.Enqueue(pair.Key); }
+            while (frontier.Count > 0)
+            {
+                string current = frontier.Dequeue();
+                foreach (string key in connections)
+                {
+                    int split = key.IndexOf('|');
+                    string other = key.Substring(0, split) == current ? key.Substring(split + 1) : key.Substring(split + 1) == current ? key.Substring(0, split) : null;
+                    // Power only continues through conductors; a dark ordinary relic breaks the chain.
+                    if (other == null || reached.Contains(other) || !entries.TryGetValue(other, out WorldEntry next) || !IsConductor(next.state) ||
+                        GetConnectionStrength(current, other) < MinimumCableStrength) continue;
+                    reached.Add(other); frontier.Enqueue(other);
+                }
+            }
+            foreach (KeyValuePair<string, WorldEntry> pair in entries)
+                if (IsConductor(pair.Value.state)) pair.Value.state.powered = reached.Contains(pair.Key);
+        }
+        private void NotifyChanged() { PropagateConductorPower(); if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
         private MapStateSnapshot CaptureSnapshot() { return new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths() }; }
         private float[] CaptureConnectionStrengths() { float[] values = new float[connections.Count]; int i = 0; foreach (string key in connections) values[i++] = connectionStrengths.TryGetValue(key, out float value) ? value : 1f; return values; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;

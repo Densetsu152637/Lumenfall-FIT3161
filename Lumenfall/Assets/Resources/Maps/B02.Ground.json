@@ -144,24 +144,25 @@
     {
       "id": "relic.stella.power",
       "type": "relic",
-      "x": 10,
+      "x": 11,
       "y": 3,
       "blocks": false,
       "tags": [
         "ampere",
         "weave",
-        "weave-with:circuit.stella.link"
+        "circuit"
       ]
     },
     {
       "id": "circuit.stella.link",
       "type": "relic",
-      "x": 15,
+      "x": 14,
       "y": 3,
       "blocks": false,
       "tags": [
         "weave",
-        "weave-with:relic.stella.power"
+        "circuit",
+        "conductor"
       ]
     }
   ],
@@ -176,13 +177,13 @@
     {
       "id": "quest.stella.string-them-together",
       "objectIds": [
-        "relic.stella.power",
-        "circuit.stella.link"
+        "stella.string-together.relic.1",
+        "stella.string-together.relic.2",
+        "stella.string-together.relic.3",
+        "stella.string-together.relic.4",
+        "stella.string-together.relic.5"
       ],
-      "requiredConnected": true,
-      "requiredConnections": [
-        "relic.stella.power|circuit.stella.link"
-      ]
+      "requiredPowered": true
     }
   ],
   "portals": [

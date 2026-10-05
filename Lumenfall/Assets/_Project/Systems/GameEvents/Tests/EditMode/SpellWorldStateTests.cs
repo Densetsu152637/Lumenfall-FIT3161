@@ -55,7 +55,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance()
+        public void StellaCircuitMonitorRequiresAllBoardRelicsLitThroughWovenCablesAfterAcceptance()
         {
             GameEventManager manager = GameEventManager.Instance;
             GameEventRuntime runtime = manager.Runtime;
@@ -73,10 +73,12 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(monitor, Is.Not.Null);
                 state.BeginMapRebuild("B02.Ground");
                 RunPuzzleMonitor(monitor);
-                Register("relic.stella.power", new Vector2Int(3, 4), Vector2Int.one,
-                    new[] { "weave-with:circuit.stella.link" });
-                Register("circuit.stella.link", new Vector2Int(6, 4), Vector2Int.one,
-                    new[] { "weave-with:relic.stella.power" });
+                string[] conductor = { "weave", "circuit", WorldStateService.ConductorTag };
+                Register("relic.stella.power", new Vector2Int(1, 4), Vector2Int.one, new[] { "ampere", "weave", "circuit" });
+                Register("circuit.stella.link", new Vector2Int(4, 4), Vector2Int.one, conductor);
+                // Five board relics in a loop of three-tile hops from the workbench link.
+                Vector2Int[] board = { new Vector2Int(7, 4), new Vector2Int(10, 4), new Vector2Int(10, 7), new Vector2Int(7, 7), new Vector2Int(4, 7) };
+                for (int i = 0; i < board.Length; i++) Register("stella.string-together.relic." + (i + 1), board[i], Vector2Int.one, conductor);
                 state.EndMapRebuild();
                 SpellCaster caster = created[1].AddComponent<SpellCaster>();
                 EditModeLifecycle.Call(caster, "OnEnable");
@@ -96,21 +98,19 @@ namespace Lumenfall.Tests.GameEvents
 
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
-                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.False,
-                    "Weave cannot connect the board while its source relic is dark.");
-                RunPuzzleMonitor(monitor);
-                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
-
-                Assert.That(caster.Cast(SpellId.Ampere, "circuit.stella.link", Vector2Int.right), Is.True);
-                Assert.That(caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.right), Is.True,
-                    "The dark source can connect to its powered partner.");
+                Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.right), Is.False,
+                    "Board relics only take power through Weave cables.");
+                caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.right);
+                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.True);
+                for (int i = 0; i < board.Length; i++)
+                    Assert.That(caster.Cast(SpellId.Weave, "stella.string-together.relic." + (i + 1), Vector2Int.right), Is.True, "relic " + (i + 1));
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active),
-                    "A valid connection must not complete the quest while the source relic is dark.");
+                    "A woven board must not complete the quest while the source relic is dark.");
 
                 Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
                 RunPuzzleMonitor(monitor);
-                Assert.That(state.IsConnected("relic.stella.power", "circuit.stella.link"), Is.True);
+                Assert.That(state.TryGetObject("stella.string-together.relic.5", out WorldObjectSnapshot last) && last.powered, Is.True);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             }
             finally

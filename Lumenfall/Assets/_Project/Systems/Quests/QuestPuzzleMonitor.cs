@@ -43,6 +43,8 @@ namespace Lumenfall.Quests
     {
         public string id;
         public string[] objectIds = Array.Empty<string>();
+        public string[] requiredConnections = Array.Empty<string>();
+        public float minimumEffectivePower;
         public string conditionMode = "All";
         public bool requiredPowered;
         public bool requiredConnected;
@@ -52,7 +54,6 @@ namespace Lumenfall.Quests
         public int requiredRotation = -1;
         public int requiredPositionX = int.MinValue;
         public int requiredPositionY = int.MinValue;
-        public string[] requiredConnections = Array.Empty<string>();
     }
 
     /// <summary>
@@ -156,7 +157,8 @@ namespace Lumenfall.Quests
                 {
                     string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
                     if (endpoints.Length != 2 || string.IsNullOrWhiteSpace(endpoints[0]) || string.IsNullOrWhiteSpace(endpoints[1]) ||
-                        !state.IsConnected(endpoints[0], endpoints[1])) return false;
+                        !state.IsConnected(endpoints[0], endpoints[1]) ||
+                        state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
                 }
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;

@@ -22,11 +22,7 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "powered_source_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true },
-        { "id": "relic_to_circuit_link", "objectIds": [
-          "relic.stella.power",
-          "circuit.stella.link"
-        ], "requiredConnections": ["relic.stella.power|circuit.stella.link"] }
+        { "id": "board_relics_lit", "objectIds": ["stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5"], "requiredPowered": true }
       ]
     },
     {
