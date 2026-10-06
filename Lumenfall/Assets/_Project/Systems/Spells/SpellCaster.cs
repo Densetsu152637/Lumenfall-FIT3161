@@ -27,6 +27,7 @@ namespace Lumenfall.Spells
         private const string SpellFlagPrefix = "spell.unlocked.";
         private const string SpellLessonFlagPrefix = "spell.lesson.";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
+        private readonly SpellWheelView wheelView = new SpellWheelView();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
@@ -169,6 +170,7 @@ namespace Lumenfall.Spells
         {
             if (spellWheelOpen || InputBlockedByOverlay || AvailableSpells.Length == 0) return;
             spellWheelOpen = true;
+            wheelView.Open();
             wheelMovementLockOwned = true;
             GetComponent<GridMover>()?.SetMovementLocked(true);
         }
@@ -179,6 +181,7 @@ namespace Lumenfall.Spells
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
+            wheelView.Close();
             // The inventory may have taken ownership of the same movement lock earlier
             // in this frame. Release only the lock owned by the wheel in that case.
             if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
@@ -188,34 +191,19 @@ namespace Lumenfall.Spells
         }
         private void OnDisable()
         { UnsubscribeProgression(); CloseSpellWheel(); }
+        private void OnDestroy() { wheelView.Dispose(); }
 
         private void OnGUI()
         {
             if (InputBlockedByOverlay) return;
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
                 GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
-            if (!spellWheelOpen) return;
+            if (!wheelView.Visible) return;
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
-
-            float radius = 112f;
-            Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            GUI.Box(new Rect(center.x - 155f, center.y - 155f, 310f, 310f), "Spell wheel");
-            GUI.Box(new Rect(center.x - 48f, center.y - 18f, 96f, 36f), selectedSpell.ToString());
-            for (int i = 0; i < spells.Length; i++)
-            {
-                float angle = i * Mathf.PI * 2f / spells.Length - Mathf.PI * 0.5f;
-                Vector2 position = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                Rect item = new Rect(position.x - 52f, position.y - 16f, 104f, 32f);
-                Color previous = GUI.color;
-                GUI.color = spells[i] == selectedSpell ? new Color(0.55f, 1f, 0.65f, 1f) : Color.white;
-                if (GUI.Button(item, string.Empty)) { selectedSpell = spells[i]; GUI.color = previous; CloseSpellWheel(); return; }
-                Texture2D icon = LoadIcon(spells[i]);
-                if (icon != null) GUI.DrawTexture(new Rect(item.x + 4f, item.y + 3f, 26f, 26f), icon, ScaleMode.ScaleToFit, true);
-                GUI.Label(new Rect(item.x + 34f, item.y + 7f, item.width - 36f, 22f), spells[i].ToString());
-                GUI.color = previous;
-            }
-            GUI.Label(new Rect(center.x - 165f, center.y + 160f, 330f, 22f), "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism");
+            string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click: cast   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
+            SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon, hint);
+            if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(); }
         }
         /// <summary>
         /// Casts Lost Echoes as an area search: every hidden, spell-compatible object within the interaction radius of
