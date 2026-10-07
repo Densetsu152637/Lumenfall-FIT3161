@@ -5,14 +5,19 @@ visible below it, while every `GridPlayerInput` component is disabled until Star
 Load closes the menu. This keeps the backdrop useful for orientation without allowing movement or
 portal interaction through the menu.
 
-The menu uses the three slots `save-1`, `save-2`, and `save-3`. On first launch it reloads the
-event definitions and creates a blank seed in the first available slot. On later launches the
-newest valid slot is loaded as the backdrop. A separate `last-played.json` marker takes precedence
-when valid, while save timestamps provide recovery when the marker is absent or invalid. Start
-reuses the blank seed or selects the first empty slot.
+The menu has one dedicated `autosave` slot and three manual snapshot slots: `save-1`, `save-2`,
+and `save-3`. Autosave is the active writable slot throughout play, including after loading a
+manual snapshot. The existing `save-*` files remain in place when upgrading; if no autosave exists,
+the most recently played valid legacy slot is loaded and copied into `autosave` while remaining
+available as a manual save. On a fresh profile no placeholder save is created. Starting a new game
+overwrites an existing autosave only after a second Start press confirms it.
 
-If all three slots are occupied, the first Start press asks for an explicit second Start press
-before replacing slot 1. The overlay also disables active dialogue overlays while it is visible,
+The Load page shows an Autosave card plus three Manual Slot cards, with no save actions. A separate
+Save page is available from the main menu and contains the three manual cards; saving an occupied
+manual slot requires a second confirmation. Loading a manual slot restores its state, copies that
+state into `autosave`, and continues with autosave active. Loading Autosave simply continues the
+current autosave. The overlay also disables
+active dialogue overlays while it is visible,
 so dialogue choices cannot be selected behind the menu.
 
 Button sheets are authored in `Assets/2D` and copied into `Resources/StartupButtons` for player
@@ -47,9 +52,10 @@ Start and a successful Load dissolve the panel into light. The backdrop fades ou
 eases back to its follow pose over `CloseSeconds` (1.3 seconds). Only then is the menu destroyed
 and input restored.
 
-Escape and the BACK buttons share one route: Load and Settings return to the main page, and
-Controls returns to Settings. While a key is being rebound, Escape only cancels the rebind. On the
-main page, Up/Down (or W/S) select an option and Enter or Space activates it.
+Escape opens the startup menu during gameplay and saves the current state first. With the menu
+open, Escape returns from Load and Settings to the main page, and from Controls to Settings; from
+the main page it closes the menu and resumes gameplay. While a key is being rebound, Escape only
+cancels the rebind. On the main page, Up/Down (or W/S) select an option and Enter or Space activates it.
 
 ## Presentation
 
@@ -105,12 +111,14 @@ changes what the card shows.
 | --- | --- |
 | Location | The loaded map's name (`westForest` is `West Forest`, `B04.Ground` is `Sirius Dormitory`, and so on), refined by the smallest named map region containing the player. Code-like region names such as `S03` are ignored. |
 | Quest | `quest` holds the first active quest in `QuestHintOverlay.QuestOrder`, or `A new term begins`, `Between quests` or `Every quest complete`. `questsDone` and `questsTotal` hold the progress counts. Older summaries that stored the combined `title · n of m quests done` text are split when the Load page reads them. |
-| Playtime | Unscaled time while `Time.timeScale > 0` and the menu is hidden. It resets on New Game and is restored from the summary on load. |
+| Playtime | Unscaled time while `Time.timeScale > 0` and the menu is hidden. It resets on New Game and is restored from the loaded slot's summary; loading a manual save carries that playtime into autosave. |
 | Thumbnail | A 320×180 render of `Camera.main` taken in `LateUpdate`. It uses a URP `StandardRequest` render request, falling back to `Camera.Render`. Autosaves refresh it at most every 10 seconds per slot. |
 
 Future menus can replace the IMGUI drawing methods while retaining the slot constants and the
-`GameSaveManager.FindMostRecentSlot` contract. A scene-specific menu may call `GameSaveManager.Load`
-or `Save` directly and can reuse the same three-slot naming convention.
+`GameSaveManager.FindMostRecentSlot` contract. `GameAutosave` writes to `autosave` every 30 seconds
+of active gameplay and never writes to a manual slot. Returning to the main menu also explicitly
+saves the current state. There are no event-triggered or app-pause autosaves. After New Game, the
+first periodic autosave is delayed until 30 seconds of active gameplay have elapsed.
 
 Manual validation (not yet executed): the title sequence, camera drift and return, cursor, rune
 ring, page fades and thumbnails have been compiled but not yet checked in Play mode or a player
