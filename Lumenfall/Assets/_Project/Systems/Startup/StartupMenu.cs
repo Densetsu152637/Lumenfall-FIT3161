@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
@@ -23,26 +24,44 @@ namespace Lumenfall.Startup
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
         private const string QuestHintsEnabledKey = "lumenfall.quest-hints-enabled";
+        private const string GameTitle = "Lumenfall";
 
-        // Night-time academy palette, kept close to the dialogue, sign and autosave overlays.
-        private static readonly Color Gold = new Color(0.96f, 0.80f, 0.45f);
-        private static readonly Color Cream = new Color(0.97f, 0.93f, 0.85f);
-        private static readonly Color Muted = new Color(0.75f, 0.71f, 0.85f);
-        private static readonly Color Lavender = new Color(0.72f, 0.60f, 1f);
-        private static readonly Color Ember = new Color(1f, 0.80f, 0.58f);
-        private static readonly Color Ink = new Color(0.07f, 0.05f, 0.12f);
-        private static readonly Color Dusk = new Color(0.25f, 0.21f, 0.36f);
         private const int MoteCount = 34;
+        private const int IntroFontSize = 86;
+        private const int MainTitleFontSize = 56;
         private const float FadeInSeconds = 0.7f;
+        private const float IntroLightDelay = 0.6f;
+        private const float IntroLightSeconds = 1.8f;
+        private const float IntroToMenuSeconds = 0.9f;
         private const float PageFadeSeconds = 0.25f;
+        private const float CloseSeconds = 1.3f;
+        private const float RingRadius = 88f;
+        private const float InnerRingRadius = 56f;
+        private const int OuterRingTexture = 256;
+        private const int OuterRingTick = 10;
+        private const int InnerRingTexture = 192;
+        private const int InnerRingTick = 6;
 
         private enum Page { Main, Load, Settings, Controls }
+        private enum Phase { Intro, Menu, Closing }
 
-        private struct Mote
+        private static readonly string[] OptionKeys = { "start", "load", "options", "exit" };
+        private static readonly string[] OptionLabels = { "START", "LOAD", "SETTINGS", "EXIT" };
+
+        // One rune per main option, as line segments in a unit square (x right, y down): a rising spark for Start,
+        // a bound page for Load, a balanced diamond for Settings and a resting stroke for Exit.
+        private static readonly Vector2[][] Runes =
         {
-            public float x, y, speed, sway, phase, size;
-            public bool gold;
-        }
+            new[] { new Vector2(0f, 1f), new Vector2(0f, -1f), new Vector2(0f, -1f), new Vector2(-0.65f, -0.3f), new Vector2(0f, -1f), new Vector2(0.65f, -0.3f) },
+            new[] { new Vector2(-0.45f, -1f), new Vector2(-0.45f, 1f), new Vector2(-0.45f, -1f), new Vector2(0.5f, -0.5f), new Vector2(0.5f, -0.5f), new Vector2(-0.45f, 0f),
+                    new Vector2(-0.45f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-0.45f, 1f) },
+            new[] { new Vector2(0f, -1f), new Vector2(0.75f, 0f), new Vector2(0.75f, 0f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(-0.75f, 0f),
+                    new Vector2(-0.75f, 0f), new Vector2(0f, -1f), new Vector2(-1f, 0f), new Vector2(1f, 0f) },
+            new[] { new Vector2(0f, -1f), new Vector2(0f, 1f), new Vector2(-0.55f, 0.35f), new Vector2(0.55f, -0.35f) }
+        };
+
+        private static bool introPlayed;
+        private static StartupMenu current;
 
         private Page page;
         private bool ready;
@@ -58,26 +77,66 @@ namespace Lumenfall.Startup
         private readonly Dictionary<string, Texture2D> buttonTextures = new Dictionary<string, Texture2D>();
         private readonly List<Texture2D> generatedTextures = new List<Texture2D>();
         private readonly string[] slotDetails = new string[Slots.Length];
+        private readonly SaveSlotSummary.Info[] slotInfos = new SaveSlotSummary.Info[Slots.Length];
+        private readonly Texture2D[] slotThumbnails = new Texture2D[Slots.Length];
         private float previousTimeScale = 1f;
 
         // Presentation state. Time.timeScale is 0 while the menu is open, so animation uses unscaled time.
+        private Phase phase;
         private float openedAt;
-        private float pageChangedAt;
-        private float hintsKnob;
+        private float phaseStartedAt;
+        private float menuShownAt;
+        private bool cameFromIntro;
+        private bool introBurstDone;
+        private float worldAlpha = 1f;
+        private float titleFly = 1f;
         private float fade = 1f;
-        private Mote[] motes;
-        private Font menuFont;
-        private Texture2D backdropTexture, glowTexture, sparkleTexture, knobTexture, switchTexture;
-        private GUIStyle panelStyle, panelTrimStyle, cardStyle, pillStyle, titleStyle, rowStyle, valueStyle,
-            mutedStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle, scrollbarStyle, scrollThumbStyle;
+        private bool interactive;
+        private Rect lastPanel;
+        // Panels keep their authored pixel size and only shrink, uniformly, when the current page would not fit the window.
+        private float uiScale = 1f;
+        private bool uiScaleSet;
+        private Vector2 viewSize;
+        private float lastPanelAlpha;
+        private float closingPanelAlpha = 1f;
+        private float hintsKnob;
 
-        public static bool IsVisible
+        private float pageChangedAt;
+
+        private int hoverOption = -1;
+        private int keyboardOption = -1;
+        private bool keyboardMode;
+        private float ringAngle;
+        private float ringVelocity;
+        private readonly float[] threadPower = new float[4];
+        private readonly float[] runeLight = new float[4];
+        private readonly Rect[] optionRects = new Rect[4];
+        private readonly Vector2[] runePositions = new Vector2[4];
+
+        private Vector2 pointer;
+        private Vector2 lastTrail;
+        private Vector2 parallax;
+        private bool pointerKnown;
+
+        private readonly MenuCameraDrift cameraDrift = new MenuCameraDrift();
+        private MenuSparks sparks;
+        private Font menuFont;
+        private Texture2D backdropTexture, glowTexture, sparkleTexture, knobTexture, switchTexture, lineTexture,
+            ringTexture, innerRingTexture, discTexture, wandCursor;
+        private GUIStyle panelStyle, panelTrimStyle, cardStyle, thumbFrameStyle, pillStyle, letterStyle, promptStyle,
+            rowStyle, valueStyle, mutedStyle, smallStyle, smallCentreStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle,
+            scrollbarStyle, scrollThumbStyle;
+
+        public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
+
+        private int SelectedOption => keyboardMode ? keyboardOption : hoverOption;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
         {
-            get
-            {
-                StartupMenu menu = FindAnyObjectByType<StartupMenu>();
-                return menu != null && menu.isActiveAndEnabled && menu.ready;
-            }
+            // Keeps the opening title sequence working when domain reload is disabled in the editor.
+            introPlayed = false;
+            current = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -104,6 +163,7 @@ namespace Lumenfall.Startup
 
         private void Awake()
         {
+            current = this;
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
@@ -114,6 +174,10 @@ namespace Lumenfall.Startup
             SetGameplayInput(false);
             LoadButtonTextures();
             CreateArt();
+            // The title sequence plays once per launch; returning from the journal goes straight to the menu.
+            phase = introPlayed ? Phase.Menu : Phase.Intro;
+            cameFromIntro = !introPlayed;
+            introPlayed = true;
             StartCoroutine(InitializeAfterSceneSystems());
         }
 
@@ -143,25 +207,51 @@ namespace Lumenfall.Startup
                 message = "The latest save could not be loaded.";
             }
             if (!string.IsNullOrWhiteSpace(backdropSlot)) GameSaveOverlay.SetCurrentSlot(backdropSlot);
-            openedAt = pageChangedAt = Time.unscaledTime;
+            float now = Time.unscaledTime;
+            openedAt = phaseStartedAt = menuShownAt = now;
+            cameraDrift.Begin(now);
             ready = true;
         }
 
         private void Update()
         {
             if (ready) SetGameplayInput(false);
+            float now = Time.unscaledTime;
+            float deltaTime = Time.unscaledDeltaTime;
+            UpdatePointer(deltaTime);
+            sparks.Tick(deltaTime);
             bool wasRebinding = settings.IsRebinding;
             settings.Tick();
-            Keyboard keyboard = Keyboard.current;
-            if (ready && !wasRebinding && keyboard != null && keyboard.escapeKey.wasPressedThisFrame) GoBack();
-            hintsKnob = Mathf.MoveTowards(hintsKnob, questHintsEnabled ? 1f : 0f, Time.unscaledDeltaTime * 6f);
+            if (!ready) return;
+
+            if (phase == Phase.Intro) UpdateIntro(now);
+            else if (phase == Phase.Menu) UpdateMenuKeys(wasRebinding);
+            else if (now - phaseStartedAt >= CloseSeconds)
+            {
+                CloseMenu();
+                return;
+            }
+
+            UpdateRing(deltaTime);
+            hintsKnob = Mathf.MoveTowards(hintsKnob, questHintsEnabled ? 1f : 0f, deltaTime * 6f);
+            // Ease between page scales so moving from a short page to a tall one does not snap.
+            uiScale = Mathf.Lerp(uiScale, FitScale(), 1f - Mathf.Exp(-12f * deltaTime));
         }
 
+        private void LateUpdate()
+        {
+            if (!ready) return;
+            float now = Time.unscaledTime;
+            float returnBlend = phase == Phase.Closing ? Smooth((now - phaseStartedAt) / (CloseSeconds - 0.15f)) : 0f;
+            cameraDrift.Apply(now, parallax, returnBlend);
+        }
 
         private void OnDestroy()
         {
+            if (current == this) current = null;
             Time.timeScale = previousTimeScale;
             SetGameplayInput(true);
+            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             foreach (Texture2D texture in buttonTextures.Values)
             {
                 if (texture != null && texture.name.StartsWith("StartupButton_", StringComparison.Ordinal))
@@ -173,7 +263,162 @@ namespace Lumenfall.Startup
             {
                 if (texture != null) Destroy(texture);
             }
+            ClearThumbnails();
         }
+
+        // ---- Input ----
+
+        /// <summary>Tracks the pointer for parallax and leaves a trail of sparks behind the wand cursor.</summary>
+        private void UpdatePointer(float deltaTime)
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse == null) return;
+            Vector2 raw = mouse.position.ReadValue();
+            Vector2 position = new Vector2(raw.x, Screen.height - raw.y);
+            if (!pointerKnown)
+            {
+                pointer = lastTrail = position;
+                pointerKnown = true;
+            }
+            if ((position - pointer).sqrMagnitude > 9f) keyboardMode = false;
+            pointer = position;
+
+            Vector2 target = new Vector2(Mathf.Clamp(position.x / Mathf.Max(1f, Screen.width) * 2f - 1f, -1f, 1f),
+                Mathf.Clamp(position.y / Mathf.Max(1f, Screen.height) * 2f - 1f, -1f, 1f));
+            parallax = Vector2.Lerp(parallax, target, 1f - Mathf.Exp(-2.5f * deltaTime));
+
+            if (!ready || phase == Phase.Closing)
+            {
+                lastTrail = position;
+                return;
+            }
+            float moved = Vector2.Distance(position, lastTrail);
+            if (moved > 240f)
+            {
+                lastTrail = position;
+            }
+            else
+            {
+                while (moved >= 10f)
+                {
+                    lastTrail = Vector2.MoveTowards(lastTrail, position, 10f);
+                    moved -= 10f;
+                    Color colour = sparks.Next() < 0.5f ? MenuArt.Gold : sparks.Next() < 0.5f ? MenuArt.Lavender : MenuArt.Cream;
+                    sparks.Emit(lastTrail + new Vector2(sparks.Range(-3f, 3f), sparks.Range(-3f, 3f)),
+                        new Vector2(sparks.Range(-14f, 14f), sparks.Range(-6f, 22f)), sparks.Range(0.35f, 0.7f),
+                        sparks.Range(3.5f, 7f), colour, sparks.Next() < 0.25f, 2.5f, 25f);
+                }
+            }
+            if (mouse.leftButton.wasPressedThisFrame) sparks.Burst(position, 14, 70f, 180f, 8f);
+        }
+
+        private void UpdateIntro(float now)
+        {
+            Keyboard keyboard = Keyboard.current;
+            Mouse mouse = Mouse.current;
+            bool pressed = (keyboard != null && keyboard.anyKey.wasPressedThisFrame) || (mouse != null && mouse.leftButton.wasPressedThisFrame);
+            if (pressed) EnterMenu(now);
+        }
+
+        private void EnterMenu(float now)
+        {
+            phase = Phase.Menu;
+            phaseStartedAt = menuShownAt = now;
+        }
+
+        private void UpdateMenuKeys(bool wasRebinding)
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            if (!wasRebinding && keyboard.escapeKey.wasPressedThisFrame)
+            {
+                GoBack();
+                return;
+            }
+            if (page != Page.Main) return;
+
+            int step = keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame ? 1
+                : keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame ? -1 : 0;
+            if (step != 0)
+            {
+                keyboardOption = keyboardMode && keyboardOption >= 0 ? (keyboardOption + step + OptionKeys.Length) % OptionKeys.Length : step > 0 ? 0 : OptionKeys.Length - 1;
+                keyboardMode = true;
+            }
+            bool confirm = keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame;
+            if (confirm && keyboardMode && keyboardOption >= 0) Activate(keyboardOption);
+        }
+
+        /// <summary>
+        /// The rune ring idles in a slow turn. When an option is chosen it turns that option's rune to the socket; once the
+        /// rune is aligned the circuit closes and light travels along the thread to the button.
+        /// </summary>
+        private void UpdateRing(float deltaTime)
+        {
+            int selected = page == Page.Main && phase == Phase.Menu ? SelectedOption : -1;
+            if (selected >= 0)
+            {
+                ringAngle = Mathf.SmoothDampAngle(ringAngle, -selected * 90f, ref ringVelocity, 0.28f, Mathf.Infinity, deltaTime);
+            }
+            else
+            {
+                ringAngle += 9f * deltaTime;
+                ringVelocity = 0f;
+            }
+            ringAngle = Mathf.Repeat(ringAngle, 360f);
+
+            for (int i = 0; i < threadPower.Length; i++)
+            {
+                bool aligned = Mathf.Abs(Mathf.DeltaAngle(ringAngle + i * 90f, 0f)) < 7f;
+                bool powered = i == selected && aligned;
+                threadPower[i] = Mathf.MoveTowards(threadPower[i], powered ? 1f : 0f, deltaTime * (powered ? 2.2f : 3f));
+                runeLight[i] = Mathf.MoveTowards(runeLight[i], i == selected ? 1f : 0f, deltaTime * 5f);
+            }
+        }
+
+        private void Activate(int option)
+        {
+            if (phase != Phase.Menu) return;
+            if (option == 0) StartNewGame();
+            else if (option == 1) SetPage(Page.Load);
+            else if (option == 2)
+            {
+                questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
+                hintsKnob = questHintsEnabled ? 1f : 0f;
+                SetPage(Page.Settings);
+            }
+            else if (option == 3) Application.Quit();
+        }
+
+        private void SetPage(Page next)
+        {
+            if (next == page) return;
+            page = next;
+            pageChangedAt = Time.unscaledTime;
+            keyboardMode = false;
+            if (next == Page.Load) RefreshSlotDetails();
+        }
+
+        /// <summary>Back buttons and Escape share one route so both always return to the parent page.</summary>
+        private void GoBack()
+        {
+            if (page == Page.Load)
+            {
+                message = string.Empty;
+                SetPage(Page.Main);
+            }
+            else if (page == Page.Settings)
+            {
+                SetPage(Page.Main);
+            }
+            else if (page == Page.Controls)
+            {
+                settings.CancelRebind();
+                settings.Message = string.Empty;
+                SetPage(Page.Settings);
+            }
+        }
+
+        // ---- Frame ----
 
         private void OnGUI()
         {
@@ -181,49 +426,402 @@ namespace Lumenfall.Startup
             EnsureStyles();
 
             float now = Time.unscaledTime;
-            float opening = Smooth((now - openedAt) / FadeInSeconds);
-            float pageIn = Smooth((now - pageChangedAt) / PageFadeSeconds);
+            Event guiEvent = Event.current;
+            bool repaint = guiEvent.type == EventType.Repaint;
             Color previousColor = GUI.color;
             Matrix4x4 previousMatrix = GUI.matrix;
 
-            fade = opening;
-            Draw(new Rect(0f, 0f, Screen.width, Screen.height), backdropTexture, Color.white, 1f);
-            DrawMotes(now);
+            float opening = Smooth((now - openedAt) / FadeInSeconds);
+            float sinceClose = phase == Phase.Closing ? now - phaseStartedAt : 0f;
+            worldAlpha = opening * (phase == Phase.Closing ? 1f - Smooth((sinceClose - 0.2f) / 0.9f) : 1f);
+            float panelAlpha = phase == Phase.Intro ? 0f
+                : phase == Phase.Menu ? Smooth((now - menuShownAt - (cameFromIntro ? 0.3f : 0f)) / 0.7f)
+                : closingPanelAlpha * (1f - Smooth(sinceClose / 0.35f));
+            titleFly = cameFromIntro ? Smooth((now - menuShownAt) / IntroToMenuSeconds) : 1f;
+            interactive = phase == Phase.Menu && panelAlpha > 0.6f;
+            if (!interactive) hoverOption = -1;
+            // While the panel is fading in or out, swallow pointer and key events so nothing is half-clicked.
+            if (!interactive && (guiEvent.isMouse || guiEvent.isKey || guiEvent.type == EventType.ScrollWheel)) guiEvent.Use();
 
-            float panelWidth = Mathf.Min(560f, Screen.width - 48f);
-            float panelHeight = page == Page.Controls ? Mathf.Min(720f, Screen.height - 40f) : page == Page.Main ? 530f : 560f;
-            Rect panel = new Rect((Screen.width - panelWidth) * 0.5f,
-                (Screen.height - panelHeight) * 0.5f + (1f - opening) * 18f, panelWidth, panelHeight);
-            DrawPanel(panel, now);
+            fade = worldAlpha;
+            if (repaint)
+            {
+                Draw(new Rect(0f, 0f, Screen.width, Screen.height), backdropTexture, Color.white, 1f);
+                sparks.DrawMotes(now, worldAlpha, parallax, glowTexture, sparkleTexture);
+            }
 
-            // Each page fades in and settles upward slightly so page changes feel gentle rather than abrupt.
-            fade = opening * pageIn;
-            Rect content = new Rect(panel.x, panel.y + (1f - pageIn) * 8f, panel.width, panel.height);
-            float top = DrawTitle(content, now);
-            if (page == Page.Main) DrawMain(content, top);
-            else if (page == Page.Load) DrawLoad(content, top);
-            else if (page == Page.Controls) DrawControls(content, top);
-            else DrawSettings(content, top);
+            // The backdrop and motes fill the real window; the title and panels are laid out in view units scaled to fit.
+            if (!uiScaleSet)
+            {
+                uiScale = FitScale();
+                uiScaleSet = true;
+            }
+            viewSize = new Vector2(Screen.width, Screen.height) / uiScale;
+            GUI.matrix = previousMatrix * Matrix4x4.Scale(new Vector3(uiScale, uiScale, 1f));
 
+            if (phase == Phase.Intro)
+            {
+                DrawIntro(now, repaint);
+            }
+            else
+            {
+                Rect panel = PanelRect(panelAlpha);
+                lastPanel = new Rect(panel.x * uiScale, panel.y * uiScale, panel.width * uiScale, panel.height * uiScale);
+                lastPanelAlpha = panelAlpha;
+                fade = panelAlpha;
+                if (repaint) DrawPanelFrame(panel, now);
+                // Each page fades in and settles upward slightly so page changes feel gentle rather than abrupt.
+                float pageIn = Smooth((now - pageChangedAt) / PageFadeSeconds);
+                fade = panelAlpha * pageIn;
+                DrawPage(page, new Rect(panel.x, panel.y + (1f - pageIn) * 8f, panel.width, panel.height), now);
+            }
+
+            GUI.matrix = previousMatrix;
+            if (repaint)
+            {
+                fade = 1f;
+                sparks.DrawSparks(opening, glowTexture, sparkleTexture);
+            }
             GUI.color = previousColor;
             GUI.matrix = previousMatrix;
         }
 
-        private void DrawMain(Rect panel, float top)
+        private Rect PanelRect(float panelAlpha)
         {
-            float x = panel.x + 80f;
-            float width = panel.width - 160f;
-            if (Button("start", new Rect(x, top, width, 64f), "START")) StartNewGame();
-            if (Button("load", new Rect(x, top + 78f, width, 64f), "LOAD")) SetPage(Page.Load);
-            if (Button("options", new Rect(x, top + 156f, width, 64f), "SETTINGS"))
-            {
-                questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
-                hintsKnob = questHintsEnabled ? 1f : 0f;
-                SetPage(Page.Settings);
-            }
-            if (Button("exit", new Rect(x, top + 234f, width, 64f), "EXIT")) Application.Quit();
-            DrawMessage(new Rect(panel.x + 36f, panel.yMax - 74f, panel.width - 72f, 46f));
+            Vector2 size = PageSize(page);
+            return new Rect((viewSize.x - size.x) * 0.5f - parallax.x * 5f,
+                (viewSize.y - size.y) * 0.5f + (1f - panelAlpha) * 18f - parallax.y * 4f, size.x, size.y);
         }
+
+        /// <summary>
+        /// Authored page size in view units. The Controls list scrolls, so that page gives up height (down to 440) before
+        /// the menu needs to shrink.
+        /// </summary>
+        private static Vector2 PageSize(Page value)
+        {
+            return value == Page.Main ? new Vector2(640f, 520f)
+                : value == Page.Load ? new Vector2(700f, 650f)
+                : value == Page.Controls ? new Vector2(560f, Mathf.Clamp(Screen.height - 40f, 440f, 720f))
+                : new Vector2(560f, 560f);
+        }
+
+        /// <summary>1 when the current page (or the opening title) fits with a margin; otherwise just small enough to fit.</summary>
+        private float FitScale()
+        {
+            Vector2 needed = phase == Phase.Intro ? new Vector2(808f, 330f) : PageSize(page) + new Vector2(48f, 24f);
+            return Mathf.Min(1f, Screen.width / needed.x, Screen.height / needed.y);
+        }
+
+        private void DrawPage(Page value, Rect panel, float now)
+        {
+            float top = DrawTitle(value, panel, now);
+            if (value == Page.Main) DrawMain(panel, top, now);
+            else if (value == Page.Load) DrawLoad(panel, top);
+            else if (value == Page.Controls) DrawControls(panel, top);
+            else DrawSettings(panel, top);
+        }
+
+        // ---- Opening title ----
+
+        private Rect IntroTitleRect() => new Rect(viewSize.x * 0.5f - 380f, viewSize.y * 0.5f - 110f, 760f, 120f);
+
+        private void DrawIntro(float now, bool repaint)
+        {
+            float progress = (now - phaseStartedAt - IntroLightDelay) / IntroLightSeconds;
+            Rect titleRect = IntroTitleRect();
+            fade = worldAlpha;
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.6f);
+            Draw(Expand(titleRect, -120f, 0f), glowTexture, MenuArt.Lavender, (0.12f + 0.14f * pulse) * Smooth(progress));
+            Vector2 spark = DrawLanternTitle(GameTitle, titleRect, IntroFontSize, progress, now);
+
+            if (repaint && progress > 0f && progress < 1f)
+            {
+                Draw(new Rect(spark.x - 22f, spark.y - 22f, 44f, 44f), glowTexture, MenuArt.Cream, 0.9f);
+                Draw(new Rect(spark.x - 13f, spark.y - 13f, 26f, 26f), sparkleTexture, MenuArt.Gold, 1f);
+                sparks.Emit(spark * uiScale, new Vector2(sparks.Range(-30f, 30f), sparks.Range(-10f, 40f)), sparks.Range(0.4f, 0.8f),
+                    sparks.Range(4f, 9f), sparks.Next() < 0.6f ? MenuArt.Gold : MenuArt.Cream, sparks.Next() < 0.3f, 2f, 30f);
+            }
+            if (repaint && progress >= 1f && !introBurstDone)
+            {
+                introBurstDone = true;
+                sparks.Burst(spark * uiScale, 22, 80f, 220f, 10f);
+            }
+
+            float promptIn = Smooth((progress - 1.1f) / 0.5f);
+            if (promptIn <= 0f) return;
+            DrawDivider(titleRect.center.x, titleRect.yMax + 14f, 300f, now, promptIn);
+            Label(new Rect(titleRect.x, titleRect.yMax + 40f, titleRect.width, 32f), "Press any key to begin", promptStyle, MenuArt.Cream,
+                promptIn * (0.55f + 0.45f * Mathf.Sin(now * 2.4f)));
+        }
+
+        /// <summary>
+        /// Draws a title letter by letter like a row of lanterns. A spark sweeps across as <paramref name="progress"/> goes from 0
+        /// to 1, each letter flaring as it lights; lit letters keep a gentle flicker. Returns the spark's position.
+        /// </summary>
+        private Vector2 DrawLanternTitle(string text, Rect rect, int fontSize, float progress, float now)
+        {
+            letterStyle.fontSize = fontSize;
+            float padding = letterStyle.padding.horizontal;
+            float total = letterStyle.CalcSize(new GUIContent(text)).x - padding;
+            float x0 = rect.center.x - total * 0.5f;
+            float sparkX = Mathf.Lerp(x0 - fontSize * 0.2f, x0 + total + fontSize * 0.2f, Mathf.Clamp01(progress));
+            float letterHeight = fontSize * 1.4f;
+            float y = rect.center.y - letterHeight * 0.5f;
+            float previous = 0f;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                float next = letterStyle.CalcSize(new GUIContent(text.Substring(0, i + 1))).x - padding;
+                float left = x0 + previous;
+                float width = next - previous;
+                previous = next;
+                if (char.IsWhiteSpace(text[i])) continue;
+
+                float centre = left + width * 0.5f;
+                float lit = progress >= 1f ? 1f : Mathf.Clamp01((sparkX - centre) / (fontSize * 0.5f) + 0.5f);
+                float flare = Mathf.Sin(lit * Mathf.PI);
+                float flicker = 0.86f + 0.14f * Mathf.PerlinNoise(now * 2.2f, i * 1.37f);
+                string letter = text[i].ToString();
+                Rect glyph = new Rect(left - letterStyle.padding.left, y, width + padding + fontSize * 0.2f, letterHeight);
+
+                Draw(new Rect(centre - fontSize * 0.55f, rect.center.y - fontSize * 0.6f, fontSize * 1.1f, fontSize * 1.2f),
+                    glowTexture, MenuArt.Gold, 0.16f * flicker * lit + 0.45f * flare);
+                Label(new Rect(glyph.x, glyph.y + fontSize * 0.05f, glyph.width, glyph.height), letter, letterStyle, MenuArt.Ink, 0.75f);
+                Color colour = Color.Lerp(MenuArt.Dusk, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.35f * flare), lit);
+                float brightness = Mathf.Lerp(1f, flicker, lit);
+                Label(glyph, letter, letterStyle, new Color(colour.r * brightness, colour.g * brightness, colour.b * brightness), Mathf.Lerp(0.75f, 1f, lit));
+            }
+
+            float hop = progress > 0f && progress < 1f ? Mathf.Abs(Mathf.Sin(progress * text.Length * Mathf.PI)) * fontSize * 0.22f : 0f;
+            return new Vector2(sparkX, rect.center.y - fontSize * 0.42f - hop);
+        }
+
+        private float DrawTitle(Page value, Rect panel, float now)
+        {
+            bool main = value == Page.Main;
+            string title = main ? GameTitle : value == Page.Load ? "Load Game" : value == Page.Controls ? "Controls" : "Settings";
+            float height = main ? 76f : 54f;
+            Rect rect = new Rect(panel.x + 24f, panel.y + 24f, panel.width - 48f, height);
+            int size = main ? MainTitleFontSize : 36;
+
+            float savedFade = fade;
+            if (main && titleFly < 1f)
+            {
+                // The opening title glides from the centre of the screen into the panel while the panel fades in around it.
+                Rect from = IntroTitleRect();
+                rect = new Rect(Mathf.Lerp(from.x, rect.x, titleFly), Mathf.Lerp(from.y, rect.y, titleFly),
+                    Mathf.Lerp(from.width, rect.width, titleFly), Mathf.Lerp(from.height, rect.height, titleFly));
+                size = Mathf.RoundToInt(Mathf.Lerp(IntroFontSize, MainTitleFontSize, titleFly));
+                fade = worldAlpha;
+            }
+            float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.6f);
+            Draw(Expand(rect, -rect.width * 0.18f, 4f), glowTexture, MenuArt.Lavender, 0.2f + 0.12f * pulse);
+            DrawLanternTitle(title, rect, size, 1f, now);
+            fade = savedFade;
+
+            float y = panel.y + 24f + height + 4f;
+            DrawDivider(panel.center.x, y + 6f, Mathf.Min(280f, panel.width - 120f), now, 1f);
+            return y + 30f;
+        }
+
+        private void DrawDivider(float centerX, float y, float width, float now, float alpha)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            Draw(new Rect(centerX - width * 0.5f, y - 2f, width, 4f), glowTexture, MenuArt.Gold, 0.85f * alpha);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float twinkle = 0.5f + 0.5f * Mathf.Sin(now * 2.2f + side);
+                Draw(new Rect(centerX + side * width * 0.32f - 4f, y - 4f, 8f, 8f), glowTexture, MenuArt.Cream, (0.5f + 0.4f * twinkle) * alpha);
+            }
+
+            Rect star = new Rect(centerX - 12f, y - 12f, 24f, 24f);
+            Matrix4x4 matrix = GUI.matrix;
+            RotateLocal(Mathf.Sin(now * 0.8f) * 12f, star.center);
+            Draw(Expand(star, 10f, 10f), glowTexture, MenuArt.Gold, 0.5f * alpha);
+            Draw(star, sparkleTexture, MenuArt.Gold, alpha);
+            GUI.matrix = matrix;
+        }
+
+        private void DrawPanelFrame(Rect panel, float now)
+        {
+            Draw(Expand(panel, 70f, 70f), glowTexture, MenuArt.Lavender, 0.22f);
+            Box(panel, panelStyle, 1f);
+            Rect trim = Expand(panel, -8f, -8f);
+            Box(trim, panelTrimStyle, 1f);
+
+            // Small stars twinkle in the trim corners, out of step with each other.
+            for (int i = 0; i < 4; i++)
+            {
+                Vector2 corner = new Vector2(i % 2 == 0 ? trim.x : trim.xMax, i < 2 ? trim.y : trim.yMax);
+                float twinkle = 0.5f + 0.5f * Mathf.Sin(now * 1.7f + i * 1.9f);
+                float size = 12f + 6f * twinkle;
+                Draw(new Rect(corner.x - size * 0.5f, corner.y - size * 0.5f, size, size), sparkleTexture, MenuArt.Gold, 0.45f + 0.5f * twinkle);
+            }
+        }
+
+        // ---- Main page: rune ring and woven light ----
+
+        private void DrawMain(Rect panel, float top, float now)
+        {
+            Vector2 centre = new Vector2(panel.x + 136f, top + 149f);
+            Vector2 socket = centre + new Vector2(RingRadius + 24f, 0f);
+            float buttonX = panel.x + 380f;
+            for (int i = 0; i < OptionKeys.Length; i++)
+            {
+                optionRects[i] = SpriteRect(OptionKeys[i], buttonX, top + i * 78f, 62f);
+                float angle = (ringAngle + i * 90f) * Mathf.Deg2Rad;
+                runePositions[i] = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * RingRadius;
+            }
+
+            if (interactive)
+            {
+                Vector2 mouse = Event.current.mousePosition;
+                hoverOption = -1;
+                for (int i = 0; i < OptionKeys.Length; i++)
+                {
+                    if (optionRects[i].Contains(mouse) || (mouse - runePositions[i]).sqrMagnitude < 22f * 22f) hoverOption = i;
+                }
+            }
+            int selected = interactive ? SelectedOption : -1;
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                DrawRing(centre, socket, selected, now);
+                for (int i = 0; i < OptionKeys.Length; i++)
+                {
+                    Rect target = optionRects[i];
+                    DrawThread(socket, new Vector2(target.x + 4f, target.center.y), threadPower[i], i, now);
+                }
+                DrawRunes();
+            }
+
+            for (int i = 0; i < OptionKeys.Length; i++)
+            {
+                if (Button(OptionKeys[i], optionRects[i], OptionLabels[i], selected == i, threadPower[i])) Activate(i);
+            }
+            if (interactive)
+            {
+                SetColor(Color.white, 1f);
+                for (int i = 0; i < OptionKeys.Length; i++)
+                {
+                    Vector2 rune = runePositions[i];
+                    if (GUI.Button(new Rect(rune.x - 20f, rune.y - 20f, 40f, 40f), GUIContent.none, GUIStyle.none)) Activate(i);
+                }
+            }
+            DrawMessage(new Rect(panel.x + 36f, panel.yMax - 70f, panel.width - 72f, 44f));
+        }
+
+        private void DrawRing(Vector2 centre, Vector2 socket, int selected, float now)
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.4f);
+            Draw(new Rect(centre.x - 130f, centre.y - 130f, 260f, 260f), glowTexture, MenuArt.Lavender, 0.22f);
+
+            Matrix4x4 matrix = GUI.matrix;
+            float outer = RingDrawSize(RingRadius, OuterRingTexture, OuterRingTick);
+            RotateLocal(ringAngle, centre);
+            Draw(new Rect(centre.x - outer * 0.5f, centre.y - outer * 0.5f, outer, outer), ringTexture, MenuArt.Gold, 0.75f);
+            GUI.matrix = matrix;
+            float inner = RingDrawSize(InnerRingRadius, InnerRingTexture, InnerRingTick);
+            RotateLocal(-now * 12f, centre);
+            Draw(new Rect(centre.x - inner * 0.5f, centre.y - inner * 0.5f, inner, inner), innerRingTexture, MenuArt.Lavender, 0.6f);
+            GUI.matrix = matrix;
+
+            for (int i = 0; i < runePositions.Length; i++)
+            {
+                float power = threadPower[i];
+                DrawLine(centre, runePositions[i], 3f, MenuArt.Gold, 0.16f);
+                if (power > 0f) DrawLine(centre, Vector2.Lerp(centre, runePositions[i], power), 4.5f, MenuArt.ThreadLive, 0.7f * power);
+            }
+
+            // The lumen orb at the heart of the ring brightens while a circuit is closed.
+            float charge = selected >= 0 ? threadPower[selected] : 0f;
+            Draw(new Rect(centre.x - 36f, centre.y - 36f, 72f, 72f), glowTexture, Color.Lerp(MenuArt.Gold, MenuArt.ThreadLive, charge), 0.55f + 0.25f * pulse);
+            RotateLocal(now * 20f, centre);
+            Draw(new Rect(centre.x - 15f, centre.y - 15f, 30f, 30f), sparkleTexture, MenuArt.Cream, 0.9f);
+            GUI.matrix = matrix;
+
+            float live = 0f;
+            for (int i = 0; i < threadPower.Length; i++) live = Mathf.Max(live, threadPower[i]);
+            DrawLine(socket - new Vector2(12f, 0f), socket, 4f, Color.Lerp(MenuArt.Gold, MenuArt.ThreadLive, live), 0.7f);
+            Draw(new Rect(socket.x - 14f, socket.y - 14f, 28f, 28f), glowTexture, Color.Lerp(MenuArt.ThreadIdle, MenuArt.ThreadLive, live), 0.35f + 0.5f * live);
+            Draw(new Rect(socket.x - 8f, socket.y - 8f, 16f, 16f), sparkleTexture, Color.Lerp(MenuArt.Muted, MenuArt.Cream, live), 0.9f);
+        }
+
+        private void DrawRunes()
+        {
+            for (int i = 0; i < runePositions.Length; i++)
+            {
+                Vector2 rune = runePositions[i];
+                float light = runeLight[i];
+                float power = threadPower[i];
+                if (light > 0f) Draw(new Rect(rune.x - 30f, rune.y - 30f, 60f, 60f), glowTexture, Color.Lerp(MenuArt.Gold, MenuArt.ThreadLive, power), 0.6f * light);
+                Draw(new Rect(rune.x - 18f, rune.y - 18f, 36f, 36f), discTexture, Color.white, 1f);
+                Color stroke = Color.Lerp(MenuArt.Muted, Color.Lerp(MenuArt.Gold, MenuArt.Cream, power), light);
+                Vector2[] segments = Runes[i];
+                for (int s = 0; s + 1 < segments.Length; s += 2)
+                    DrawLine(rune + segments[s] * 8f, rune + segments[s + 1] * 8f, 3.4f, stroke, 0.95f);
+            }
+        }
+
+        /// <summary>
+        /// A weave thread from the ring's socket to a button: amber and faint while idle, then filled with cyan light from the
+        /// socket outward as <paramref name="power"/> rises, with beads of light travelling along it once fully powered.
+        /// </summary>
+        private void DrawThread(Vector2 from, Vector2 to, float power, int index, float now)
+        {
+            const int Segments = 18;
+            float flicker = 0.85f + 0.15f * Mathf.Sin(now * 3f + index * 1.7f);
+            Vector2 previous = from;
+            for (int s = 1; s <= Segments; s++)
+            {
+                float t = s / (float)Segments;
+                Vector2 point = ThreadPoint(from, to, t);
+                float startT = (s - 1) / (float)Segments;
+                if (startT < power)
+                {
+                    Vector2 end = t <= power ? point : Vector2.Lerp(previous, point, (power - startT) * Segments);
+                    DrawLine(previous, end, 12f, MenuArt.ThreadLive, 0.22f);
+                    DrawLine(previous, end, 4.5f, MenuArt.ThreadLive, 0.95f);
+                }
+                if (t > power) DrawLine(previous, point, 3.5f, MenuArt.ThreadIdle, 0.35f * flicker);
+                previous = point;
+            }
+
+            if (power > 0f && power < 1f)
+            {
+                Vector2 head = ThreadPoint(from, to, power);
+                Draw(new Rect(head.x - 10f, head.y - 10f, 20f, 20f), glowTexture, MenuArt.Cream, 0.95f);
+            }
+            if (power >= 0.999f)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector2 bead = ThreadPoint(from, to, Mathf.Repeat(now * 0.7f + k / 3f, 1f));
+                    Draw(new Rect(bead.x - 9f, bead.y - 9f, 18f, 18f), glowTexture, MenuArt.ThreadLive, 0.9f);
+                    Draw(new Rect(bead.x - 3f, bead.y - 3f, 6f, 6f), glowTexture, MenuArt.Cream, 1f);
+                }
+            }
+        }
+
+        private static Vector2 ThreadPoint(Vector2 from, Vector2 to, float t)
+        {
+            // Cubic curve that leaves the socket and meets the button horizontally, with a slight droop like slack thread.
+            Vector2 c1 = from + new Vector2(50f, 0f);
+            Vector2 c2 = to - new Vector2(50f, 0f);
+            float u = 1f - t;
+            Vector2 point = u * u * u * from + 3f * u * u * t * c1 + 3f * u * t * t * c2 + t * t * t * to;
+            point.y += Mathf.Sin(t * Mathf.PI) * 8f;
+            return point;
+        }
+
+        private static float RingDrawSize(float radius, int textureSize, int tickLength)
+        {
+            float circle = textureSize * 0.5f - tickLength - 2f;
+            return radius * 2f * (textureSize * 0.5f) / circle;
+        }
+
+        // ---- Load page: journal cards ----
 
         private void DrawLoad(Rect panel, float top)
         {
@@ -233,32 +831,96 @@ namespace Lumenfall.Startup
             {
                 string slot = Slots[i];
                 bool hasSave = saves.HasSave(slot);
-                Rect card = new Rect(panel.x + 36f, y, panel.width - 72f, 84f);
+                Rect card = new Rect(panel.x + 32f, y, panel.width - 64f, 118f);
                 Box(card, cardStyle, hasSave ? 1f : 0.55f);
 
+                Rect thumb = new Rect(card.x + 14f, card.y + 14f, 160f, 90f);
+                if (hasSave && slotThumbnails[i] != null)
+                {
+                    SetColor(Color.white, 1f);
+                    GUI.DrawTexture(thumb, slotThumbnails[i], ScaleMode.ScaleAndCrop, false);
+                    Box(thumb, thumbFrameStyle, 1f);
+                }
+                else
+                {
+                    Box(thumb, thumbFrameStyle, 0.6f);
+                    Draw(new Rect(thumb.center.x - 12f, thumb.center.y - 12f, 24f, 24f), sparkleTexture, MenuArt.Muted, hasSave ? 0.6f : 0.35f);
+                }
+
+                // Right column: the LOAD button with the save time and playtime tucked underneath it.
+                float textX = thumb.xMax + 16f;
+                Rect button = SpriteRect("load", 0f, 0f, 50f);
+                button = new Rect(card.xMax - 14f - button.width, card.y + 12f, button.width, button.height);
+                float textWidth = button.x - 14f - textX;
                 string title = $"Slot {i + 1}";
-                Rect titleRect = new Rect(card.x + 22f, card.y + 13f, card.width - 210f, 30f);
-                Label(titleRect, title, rowStyle, hasSave ? Cream : Muted);
+                Rect titleRect = new Rect(textX, card.y + 10f, textWidth, 26f);
+                Label(titleRect, title, rowStyle, hasSave ? MenuArt.Cream : MenuArt.Muted);
                 if (hasSave && slot == backdropSlot && !seededBlankSave)
                 {
                     // Marks the save the backdrop was restored from, so returning players can find their place.
-                    float badgeX = titleRect.x + rowStyle.CalcSize(new GUIContent(title)).x + 12f;
-                    Draw(new Rect(badgeX, titleRect.center.y - 7f, 14f, 14f), sparkleTexture, Lavender, 0.9f);
-                    Label(new Rect(badgeX + 18f, titleRect.y, 140f, titleRect.height), "Most recent", mutedStyle, Lavender);
+                    float badgeX = titleRect.x + rowStyle.CalcSize(new GUIContent(title)).x + 10f;
+                    Draw(new Rect(badgeX, titleRect.center.y - 7f, 14f, 14f), sparkleTexture, MenuArt.Lavender, 0.9f);
+                    Label(new Rect(badgeX + 18f, titleRect.y, textWidth, titleRect.height), "Most recent", mutedStyle, MenuArt.Lavender);
                 }
-                Label(new Rect(titleRect.x, titleRect.yMax, titleRect.width, 26f),
-                    hasSave ? slotDetails[i] : "Empty — a fresh page awaits", mutedStyle, Muted);
 
-                if (hasSave && Button("load", new Rect(card.xMax - 186f, card.y + 14f, 170f, 56f), "LOAD"))
+                if (hasSave)
                 {
-                    LoadSlot(slot);
+                    SaveSlotSummary.Info info = slotInfos[i];
+                    string location = info != null && !string.IsNullOrWhiteSpace(info.location) ? info.location : "Somewhere in Lumenfall";
+                    string quest = info != null && !string.IsNullOrWhiteSpace(info.quest) ? info.quest : string.Empty;
+                    FitLabel(new Rect(textX, card.y + 38f, textWidth, 20f), location, mutedStyle, MenuArt.Cream);
+                    FitLabel(new Rect(textX, card.y + 59f, textWidth, 20f), quest, mutedStyle, MenuArt.Muted);
+                    if (info != null && info.questsTotal > 0) DrawQuestStars(new Rect(textX, card.y + 84f, textWidth, 16f), info.questsDone, info.questsTotal);
+
+                    Rect details = new Rect(button.x - 10f, button.yMax + 6f, button.width + 20f, 18f);
+                    Draw(new Rect(details.x + 16f, details.y - 2f, details.width - 32f, 3f), glowTexture, MenuArt.Gold, 0.4f);
+                    Label(new Rect(details.x, details.y + 2f, details.width, 18f), slotDetails[i], smallCentreStyle, MenuArt.Cream, 0.85f);
+                    if (info != null)
+                        Label(new Rect(details.x, details.y + 21f, details.width, 18f), FormatPlaytime(info.playSeconds), smallCentreStyle, MenuArt.Muted);
+                    if (Button("load", button, "LOAD")) LoadSlot(slot);
                 }
-                y += 98f;
+                else
+                {
+                    Label(new Rect(textX, card.y + 46f, card.xMax - 14f - textX, 22f), "Empty — a fresh page awaits", mutedStyle, MenuArt.Muted);
+                }
+                y += 130f;
             }
 
-            DrawMessage(new Rect(panel.x + 36f, panel.yMax - 140f, panel.width - 72f, 42f));
-            if (Button("exit", BackRect(panel), "BACK")) GoBack();
+            Rect back = BackRect(panel);
+            DrawMessage(new Rect(panel.x + 36f, back.y - 50f, panel.width - 72f, 42f));
+            if (Button("exit", back, "BACK")) GoBack();
         }
+
+        /// <summary>One star per quest, lit gold for each completed one, followed by a short count.</summary>
+        private void DrawQuestStars(Rect rect, int done, int total)
+        {
+            float x = rect.x;
+            for (int i = 0; i < total; i++)
+            {
+                Rect star = new Rect(x, rect.center.y - 6f, 12f, 12f);
+                if (i < done)
+                {
+                    Draw(Expand(star, 4f, 4f), glowTexture, MenuArt.Gold, 0.5f);
+                    Draw(star, sparkleTexture, MenuArt.Gold, 1f);
+                }
+                else
+                {
+                    Draw(Expand(star, -3f, -3f), glowTexture, MenuArt.Muted, 0.45f);
+                }
+                x += 15f;
+            }
+            Label(new Rect(x + 4f, rect.y - 2f, rect.xMax - x - 4f, rect.height + 4f), $"{done} of {total} quests", smallStyle, MenuArt.Muted, 0.85f);
+        }
+
+        private static string FormatPlaytime(float seconds)
+        {
+            int minutes = Mathf.FloorToInt(seconds / 60f);
+            if (minutes < 1) return "under a minute played";
+            int hours = minutes / 60;
+            return hours > 0 ? $"{hours}h {minutes % 60}m played" : $"{minutes}m played";
+        }
+
+        // ---- Settings and controls ----
 
         private void DrawSettings(Rect panel, float top)
         {
@@ -268,17 +930,16 @@ namespace Lumenfall.Startup
             float width = card.width - 48f;
 
             float masterVolume = GameSettingsPanel.MasterVolume;
-            Label(new Rect(x, card.y + 16f, width, 30f), "Master volume", rowStyle, Cream);
-            Label(new Rect(x, card.y + 16f, width, 30f), $"{Mathf.RoundToInt(masterVolume * 100f)}%", valueStyle, Gold);
+            Label(new Rect(x, card.y + 16f, width, 30f), "Master volume", rowStyle, MenuArt.Cream);
+            Label(new Rect(x, card.y + 16f, width, 30f), $"{Mathf.RoundToInt(masterVolume * 100f)}%", valueStyle, MenuArt.Gold);
             float newVolume = Slider(new Rect(x, card.y + 54f, width, 26f), masterVolume);
             if (!Mathf.Approximately(newVolume, masterVolume)) GameSettingsPanel.MasterVolume = newVolume;
 
-            Draw(new Rect(x, card.y + 98f, width, 4f), glowTexture, Gold, 0.45f);
+            Draw(new Rect(x, card.y + 98f, width, 4f), glowTexture, MenuArt.Gold, 0.45f);
 
-            Label(new Rect(x, card.y + 114f, width - 80f, 28f), "Show quest hints", rowStyle, Cream);
-            Label(new Rect(x, card.y + 142f, width - 80f, 24f), "Gentle nudges toward what to do next", mutedStyle, Muted);
-            Rect switchRect = new Rect(card.xMax - 24f - 60f, card.y + 124f, 60f, 30f);
-            DrawSwitch(switchRect, hintsKnob);
+            Label(new Rect(x, card.y + 114f, width - 80f, 28f), "Show quest hints", rowStyle, MenuArt.Cream);
+            Label(new Rect(x, card.y + 142f, width - 80f, 24f), "Gentle nudges toward what to do next", mutedStyle, MenuArt.Muted);
+            DrawSwitch(new Rect(card.xMax - 24f - 60f, card.y + 124f, 60f, 30f), hintsKnob);
             SetColor(Color.white, 1f);
             if (GUI.Button(new Rect(x, card.y + 108f, width, 66f), GUIContent.none, GUIStyle.none))
             {
@@ -308,8 +969,8 @@ namespace Lumenfall.Startup
             try
             {
                 SetColor(Color.white, 1f);
-                rowStyle.normal.textColor = Cream;
-                messageStyle.normal.textColor = Ember;
+                rowStyle.normal.textColor = MenuArt.Cream;
+                messageStyle.normal.textColor = MenuArt.Ember;
                 GUILayout.BeginArea(area);
                 settings.DrawControls(rowStyle, keyStyle, messageStyle, area.height - 96f);
                 GUILayout.EndArea();
@@ -322,36 +983,20 @@ namespace Lumenfall.Startup
             if (Button("exit", back, "BACK")) GoBack();
         }
 
-        private void SetPage(Page next)
-        {
-            page = next;
-            pageChangedAt = Time.unscaledTime;
-            if (next == Page.Load) RefreshSlotDetails();
-        }
-
-        /// <summary>Back buttons and Escape share one route so both always return to the parent page.</summary>
-        private void GoBack()
-        {
-            if (page == Page.Load)
-            {
-                message = string.Empty;
-                SetPage(Page.Main);
-            }
-            else if (page == Page.Settings)
-            {
-                SetPage(Page.Main);
-            }
-            else if (page == Page.Controls)
-            {
-                settings.CancelRebind();
-                settings.Message = string.Empty;
-                SetPage(Page.Settings);
-            }
-        }
-
         private static Rect BackRect(Rect panel) => new Rect(panel.x + 80f, panel.yMax - 92f, panel.width - 160f, 60f);
 
-        private bool Button(string textureKey, Rect rect, string fallbackLabel)
+        // ---- Controls ----
+
+        /// <summary>A sprite-sheet button at its natural aspect ratio, placed with its left edge at <paramref name="x"/>.</summary>
+        private Rect SpriteRect(string textureKey, float x, float y, float height)
+        {
+            float aspect = buttonTextures.TryGetValue(textureKey, out Texture2D texture) && texture != null ? SheetAspect(texture) : 3.3f;
+            return new Rect(x, y, height * aspect, height);
+        }
+
+        private static float SheetAspect(Texture2D texture) => texture.width / (texture.height * 0.25f);
+
+        private bool Button(string textureKey, Rect rect, string fallbackLabel, bool highlighted = false, float power = 0f)
         {
             if (!buttonTextures.TryGetValue(textureKey, out Texture2D texture) || texture == null)
             {
@@ -360,90 +1005,20 @@ namespace Lumenfall.Startup
             }
 
             // Sheets hold four stacked frames: normal, hover, pressed, then disabled.
-            float aspect = texture.width / (texture.height * 0.25f);
+            float aspect = SheetAspect(texture);
             float drawWidth = Mathf.Min(rect.width, rect.height * aspect);
             float drawHeight = drawWidth / aspect;
             Rect hitRect = new Rect(rect.center.x - drawWidth * 0.5f, rect.center.y - drawHeight * 0.5f, drawWidth, drawHeight);
-            bool hover = hitRect.Contains(Event.current.mousePosition);
+            bool hover = interactive && hitRect.Contains(Event.current.mousePosition);
+            bool lit = hover || highlighted;
             bool pressed = hover && Mouse.current != null && Mouse.current.leftButton.isPressed;
-            Rect drawRect = hover && !pressed ? new Rect(hitRect.x, hitRect.y - 2f, hitRect.width, hitRect.height) : hitRect;
+            Rect drawRect = lit && !pressed ? new Rect(hitRect.x, hitRect.y - 2f, hitRect.width, hitRect.height) : hitRect;
 
-            if (hover) Draw(Expand(drawRect, 34f, 22f), glowTexture, Lavender, pressed ? 0.3f : 0.5f);
+            if (lit) Draw(Expand(drawRect, 34f, 22f), glowTexture, Color.Lerp(MenuArt.Lavender, MenuArt.ThreadLive, power), pressed ? 0.3f : 0.5f);
             SetColor(Color.white, 1f);
-            float row = pressed ? 0.25f : hover ? 0.5f : 0.75f;
+            float row = pressed ? 0.25f : lit ? 0.5f : 0.75f;
             GUI.DrawTextureWithTexCoords(drawRect, texture, new Rect(0f, row, 1f, 0.25f), true);
             return GUI.Button(hitRect, GUIContent.none, GUIStyle.none);
-        }
-
-        private float DrawTitle(Rect panel, float now)
-        {
-            bool main = page == Page.Main;
-            string title = main ? "Lumenfall" : page == Page.Load ? "Load Game" : page == Page.Controls ? "Controls" : "Settings";
-            Rect titleRect = new Rect(panel.x + 24f, panel.y + (main ? 30f : 26f), panel.width - 48f, main ? 72f : 52f);
-            titleStyle.fontSize = main ? 54 : 36;
-
-            float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.6f);
-            Draw(Expand(titleRect, 20f, 6f), glowTexture, Lavender, 0.22f + 0.14f * pulse);
-            Label(new Rect(titleRect.x, titleRect.y + 3f, titleRect.width, titleRect.height), title, titleStyle, Ink, 0.85f);
-            Label(titleRect, title, titleStyle, Gold);
-
-            float y = titleRect.yMax + 4f;
-            DrawDivider(panel.center.x, y + 6f, Mathf.Min(280f, panel.width - 120f), now);
-            return y + 30f;
-        }
-
-        private void DrawDivider(float centerX, float y, float width, float now)
-        {
-            Draw(new Rect(centerX - width * 0.5f, y - 2f, width, 4f), glowTexture, Gold, 0.85f);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                float twinkle = 0.5f + 0.5f * Mathf.Sin(now * 2.2f + side);
-                Draw(new Rect(centerX + side * width * 0.32f - 4f, y - 4f, 8f, 8f), glowTexture, Cream, 0.5f + 0.4f * twinkle);
-            }
-
-            Rect star = new Rect(centerX - 12f, y - 12f, 24f, 24f);
-            Matrix4x4 matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Sin(now * 0.8f) * 12f, star.center);
-            Draw(Expand(star, 10f, 10f), glowTexture, Gold, 0.5f);
-            Draw(star, sparkleTexture, Gold, 1f);
-            GUI.matrix = matrix;
-        }
-
-        private void DrawPanel(Rect panel, float now)
-        {
-            Draw(Expand(panel, 70f, 70f), glowTexture, Lavender, 0.22f);
-            Box(panel, panelStyle, 1f);
-            Rect trim = Expand(panel, -8f, -8f);
-            Box(trim, panelTrimStyle, 1f);
-
-            // Small stars twinkle in the trim corners, out of step with each other.
-            Vector2[] corners = { new Vector2(trim.x, trim.y), new Vector2(trim.xMax, trim.y), new Vector2(trim.x, trim.yMax), new Vector2(trim.xMax, trim.yMax) };
-            for (int i = 0; i < corners.Length; i++)
-            {
-                float twinkle = 0.5f + 0.5f * Mathf.Sin(now * 1.7f + i * 1.9f);
-                float size = 12f + 6f * twinkle;
-                Draw(new Rect(corners[i].x - size * 0.5f, corners[i].y - size * 0.5f, size, size), sparkleTexture, Gold, 0.45f + 0.5f * twinkle);
-            }
-        }
-
-        /// <summary>Lantern-light motes drift upward behind the panel, swaying and twinkling at their own pace.</summary>
-        private void DrawMotes(float now)
-        {
-            float scale = Mathf.Max(0.6f, Screen.height / 1080f);
-            for (int i = 0; i < motes.Length; i++)
-            {
-                Mote mote = motes[i];
-                float y = Mathf.Repeat(mote.y - now * mote.speed, 1.1f) - 0.05f;
-                float x = mote.x + Mathf.Sin(now * 0.5f + mote.phase) * mote.sway;
-                float twinkle = 0.45f + 0.55f * (0.5f + 0.5f * Mathf.Sin(now * (1.2f + mote.speed * 25f) + mote.phase));
-                float edge = Mathf.Clamp01(y / 0.25f) * Mathf.Clamp01((1.05f - y) / 0.2f);
-                float size = mote.size * scale;
-                Vector2 centre = new Vector2(x * Screen.width, y * Screen.height);
-                Color colour = mote.gold ? Gold : Lavender;
-                Draw(new Rect(centre.x - size * 1.5f, centre.y - size * 1.5f, size * 3f, size * 3f), glowTexture, colour, 0.35f * twinkle * edge);
-                if (mote.size > 15f) Draw(new Rect(centre.x - size * 0.6f, centre.y - size * 0.6f, size * 1.2f, size * 1.2f), sparkleTexture, Cream, 0.8f * twinkle * edge);
-                else Draw(new Rect(centre.x - size * 0.25f, centre.y - size * 0.25f, size * 0.5f, size * 0.5f), glowTexture, Cream, 0.9f * twinkle * edge);
-            }
         }
 
         private float Slider(Rect rect, float value)
@@ -453,31 +1028,33 @@ namespace Lumenfall.Startup
             float next = GUI.HorizontalSlider(rect, value, 0f, 1f, sliderStyle, thumbStyle);
 
             Rect track = new Rect(rect.x + Knob * 0.5f, rect.center.y - 5f, rect.width - Knob, 10f);
-            Box(track, pillStyle, 0.9f, Ink);
+            Box(track, pillStyle, 0.9f, MenuArt.Ink);
             float filled = track.width * next;
-            if (filled >= 10f) Box(new Rect(track.x, track.y, filled, track.height), pillStyle, 0.95f, Lavender);
+            if (filled >= 10f) Box(new Rect(track.x, track.y, filled, track.height), pillStyle, 0.95f, MenuArt.Lavender);
 
             float knobX = rect.x + Knob * 0.5f + next * (rect.width - Knob);
-            Draw(new Rect(knobX - 20f, rect.center.y - 20f, 40f, 40f), glowTexture, Gold, 0.5f);
-            Draw(new Rect(knobX - Knob * 0.5f, rect.center.y - Knob * 0.5f, Knob, Knob), knobTexture, Gold, 1f);
+            Draw(new Rect(knobX - 20f, rect.center.y - 20f, 40f, 40f), glowTexture, MenuArt.Gold, 0.5f);
+            Draw(new Rect(knobX - Knob * 0.5f, rect.center.y - Knob * 0.5f, Knob, Knob), knobTexture, MenuArt.Gold, 1f);
             return next;
         }
 
         private void DrawSwitch(Rect rect, float on)
         {
-            Draw(rect, switchTexture, Color.Lerp(Dusk, Lavender, on), 1f);
+            Draw(rect, switchTexture, Color.Lerp(MenuArt.Dusk, MenuArt.Lavender, on), 1f);
             float knobX = Mathf.Lerp(rect.x + 3f, rect.xMax - 27f, on);
             Rect knob = new Rect(knobX, rect.center.y - 12f, 24f, 24f);
-            if (on > 0.01f) Draw(Expand(knob, 10f, 10f), glowTexture, Gold, 0.5f * on);
-            Draw(knob, knobTexture, Color.Lerp(Cream, Gold, on), 1f);
+            if (on > 0.01f) Draw(Expand(knob, 10f, 10f), glowTexture, MenuArt.Gold, 0.5f * on);
+            Draw(knob, knobTexture, Color.Lerp(MenuArt.Cream, MenuArt.Gold, on), 1f);
         }
 
         private void DrawMessage(Rect rect)
         {
             if (string.IsNullOrEmpty(message)) return;
             Box(rect, cardStyle, 1f);
-            Label(rect, message, messageStyle, Ember);
+            Label(rect, message, messageStyle, MenuArt.Ember);
         }
+
+        // ---- Game flow ----
 
         private void StartNewGame()
         {
@@ -499,6 +1076,7 @@ namespace Lumenfall.Startup
             GameEventManager.Instance.ReloadDefinitions();
             DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
             if (worldLoader != null) worldLoader.ResetToStartingState();
+            SaveSlotSummary.BeginNewGame();
             if (!saves.Save(slot))
             {
                 message = "Could not start a new game.";
@@ -510,7 +1088,7 @@ namespace Lumenfall.Startup
             seededBlankSave = false;
             confirmOverwrite = false;
             message = string.Empty;
-            CloseMenu();
+            BeginClosing();
         }
 
         private void LoadSlot(string slot)
@@ -519,7 +1097,7 @@ namespace Lumenfall.Startup
             {
                 backdropSlot = slot;
                 GameSaveOverlay.SetCurrentSlot(slot);
-                CloseMenu();
+                BeginClosing();
             }
             else
             {
@@ -527,8 +1105,22 @@ namespace Lumenfall.Startup
             }
         }
 
+        /// <summary>
+        /// Dissolves the panel into drifting light while the camera eases back to the player. Input stays paused until
+        /// <see cref="CloseMenu"/> runs at the end of the transition.
+        /// </summary>
+        private void BeginClosing()
+        {
+            if (phase == Phase.Closing) return;
+            phase = Phase.Closing;
+            phaseStartedAt = Time.unscaledTime;
+            closingPanelAlpha = lastPanelAlpha;
+            sparks.Dissolve(lastPanel, 170);
+        }
+
         private void CloseMenu()
         {
+            cameraDrift.Release();
             SetGameplayInput(true);
             Destroy(gameObject);
         }
@@ -583,28 +1175,57 @@ namespace Lumenfall.Startup
 
         private void RefreshSlotDetails()
         {
+            ClearThumbnails();
             string directory = GameSaveManager.Instance.SaveDirectory;
             for (int i = 0; i < Slots.Length; i++)
             {
                 slotDetails[i] = string.Empty;
+                slotInfos[i] = SaveSlotSummary.TryRead(Slots[i], out SaveSlotSummary.Info info) ? UpgradeLegacySummary(info) : null;
                 try
                 {
                     string path = Path.Combine(directory, Slots[i] + ".json");
                     if (!File.Exists(path)) continue;
                     DateTime saved = File.GetLastWriteTime(path);
-                    slotDetails[i] = "Saved " + saved.ToString("d MMM yyyy", CultureInfo.InvariantCulture) + " at " +
+                    slotDetails[i] = saved.ToString("d MMM yyyy", CultureInfo.InvariantCulture) + ", " +
                         saved.ToString("h:mm", CultureInfo.InvariantCulture) + (saved.Hour < 12 ? " am" : " pm");
+
+                    string thumbnailPath = SaveSlotSummary.ThumbnailPath(Slots[i]);
+                    if (thumbnailPath == null || !File.Exists(thumbnailPath)) continue;
+                    Texture2D thumbnail = new Texture2D(2, 2, TextureFormat.RGB24, false) { name = "StartupMenu_Thumb", hideFlags = HideFlags.HideAndDontSave };
+                    if (thumbnail.LoadImage(File.ReadAllBytes(thumbnailPath))) slotThumbnails[i] = thumbnail;
+                    else Destroy(thumbnail);
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogWarning($"Could not read the save time for '{Slots[i]}': {exception.Message}");
+                    Debug.LogWarning($"Could not read the save details for '{Slots[i]}': {exception.Message}");
                 }
+            }
+        }
+
+        /// <summary>Splits the combined "title · n of m quests done" text written by earlier summaries into its parts.</summary>
+        private static SaveSlotSummary.Info UpgradeLegacySummary(SaveSlotSummary.Info info)
+        {
+            if (info.questsTotal > 0 || string.IsNullOrEmpty(info.quest)) return info;
+            Match match = Regex.Match(info.quest, @"^(.*?) · (\d+) of (\d+) quests done$");
+            if (!match.Success) return info;
+            info.quest = match.Groups[1].Value;
+            info.questsDone = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
+            info.questsTotal = int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
+            return info;
+        }
+
+        private void ClearThumbnails()
+        {
+            for (int i = 0; i < slotThumbnails.Length; i++)
+            {
+                if (slotThumbnails[i] != null) Destroy(slotThumbnails[i]);
+                slotThumbnails[i] = null;
             }
         }
 
         private void LoadButtonTextures()
         {
-            foreach (string key in new[] { "start", "load", "options", "exit" })
+            foreach (string key in OptionKeys)
             {
                 string fileName = key == "start" ? "btn_start_sheet4x" : key == "load" ? "btn_load_sheet4x" :
                     key == "options" ? "btn_options_sheet4x" : "btn_exit_sheet4x";
@@ -631,7 +1252,7 @@ namespace Lumenfall.Startup
             }
         }
 
-        // ---- Drawing helpers. Every draw is multiplied by the current fade so the whole menu can ease in. ----
+        // ---- Drawing helpers. Every draw is multiplied by the current fade so whole layers can ease in and out. ----
 
         private void SetColor(Color tint, float alpha) => GUI.color = new Color(tint.r, tint.g, tint.b, tint.a * alpha * fade);
 
@@ -642,12 +1263,47 @@ namespace Lumenfall.Startup
             GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, true);
         }
 
+        /// <summary>Draws an anti-aliased line as a rotated strip; used for runes and weave threads.</summary>
+        private void DrawLine(Vector2 from, Vector2 to, float thickness, Color colour, float alpha)
+        {
+            Vector2 delta = to - from;
+            float length = delta.magnitude;
+            if (length < 0.01f) return;
+            Matrix4x4 matrix = GUI.matrix;
+            RotateLocal(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, from);
+            Draw(new Rect(from.x, from.y - thickness * 0.5f, length + 0.6f, thickness), lineTexture, colour, alpha);
+            GUI.matrix = matrix;
+        }
+
+        // Rotates in the current GUI space, so it composes correctly with any transform already applied.
+        private static void RotateLocal(float degrees, Vector2 pivot)
+        {
+            GUI.matrix = GUI.matrix * Matrix4x4.TRS(pivot, Quaternion.Euler(0f, 0f, degrees), Vector3.one) *
+                Matrix4x4.TRS(-pivot, Quaternion.identity, Vector3.one);
+        }
+
         private void Box(Rect rect, GUIStyle style, float alpha) => Box(rect, style, alpha, Color.white);
 
         private void Box(Rect rect, GUIStyle style, float alpha, Color tint)
         {
             SetColor(tint, alpha);
             GUI.Box(rect, GUIContent.none, style);
+        }
+
+        /// <summary>Single-line label that steps the font down (to 12) and then trims with an ellipsis until it fits.</summary>
+        private void FitLabel(Rect rect, string text, GUIStyle style, Color colour, float alpha = 1f)
+        {
+            int original = style.fontSize;
+            GUIContent content = new GUIContent(text);
+            while (style.fontSize > 12 && style.CalcSize(content).x > rect.width) style.fontSize--;
+            if (style.CalcSize(content).x > rect.width)
+            {
+                string trimmed = text;
+                while (trimmed.Length > 1 && style.CalcSize(new GUIContent(trimmed + "…")).x > rect.width) trimmed = trimmed.Substring(0, trimmed.Length - 1);
+                content.text = trimmed.TrimEnd(' ', '·') + "…";
+            }
+            Label(rect, content.text, style, colour, alpha);
+            style.fontSize = original;
         }
 
         private void Label(Rect rect, string text, GUIStyle style, Color colour, float alpha = 1f)
@@ -661,49 +1317,51 @@ namespace Lumenfall.Startup
 
         private static float Smooth(float t) => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
 
-        // ---- Generated art. Everything below is created at runtime so the menu needs no imported UI assets. ----
+        // ---- Generated art ----
 
         private void CreateArt()
         {
             menuFont = Resources.Load<Font>("Dialogue/Nunito-Regular");
-            backdropTexture = Track(CreateBackdropTexture(32));
-            glowTexture = Track(CreateGlowTexture(64));
+            backdropTexture = Track(MenuArt.Backdrop(32));
+            glowTexture = Track(MenuArt.Glow(64));
             sparkleTexture = Track(GameSaveOverlay.CreateSparkleTexture(64));
-            knobTexture = Track(CreateRoundedTexture(32, 32, 16f, Color.white, new Color(0.62f, 0.5f, 0.32f), 2f));
-            switchTexture = Track(CreateRoundedTexture(60, 30, 15f, Color.white, Color.clear, 0f));
-
-            System.Random random = new System.Random(1170);
-            motes = new Mote[MoteCount];
-            for (int i = 0; i < motes.Length; i++)
-            {
-                motes[i] = new Mote
-                {
-                    x = (float)random.NextDouble(),
-                    y = (float)random.NextDouble() * 1.1f,
-                    speed = 0.012f + 0.028f * (float)random.NextDouble(),
-                    sway = 0.008f + 0.02f * (float)random.NextDouble(),
-                    phase = (float)random.NextDouble() * Mathf.PI * 2f,
-                    size = 6f + 14f * (float)random.NextDouble(),
-                    gold = random.NextDouble() < 0.6
-                };
-            }
+            knobTexture = Track(MenuArt.Rounded(32, 32, 16f, Color.white, new Color(0.62f, 0.5f, 0.32f), 2f));
+            switchTexture = Track(MenuArt.Rounded(60, 30, 15f, Color.white, Color.clear, 0f));
+            lineTexture = Track(MenuArt.Line());
+            ringTexture = Track(MenuArt.Ring(OuterRingTexture, 1.8f, 48, 4, OuterRingTick));
+            innerRingTexture = Track(MenuArt.Ring(InnerRingTexture, 1.2f, 36, 6, InnerRingTick));
+            discTexture = Track(MenuArt.Rounded(40, 40, 20f, new Color(0.17f, 0.13f, 0.27f, 1f), MenuArt.Gold, 2f));
+            wandCursor = Track(MenuArt.WandCursor());
+            Cursor.SetCursor(wandCursor, new Vector2(5f, 5f), CursorMode.Auto);
+            sparks = new MenuSparks(MoteCount);
         }
 
         private void EnsureStyles()
         {
-            if (titleStyle != null) return;
+            if (letterStyle != null) return;
 
-            panelStyle = SlicedStyle(CreateRoundedTexture(64, 64, 20f, new Color(0.11f, 0.085f, 0.18f, 0.95f), Gold, 2.5f), 24);
-            panelTrimStyle = SlicedStyle(CreateRoundedTexture(64, 64, 15f, Color.clear, new Color(Gold.r, Gold.g, Gold.b, 0.3f), 1f), 20);
-            cardStyle = SlicedStyle(CreateRoundedTexture(32, 32, 12f, new Color(0.18f, 0.14f, 0.27f, 0.85f), new Color(Gold.r, Gold.g, Gold.b, 0.32f), 1.5f), 14);
-            pillStyle = SlicedStyle(CreateRoundedTexture(20, 10, 5f, Color.white, Color.clear, 0f), 5);
+            Color goldTrim = MenuArt.WithAlpha(MenuArt.Gold, 0.32f);
+            panelStyle = SlicedStyle(MenuArt.Rounded(64, 64, 20f, MenuArt.PanelFill, MenuArt.Gold, 2.5f), 24);
+            panelTrimStyle = SlicedStyle(MenuArt.Rounded(64, 64, 15f, Color.clear, MenuArt.WithAlpha(MenuArt.Gold, 0.3f), 1f), 20);
+            cardStyle = SlicedStyle(MenuArt.Rounded(32, 32, 12f, new Color(0.18f, 0.14f, 0.27f, 0.85f), goldTrim, 1.5f), 14);
+            thumbFrameStyle = SlicedStyle(MenuArt.Rounded(24, 24, 6f, MenuArt.WithAlpha(MenuArt.Ink, 0.15f), MenuArt.WithAlpha(MenuArt.Gold, 0.6f), 1.5f), 8);
+            pillStyle = SlicedStyle(MenuArt.Rounded(20, 10, 5f, Color.white, Color.clear, 0f), 5);
 
-            titleStyle = TextStyle(54, TextAnchor.MiddleCenter);
-            titleStyle.fontStyle = FontStyle.Bold;
+            letterStyle = TextStyle(MainTitleFontSize, TextAnchor.MiddleLeft);
+            letterStyle.fontStyle = FontStyle.Bold;
+            letterStyle.clipping = TextClipping.Overflow;
+            letterStyle.wordWrap = false;
+            promptStyle = TextStyle(20, TextAnchor.MiddleCenter);
+            promptStyle.fontStyle = FontStyle.Italic;
             rowStyle = TextStyle(19, TextAnchor.MiddleLeft);
             valueStyle = TextStyle(19, TextAnchor.MiddleRight);
             valueStyle.fontStyle = FontStyle.Bold;
             mutedStyle = TextStyle(15, TextAnchor.MiddleLeft);
+            mutedStyle.clipping = TextClipping.Clip;
+            smallStyle = TextStyle(13, TextAnchor.MiddleLeft);
+            smallStyle.clipping = TextClipping.Clip;
+            smallCentreStyle = TextStyle(13, TextAnchor.MiddleCenter);
+            smallCentreStyle.clipping = TextClipping.Clip;
             messageStyle = TextStyle(17, TextAnchor.MiddleCenter);
             messageStyle.wordWrap = true;
             messageStyle.padding = new RectOffset(14, 14, 4, 4);
@@ -715,12 +1373,12 @@ namespace Lumenfall.Startup
                 alignment = TextAnchor.MiddleCenter,
                 border = new RectOffset(12, 12, 12, 12),
                 padding = new RectOffset(12, 12, 6, 6),
-                normal = { background = Track(CreateRoundedTexture(32, 32, 10f, new Color(0.2f, 0.16f, 0.3f, 0.95f), new Color(Gold.r, Gold.g, Gold.b, 0.55f), 1.5f)), textColor = Cream },
-                hover = { background = Track(CreateRoundedTexture(32, 32, 10f, new Color(0.28f, 0.21f, 0.4f, 0.98f), Gold, 2f)), textColor = Gold },
-                active = { background = Track(CreateRoundedTexture(32, 32, 10f, new Color(0.13f, 0.1f, 0.2f, 1f), Gold, 2f)), textColor = Gold }
+                normal = { background = Track(MenuArt.Rounded(32, 32, 10f, new Color(0.2f, 0.16f, 0.3f, 0.95f), MenuArt.WithAlpha(MenuArt.Gold, 0.55f), 1.5f)), textColor = MenuArt.Cream },
+                hover = { background = Track(MenuArt.Rounded(32, 32, 10f, new Color(0.28f, 0.21f, 0.4f, 0.98f), MenuArt.Gold, 2f)), textColor = MenuArt.Gold },
+                active = { background = Track(MenuArt.Rounded(32, 32, 10f, new Color(0.13f, 0.1f, 0.2f, 1f), MenuArt.Gold, 2f)), textColor = MenuArt.Gold }
             };
             textButtonStyle.focused.background = textButtonStyle.normal.background;
-            textButtonStyle.focused.textColor = Cream;
+            textButtonStyle.focused.textColor = MenuArt.Cream;
             keyStyle = new GUIStyle(textButtonStyle) { fontSize = 16 };
 
             sliderStyle = new GUIStyle();
@@ -730,19 +1388,20 @@ namespace Lumenfall.Startup
                 fixedWidth = 10f,
                 border = new RectOffset(5, 5, 5, 5),
                 margin = new RectOffset(6, 2, 2, 2),
-                normal = { background = Track(CreateRoundedTexture(10, 20, 5f, new Color(0.07f, 0.05f, 0.12f, 0.7f), Color.clear, 0f)) }
+                normal = { background = Track(MenuArt.Rounded(10, 20, 5f, MenuArt.WithAlpha(MenuArt.Ink, 0.7f), Color.clear, 0f)) }
             };
             scrollThumbStyle = new GUIStyle(GUI.skin.verticalScrollbarThumb)
             {
                 fixedWidth = 10f,
                 border = new RectOffset(5, 5, 5, 5),
-                normal = { background = Track(CreateRoundedTexture(10, 20, 5f, new Color(Gold.r, Gold.g, Gold.b, 0.75f), Color.clear, 0f)) }
+                normal = { background = Track(MenuArt.Rounded(10, 20, 5f, MenuArt.WithAlpha(MenuArt.Gold, 0.75f), Color.clear, 0f)) }
             };
         }
 
         private GUIStyle TextStyle(int size, TextAnchor alignment)
         {
-            GUIStyle style = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = alignment, normal = { textColor = Cream } };
+            // Single-line by default; the skin's label wraps, which pushes short card lines onto a clipped second row.
+            GUIStyle style = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = alignment, wordWrap = false, normal = { textColor = MenuArt.Cream } };
             if (menuFont != null) style.font = menuFont;
             return style;
         }
@@ -755,75 +1414,6 @@ namespace Lumenfall.Startup
         private Texture2D Track(Texture2D texture)
         {
             if (texture != null && !generatedTextures.Contains(texture)) generatedTextures.Add(texture);
-            return texture;
-        }
-
-        private static Texture2D NewTexture(int width, int height, string name)
-        {
-            return new Texture2D(width, height, TextureFormat.RGBA32, false)
-            {
-                name = "StartupMenu_" + name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.HideAndDontSave
-            };
-        }
-
-        /// <summary>Anti-aliased rounded rectangle with an optional border, suitable for nine-slice drawing.</summary>
-        private static Texture2D CreateRoundedTexture(int width, int height, float radius, Color fill, Color border, float borderWidth)
-        {
-            Texture2D texture = NewTexture(width, height, "Rounded");
-            Color[] pixels = new Color[width * height];
-            for (int y = 0; y < height; y++)
-                for (int x = 0; x < width; x++)
-                {
-                    float qx = Mathf.Abs(x + 0.5f - width * 0.5f) - (width * 0.5f - radius);
-                    float qy = Mathf.Abs(y + 0.5f - height * 0.5f) - (height * 0.5f - radius);
-                    float distance = new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude + Mathf.Min(Mathf.Max(qx, qy), 0f) - radius;
-                    float coverage = Mathf.Clamp01(0.5f - distance);
-                    float borderMix = borderWidth > 0f ? Mathf.Clamp01(distance + borderWidth + 0.5f) : 0f;
-                    Color colour = Color.Lerp(fill, border, borderMix);
-                    colour.a *= coverage;
-                    pixels[y * width + x] = colour;
-                }
-            texture.SetPixels(pixels);
-            texture.Apply();
-            return texture;
-        }
-
-        private static Texture2D CreateGlowTexture(int size)
-        {
-            Texture2D texture = NewTexture(size, size, "Glow");
-            Color[] pixels = new Color[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (x + 0.5f) / size * 2f - 1f;
-                    float v = (y + 0.5f) / size * 2f - 1f;
-                    float r2 = u * u + v * v;
-                    pixels[y * size + x] = new Color(1f, 1f, 1f, Mathf.Exp(-r2 * 4.5f) * Mathf.Clamp01(1f - r2));
-                }
-            texture.SetPixels(pixels);
-            texture.Apply();
-            return texture;
-        }
-
-        /// <summary>Indigo-to-plum dusk wash with a soft vignette; the world stays faintly visible in the centre.</summary>
-        private static Texture2D CreateBackdropTexture(int size)
-        {
-            Texture2D texture = NewTexture(size, size, "Backdrop");
-            Color top = new Color(0.05f, 0.05f, 0.16f);
-            Color bottom = new Color(0.15f, 0.07f, 0.19f);
-            Color[] pixels = new Color[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float v = y / (size - 1f);
-                    float u = x / (size - 1f) * 2f - 1f;
-                    float w = v * 2f - 1f;
-                    Color colour = Color.Lerp(bottom, top, v);
-                    colour.a = 0.5f + 0.38f * Mathf.Clamp01((u * u + w * w) * 0.7f);
-                    pixels[y * size + x] = colour;
-                }
-            texture.SetPixels(pixels);
-            texture.Apply();
             return texture;
         }
     }

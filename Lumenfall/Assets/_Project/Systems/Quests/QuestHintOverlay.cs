@@ -15,7 +15,7 @@ namespace Lumenfall.Quests
     public sealed class QuestHintOverlay : MonoBehaviour
     {
         private const string EnabledKey = "lumenfall.quest-hints-enabled";
-        private static readonly string[] QuestOrder =
+        internal static readonly string[] QuestOrder =
         {
             "stella_first_light", "stella_string_them_together", "cinna_out_of_alignment",
             "cinna_cold_feet_warm_idea", "orio_patch_notes", "katrina_something_borrowed"
