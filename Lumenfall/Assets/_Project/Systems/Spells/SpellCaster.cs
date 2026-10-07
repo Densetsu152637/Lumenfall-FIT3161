@@ -37,6 +37,9 @@ namespace Lumenfall.Spells
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
         private float feedbackUntil;
+        private float nextScrollAt;
+        private const float ScrollCooldown = 0.06f;
+        private const float ChipClearanceOverRotaraPanel = 104f;
         private const string CircuitTag = "circuit";
         public event Action<SpellId, string, bool> CastCompleted;
 
@@ -101,7 +104,13 @@ namespace Lumenfall.Spells
             if (mouse != null && spellWheelOpen)
             {
                 float scroll = mouse.scroll.ReadValue().y;
-                if (Mathf.Abs(scroll) > 0.01f) SelectSpellByOffset(scroll > 0f ? -1 : 1);
+                // A short cooldown keeps smooth trackpad scrolling from racing through every spell.
+                if (Mathf.Abs(scroll) > 0.01f && Time.unscaledTime >= nextScrollAt)
+                {
+                    SelectSpellByOffset(scroll > 0f ? -1 : 1);
+                    wheelView.Scrolled();
+                    nextScrollAt = Time.unscaledTime + ScrollCooldown;
+                }
             }
 
             if (mouse != null && mouse.rightButton.wasPressedThisFrame)
@@ -177,11 +186,11 @@ namespace Lumenfall.Spells
         /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
         public bool CastSelectedAt(string targetId)
         { CloseSpellWheel(); return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
-        private void CloseSpellWheel()
+        private void CloseSpellWheel(SpellId? picked = null)
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
-            wheelView.Close();
+            wheelView.Close(picked);
             // The inventory may have taken ownership of the same movement lock earlier
             // in this frame. Release only the lock owned by the wheel in that case.
             if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
@@ -198,12 +207,19 @@ namespace Lumenfall.Spells
             if (InputBlockedByOverlay) return;
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
                 GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
-            if (!wheelView.Visible) return;
+            if (!wheelView.Visible)
+            {
+                // The chip only paints on repaint, so skip building the spell list for other events.
+                if (Event.current.type == EventType.Repaint && AvailableSpells.Length > 0)
+                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel),
+                        Lumenfall.Quests.RotaraGearMechanism.PanelVisible ? ChipClearanceOverRotaraPanel : 0f);
+                return;
+            }
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
             string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click: cast   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
             SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon, hint);
-            if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(); }
+            if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(picked); }
         }
         /// <summary>
         /// Casts Lost Echoes as an area search: every hidden, spell-compatible object within the interaction radius of
