@@ -159,7 +159,7 @@ namespace Lumenfall.GameEvents
         }
 
         /// <summary>Four-pointed star with a soft halo, generated so the indicator needs no imported art.</summary>
-        private static Texture2D CreateSparkleTexture(int size)
+        public static Texture2D CreateSparkleTexture(int size)
         {
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
             {
