@@ -219,6 +219,6 @@ do not treat a missing license as a passing test run.
 
 ## Runtime content baseline and offline compilation
 
-The authored runtime check intentionally exposes existing source/baked and route/lesson failures. They are recorded in `docs/implementation/feature-content-validation-ci.md`; a failing check must not be treated as a successful gameplay audit. Planned glyph-ineligible and reserved portals are excluded from live-route checks unless a live component references them. Custom condition/action types remain extensible; built-in quest/event/dialogue references are checked with runtime-compatible case handling.
+The source/baked parity, active interior routes, NPC resource paths, and lesson gates now pass the authored runtime check. The original findings and their repairs are recorded in `docs/implementation/feature-content-validation-ci.md`; a failing check must not be treated as a successful gameplay audit. Planned glyph-ineligible and reserved portals are excluded from live-route checks unless a live component references them. Custom condition/action types remain extensible; built-in quest/event/dialogue references are checked with runtime-compatible case handling.
 
 For clean-worktree offline compilation without launching Unity, see `docs/runtime-data-contract.md`. Supply an explicit read-only imported reference project; the helper compiles current asmdef membership and filters all stale first-party references. `-PrepareOnly` is used by portability fixtures and does not claim a successful C# compile.
