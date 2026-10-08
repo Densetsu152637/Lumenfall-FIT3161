@@ -70,6 +70,16 @@ namespace Lumenfall.Spells
             MapRebuilt?.Invoke(new MapRebuildEvent(CurrentMapId)); NotifyChanged();
         }
         public bool TryGetObject(string id, out WorldObjectSnapshot snapshot) { if (entries.TryGetValue(id ?? string.Empty, out WorldEntry item)) { snapshot = Clone(item.state); return true; } snapshot = null; return false; }
+        /// <summary>Reads an object from the live map or, for a map the player has left, its archived snapshot.</summary>
+        public bool TryGetObjectInMap(string mapId, string id, out WorldObjectSnapshot snapshot)
+        {
+            snapshot = null;
+            if (IsReady && string.Equals(CurrentMapId, mapId, StringComparison.OrdinalIgnoreCase)) return TryGetObject(id, out snapshot);
+            if (!archivedMaps.TryGetValue(mapId ?? string.Empty, out MapStateSnapshot archived) || archived?.objects == null) return false;
+            foreach (WorldObjectSnapshot item in archived.objects)
+                if (item != null && string.Equals(item.id, id, StringComparison.Ordinal)) { snapshot = Clone(item); return true; }
+            return false;
+        }
         public WorldObjectSnapshot[] SnapshotObjects() { var result = new WorldObjectSnapshot[entries.Count]; int i = 0; foreach (WorldEntry e in entries.Values) result[i++] = Clone(e.state); return result; }
         public bool IsConnected(string a, string b) => connections.Contains(ConnectionKey(a, b));
         public float GetConnectionStrength(string a, string b) { connectionStrengths.TryGetValue(ConnectionKey(a, b), out float value); return value; }
