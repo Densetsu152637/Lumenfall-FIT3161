@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.Spells;
 using Lumenfall.Inventory;
@@ -15,6 +16,38 @@ namespace Lumenfall.Tests.GameEvents
             "stella_first_light", "stella_string_them_together", "cinna_out_of_alignment",
             "cinna_cold_feet_warm_idea", "orio_patch_notes", "katrina_something_borrowed"
         };
+
+        [SetUp]
+        public void SetUp()
+        {
+            ResetSharedState();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ResetSharedState();
+        }
+
+        private static void ResetSharedState()
+        {
+            GameEventManager.Instance.Runtime.ResetState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
+        }
+
+        // Ordinary MonoBehaviours do not run their play-mode lifecycle in EditMode.
+        // Normalize subscriptions before explicitly wiring the production event handlers.
+        private static void EnableForTest(Component component)
+        {
+            InvokeLifecycle(component, "OnDisable");
+            InvokeLifecycle(component, "OnEnable");
+        }
+
+        private static void InvokeLifecycle(Component component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(component, null);
+        }
 
         [Test]
         public void EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches()
@@ -68,20 +101,31 @@ namespace Lumenfall.Tests.GameEvents
         [Test]
         public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
         {
-            GameEventRuntime runtime = CreateRuntime();
-            DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            session.SelectChoice("leave");
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            GameObject host = new GameObject("quest-scoped-spell-reward-test");
+            SpellCaster caster = host.AddComponent<SpellCaster>();
+            try
+            {
+                EnableForTest(caster);
+                DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                session.SelectChoice("leave");
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
 
-            session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
-            Assert.That(session.Continue(), Is.True);
-            Assert.That(session.IsCompleted, Is.True);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+                session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
+                Assert.That(session.Continue(), Is.True);
+                Assert.That(session.IsCompleted, Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+            }
+            finally
+            {
+                InvokeLifecycle(caster, "OnDisable");
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]
@@ -104,6 +148,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
+                EnableForTest(caster);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
@@ -121,6 +166,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -131,9 +177,10 @@ namespace Lumenfall.Tests.GameEvents
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
             GameObject uiObject = new GameObject("inventory-test-ui");
-            uiObject.AddComponent<InventoryEncyclopediaUI>();
+            InventoryEncyclopediaUI inventory = uiObject.AddComponent<InventoryEncyclopediaUI>();
             try
             {
+                EnableForTest(inventory);
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
 
                 DialogueSession dialogue = manager.Runtime.StartDialogue("katrina_something_borrowed_dialogue");
@@ -149,6 +196,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
+                InvokeLifecycle(inventory, "OnDisable");
                 Object.DestroyImmediate(uiObject);
             }
         }
