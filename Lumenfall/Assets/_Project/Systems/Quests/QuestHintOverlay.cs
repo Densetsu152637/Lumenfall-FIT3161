@@ -132,6 +132,31 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
+                runtime.HasEventTriggered("found_katrina_keepsake"))
+            {
+                hint = "Return the keepsake to Katrina on campus.";
+                return;
+            }
+            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal) &&
+                IsOnMap(selectedPuzzle, world.CurrentMapId))
+            {
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Finish Orio's Rotara lesson, then rotate the west forest gear to the marked quarter turn.";
+                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
+                    hint = "The objective is complete. Return to Orio to confirm the patch.";
+                else
+                {
+                    hint = "Rotate the mechanism to 90 degrees with Rotara. Each cast turns it clockwise by 90 degrees.";
+                    if (world.TryGetObject(RotaraGearMechanism.PuzzleObjectId, out WorldObjectSnapshot gear))
+                    {
+                        string direction = DirectionToCell(gear.cell);
+                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                    }
+                }
+                return;
+            }
+
             if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
             {
                 if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
@@ -220,6 +245,14 @@ namespace Lumenfall.Quests
         {
             foreach (QuestPuzzleDefinition puzzle in puzzleDatabase?.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
                 if (puzzle != null && string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) return puzzle;
+            // Orio confirms the live gear through dialogue, so it has no automatic monitor.
+            // Keep its objective available to hints without adding an auto-completion event.
+            if (string.Equals(questId, "orio_patch_notes", StringComparison.Ordinal))
+                return new QuestPuzzleDefinition
+                {
+                    questId = questId,
+                    mapId = RotaraGearMechanism.PuzzleMapId
+                };
             return null;
         }
 

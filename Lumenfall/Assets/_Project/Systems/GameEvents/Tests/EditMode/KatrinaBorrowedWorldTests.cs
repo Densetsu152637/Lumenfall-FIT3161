@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using NUnit.Framework;
@@ -13,6 +14,7 @@ namespace Lumenfall.Tests.GameEvents
         private readonly List<GameObject> objects = new List<GameObject>();
         private WorldStateService state;
         private GridWorld grid;
+        private WorldStateService previousState;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
         private const string Keepsake = "keepsake.katrina.hidden";
         private static readonly Vector2Int Cell = new Vector2Int(12, 9);
@@ -23,16 +25,24 @@ namespace Lumenfall.Tests.GameEvents
         public void SetUp()
         {
             Runtime.ResetState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
+            previousState = WorldStateService.Instance;
             grid = Create("grid").AddComponent<GridWorld>(); grid.ConfigureBounds(100, 60);
-            state = Create("state").AddComponent<WorldStateService>(); state.BeginMapRebuild("campus");
+            state = Create("state").AddComponent<WorldStateService>();
+            EditModeLifecycle.SetWorldInstance(state);
+            state.BeginMapRebuild("campus");
         }
         [TearDown]
         public void TearDown()
         {
             Runtime.ResetState();
-            GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
-            for (int i = objects.Count - 1; i >= 0; i--) Object.DestroyImmediate(objects[i]);
+            for (int i = objects.Count - 1; i >= 0; i--)
+            {
+                foreach (SpellCaster caster in objects[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                Object.DestroyImmediate(objects[i]);
+            }
             objects.Clear();
+            EditModeLifecycle.SetWorldInstance(previousState);
         }
 
         [Test]
@@ -144,6 +154,7 @@ namespace Lumenfall.Tests.GameEvents
         public void MonitorRejectsWrongMapPositionUnrelatedRevealAndInactiveQuestThenCompletesOnce()
         {
             QuestPuzzleMonitor monitor = Create("monitor").AddComponent<QuestPuzzleMonitor>();
+            EditModeLifecycle.Call(monitor, "Awake");
             Register("other", Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject("other", Cell, 2);
             Runtime.StartQuest("katrina_something_borrowed");
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
@@ -157,6 +168,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(monitor.EvaluatePuzzles(), Is.EqualTo(1));
             Assert.That(Runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
             Assert.That(Runtime.ActiveDialogue.Definition.id, Is.EqualTo("katrina_keepsake_recovered"));
+            Assert.That(Runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active),
+                "Finding the keepsake leaves the return conversation pending.");
             Runtime.ActiveDialogue.Continue(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             string saved = Runtime.ExportStateJson(false); Runtime.ResetState(); Runtime.ImportStateJson(saved);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

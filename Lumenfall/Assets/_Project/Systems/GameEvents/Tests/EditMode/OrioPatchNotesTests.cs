@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Lumenfall.GameEvents;
+using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using NUnit.Framework;
@@ -15,6 +16,7 @@ namespace Lumenfall.Tests.GameEvents
         private GameObject stateHost;
         private GameObject casterHost;
         private SpellCaster caster;
+        private WorldStateService previousState;
         private const string Quest = "orio_patch_notes";
         private const string Event = "complete_orio_patch_notes";
 
@@ -23,11 +25,14 @@ namespace Lumenfall.Tests.GameEvents
         {
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
-            state = WorldStateService.Instance;
-            if (state == null) { stateHost = new GameObject("orio-world-test"); state = stateHost.AddComponent<WorldStateService>(); }
-            state.ResetAllState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
+            previousState = WorldStateService.Instance;
+            stateHost = new GameObject("orio-world-test");
+            state = stateHost.AddComponent<WorldStateService>();
+            EditModeLifecycle.SetWorldInstance(state);
             casterHost = new GameObject("orio-caster-test");
             caster = casterHost.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
             RotaraGearMechanism.RegisterQuestConditions(runtime);
             RegisterForestGear(180);
         }
@@ -38,12 +43,10 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ActiveDialogue?.End();
             runtime.ResetState();
             state.ResetAllState();
+            EditModeLifecycle.Call(caster, "OnDisable");
             UnityEngine.Object.DestroyImmediate(casterHost);
-            if (stateHost != null)
-            {
-                GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
-                UnityEngine.Object.DestroyImmediate(stateHost);
-            }
+            UnityEngine.Object.DestroyImmediate(stateHost);
+            EditModeLifecycle.SetWorldInstance(previousState);
         }
 
         [Test]
