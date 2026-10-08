@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using Lumenfall.Inventory;
 using Lumenfall.GameEvents;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
@@ -12,6 +14,7 @@ namespace Lumenfall.Tests.GameEvents
         private readonly List<GameObject> created = new List<GameObject>();
         private GameEventManager manager;
         private WorldStateService state;
+        private WorldStateService previousState;
         private QuestPuzzleMonitor monitor;
         private SpellCaster caster;
 
@@ -20,28 +23,34 @@ namespace Lumenfall.Tests.GameEvents
         {
             manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
-            state = WorldStateService.Instance;
-            if (state == null) state = Create("first-light-world").AddComponent<WorldStateService>();
+            previousState = WorldStateService.Instance;
+            state = Create("first-light-world").AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             state.ResetAllState();
-            monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
-            if (monitor == null) monitor = Create("first-light-monitor").AddComponent<QuestPuzzleMonitor>();
+            monitor = Create("first-light-monitor").AddComponent<QuestPuzzleMonitor>();
+            Call(monitor, "Awake");
+            Call(monitor, "OnEnable");
             caster = Create("first-light-caster").AddComponent<SpellCaster>();
+            Call(caster, "OnEnable");
             BuildRelic("B02.Ground");
         }
 
         [TearDown]
         public void TearDown()
         {
+            Call(caster, "OnDisable");
+            Call(monitor, "OnDisable");
             state.ResetAllState();
             manager.Runtime.ResetState();
             for (int i = created.Count - 1; i >= 0; i--)
             {
                 if (created[i] == null) continue;
-                if (created[i].GetComponent<WorldStateService>() != null)
-                    GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
+
                 Object.DestroyImmediate(created[i]);
             }
             created.Clear();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
         }
 
         [Test]
@@ -99,10 +108,12 @@ namespace Lumenfall.Tests.GameEvents
             monitor.EvaluatePuzzles();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
             manager.Runtime.ActiveDialogue.End();
+            Call(monitor, "OnDisable");
             monitor.enabled = false;
             monitor.EvaluatePuzzles();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
             monitor.enabled = true;
+            Call(monitor, "OnEnable");
             monitor.EvaluatePuzzles();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
         }
@@ -143,14 +154,21 @@ namespace Lumenfall.Tests.GameEvents
         [Test]
         public void DisabledCasterUnsubscribesAndReenabledCasterRecoversTeaching()
         {
+            Call(caster, "OnDisable");
             caster.enabled = false;
             TeachAmpere();
             Assert.That(manager.Runtime.GetFlag("spell.unlocked.Ampere"), Is.False);
             caster.enabled = true;
+            Call(caster, "OnEnable");
             DialogueSession hint = manager.Runtime.StartDialogue("stella_first_light_dialogue");
             hint.SelectChoice("active");
             hint.Continue();
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
+        }
+
+        private static void Call(MonoBehaviour component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(component, null);
         }
 
         private GameObject Create(string name)
