@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Lumenfall.Inventory;
 using NUnit.Framework;
 using UnityEngine;
 using Lumenfall.GameEvents;
@@ -17,6 +19,7 @@ namespace Lumenfall.Tests.GameEvents
         private readonly List<GameObject> objects = new List<GameObject>();
         private GridWorld grid;
         private WorldStateService state;
+        private WorldStateService previousState;
         private SpellCaster caster;
         private GameEventRuntime runtime;
         private static readonly string[] Tags = { "glaciate", "slide-goal:24,34", "slide-lane:20,34,24,34" };
@@ -24,16 +27,38 @@ namespace Lumenfall.Tests.GameEvents
         {
             GameEventManager.Instance.ReloadDefinitions(); runtime = GameEventManager.Instance.Runtime;
             grid = Create("grid", Vector2Int.zero).AddComponent<GridWorld>(); grid.ConfigureBounds(80,80);
-            state = Create("state", Vector2Int.zero).AddComponent<WorldStateService>(); state.BeginMapRebuild("campus");
+            previousState = WorldStateService.Instance;
+            state = Create("state", Vector2Int.zero).AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
+            state.BeginMapRebuild("campus");
             RegisterTrial(); state.EndMapRebuild(); caster = Create("caster", new Vector2Int(19,35)).AddComponent<SpellCaster>();
+            Call(caster, "OnEnable");
         }
         [TearDown] public void TearDown()
         {
             runtime.ActiveDialogue?.End();
-            GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
+            foreach (GameObject host in objects) if (host != null)
+            {
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) Call(component, "OnDisable");
+                foreach (GridMover component in host.GetComponents<GridMover>()) Call(component, "OnDisable");
+                foreach (GridObstacle component in host.GetComponents<GridObstacle>()) Call(component, "OnDisable");
+                foreach (QuestPuzzleMonitor component in host.GetComponents<QuestPuzzleMonitor>())
+                {
+                    Call(component, "OnDisable");
+                    Call(component, "OnDestroy");
+                }
+            }
             for (int i=objects.Count-1;i>=0;i--) if (objects[i] != null) UnityEngine.Object.DestroyImmediate(objects[i]);
-            objects.Clear(); GameEventManager.Instance.Runtime.ResetState();
+            objects.Clear();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
+            GameEventManager.Instance.Runtime.ResetState();
         }
+        private static void Call(object component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
+        }
+
         private GameObject Create(string name, Vector2Int cell)
         { GameObject go = new GameObject(name); objects.Add(go); go.transform.position = new Vector3(cell.x,0,cell.y); return go; }
         private void RegisterTrial(Vector2Int? size = null)
@@ -71,7 +96,7 @@ namespace Lumenfall.Tests.GameEvents
             GameEventRuntime old=runtime; GameEventManager.Instance.ReloadDefinitions(); runtime=GameEventManager.Instance.Runtime;
             Activate(); DialogueSession lesson=runtime.StartDialogue(Quest+"_dialogue"); lesson.SelectChoice("active"); lesson.Continue();
             Assert.That(caster.IsSpellUnlocked(SpellId.Glaciate),Is.True); Assert.That(old.GetFlag("spell.unlocked.Glaciate"),Is.False);
-            caster.enabled=false; runtime.ResetState(); caster.enabled=true; Activate();
+            caster.enabled=false; Call(caster, "OnDisable"); runtime.ResetState(); caster.enabled=true; Call(caster, "OnEnable"); Activate();
             lesson=runtime.StartDialogue(Quest+"_dialogue"); lesson.SelectChoice("active"); lesson.Continue();
             Assert.That(caster.IsSpellUnlocked(SpellId.Glaciate),Is.True);
         }
@@ -108,20 +133,22 @@ namespace Lumenfall.Tests.GameEvents
             Unlock(); GameObject blocker=Create("blocker",new Vector2Int(23,34)); GridObstacle obstacle=blocker.AddComponent<GridObstacle>(); obstacle.Configure(grid,Vector2Int.one);
             Assert.That(caster.Cast(SpellId.Glaciate,Trial,Vector2Int.right),Is.True);
             Assert.That(Snapshot().cell,Is.EqualTo(new Vector2Int(22,34))); Assert.That(Snapshot().visitedTrapCount,Is.Zero); Assert.That(Snapshot().slideInterrupted,Is.True);
-            Assert.That(state.EvaluatePuzzleTarget(Target()),Is.False); obstacle.enabled=false;
+            Assert.That(state.EvaluatePuzzleTarget(Target()),Is.False); obstacle.enabled=false; Call(obstacle, "OnDisable");
             Assert.That(caster.ResetIceTrial(Trial),Is.True); Assert.That(Snapshot().frozen,Is.False);
             Assert.That(caster.Cast(SpellId.Glaciate,Trial,Vector2Int.right),Is.True); Assert.That(state.EvaluatePuzzleTarget(Target()),Is.True);
         }
         [Test] public void ResetFailsWithoutMutationWhenStartIsOccupied()
         {
-            Step(2); GameObject actor=Create("occupant",new Vector2Int(20,34)); actor.AddComponent<GridMover>();
+            Step(2); GameObject actor=Create("occupant",new Vector2Int(20,34)); GridMover occupant = actor.AddComponent<GridMover>();
+            Assert.That(occupant.TryTeleportTo(grid, grid.WorldToCell(actor.transform.position)), Is.True);
             Assert.That(state.ResetIceSlide(Trial),Is.False); Assert.That(Snapshot().cell,Is.EqualTo(new Vector2Int(22,34))); Assert.That(Snapshot().visitedTrapCount,Is.EqualTo(2));
-            actor.SetActive(false); Assert.That(state.ResetIceSlide(Trial),Is.True);
+            actor.SetActive(false); Call(occupant, "OnDisable"); Assert.That(state.ResetIceSlide(Trial),Is.True);
         }
         [Test] public void MovementRejectsOccupiedDestinationAndFootprintBlocker()
         {
-            GameObject actor=Create("occupant",new Vector2Int(21,34)); actor.AddComponent<GridMover>();
-            Assert.That(state.TrySlideIceObject(Trial,Vector2Int.right),Is.False); actor.SetActive(false);
+            GameObject actor=Create("occupant",new Vector2Int(21,34)); GridMover occupant = actor.AddComponent<GridMover>();
+            Assert.That(occupant.TryTeleportTo(grid, grid.WorldToCell(actor.transform.position)), Is.True);
+            Assert.That(state.TrySlideIceObject(Trial,Vector2Int.right),Is.False); actor.SetActive(false); Call(occupant, "OnDisable");
             state.BeginMapRebuild("campus-wide"); RegisterTrial(new Vector2Int(2,1)); state.EndMapRebuild();
             GameObject blocker=Create("blocker",new Vector2Int(22,34)); blocker.AddComponent<GridObstacle>().Configure(grid,Vector2Int.one);
             Assert.That(state.TrySlideIceObject(Trial,Vector2Int.right),Is.False); Assert.That(Snapshot().cell,Is.EqualTo(new Vector2Int(20,34)));
@@ -152,12 +179,13 @@ namespace Lumenfall.Tests.GameEvents
         [Test] public void CompletedQuestCannotResetAndMonitorSuccessIsDurableAndIdempotent()
         {
             Unlock(); QuestPuzzleMonitor monitor=Create("monitor",Vector2Int.zero).AddComponent<QuestPuzzleMonitor>();
+            Call(monitor, "Awake"); Call(monitor, "OnEnable");
             monitor.EvaluatePuzzles(); Assert.That(runtime.GetQuestStatus(Quest),Is.EqualTo(QuestStatus.Active));
             Step(4); monitor.EvaluatePuzzles(); Assert.That(runtime.GetQuestStatus(Quest),Is.EqualTo(QuestStatus.Completed));
             Assert.That(runtime.ActiveDialogue.Definition.id,Is.EqualTo("cinna_cold_feet_success_dialogue")); runtime.ActiveDialogue.Continue();
             string saved=runtime.ExportStateJson(false); runtime.ResetState(); runtime.ImportStateJson(saved); monitor.EvaluatePuzzles();
             Assert.That(runtime.ActiveDialogue,Is.Null); Assert.That(caster.ResetIceTrial(Trial),Is.False);
-            monitor.enabled=false; monitor.enabled=true; monitor.EvaluatePuzzles(); Assert.That(runtime.ActiveDialogue,Is.Null);
+            monitor.enabled=false; Call(monitor, "OnDisable"); monitor.enabled=true; Call(monitor, "OnEnable"); monitor.EvaluatePuzzles(); Assert.That(runtime.ActiveDialogue,Is.Null);
         }
         [Test] public void CastRequiresActiveQuestAndIgnoresOtherSpellsOnLane()
         {
