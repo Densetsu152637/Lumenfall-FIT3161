@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
@@ -59,8 +60,12 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(renderer.forceRenderingOff, Is.False);
             Assert.That(state.RestoreStateJson(hiddenSave), Is.True);
             Assert.That(label.Visible, Is.False); Assert.That(renderer.forceRenderingOff, Is.True);
-            root.SetActive(false); Assert.That(renderer.forceRenderingOff, Is.False, "Owned renderer override must be released.");
-            root.SetActive(true); Assert.That(label.Visible, Is.False); Assert.That(renderer.forceRenderingOff, Is.True);
+            root.SetActive(false);
+            typeof(WorldAreaPresentation).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(root.GetComponent<WorldAreaPresentation>(), null);
+            Assert.That(renderer.forceRenderingOff, Is.False, "Owned renderer override must be released.");
+            root.SetActive(true);
+            typeof(WorldAreaPresentation).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(root.GetComponent<WorldAreaPresentation>(), null);
+            Assert.That(label.Visible, Is.False); Assert.That(renderer.forceRenderingOff, Is.True);
             Assert.That(state.TryGetObject(registration.ObjectId, out WorldObjectSnapshot restored) && restored.revealed, Is.False);
         }
 
