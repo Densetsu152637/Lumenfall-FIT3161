@@ -8,6 +8,8 @@ Open [Lumenfall](Lumenfall) as the Unity project root with Unity `6000.4.10f1`. 
 
 ## Repository guide
 
+- [Download a Windows game bundle](https://github.com/Densetsu152637/Lumenfall-FIT3161/releases): extract the entire game ZIP and run `Lumenfall.exe`. See [CI and release instructions](.github/CI.md) for publishing builds.
+
 - [Design notes](docs) cover the cast, quests, spells, and world.
 - [First-party systems](Lumenfall/Assets/_Project/Systems) contain feature-oriented runtime code, tests, documentation, and owned data.
 - [Unity project guide](Lumenfall/README.md) describes the project layout.
