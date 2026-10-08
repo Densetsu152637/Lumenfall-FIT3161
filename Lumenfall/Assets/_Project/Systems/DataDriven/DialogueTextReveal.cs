@@ -46,6 +46,7 @@ namespace Lumenfall.DataDriven
         public static string Reveal(string richText, int visibleCharacters)
         {
             if (string.IsNullOrEmpty(richText) || visibleCharacters <= 0) return string.Empty;
+            if (visibleCharacters >= VisibleCharacterCount(richText)) return richText;
             int visible = 0;
             List<string> openTags = new List<string>();
             StringBuilder result = new StringBuilder(richText.Length);
@@ -58,6 +59,7 @@ namespace Lumenfall.DataDriven
                     if (close >= 0)
                     {
                         string tag = richText.Substring(i, close - i + 1);
+                        if (visible >= visibleCharacters && !IsClosingTag(tag)) break;
                         result.Append(tag);
                         UpdateTagStack(tag, openTags);
                         i = close + 1;
@@ -79,8 +81,8 @@ namespace Lumenfall.DataDriven
             string body = tag.Substring(closing ? 2 : 1, tag.Length - (closing ? 3 : 2)).Trim();
             bool selfClosing = body.EndsWith("/", StringComparison.Ordinal);
             if (selfClosing || body.Length == 0) return;
-            int space = body.IndexOfAny(new[] { ' ', '\t', '\r', '\n' });
-            string name = (space >= 0 ? body.Substring(0, space) : body).TrimEnd('/');
+            int delimiter = body.IndexOfAny(new[] { ' ', '\t', '\r', '\n', '=' });
+            string name = (delimiter >= 0 ? body.Substring(0, delimiter) : body).TrimEnd('/');
             if (closing)
             {
                 for (int i = openTags.Count - 1; i >= 0; i--)
@@ -91,6 +93,11 @@ namespace Lumenfall.DataDriven
                 }
             }
             else openTags.Add(name);
+        }
+
+        private static bool IsClosingTag(string tag)
+        {
+            return tag.Length > 2 && tag[1] == '/';
         }
     }
 }
