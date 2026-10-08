@@ -159,6 +159,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"version={version}\n")
           print(f"Using Unity version {version} for the test image.")
+          PY
 
       - name: Verify Unity license secrets
         shell: bash

@@ -54,6 +54,11 @@ class OfflineCompileTests(unittest.TestCase):
         self.assertIn(str(out / 'Lumenfall.GameEvents.dll'), runtime_rsp)
         after = {p.relative_to(self.reference): (p.read_bytes(), p.stat().st_mtime_ns) for p in self.reference.rglob('*') if p.is_file()}
         self.assertEqual(self.before, after)
+    def test_prepare_only_does_not_resolve_uninstalled_editor(self):
+        result = self.run_script('compile_runtime.ps1', '-UnityEditorPath', 'MissingUnityDrive:/Editor')
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertTrue((self.project / 'Temp/codex-compile/Lumenfall.Runtime.rsp').exists())
+
     def test_missing_dependency_returns_failure(self):
         (self.dag / 'Dependency.ref.dll').unlink()
         result = self.run_script('compile_runtime.ps1')

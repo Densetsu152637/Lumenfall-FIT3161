@@ -13,10 +13,12 @@ $referencePrefix = $referenceRoot.TrimEnd([char[]]'\/') + [IO.Path]::DirectorySe
 if ($project.Equals($referenceRoot, [StringComparison]::OrdinalIgnoreCase) -or $project.StartsWith($referencePrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Current-source project must be outside the read-only ReferenceProject.' }
 $dagRoot = Join-Path $referenceRoot 'Library/Bee/artifacts'
 $outDir = Join-Path $project 'Temp/codex-compile'
-$dotnet = Join-Path $UnityEditorPath 'Data/NetCoreRuntime/dotnet.exe'
-$csc = Join-Path $UnityEditorPath 'Data/DotNetSdkRoslyn/csc.dll'
 if (!(Test-Path -LiteralPath $dagRoot)) { throw "Read-only reference project has no imported Bee artifacts: $dagRoot" }
-if (!$PrepareOnly -and (!(Test-Path -LiteralPath $dotnet) -or !(Test-Path -LiteralPath $csc))) { throw "Unity Roslyn compiler not found under $UnityEditorPath" }
+if (!$PrepareOnly) {
+    $dotnet = Join-Path $UnityEditorPath 'Data/NetCoreRuntime/dotnet.exe'
+    $csc = Join-Path $UnityEditorPath 'Data/DotNetSdkRoslyn/csc.dll'
+    if (!(Test-Path -LiteralPath $dotnet) -or !(Test-Path -LiteralPath $csc)) { throw "Unity Roslyn compiler not found under $UnityEditorPath" }
+}
 
 # Current asmdefs own source membership; imported response files supply dependency references only.
 $assemblies = @{}
