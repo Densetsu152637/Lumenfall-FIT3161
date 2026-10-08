@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Lumenfall.Inventory;
 using Lumenfall.GameEvents;
 using Lumenfall.DataDriven;
 using Lumenfall.Quests;
@@ -17,6 +18,7 @@ namespace Lumenfall.Tests.GameEvents
         private GameEventRuntime runtime;
         private GameObject worldHost, casterHost, markerHost, monitorHost;
         private WorldStateService world;
+        private WorldStateService previousWorld;
         private SpellCaster caster;
         private float previousTimeScale;
         private Action<GameEventDefinition> completionHandler;
@@ -29,9 +31,13 @@ namespace Lumenfall.Tests.GameEvents
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
             worldHost = new GameObject("alignment-world");
+            previousWorld = WorldStateService.Instance;
             world = worldHost.AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, world);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             casterHost = new GameObject("alignment-caster");
             caster = casterHost.AddComponent<SpellCaster>();
+            Call(caster, "OnEnable");
         }
 
         [TearDown]
@@ -39,13 +45,23 @@ namespace Lumenfall.Tests.GameEvents
         {
             if (completionHandler != null) runtime.EventTriggered -= completionHandler;
             completionHandler = null;
-            if (monitorHost != null) Object.DestroyImmediate(monitorHost);
+            if (monitorHost != null)
+            {
+                Call(monitorHost.GetComponent<QuestPuzzleMonitor>(), "OnDestroy");
+                Object.DestroyImmediate(monitorHost);
+            }
             if (markerHost != null) Object.DestroyImmediate(markerHost);
-            GameSaveManager.Instance.UnregisterProvider(world.SaveKey);
+            Call(caster, "OnDisable");
             Object.DestroyImmediate(casterHost);
             Object.DestroyImmediate(worldHost);
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousWorld);
             runtime.ResetState();
             Time.timeScale = previousTimeScale;
+        }
+
+        private static void Call(object component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
         }
 
         private void BuildCampus(string[] tags = null, float authoredAngle = 0)
@@ -174,6 +190,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.SetFlag("spell.unlocked.Vis", true);
             monitorHost = new GameObject("alignment-monitor");
             QuestPuzzleMonitor monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
+            Call(monitor, "Awake");
             int completions = 0, changes = 0;
             completionHandler = e => { if (e.id == "complete_cinna_out_of_alignment") completions++; };
             runtime.EventTriggered += completionHandler;
@@ -279,14 +296,16 @@ namespace Lumenfall.Tests.GameEvents
             WorldObjectRegistration registration = markerHost.AddComponent<WorldObjectRegistration>();
             registration.Configure(Marker, new Vector2Int(40, 22), Vector2Int.one, true, new[] { "vis", "vis-target:90" });
             world.BeginMapRebuild("campus");
-            markerHost.SetActive(false); markerHost.SetActive(true);
+            markerHost.SetActive(false);
+            markerHost.SetActive(true); Call(registration, "OnEnable");
             world.EndMapRebuild();
             runtime.StartQuest(Quest);
             runtime.SetFlag("spell.unlocked.Vis", true);
             caster.Cast(SpellId.Vis, Marker, Vector2Int.up);
             world.BeginMapRebuild("eastForest"); world.EndMapRebuild();
             world.BeginMapRebuild("campus");
-            markerHost.SetActive(false); markerHost.SetActive(true);
+            markerHost.SetActive(false);
+            markerHost.SetActive(true); Call(registration, "OnEnable");
             world.EndMapRebuild();
             Assert.That(MarkerState().rotation, Is.EqualTo(90));
             Assert.That(caster.ResetActiveAlignmentPuzzle(), Is.True);
@@ -295,7 +314,8 @@ namespace Lumenfall.Tests.GameEvents
             caster.Cast(SpellId.Vis, Marker, Vector2Int.up);
             world.ResetAllState();
             world.BeginMapRebuild("campus");
-            markerHost.SetActive(false); markerHost.SetActive(true);
+            markerHost.SetActive(false);
+            markerHost.SetActive(true); Call(registration, "OnEnable");
             world.EndMapRebuild();
             Assert.That(MarkerState().rotation, Is.EqualTo(0));
             Assert.That(markerHost.transform.eulerAngles.y, Is.EqualTo(0));
