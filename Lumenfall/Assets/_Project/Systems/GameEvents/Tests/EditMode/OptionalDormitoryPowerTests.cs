@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -13,6 +14,7 @@ namespace Lumenfall.Tests.GameEvents
     {
         private readonly List<GameObject> objects = new List<GameObject>();
         private WorldStateService state;
+        private WorldStateService previousState;
         private GridWorld grid;
         private GridMover player;
         private SpellCaster caster;
@@ -31,12 +33,15 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ResetState();
             grid = Create("grid").AddComponent<GridWorld>();
             grid.ConfigureBounds(20, 20);
+            previousState = WorldStateService.Instance;
             state = Create("world").AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
             BuildMap();
             GameObject actor = Create("actor");
             actor.transform.position = grid.CellToWorld(new Vector2Int(3, 2));
             player = actor.AddComponent<GridMover>();
             caster = actor.AddComponent<SpellCaster>();
+            Call(caster, "OnEnable");
             activity = Create("optional-power").AddComponent<OptionalDormitoryPowerActivity>();
             Unlock();
             activity.Configure(true, state, caster, player);
@@ -47,9 +52,11 @@ namespace Lumenfall.Tests.GameEvents
         {
             SetOverlay(false);
             Time.timeScale = 1;
-            if (state != null) GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
+            Call(activity, "OnDisable");
+            Call(caster, "OnDisable");
             for (int i = objects.Count - 1; i >= 0; i--) if (objects[i] != null) UnityEngine.Object.DestroyImmediate(objects[i]);
             objects.Clear();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
             GameEventManager.Instance.Runtime.ResetState();
         }
 
@@ -251,9 +258,11 @@ namespace Lumenfall.Tests.GameEvents
             old.ResetState();
             Assert.That(activity.SessionStarted, Is.True, "Old runtime must be unsubscribed.");
             activity.enabled = false;
+            Call(activity, "OnDisable");
             runtime.ResetState();
             Assert.That(activity.SessionStarted, Is.False);
             activity.enabled = true;
+            Call(activity, "OnEnable");
             Unlock();
             Assert.That(activity.TryBegin(), Is.True);
         }
@@ -268,6 +277,11 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(activity.TryCast(SpellId.Ampere, Source), Is.False);
             state.TryGetObject(Source, out WorldObjectSnapshot source);
             Assert.That(source.powered, Is.False);
+        }
+
+        private static void Call(object component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
         }
 
         private static void SetOverlay(bool value)
