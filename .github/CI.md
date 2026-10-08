@@ -45,8 +45,9 @@ third-party sample tests do not belong to the game acceptance suite. The NUnit
 result validator fails missing, malformed, empty, failed, or entirely skipped
 results, and requires at least one passing test from the intended assembly.
 Results and logs are uploaded for 14 days even when the test step fails, and
-passing-test counts appear in the job summary. Coverage instrumentation is disabled
-because this project does not configure the Unity Code Coverage package.
+passing-test counts appear in the job summary. The GameCI CLI is pinned to
+`v0.1.72` to avoid per-run GitHub latest-release discovery. The runner uses its
+supported default coverage arguments; no coverage threshold is an acceptance gate.
 
 Library caches are separated by OS, test mode, editor/package hash, and commit.
 Restore fallback stays within the same mode and dependency versions. Workflows
