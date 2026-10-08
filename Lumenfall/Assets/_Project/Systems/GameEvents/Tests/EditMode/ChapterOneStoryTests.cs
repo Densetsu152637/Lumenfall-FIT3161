@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
@@ -207,8 +208,10 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(bridge.TryInteractBed(player), Is.False);
                 Assert.That(GameEventManager.Instance.StartDialogue("chapter1.reception_first"), Is.Null, "Wrong map.");
                 bridge.enabled = false;
+                typeof(ChapterOneInteraction).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(bridge, null);
                 Assert.That(grid.IsCellBlocked(new Vector2Int(29, 8)), Is.False);
                 bridge.enabled = true;
+                typeof(ChapterOneInteraction).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(bridge, null);
                 Assert.That(grid.IsCellBlocked(new Vector2Int(29, 8)), Is.True);
                 bridge.BindArea(new MapDefinition { id = "B01.Ground" }, root, grid);
                 Assert.That(grid.IsCellBlocked(new Vector2Int(29, 8)), Is.False);
