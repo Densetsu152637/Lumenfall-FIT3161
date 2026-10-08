@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Reflection;
+using Lumenfall.Inventory;
 using Lumenfall.GameEvents;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
@@ -12,6 +14,7 @@ namespace Lumenfall.Tests.GameEvents
     {
         private GameEventRuntime runtime;
         private WorldStateService state;
+        private WorldStateService previousState;
         private GameObject stateHost;
         private GameObject casterHost;
         private SpellCaster caster;
@@ -28,11 +31,15 @@ namespace Lumenfall.Tests.GameEvents
         {
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
-            state = WorldStateService.Instance;
-            if (state == null) { stateHost = new GameObject("orio-world-test"); state = stateHost.AddComponent<WorldStateService>(); }
+            previousState = WorldStateService.Instance;
+            stateHost = new GameObject("orio-world-test");
+            state = stateHost.AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             state.ResetAllState();
             casterHost = new GameObject("orio-caster-test");
             caster = casterHost.AddComponent<SpellCaster>();
+            typeof(SpellCaster).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(caster, null);
             OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
             RegisterDais(Hall);
         }
@@ -43,10 +50,11 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ActiveDialogue?.End();
             runtime.ResetState();
             state.ResetAllState();
+            typeof(SpellCaster).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(caster, null);
             UnityEngine.Object.DestroyImmediate(casterHost);
             if (stateHost != null)
             {
-                GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
+                typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
                 UnityEngine.Object.DestroyImmediate(stateHost);
             }
         }
