@@ -79,7 +79,7 @@ def _read_text(path: Path, errors: list[str], root: Path) -> str | None:
                 return data.decode("utf-16")
         return path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeDecodeError) as exception:
-        errors.append(f"Cannot read {_relative(path, root)} as UTF-8: {exception}")
+        errors.append(f"Cannot decode text in {_relative(path, root)}: {exception}")
         return None
 
 
@@ -132,12 +132,13 @@ def _validate_asset_metadata(project: Path, errors: list[str]) -> None:
         relative = _relative(path, project)
         if path.name.endswith(".meta"):
             target = path.with_name(path.name[:-5])
-            if not target.exists():
-                errors.append(f"Orphaned Unity metadata: {relative}")
-
             text = _read_text(path, errors, project)
             if text is None:
                 continue
+            # Git cannot preserve empty directories. Unity reconstructs folders
+            # from folder metadata when importing a clean checkout.
+            if not target.exists() and re.search(r"^folderAsset:\s*yes\s*$", text, re.MULTILINE) is None:
+                errors.append(f"Orphaned Unity metadata: {relative}")
             match = GUID_PATTERN.search(text)
             if match is None:
                 errors.append(f"Unity metadata has no valid 32-character GUID: {relative}")

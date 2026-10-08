@@ -82,13 +82,13 @@ class UnityProjectValidatorTests(unittest.TestCase):
 
     def test_vendor_utf16_documentation_is_accepted(self) -> None:
         asset = self.create_asset("ReadMe.txt", "5" * 32)
-        asset.write_text("Vendor documentation: café\n", encoding="utf-16")
+        asset.write_text("Vendor documentation: cafÃ©\n", encoding="utf-16")
         self.assertEqual([], validate_project(self.project))
 
     def test_non_utf8_source_is_still_rejected(self) -> None:
         asset = self.create_asset("broken.cs", "6" * 32)
         asset.write_text("class Example {}", encoding="utf-16")
-        self.assertTrue(any("Cannot read" in error for error in validate_project(self.project)))
+        self.assertTrue(any("Cannot decode" in error for error in validate_project(self.project)))
 
     def test_decorative_dividers_are_not_conflicts(self) -> None:
         asset = self.create_asset("ReadMe.txt", "7" * 32)
@@ -112,6 +112,35 @@ class UnityProjectValidatorTests(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertTrue(any("Enabled build scene" in error for error in validate_project(self.project)))
+
+    def test_empty_folder_metadata_from_clean_checkout_is_valid(self) -> None:
+        (self.assets / "Empty.meta").write_text(
+            "guid: " + "5" * 32 + "\nfolderAsset: yes\n", encoding="utf-8"
+        )
+        self.assertEqual([], validate_project(self.project))
+
+    def test_orphaned_file_metadata_is_still_reported(self) -> None:
+        (self.assets / "Missing.txt.meta").write_text(
+            "guid: " + "6" * 32 + "\n", encoding="utf-8"
+        )
+        self.assertTrue(any("Orphaned Unity metadata" in error for error in validate_project(self.project)))
+
+    def test_utf16_imported_text_is_valid(self) -> None:
+        asset = self.create_asset("ReadMe.txt", "7" * 32)
+        asset.write_text("Asset-pack documentation", encoding="utf-16")
+        self.assertEqual([], validate_project(self.project))
+
+    def test_decorative_readme_dividers_are_valid(self) -> None:
+        asset = self.create_asset("ReadMe.txt", "8" * 32)
+        asset.write_text("========================\nAsset pack\n", encoding="utf-8")
+        self.assertEqual([], validate_project(self.project))
+
+    def test_actual_conflict_markers_are_still_reported(self) -> None:
+        asset = self.create_asset("ReadMe.txt", "9" * 32)
+        for marker in ("<<<<<<< HEAD", "=======", ">>>>>>> other"):
+            with self.subTest(marker=marker):
+                asset.write_text(marker + "\n", encoding="utf-8")
+                self.assertTrue(any("merge-conflict marker" in error for error in validate_project(self.project)))
 
 
 if __name__ == "__main__":
