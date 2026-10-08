@@ -72,8 +72,8 @@
       "id": "B01",
       "name": "B01",
       "rect": {
-        "x": 12,
-        "y": 56,
+        "x": 40,
+        "y": 36,
         "width": 20,
         "height": 14
       },
@@ -106,7 +106,7 @@
       "name": "B04",
       "rect": {
         "x": 72,
-        "y": 48,
+        "y": 28,
         "width": 20,
         "height": 24
       },
@@ -114,13 +114,13 @@
     }
   ],
   "spawn": {
-    "x": 1,
-    "y": 1
+    "x": 42,
+    "y": 30
   },
   "buildingPlacements": {
     "B01": {
-      "x": 12,
-      "y": 56,
+      "x": 40,
+      "y": 36,
       "width": 20,
       "height": 14
     },
@@ -138,7 +138,7 @@
     },
     "B04": {
       "x": 72,
-      "y": 48,
+      "y": 28,
       "width": 20,
       "height": 24
     }
@@ -208,11 +208,11 @@
     {
       "id": "P.B04.C05",
       "x": 80,
-      "y": 50,
+      "y": 30,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B04",
       "arrivalOffsetX": 85,
-      "arrivalOffsetY": 48
+      "arrivalOffsetY": 26
     },
     {
       "id": "P.C01.A01",
@@ -308,29 +308,29 @@
     {
       "id": "P.C05.B02",
       "x": 23,
-      "y": 12,
+      "y": 11,
       "destinationScene": "B02.Ground",
       "destinationPortalId": "P.B02.C05",
-      "arrivalOffsetX": 18,
-      "arrivalOffsetY": 14
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1
     },
     {
       "id": "P.C05.B03",
       "x": 53,
-      "y": 8,
+      "y": 7,
       "destinationScene": "B03.Ground",
       "destinationPortalId": "P.B03.C05",
-      "arrivalOffsetX": 48,
-      "arrivalOffsetY": 10
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1
     },
     {
       "id": "P.C05.B04",
       "x": 85,
-      "y": 48,
+      "y": 27,
       "destinationScene": "B04.Ground",
       "destinationPortalId": "P.B04.C05",
-      "arrivalOffsetX": 80,
-      "arrivalOffsetY": 50
+      "arrivalOffsetX": 8,
+      "arrivalOffsetY": 1
     },
     {
       "id": "P.A01.F03",

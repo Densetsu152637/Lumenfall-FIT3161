@@ -41,10 +41,20 @@ namespace Lumenfall.Spells
         {
             if (session != null && session.IsCompleted)
             {
-                string reward = MetadataValue(session.Definition?.metadata, "spellReward");
-                if (TryParseSpell(reward, out SpellId spell) &&
-                    (spell != SpellId.Ampere || GameEventManager.Instance.Runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
-                    GameEventManager.Instance.Runtime.SetFlag(SpellFlagPrefix + spell, true);
+                string lessonQuest = MetadataValue(session.Definition?.metadata, "spellRewardQuestId");
+                GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+                if (!string.IsNullOrWhiteSpace(lessonQuest))
+                {
+                    if (runtime.GetQuestStatus(lessonQuest) == QuestStatus.Active)
+                        GrantSpellRewards(session.Definition.metadata);
+                }
+                else
+                {
+                    string reward = MetadataValue(session.Definition?.metadata, "spellReward");
+                    if (TryParseSpell(reward, out SpellId spell) &&
+                        (spell != SpellId.Ampere || runtime.GetQuestStatus("stella_first_light") == QuestStatus.Active))
+                        runtime.SetFlag(SpellFlagPrefix + spell, true);
+                }
             }
             RefreshSelection();
         }

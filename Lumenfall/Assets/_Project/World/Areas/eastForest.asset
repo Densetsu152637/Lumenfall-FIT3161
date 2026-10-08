@@ -20,8 +20,8 @@ MonoBehaviour:
     tileFile: eastForest.txt
     portalGlyph: X
     spawn:
-      x: 1
-      y: 1
+      x: 25
+      y: 10
     regions:
     - id: F01
       name: Forest arrival clearing

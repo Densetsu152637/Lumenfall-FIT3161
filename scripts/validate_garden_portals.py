@@ -69,7 +69,7 @@ def main() -> int:
                 fail(f"C04 metadata rect is not inside garden: {r}")
     npc_db = load(NPCS / "npcs.json")
     assets = {n.get("asset") for n in npc_db.get("npcs", [])}
-    if assets != {"NPCs/Elara.prefab"} or len(npc_db.get("npcs", [])) != 7:
+    if assets != {"NPCs/NpcPlaceholder.prefab"} or len(npc_db.get("npcs", [])) != 7:
         fail(f"NPC shared asset/count mismatch: count={len(npc_db.get('npcs', []))}, assets={sorted(assets)}")
     kat = next((n for n in npc_db.get("npcs", []) if n.get("id") == "katrina"), None)
     if not kat or kat.get("mapId") != "campus" or (kat.get("x"), kat.get("y")) != (23, 40):
@@ -93,8 +93,8 @@ def main() -> int:
     if not (walkable(campus, 22, 49) and walkable(campus, 23, 49)):
         fail("garden entrance (22,49)-(23,49) is not walkable")
 
-    # Exact active east-gate X cells and reserved future markers.
-    expected = {"campus": {(86, 25), (86, 26)}, "eastForest": {(0, 34), (1, 34), (0, 35), (1, 35)}}
+    # Exact active east-gate/interior approach cells and reserved future markers.
+    expected = {"campus": {(86, 25), (86, 26), (23, 11), (53, 7), (85, 27)}, "eastForest": {(0, 34), (1, 34), (0, 35), (1, 35)}}
     for name, rows, cells in (("campus", campus, expected["campus"]), ("eastForest", forest, expected["eastForest"])):
         actual = {(x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c == "X"}
         if name == "campus":

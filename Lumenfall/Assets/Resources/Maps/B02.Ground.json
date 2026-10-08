@@ -155,12 +155,12 @@
       "y": 2,
       "destinationScene": "campus",
       "destinationPortalId": "P.C05.B02",
-      "arrivalOffsetX": 18,
-      "arrivalOffsetY": 14
+      "arrivalOffsetX": 23,
+      "arrivalOffsetY": 10
     }
   ],
   "coordinateOffset": {
-    "x": 10,
-    "y": 12
+    "x": 0,
+    "y": 0
   }
 }

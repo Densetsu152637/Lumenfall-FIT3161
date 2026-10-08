@@ -53,9 +53,9 @@ namespace Lumenfall.Tests.World
 
             var migratedReturns = new[]
             {
-                new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(23, 11) },
-                new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(53, 7) },
-                new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(85, 47) }
+                new { areaId = "B02.Ground", portalId = "P.B02.C05", arrival = new Vector2Int(23, 10) },
+                new { areaId = "B03.Ground", portalId = "P.B03.C05", arrival = new Vector2Int(53, 6) },
+                new { areaId = "B04.Ground", portalId = "P.B04.C05", arrival = new Vector2Int(85, 26) }
             };
             foreach (var expected in migratedReturns)
             {
@@ -92,7 +92,7 @@ namespace Lumenfall.Tests.World
                     activeRouteCount++;
                 }
             }
-            Assert.That(activeRouteCount, Is.EqualTo(10), "All legacy active portal edges should be present and traversable.");
+            Assert.That(activeRouteCount, Is.EqualTo(13), "All authored active portal edges should be present and traversable.");
 
             WorldAreaAsset campus = allAreas.Single(area => area.definition.id == "campus");
             loader.Load(campus, catalog);

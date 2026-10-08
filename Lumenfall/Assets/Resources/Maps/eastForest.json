@@ -70,8 +70,8 @@
     }
   ],
   "spawn": {
-    "x": 1,
-    "y": 1
+    "x": 25,
+    "y": 10
   },
   "tileFile": "eastForest.txt",
   "portalGlyph": "X",

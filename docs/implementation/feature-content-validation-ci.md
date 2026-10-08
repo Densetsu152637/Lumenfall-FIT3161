@@ -38,14 +38,18 @@ CI adds `Content / Authored runtime assets` to the existing matrix and installs 
 - Authored runtime content check: **failed with 22 existing gaps**, enumerated below. Dialogue semantic check: **failed with one missing First Light teaching guard** (merged resource catalogue currently 7 quests, 17 dialogues, 14 events; these are observed results, not required counts).
 - Working-tree whitespace check passed. Final committed-range whitespace and remote HEAD parity are checked after commit/push. Local actionlint was unavailable and was not rerun; CI retains its existing lint job. No GitHub Actions or Unity Test Runner execution is claimed by this local run.
 
-## Existing content gaps exposed
+## Historical content gaps exposed
 
 The 22 diagnostics are: divergent `campus` legacy `map.json` alias (1); all seven source NPC resource paths differ from NpcCatalog's editable NpcPlaceholder prefab (7); First Light dialogue reward lacks `spellRewardQuestId` (1); campus/eastForest spawn `(1,1)` is on a blocking source tile (2); campus B01 `(12,56)` size `20x14` and B04 `(72,48)` size `20x24` exceed `92x54` bounds (2); B02/B03/B04 indoor exits target campus PortalContentAssets absent from live prefab components (3); and all six quest completion spell rewards lack authored Active-gated teaching dialogue metadata on this branch (6). NPC placeholder fallback is documented by the migration, but it leaves source/resource identity parity incomplete and is reported explicitly. Quest and route branches own the narrow gameplay/content remediation.
 
-The newly enforced content check intentionally fails until these authoring gaps are reconciled. This PR does not migrate assets, activate reserved content, add gameplay teaching, or disguise failures to obtain green CI.
+The user-requested PR check repair now reconciles these gaps in source and baked assets. Existing placeholder GUIDs are retained under Resources, real building footprints are kept in bounds away from the garden/NPCs, spawns use free cells, and three reciprocal indoor approaches are baked without opening reserved gates. Teaching grants use terminal dialogue and an Active quest gate, with six behavior regressions covering acceptance, abandonment, reminders and completion. No content checks are disabled.
 
 ## Limits and merge handoff
 
 Static tile/object collision checks do not prove baked GridObstacle geometry, root/content transforms, scene grid scale, reachability, portal bounce or successful runtime travel. Transform checks cover direct placed registrations/NPCs and serialized prefab-instance placement overrides under the existing unit-grid authoring convention. Runtime monitor predicate equivalence, custom optional component gates, terminal-dialogue grant timing and custom handlers still need gameplay acceptance after combining feature branches. No Unity Editor/MCP/CLI, Play Mode, player build, rendering/audio/device or performance acceptance ran.
 
 Quest branches will resolve teaching/target data and NPC handoff eligibility; world-route/presentation branches will reconcile travel/asset placement. Retain authored source/baked parity and tests while resolving merges. CI/docs/compile scripts overlap PR 2's retained workflow work. Parent/root owns PR update/attachment, independent final review, remote verification and worktree archival.
+
+## Current PR check repair
+
+Merged current main, fixed actionlint heredoc termination, and made PrepareOnly compilation independent of a Windows Editor installation. The 62 Python harness tests and all five content validators pass locally. Current-source runtime/EditMode/PlayMode compilation passes against read-only Unity 6000.4.10f1 references. The authored runtime validator now reports zero errors. Licensed native Actions validation remains the readiness gate; manual gameplay, placement, visual and platform acceptance remain pending.

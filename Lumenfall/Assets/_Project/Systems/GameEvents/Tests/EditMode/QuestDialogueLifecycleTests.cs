@@ -127,6 +127,60 @@ namespace Lumenfall.Tests.GameEvents
             }
         }
 
+        [TestCase("stella_first_light")]
+        [TestCase("stella_string_them_together")]
+        [TestCase("cinna_out_of_alignment")]
+        [TestCase("cinna_cold_feet_warm_idea")]
+        [TestCase("orio_patch_notes")]
+        [TestCase("katrina_something_borrowed")]
+        public void EveryLessonRequiresTerminalContinuationAndAnActiveQuest(string questId)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("all-lesson-gates-test");
+            SpellCaster caster = host.AddComponent<SpellCaster>();
+            try
+            {
+                EnableForTest(caster);
+                string prerequisite = questId == "stella_string_them_together" ? "stella_first_light"
+                    : questId == "cinna_cold_feet_warm_idea" ? "cinna_out_of_alignment" : null;
+                if (prerequisite != null)
+                {
+                    runtime.StartQuest(prerequisite);
+                    runtime.CompleteQuest(prerequisite);
+                }
+                DialogueSession session = runtime.StartDialogue(questId + "_dialogue");
+                string reward = session.Definition.metadata.First(item => item.key == "spellReward").value;
+                string[] spells = reward.Split(',');
+                session.SelectChoice("leave");
+                foreach (string spell in spells) Assert.That(runtime.GetFlag("spell.unlocked." + spell), Is.False);
+                session = runtime.StartDialogue(questId + "_dialogue");
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                foreach (string spell in spells) Assert.That(runtime.GetFlag("spell.unlocked." + spell), Is.False);
+                session.End();
+                session = runtime.StartDialogue(questId + "_dialogue");
+                session.SelectChoice("leave");
+                foreach (string spell in spells) Assert.That(runtime.GetFlag("spell.unlocked." + spell), Is.False);
+                session = runtime.StartDialogue(questId + "_dialogue");
+                Assert.That(session.SelectChoice("active"), Is.True);
+                Assert.That(session.Continue(), Is.True);
+                foreach (string spell in spells) Assert.That(runtime.GetFlag("spell.unlocked." + spell), Is.True);
+                runtime.CompleteQuest(questId);
+                foreach (string spell in spells) runtime.SetFlag("spell.unlocked." + spell, false);
+                session = runtime.StartDialogue(questId + "_dialogue");
+                Assert.That(session.SelectChoice("done"), Is.True);
+                session.Continue();
+                foreach (string spell in spells) Assert.That(runtime.GetFlag("spell.unlocked." + spell), Is.False,
+                    "A completed quest reminder must not grant a lesson reward.");
+            }
+            finally
+            {
+                InvokeLifecycle(caster, "OnDisable");
+                Object.DestroyImmediate(host);
+                runtime.ResetState();
+            }
+        }
+
         [Test]
         public void SpellRewardFlagsSurviveRuntimeSaveRoundTrip()
         {

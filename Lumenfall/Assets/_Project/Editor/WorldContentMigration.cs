@@ -15,7 +15,7 @@ namespace Lumenfall.EditorTools
     public static class WorldContentMigration
     {
         private const string AreaRoot = "Assets/_Project/World/Areas";
-        private const string NpcFallbackPrefabPath = "Assets/_Project/World/NPCs/NpcPlaceholder.prefab";
+        private const string NpcFallbackPrefabPath = "Assets/Resources/NPCs/NpcPlaceholder.prefab";
         private const string ScenePath = "Assets/_Project/Scenes/SampleScene.unity";
 
         [Serializable] private sealed class LegacyMap
@@ -400,9 +400,9 @@ namespace Lumenfall.EditorTools
         private static Vector2Int GetMigratedArrivalCell(string sourceArea, LegacyPortal portal)
         {
             // The legacy indoor exits target cells inside their campus buildings. Keep the same route and place arrivals at the nearest free approach tile.
-            if (sourceArea == "B02.Ground" && portal.id == "P.B02.C05") return new Vector2Int(23, 11);
-            if (sourceArea == "B03.Ground" && portal.id == "P.B03.C05") return new Vector2Int(53, 7);
-            if (sourceArea == "B04.Ground" && portal.id == "P.B04.C05") return new Vector2Int(85, 47);
+            if (sourceArea == "B02.Ground" && portal.id == "P.B02.C05") return new Vector2Int(23, 10);
+            if (sourceArea == "B03.Ground" && portal.id == "P.B03.C05") return new Vector2Int(53, 6);
+            if (sourceArea == "B04.Ground" && portal.id == "P.B04.C05") return new Vector2Int(85, 26);
             return new Vector2Int(portal.arrivalOffsetX, portal.arrivalOffsetY);
         }
         private static PortalContentAsset ResolvePortal(Dictionary<string, PortalContentAsset> portals, string area, string id)

@@ -20,8 +20,8 @@ MonoBehaviour:
     tileFile: campus.txt
     portalGlyph: X
     spawn:
-      x: 1
-      y: 1
+      x: 42
+      y: 30
     regions:
     - id: A01
       name: East gate forecourt
@@ -74,8 +74,8 @@ MonoBehaviour:
     - id: B01
       name: B01
       rect:
-        x: 12
-        y: 56
+        x: 40
+        y: 36
         width: 20
         height: 14
       walkable: 1
@@ -99,13 +99,13 @@ MonoBehaviour:
       name: B04
       rect:
         x: 72
-        y: 48
+        y: 28
         width: 20
         height: 24
       walkable: 1
     B01:
-      x: 12
-      y: 56
+      x: 40
+      y: 36
       width: 20
       height: 14
     B02:
@@ -120,7 +120,7 @@ MonoBehaviour:
       height: 18
     B04:
       x: 72
-      y: 48
+      y: 28
       width: 20
       height: 24
     B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
@@ -327,7 +327,7 @@ MonoBehaviour:
       reserved: 0
     - id: P.B04.C05
       x: 80
-      y: 50
+      y: 30
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: 41c184c10886e40449ff7576f4f40ebf, type: 2}
@@ -415,7 +415,7 @@ MonoBehaviour:
       reserved: 0
     - id: P.C05.B02
       x: 23
-      y: 12
+      y: 11
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: de1180b4ea288b2498f14342f81e85ee, type: 2}
@@ -423,7 +423,7 @@ MonoBehaviour:
       reserved: 0
     - id: P.C05.B03
       x: 53
-      y: 8
+      y: 7
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: 34a8113bdba92cf45916471fd6ca67cb, type: 2}
@@ -431,7 +431,7 @@ MonoBehaviour:
       reserved: 0
     - id: P.C05.B04
       x: 85
-      y: 48
+      y: 27
       width: 1
       height: 1
       destination: {fileID: 11400000, guid: cedd9b5ed211ce2489890abf46f4f7c8, type: 2}
