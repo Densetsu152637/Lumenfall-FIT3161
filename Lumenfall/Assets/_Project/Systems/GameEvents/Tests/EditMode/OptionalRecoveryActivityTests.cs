@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using Lumenfall.Inventory;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
@@ -11,6 +13,7 @@ namespace Lumenfall.Tests.GameEvents
     {
         private readonly List<GameObject> created = new List<GameObject>();
         private WorldStateService world;
+        private WorldStateService previousWorld;
         private GridWorld grid;
         private GameEventRuntime runtime;
         private OptionalRecoveryRules rules;
@@ -22,16 +25,25 @@ namespace Lumenfall.Tests.GameEvents
         {
             runtime = GameEventManager.Instance.Runtime; priorRuntime = runtime.ExportStateJson(false); runtime.ResetState();
             grid = Create("grid").AddComponent<GridWorld>(); grid.ConfigureBounds(64, 64);
+            previousWorld = WorldStateService.Instance;
             world = Create("world").AddComponent<WorldStateService>();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, world);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             world.BeginMapRebuild("campus"); RegisterTargets(); world.EndMapRebuild();
             rules = new OptionalRecoveryRules(runtime, world, "campus", first, second);
         }
         [TearDown]
         public void TearDown()
         {
-            GameSaveManager.Instance.UnregisterProvider(world.SaveKey);
+            foreach (GameObject host in created) if (host != null)
+            {
+                foreach (SpellCaster caster in host.GetComponents<SpellCaster>()) Call(caster, "OnDisable");
+                foreach (OptionalRecoveryActivity activity in host.GetComponents<OptionalRecoveryActivity>()) Call(activity, "OnDisable");
+            }
             for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null) Object.DestroyImmediate(created[i]);
-            created.Clear(); runtime.ImportStateJson(priorRuntime);
+            created.Clear();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousWorld);
+            runtime.ImportStateJson(priorRuntime);
         }
         [Test]
         public void DisabledAndLockedSpellCannotStartOrReward()
@@ -165,6 +177,7 @@ namespace Lumenfall.Tests.GameEvents
             GridMover mover = player.AddComponent<GridMover>();
             Assert.That(mover.TryTeleportTo(grid, first), Is.True);
             SpellCaster caster = player.AddComponent<SpellCaster>();
+            Call(caster, "OnEnable");
             Assert.That(caster.Cast(SpellId.Ampere, OptionalRecoveryRules.TargetOne, Vector2Int.up), Is.False);
             Assert.That(caster.Cast(SpellId.LostEchoes, OptionalRecoveryRules.TargetTwo, Vector2Int.up), Is.False);
             Assert.That(caster.Cast(SpellId.LostEchoes, OptionalRecoveryRules.TargetOne, Vector2Int.up), Is.True);
@@ -180,6 +193,11 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(rules.TryBegin(true), Is.False); Assert.That(rules.Observe(true), Is.False);
             Assert.That(runtime.GetFlag(OptionalRecoveryRules.RewardFlag), Is.False);
         }
+        private static void Call(object component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
+        }
+
         private void Unlock() => runtime.SetFlag("spell.unlocked.LostEchoes", true);
         private GameObject Create(string name) { GameObject item = new GameObject(name); created.Add(item); return item; }
         private void RegisterTargets()
