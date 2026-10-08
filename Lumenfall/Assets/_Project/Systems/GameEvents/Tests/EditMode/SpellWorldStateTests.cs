@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using Lumenfall.Inventory;
 using NUnit.Framework;
 using UnityEngine;
 using Lumenfall.Spells;
@@ -14,20 +15,34 @@ namespace Lumenfall.Tests.GameEvents
         private readonly List<GameObject> created = new List<GameObject>();
         private WorldStateService state;
         private GridWorld grid;
+        private WorldStateService previousState;
 
         [SetUp]
         public void SetUp()
         {
+            ResetSharedState();
+            previousState = WorldStateService.Instance;
             GameObject gridObject = new GameObject("test-grid"); created.Add(gridObject); grid = gridObject.AddComponent<GridWorld>(); grid.ConfigureBounds(12, 12);
-            GameObject stateObject = new GameObject("test-spell-state"); created.Add(stateObject); state = stateObject.AddComponent<WorldStateService>(); state.BeginMapRebuild("test-map");
+            GameObject stateObject = new GameObject("test-spell-state"); created.Add(stateObject); state = stateObject.AddComponent<WorldStateService>();
+            // Awake is not run in EditMode. Bind only the dependency Cast uses,
+            // avoiding Awake's scene persistence and save-provider side effects.
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
+            state.BeginMapRebuild("test-map");
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (state != null) GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
             for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null) Object.DestroyImmediate(created[i]);
             created.Clear();
+            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
+            ResetSharedState();
+        }
+
+        private static void ResetSharedState()
+        {
+            GameEventManager.Instance.Runtime.ResetState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
         }
 
         [Test]
