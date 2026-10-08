@@ -106,6 +106,8 @@ namespace Lumenfall.Tests.GameEvents
             GameEventRuntime runtime = manager.Runtime;
             runtime.ResetState();
             GameObject host = new GameObject("stella-follow-up-selection-test");
+            SpellCaster lessonCaster = host.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(lessonCaster, "OnEnable");
             try
             {
                 StartAndComplete(runtime, "stella_first_light");
@@ -156,8 +158,9 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
                 Assert.That(ChoiceIds(session), Does.Contain("accept"));
                 Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.False);
+                Assert.That(session.Continue(), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
-                session.End();
 
                 session = stella.Interact();
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
@@ -252,10 +255,14 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
+        public void OrioTeachesRotaraAndRequiresTheLiveGearBeforeCompletion()
         {
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
+            WorldStateService previousState = WorldStateService.Instance;
+            GameObject worldHost = new GameObject("orio-progression-world-test");
+            WorldStateService world = worldHost.AddComponent<WorldStateService>();
+            EditModeLifecycle.SetWorldInstance(world);
             GameObject host = new GameObject("later-spell-progression-test");
             try
             {
@@ -264,14 +271,25 @@ namespace Lumenfall.Tests.GameEvents
                 DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
+                Assert.That(dialogue.Continue(), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
+                world.BeginMapRebuild(Lumenfall.Quests.RotaraGearMechanism.PuzzleMapId);
+                world.RegisterObject(Lumenfall.Quests.RotaraGearMechanism.PuzzleObjectId, null,
+                    new Vector2Int(8, 21), Vector2Int.one, true, new[] { "rotara" });
+                world.SetProperty(Lumenfall.Quests.RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 90);
+                world.EndMapRebuild();
                 Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False, "Orio teaches Rotara, not Gravitate.");
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
             }
             finally
             {
                 InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
                 Object.DestroyImmediate(host);
+                Object.DestroyImmediate(worldHost);
+                EditModeLifecycle.SetWorldInstance(previousState);
             }
         }
 

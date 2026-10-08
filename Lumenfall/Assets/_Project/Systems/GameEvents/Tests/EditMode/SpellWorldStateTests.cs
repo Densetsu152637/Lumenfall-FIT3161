@@ -105,9 +105,10 @@ namespace Lumenfall.Tests.GameEvents
 
                 DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
                 Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
                 Assert.That(circuitQuest.Continue(), Is.True,
                     "Finish Stella's teaching dialogue before casting puzzle spells.");
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
 
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
