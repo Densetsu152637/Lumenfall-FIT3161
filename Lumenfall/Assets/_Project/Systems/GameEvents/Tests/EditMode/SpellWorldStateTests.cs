@@ -33,7 +33,6 @@ namespace Lumenfall.Tests.GameEvents
         [TearDown]
         public void TearDown()
         {
-            if (state != null) GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
             for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null)
             {
                 foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
