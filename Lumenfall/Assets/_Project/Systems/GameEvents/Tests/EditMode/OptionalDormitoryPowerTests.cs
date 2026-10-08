@@ -40,6 +40,7 @@ namespace Lumenfall.Tests.GameEvents
             GameObject actor = Create("actor");
             actor.transform.position = grid.CellToWorld(new Vector2Int(3, 2));
             player = actor.AddComponent<GridMover>();
+            Assert.That(player.TryTeleportTo(grid, new Vector2Int(3, 2)), Is.True);
             caster = actor.AddComponent<SpellCaster>();
             Call(caster, "OnEnable");
             activity = Create("optional-power").AddComponent<OptionalDormitoryPowerActivity>();
