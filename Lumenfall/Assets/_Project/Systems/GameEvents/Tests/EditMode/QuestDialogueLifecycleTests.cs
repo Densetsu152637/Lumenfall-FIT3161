@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.DataDriven;
 using Lumenfall.Spells;
@@ -16,6 +17,38 @@ namespace Lumenfall.Tests.GameEvents
             "stella_first_light", "stella_string_them_together", "cinna_out_of_alignment",
             "cinna_cold_feet_warm_idea", "orio_patch_notes", "katrina_something_borrowed"
         };
+
+        [SetUp]
+        public void SetUp()
+        {
+            ResetSharedState();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ResetSharedState();
+        }
+
+        private static void ResetSharedState()
+        {
+            GameEventManager.Instance.Runtime.ResetState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
+        }
+
+        // Ordinary MonoBehaviours do not run their play-mode lifecycle in EditMode.
+        // Normalize subscriptions before explicitly wiring the production event handlers.
+        private static void EnableForTest(Component component)
+        {
+            InvokeLifecycle(component, "OnDisable");
+            InvokeLifecycle(component, "OnEnable");
+        }
+
+        private static void InvokeLifecycle(Component component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(component, null);
+        }
 
         [Test]
         public void EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches()
@@ -149,32 +182,29 @@ namespace Lumenfall.Tests.GameEvents
         public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
         {
             GameEventRuntime runtime = GameEventManager.Instance.Runtime;
-            runtime.ResetState();
-            GameObject host = new GameObject("dialogue-spell-reward-test");
+            GameObject host = new GameObject("quest-scoped-spell-reward-test");
             SpellCaster caster = host.AddComponent<SpellCaster>();
-            EditModeLifecycle.Call(caster, "OnEnable");
             try
             {
-            DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            session.SelectChoice("leave");
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
+                EnableForTest(caster);
+                DialogueSession session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.Definition.metadata.Any(item => item.key == "spellReward" && item.value == "Ampere"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                session.SelectChoice("leave");
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Leaving before accepting the quest must not award Ampere.");
 
-            session = runtime.StartDialogue("stella_first_light_dialogue");
-            Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(session.IsCompleted, Is.False);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
-            Assert.That(session.Continue(), Is.True);
-            Assert.That(session.IsCompleted, Is.True);
-            Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
+                session = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(session.IsCompleted, Is.False);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
+                Assert.That(session.Continue(), Is.True);
+                Assert.That(session.IsCompleted, Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
             }
             finally
             {
-                EditModeLifecycle.Call(caster, "OnDisable");
-                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                InvokeLifecycle(caster, "OnDisable");
                 Object.DestroyImmediate(host);
-                runtime.ResetState();
             }
         }
 
@@ -198,7 +228,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
-                EditModeLifecycle.Call(caster, "OnEnable");
+                EnableForTest(caster);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
@@ -216,7 +246,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
-                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -230,7 +260,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 SpellCaster caster = host.AddComponent<SpellCaster>();
-                EditModeLifecycle.Call(caster, "OnEnable");
+                EnableForTest(caster);
                 DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
@@ -240,7 +270,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
-                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
                 Object.DestroyImmediate(host);
             }
         }
@@ -251,10 +281,10 @@ namespace Lumenfall.Tests.GameEvents
             GameEventManager manager = GameEventManager.Instance;
             manager.Runtime.ResetState();
             GameObject uiObject = new GameObject("inventory-test-ui");
-            InventoryEncyclopediaUI ui = uiObject.AddComponent<InventoryEncyclopediaUI>();
-            EditModeLifecycle.Call(ui, "OnEnable");
+            InventoryEncyclopediaUI inventory = uiObject.AddComponent<InventoryEncyclopediaUI>();
             try
             {
+                EnableForTest(inventory);
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
 
                 DialogueSession dialogue = manager.Runtime.StartDialogue("katrina_something_borrowed_dialogue");
@@ -270,7 +300,7 @@ namespace Lumenfall.Tests.GameEvents
             }
             finally
             {
-                EditModeLifecycle.Call(ui, "OnDisable");
+                InvokeLifecycle(inventory, "OnDisable");
                 Object.DestroyImmediate(uiObject);
             }
         }
