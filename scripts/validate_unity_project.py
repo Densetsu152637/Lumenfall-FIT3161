@@ -71,9 +71,12 @@ def _relative(path: Path, root: Path) -> str:
 
 def _read_text(path: Path, errors: list[str], root: Path) -> str | None:
     try:
-        return path.read_text(encoding="utf-8-sig")
+        content = path.read_bytes()
+        # Some imported asset-pack text files use UTF-16 with a BOM.
+        encoding = "utf-16" if content.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
+        return content.decode(encoding)
     except (OSError, UnicodeDecodeError) as exception:
-        errors.append(f"Cannot read {_relative(path, root)} as UTF-8: {exception}")
+        errors.append(f"Cannot decode text in {_relative(path, root)}: {exception}")
         return None
 
 
@@ -126,12 +129,13 @@ def _validate_asset_metadata(project: Path, errors: list[str]) -> None:
         relative = _relative(path, project)
         if path.name.endswith(".meta"):
             target = path.with_name(path.name[:-5])
-            if not target.exists():
-                errors.append(f"Orphaned Unity metadata: {relative}")
-
             text = _read_text(path, errors, project)
             if text is None:
                 continue
+            # Git cannot preserve empty directories. Unity reconstructs folders
+            # from folder metadata when importing a clean checkout.
+            if not target.exists() and re.search(r"^folderAsset:\s*yes\s*$", text, re.MULTILINE) is None:
+                errors.append(f"Orphaned Unity metadata: {relative}")
             match = GUID_PATTERN.search(text)
             if match is None:
                 errors.append(f"Unity metadata has no valid 32-character GUID: {relative}")
@@ -164,14 +168,14 @@ def _validate_build_scenes(project: Path, errors: list[str]) -> None:
 
 
 def _validate_text_files(project: Path, errors: list[str]) -> None:
-    markers = ("<<<<<<< ", "=======", ">>>>>>> ")
+    markers = ("<<<<<<< ", ">>>>>>> ")
     for path in (item for item in _iter_source_paths(project) if item.is_file()):
         if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {"LICENSE"}:
             continue
         text = _read_text(path, errors, project)
         if text is None:
             continue
-        if any(line.startswith(markers) for line in text.splitlines()):
+        if any(line.startswith(markers) or line == "=======" for line in text.splitlines()):
             errors.append(f"Unresolved merge-conflict marker in {_relative(path, project)}")
 
 
