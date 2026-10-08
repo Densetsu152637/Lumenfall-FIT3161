@@ -33,7 +33,11 @@ namespace Lumenfall.Tests.GameEvents
         [TearDown]
         public void TearDown()
         {
-            for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null) Object.DestroyImmediate(created[i]);
+            for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null)
+            {
+                foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) Call(caster, "OnDisable");
+                Object.DestroyImmediate(created[i]);
+            }
             created.Clear();
             typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
             ResetSharedState();
@@ -75,6 +79,7 @@ namespace Lumenfall.Tests.GameEvents
             {
                 monitorHost = new GameObject("stella-quest-puzzle-monitor-test");
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
+                Call(monitor, "Awake");
             }
             try
             {
@@ -87,6 +92,7 @@ namespace Lumenfall.Tests.GameEvents
                     new[] { "weave-with:relic.stella.power" });
                 state.EndMapRebuild();
                 SpellCaster caster = created[1].AddComponent<SpellCaster>();
+                Call(caster, "OnEnable");
 
                 DialogueSession firstLight = runtime.StartDialogue("stella_first_light_dialogue");
                 Assert.That(firstLight.SelectChoice("accept"), Is.True);
@@ -124,8 +130,17 @@ namespace Lumenfall.Tests.GameEvents
             {
                 if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
                 runtime.ResetState();
-                if (monitorHost != null) Object.DestroyImmediate(monitorHost);
+                if (monitorHost != null)
+                {
+                    Call(monitor, "OnDestroy");
+                    Object.DestroyImmediate(monitorHost);
+                }
             }
+        }
+
+        private static void Call(object component, string method)
+        {
+            component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
         }
 
         private static void RunPuzzleMonitor(QuestPuzzleMonitor monitor)
