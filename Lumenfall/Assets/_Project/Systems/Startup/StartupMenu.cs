@@ -70,6 +70,8 @@ namespace Lumenfall.Startup
         private string backdropSlot;
         private string message;
         private bool questHintsEnabled;
+        // Read once on open; the Reduce motion switch lives in the in-game options, so it cannot change while the menu is up.
+        private bool reduceMotion;
         private readonly GameSettingsPanel settings = new GameSettingsPanel();
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
@@ -124,7 +126,7 @@ namespace Lumenfall.Startup
         private Texture2D backdropTexture, glowTexture, sparkleTexture, knobTexture, switchTexture, lineTexture,
             ringTexture, innerRingTexture, discTexture, wandCursor;
         private GUIStyle panelStyle, panelTrimStyle, cardStyle, thumbFrameStyle, pillStyle, letterStyle, promptStyle,
-            rowStyle, valueStyle, mutedStyle, smallStyle, smallCentreStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle,
+            rowStyle, valueStyle, mutedStyle, groupStyle, smallStyle, smallCentreStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle,
             scrollbarStyle, scrollThumbStyle;
 
         public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
@@ -171,6 +173,8 @@ namespace Lumenfall.Startup
             hintsKnob = questHintsEnabled ? 1f : 0f;
             QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
             GameSettingsPanel.ApplySavedVolume();
+            GameSettingsPanel.ApplySavedDisplay();
+            reduceMotion = GameSettingsPanel.ReduceMotion;
             SetGameplayInput(false);
             LoadButtonTextures();
             CreateArt();
@@ -243,7 +247,7 @@ namespace Lumenfall.Startup
             if (!ready) return;
             float now = Time.unscaledTime;
             float returnBlend = phase == Phase.Closing ? Smooth((now - phaseStartedAt) / (CloseSeconds - 0.15f)) : 0f;
-            cameraDrift.Apply(now, parallax, returnBlend);
+            if (!reduceMotion) cameraDrift.Apply(now, parallax, returnBlend);
         }
 
         private void OnDestroy()
@@ -285,9 +289,9 @@ namespace Lumenfall.Startup
 
             Vector2 target = new Vector2(Mathf.Clamp(position.x / Mathf.Max(1f, Screen.width) * 2f - 1f, -1f, 1f),
                 Mathf.Clamp(position.y / Mathf.Max(1f, Screen.height) * 2f - 1f, -1f, 1f));
-            parallax = Vector2.Lerp(parallax, target, 1f - Mathf.Exp(-2.5f * deltaTime));
+            parallax = reduceMotion ? Vector2.zero : Vector2.Lerp(parallax, target, 1f - Mathf.Exp(-2.5f * deltaTime));
 
-            if (!ready || phase == Phase.Closing)
+            if (!ready || phase == Phase.Closing || reduceMotion)
             {
                 lastTrail = position;
                 return;
@@ -447,7 +451,7 @@ namespace Lumenfall.Startup
             if (repaint)
             {
                 Draw(new Rect(0f, 0f, Screen.width, Screen.height), backdropTexture, Color.white, 1f);
-                sparks.DrawMotes(now, worldAlpha, parallax, glowTexture, sparkleTexture);
+                if (!reduceMotion) sparks.DrawMotes(now, worldAlpha, parallax, glowTexture, sparkleTexture);
             }
 
             // The backdrop and motes fill the real window; the title and panels are laid out in view units scaled to fit.
@@ -490,7 +494,7 @@ namespace Lumenfall.Startup
         {
             Vector2 size = PageSize(page);
             return new Rect((viewSize.x - size.x) * 0.5f - parallax.x * 5f,
-                (viewSize.y - size.y) * 0.5f + (1f - panelAlpha) * 18f - parallax.y * 4f, size.x, size.y);
+                (viewSize.y - size.y) * 0.5f + (1f - panelAlpha) * (reduceMotion ? 0f : 18f) - parallax.y * 4f, size.x, size.y);
         }
 
         /// <summary>
@@ -971,8 +975,9 @@ namespace Lumenfall.Startup
                 SetColor(Color.white, 1f);
                 rowStyle.normal.textColor = MenuArt.Cream;
                 messageStyle.normal.textColor = MenuArt.Ember;
+                groupStyle.normal.textColor = MenuArt.Gold;
                 GUILayout.BeginArea(area);
-                settings.DrawControls(rowStyle, keyStyle, messageStyle, area.height - 96f);
+                settings.DrawControls(rowStyle, keyStyle, messageStyle, area.height - 96f, groupStyle);
                 GUILayout.EndArea();
             }
             finally
@@ -1357,6 +1362,8 @@ namespace Lumenfall.Startup
             valueStyle = TextStyle(19, TextAnchor.MiddleRight);
             valueStyle.fontStyle = FontStyle.Bold;
             mutedStyle = TextStyle(15, TextAnchor.MiddleLeft);
+            groupStyle = TextStyle(15, TextAnchor.MiddleLeft);
+            groupStyle.fontStyle = FontStyle.Bold;
             mutedStyle.clipping = TextClipping.Clip;
             smallStyle = TextStyle(13, TextAnchor.MiddleLeft);
             smallStyle.clipping = TextClipping.Clip;
