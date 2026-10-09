@@ -123,3 +123,10 @@ is outside that linter's supported schema and was left unchanged. Repository
 integrity and whitespace validation pass. See the PR's live checks for hosted
 execution results; the 101 local feature-case results above remain independent
 evidence against the same pinned revisions.
+
+The first hosted Unity invocation exposed an upstream GameCI CLI incompatibility:
+`coverageEnabled: false` produced an unsupported `--no-coverageEnabled` argument
+and stopped before launching Unity. The shared workflow now uses GameCI's default
+coverage setting, matching the existing repository workflow. The suite summary and
+diagnostic artifact correctly retained this setup failure; it was not classified
+as a failed feature assertion. Hosted results must be read from the latest PR head.

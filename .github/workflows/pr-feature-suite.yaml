@@ -107,7 +107,6 @@ jobs:
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: editmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance
-          coverageEnabled: false
           artifactsPath: artifacts/pr-${{ inputs.pr-number }}/editmode
           githubToken: ''
 
@@ -125,7 +124,6 @@ jobs:
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: playmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance
-          coverageEnabled: false
           artifactsPath: artifacts/pr-${{ inputs.pr-number }}/playmode
           githubToken: ''
 
