@@ -26,6 +26,11 @@ namespace Lumenfall.Startup
         private enum Page { Main, Load, Settings }
 
         private Page page;
+        private int focused;
+        private int drawingIndex;
+        private readonly UiNavigationInput navigation = new UiNavigationInput();
+        private GameSaveManager subscribedSaves;
+        private GUIStyle headerStyle, bodyStyle, buttonStyle;
         private bool ready;
         private bool seededBlankSave;
         private bool confirmOverwrite;
@@ -49,6 +54,21 @@ namespace Lumenfall.Startup
             }
         }
 
+        private void OnEnable() { OverlayInputGate.Acquire(this); }
+        private void OnDisable()
+        {
+            OverlayInputGate.Release(this);
+            if (subscribedSaves != null) subscribedSaves.SaveFailed -= OnSaveFailed;
+            subscribedSaves = null;
+        }
+        private void OnSaveFailed(string error) { message = error; }
+        private void ChangePage(Page value)
+        {
+            page = value; focused = 0; confirmOverwrite = false; message = "";
+            if (value == Page.Load) focused = UiFocusIndex.Move(0, 0, 4, index => index == 3 || GameSaveManager.Instance.HasSave(Slots[index]));
+        }
+        private void CancelOverwrite() { confirmOverwrite = false; focused = 0; message = ""; }
+
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -65,6 +85,8 @@ namespace Lumenfall.Startup
         {
             yield return null;
             GameSaveManager saves = GameSaveManager.Instance;
+            subscribedSaves = saves;
+            saves.SaveFailed += OnSaveFailed;
             backdropSlot = saves.FindMostRecentSlot(Slots);
             if (backdropSlot == null)
             {
@@ -77,22 +99,46 @@ namespace Lumenfall.Startup
                 }
                 else
                 {
-                    message = "Unable to create a starting save.";
+                    if (string.IsNullOrEmpty(message)) message = "Unable to create a starting save.";
                 }
             }
 
             // The latest save is the backdrop state. Providers registered by the scene are ready now.
             if (!string.IsNullOrWhiteSpace(backdropSlot) && !saves.Load(backdropSlot, false))
             {
-                message = "The latest save could not be loaded.";
+                if (string.IsNullOrEmpty(message)) message = "The latest save could not be loaded.";
             }
-            if (!string.IsNullOrWhiteSpace(backdropSlot)) GameSaveOverlay.SetCurrentSlot(backdropSlot);
+            if (!string.IsNullOrWhiteSpace(backdropSlot) && string.IsNullOrEmpty(message)) GameSaveOverlay.SetCurrentSlot(backdropSlot);
             ready = true;
         }
 
         private void Update()
         {
-            if (ready) SetGameplayInput(false);
+            if (!ready) return;
+            SetGameplayInput(false);
+            navigation.Read();
+            int count = confirmOverwrite ? 2 : page == Page.Main ? 4 : page == Page.Load ? 4 : 2;
+            if (navigation.Cancel)
+            {
+                if (confirmOverwrite) CancelOverwrite();
+                else if (page != Page.Main) ChangePage(Page.Main);
+                return;
+            }
+            if (navigation.Vertical != 0)
+                focused = UiFocusIndex.Move(focused, navigation.Vertical, count,
+                    index => page != Page.Load || index == 3 || GameSaveManager.Instance.HasSave(Slots[index]));
+            if (page == Page.Settings && focused == 0 && navigation.Horizontal != 0) SetMasterVolume(masterVolume + navigation.Horizontal * 0.05f);
+            if (!navigation.Submit) return;
+            if (confirmOverwrite) { if (focused == 0) StartNewGame(); else CancelOverwrite(); }
+            else if (page == Page.Main)
+            {
+                if (focused == 0) StartNewGame();
+                else if (focused == 1) ChangePage(Page.Load);
+                else if (focused == 2) ChangePage(Page.Settings);
+                else Application.Quit();
+            }
+            else if (page == Page.Load) { if (focused == 3) ChangePage(Page.Main); else if (GameSaveManager.Instance.HasSave(Slots[focused])) LoadSlot(Slots[focused]); }
+            else if (focused == 1) ChangePage(Page.Main);
         }
 
         private void OnDestroy()
@@ -129,17 +175,28 @@ namespace Lumenfall.Startup
             if (page == Page.Main) DrawMain(panel);
             else if (page == Page.Load) DrawLoad(panel);
             else DrawSettings(panel);
+            GUI.Label(new Rect(panel.x + 20f, panel.yMax - 28f, panel.width - 40f, 24f), "Up/Down: choose   Enter / A: confirm   Esc / B: back", BodyStyle());
+            if (page != Page.Main && !string.IsNullOrEmpty(message)) GUI.Label(new Rect(panel.x + 24f, panel.yMax - 170f, panel.width - 48f, 54f), message, BodyStyle());
+            GUI.matrix = previousMatrix;
         }
 
         private void DrawMain(Rect panel)
         {
-            float x = panel.x + 90f;
-            float width = panel.width - 180f;
+            if (confirmOverwrite)
+            {
+                GUI.Label(new Rect(panel.x + 24f, panel.y + 100f, panel.width - 48f, 100f), "All slots are full. Replace SLOT 1 with a new game? This replaces its saved progress.", BodyStyle());
+                if (Button("start", new Rect(panel.x + 60f, panel.y + 220f, panel.width - 120f, 60f), "REPLACE SLOT 1")) StartNewGame();
+                if (Button("exit", new Rect(panel.x + 60f, panel.y + 300f, panel.width - 120f, 60f), "CANCEL")) CancelOverwrite();
+                if (!string.IsNullOrEmpty(message)) GUI.Label(new Rect(panel.x + 24f, panel.yMax - 120f, panel.width - 48f, 80f), message, BodyStyle());
+                return;
+            }
+            float x = panel.x + 60f;
+            float width = panel.width - 120f;
             float y = panel.y + 112f;
-            if (Button("start", new Rect(x, y, width, 72f), "START")) StartNewGame();
-            if (Button("load", new Rect(x, y + 88f, width, 72f), "LOAD")) page = Page.Load;
-            if (Button("options", new Rect(x, y + 176f, width, 72f), "SETTINGS")) page = Page.Settings;
-            if (Button("exit", new Rect(x, y + 264f, width, 72f), "EXIT")) Application.Quit();
+            if (Button("start", new Rect(x, y, width, Mathf.Min(64f, (panel.height - 190f) / 4f)), "START")) StartNewGame();
+            if (Button("load", new Rect(x, y + (panel.height - 180f) / 4f, width, Mathf.Min(64f, (panel.height - 190f) / 4f)), "LOAD")) ChangePage(Page.Load);
+            if (Button("options", new Rect(x, y + (panel.height - 180f) / 2f, width, Mathf.Min(64f, (panel.height - 190f) / 4f)), "SETTINGS")) ChangePage(Page.Settings);
+            if (Button("exit", new Rect(x, y + (panel.height - 180f) * 0.75f, width, Mathf.Min(64f, (panel.height - 190f) / 4f)), "EXIT")) Application.Quit();
             if (!string.IsNullOrEmpty(message)) GUI.Label(new Rect(panel.x + 30f, panel.yMax - 68f, panel.width - 60f, 42f), message, BodyStyle());
         }
 
@@ -152,17 +209,18 @@ namespace Lumenfall.Startup
                 string slot = Slots[i];
                 string label = saves.HasSave(slot) ? $"SLOT {i + 1}" : "empty save file";
                 GUI.Label(new Rect(panel.x + 52f, y + 12f, panel.width - 210f, 48f), label, BodyStyle());
-                if (saves.HasSave(slot) && Button("load", new Rect(panel.xMax - 170f, y, 120f, 66f), "LOAD"))
+                drawingIndex = i;
+                if (Button("load", new Rect(panel.xMax - 170f, y, 120f, 66f), saves.HasSave(slot) ? "LOAD" : "EMPTY"))
                 {
-                    LoadSlot(slot);
+                    if (saves.HasSave(slot)) LoadSlot(slot); else message = "This slot is empty. Start a new game to create a save.";
                 }
-                y += 88f;
+                y += Mathf.Min(88f, (panel.height - 240f) / 3f);
             }
 
+            drawingIndex = 3;
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK"))
             {
-                page = Page.Main;
-                message = string.Empty;
+                ChangePage(Page.Main);
             }
         }
 
@@ -176,10 +234,7 @@ namespace Lumenfall.Startup
                 masterVolume, 0f, 1f);
             if (!Mathf.Approximately(newVolume, masterVolume))
             {
-                masterVolume = newVolume;
-                AudioListener.volume = masterVolume;
-                PlayerPrefs.SetFloat(MasterVolumeKey, masterVolume);
-                PlayerPrefs.Save();
+                SetMasterVolume(newVolume);
             }
             GUI.Label(new Rect(0f, 66f, width, 28f),
                 $"{Mathf.RoundToInt(masterVolume * 100f)}%", BodyStyle());
@@ -223,18 +278,22 @@ namespace Lumenfall.Startup
 
         private bool Button(string textureKey, Rect rect, string fallbackLabel)
         {
+            int index = drawingIndex++;
+            if (index == focused) GUI.Box(new Rect(rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f), GUIContent.none);
             bool clicked = GUI.Button(rect, GUIContent.none, GUI.skin.button);
-            if (buttonTextures.TryGetValue(textureKey, out Texture2D texture) && texture != null)
+            bool standardLabel = fallbackLabel == "START" || fallbackLabel == "LOAD" || fallbackLabel == "SETTINGS" || fallbackLabel == "EXIT";
+            buttonTextures.TryGetValue(textureKey, out Texture2D texture);
+            bool hasArtwork = standardLabel && texture != null;
+            if (hasArtwork)
             {
                 float aspect = texture.width / (texture.height * 0.25f);
                 float drawWidth = Mathf.Min(rect.width, rect.height * aspect);
                 Rect drawRect = new Rect(rect.center.x - drawWidth * 0.5f, rect.y, drawWidth, rect.height);
                 GUI.DrawTextureWithTexCoords(drawRect, texture, new Rect(0f, 0.75f, 1f, 0.25f), true);
             }
-            else
-            {
-                GUI.Label(rect, fallbackLabel, ButtonStyle());
-            }
+            if (!hasArtwork) GUI.Label(rect, fallbackLabel, ButtonStyle());
+            if (index == focused) GUI.Label(new Rect(rect.x - 28f, rect.y, 24f, rect.height), ">", ButtonStyle());
+            if (clicked) focused = index;
             return clicked;
         }
 
@@ -249,18 +308,20 @@ namespace Lumenfall.Startup
                 if (!confirmOverwrite)
                 {
                     confirmOverwrite = true;
-                    message = "All slots are full. Press START again to replace SLOT 1.";
+                    focused = 1;
+                    message = "All slots are full. Confirm replacement or cancel.";
                     return;
                 }
                 slot = Slots[0];
             }
 
+            message = "";
             GameEventManager.Instance.ReloadDefinitions();
             DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
             if (worldLoader != null) worldLoader.ResetToStartingState();
             if (!saves.Save(slot))
             {
-                message = "Could not start a new game.";
+                if (string.IsNullOrEmpty(message)) message = "Could not start a new game.";
                 return;
             }
             backdropSlot = slot;
@@ -274,6 +335,7 @@ namespace Lumenfall.Startup
 
         private void LoadSlot(string slot)
         {
+            message = "";
             if (GameSaveManager.Instance.Load(slot))
             {
                 backdropSlot = slot;
@@ -282,7 +344,7 @@ namespace Lumenfall.Startup
             }
             else
             {
-                message = "That save could not be loaded.";
+                if (string.IsNullOrEmpty(message)) message = "That save could not be loaded.";
             }
         }
 
@@ -369,8 +431,8 @@ namespace Lumenfall.Startup
             }
         }
 
-        private static GUIStyle HeaderStyle() => new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 28, normal = { textColor = Color.white } };
-        private static GUIStyle BodyStyle() => new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 18, normal = { textColor = Color.white } };
-        private static GUIStyle ButtonStyle() => new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontSize = 20 };
+        private GUIStyle HeaderStyle() => headerStyle ?? (headerStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 28, normal = { textColor = Color.white } });
+        private GUIStyle BodyStyle() => bodyStyle ?? (bodyStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, wordWrap = true, normal = { textColor = Color.white } });
+        private GUIStyle ButtonStyle() => buttonStyle ?? (buttonStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 20, wordWrap = true, normal = { textColor = Color.white } });
     }
 }

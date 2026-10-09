@@ -108,8 +108,9 @@ namespace Lumenfall.GridMovement
 
         private void Update()
         {
-            if (activeMoveAction == null)
+            if (activeMoveAction == null || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
+                heldDirection = Vector2Int.zero;
                 return;
             }
 
@@ -141,7 +142,7 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            if (!repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked)
+            if (!repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 return;
             }

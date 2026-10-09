@@ -41,13 +41,14 @@ namespace Lumenfall.GridMovement
         private float elevation;
         private bool isMoving;
         private bool movementLocked;
+        private readonly System.Collections.Generic.HashSet<object> movementLockOwners = new System.Collections.Generic.HashSet<object>();
         private GridPortal suppressedPortal;
 
         public GridWorld World => world;
         public Vector2Int CurrentCell => currentCell;
         public Vector2Int DestinationCell => isMoving ? destinationCell : currentCell;
         public bool IsMoving => isMoving;
-        public bool IsMovementLocked => movementLocked;
+        public bool IsMovementLocked => movementLocked || movementLockOwners.Count > 0;
         public GridMovementMode MovementMode => movementMode;
         public float CurrentStepDuration => movementMode == GridMovementMode.Sprint
             ? sprintMoveDuration
@@ -118,6 +119,7 @@ namespace Lumenfall.GridMovement
             moveRoutine = null;
             isMoving = false;
             movementLocked = false;
+            movementLockOwners.Clear();
         }
 
         /// <summary>
@@ -125,7 +127,7 @@ namespace Lumenfall.GridMovement
         /// </summary>
         public bool TryMove(Vector2Int direction)
         {
-            if (!isActiveAndEnabled || world == null || isMoving || movementLocked)
+            if (!isActiveAndEnabled || world == null || isMoving || IsMovementLocked)
             {
                 return false;
             }
@@ -147,6 +149,12 @@ namespace Lumenfall.GridMovement
         public bool TryTeleportTo(GridWorld destinationWorld, Vector2Int cell)
         {
             return TryTeleportTo(destinationWorld, cell, null);
+        }
+
+        public void SetMovementLocked(object owner, bool locked)
+        {
+            if (owner == null) throw new ArgumentNullException(nameof(owner));
+            if (locked) movementLockOwners.Add(owner); else movementLockOwners.Remove(owner);
         }
 
         public void SetMovementLocked(bool locked)
@@ -218,7 +226,7 @@ namespace Lumenfall.GridMovement
             Vector2Int sourceEntryOffset,
             Vector2Int arrivalOffset)
         {
-            if (movementLocked)
+            if (IsMovementLocked)
             {
                 return;
             }
