@@ -1,0 +1,42 @@
+name: Feature PR 20 - Glaciate lanes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/feature-pr-20-glaciate-lanes.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_20/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/feature-pr-20-glaciate-lanes.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_20/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feature-pr-20-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: Glaciate lanes
+    uses: ./.github/workflows/pr-feature-suite.yaml
+    with:
+      pr-number: 20
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}

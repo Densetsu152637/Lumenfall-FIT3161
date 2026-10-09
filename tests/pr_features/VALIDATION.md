@@ -108,4 +108,18 @@ This report validates the additional acceptance suites. It does not establish
 that sibling PRs work together, that all existing branch tests pass, or that a
 player build succeeds. Visual/audio quality, complete gameplay journeys, target
 device performance and art approval remain manual or separately scoped checks.
-No remote CI run, PR publication, merge or production implementation was performed.
+The results above were obtained locally before publication; they do not establish
+GitHub-hosted runner execution. No merge or production implementation was performed.
+
+## Actions integration follow-up
+
+The branch now includes 22 named suite workflows and a shared GameCI workflow.
+The CI adapter adds strict action-outcome, source-revision, suite-hash and result
+verification, plus per-platform job summaries and diagnostic artifacts. The local
+Python harness passes **56/56** checks, including nine CI adapter regressions in
+addition to the original 18 runner regressions. All 23 new YAML workflow documents
+pass actionlint 1.7.12; the existing release workflow's `concurrency.queue` field
+is outside that linter's supported schema and was left unchanged. Repository
+integrity and whitespace validation pass. See the PR's live checks for hosted
+execution results; the 101 local feature-case results above remain independent
+evidence against the same pinned revisions.

@@ -93,6 +93,42 @@ the pinned PR project and execute its added suite without changing a checkout.
 These catalog tests live outside `Assets` and therefore require this runner;
 the existing EditMode CI job does not automatically discover them on main.
 
+## Feature acceptance workflows
+
+Each catalog suite has a separate `.yaml` workflow named **Feature PR NN -
+<feature>**. For example, `feature-pr-18-camera.yaml` appears as **Feature PR 18 -
+Camera** in Actions. The 22 workflows call `pr-feature-suite.yaml` for shared
+setup, while retaining separate workflow runs, check names, rerun controls and
+artifacts. Within a run, EditMode and PlayMode have separate named steps; both
+are attempted when applicable, even if EditMode fails. PR 2 runs Python mutations
+without a Unity image or license.
+
+They run on pull requests and pushes to `main` that change their suite, its workflow,
+the shared workflow, manifest, runner or CI adapter. Updating shared execution code
+or the manifest starts all 22 suites. A suite-only change starts that suite. Each
+workflow also supports **Run workflow** from Actions after it is on the default
+branch. These are catalog validation workflows: they fetch the exact manifest SHA,
+not the current feature-branch head. Refresh the pinned SHA and any expectations
+when adopting a later implementation; ordinary gameplay changes alone do not
+trigger these historical snapshots.
+
+Every job prepares its own extracted project, uses the snapshot's Unity version,
+and filters to `Lumenfall.FeatureAcceptance`. Unity jobs use the same three license
+secrets as the existing EditMode workflow and fail visibly if they are absent.
+The workflows use `contents: read`; GameCI's optional Checks reporter is disabled.
+Library caches are scoped to PR, OS, Unity version, target SHA and suite hash, and
+saved only after complete result verification. Concurrent suites run on separate
+hosted runners; their source, preferences and caches are isolated.
+
+`scripts/pr_feature_ci.py` verifies each action outcome, pinned revision, suite
+hash and every expected fixture/case count. Missing, duplicate, partial, failed or
+skipped test results fail the workflow. The job summary lists the target commit
+and results by platform; annotations identify the failing platform or preparation
+step. Download `pr-N-feature-acceptance` for the NUnit XML, Editor diagnostics,
+Python log, preparation metadata and `ci-report.json` (retained for 14 days).
+Artifacts are uploaded after failures as well. The original repository integrity
+and colocated EditMode checks continue unchanged.
+
 ## Downloadable game releases
 
 [`Release game bundle`](workflows/release-build.yml) builds a **Windows x64 Mono**

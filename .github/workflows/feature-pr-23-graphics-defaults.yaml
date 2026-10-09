@@ -1,0 +1,42 @@
+name: Feature PR 23 - Graphics defaults
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/feature-pr-23-graphics-defaults.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_23/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/feature-pr-23-graphics-defaults.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_23/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feature-pr-23-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: Graphics defaults
+    uses: ./.github/workflows/pr-feature-suite.yaml
+    with:
+      pr-number: 23
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}

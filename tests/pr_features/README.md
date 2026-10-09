@@ -8,6 +8,10 @@ the branches or establish that all sibling features work together.
 See [the execution report](VALIDATION.md) for per-PR results, case counts and
 retained evidence from the local validation run.
 
+Each suite also has its own **Feature PR NN - <feature>** GitHub Actions workflow
+in `.github/workflows/feature-pr-*.yaml`. See [CI instructions](../../.github/CI.md#feature-acceptance-workflows)
+for triggers, pinned revisions, per-platform summaries and result artifacts.
+
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own
 ignored snapshot, installs only that PR's acceptance suite with deterministic
