@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Accessibility;
+using Lumenfall.Controls;
 
 namespace Lumenfall.GridMovement
 {
@@ -35,6 +37,8 @@ namespace Lumenfall.GridMovement
         private bool enabledSprintActionHere;
         private Vector2Int heldDirection;
         private float nextRepeatTime;
+        private readonly SprintPreferenceState sprintPreference = new SprintPreferenceState();
+        private bool sprinting;
 
         private void Reset()
         {
@@ -50,6 +54,7 @@ namespace Lumenfall.GridMovement
         private void OnEnable()
         {
             mover.MoveCompleted += HandleMoveCompleted;
+            AccessibilitySettings.Changed += OnPreferencesChanged;
             ResolveActions();
             if (activeMoveAction == null)
             {
@@ -74,6 +79,9 @@ namespace Lumenfall.GridMovement
         private void OnDisable()
         {
             mover.MoveCompleted -= HandleMoveCompleted;
+            AccessibilitySettings.Changed -= OnPreferencesChanged;
+            sprintPreference.Reset();
+            sprinting = false;
 
             if (enabledMoveActionHere && activeMoveAction != null)
             {
@@ -108,16 +116,18 @@ namespace Lumenfall.GridMovement
 
         private void Update()
         {
-            if (activeMoveAction == null || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
+            if (AccessibilitySettingsOverlay.InputBlocked || activeMoveAction == null || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 heldDirection = Vector2Int.zero;
                 return;
             }
 
-            bool sprinting = activeSprintAction != null && activeSprintAction.IsPressed();
+            sprinting = sprintPreference.Resolve(AccessibilitySettings.Current.HoldToSprint,
+                KeyBindings.IsPressed(GameAction.Sprint) || (activeSprintAction?.activeControl?.device is Gamepad && activeSprintAction.IsPressed()),
+                KeyBindings.WasPressed(GameAction.Sprint) || (activeSprintAction?.activeControl?.device is Gamepad && activeSprintAction.WasPressedThisFrame()), mover.IsMovementLocked || Time.timeScale <= 0f);
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
 
-            Vector2Int direction = QuantiseDirection(activeMoveAction.ReadValue<Vector2>());
+            Vector2Int direction = QuantiseDirection(ReadMove());
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
@@ -142,14 +152,14 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            if (!repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
+            if (AccessibilitySettingsOverlay.InputBlocked || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 return;
             }
 
             // Start the next tile in the completion frame so held movement has no
             // stop/start frame for the follow camera to expose as visible jitter.
-            Vector2Int direction = QuantiseDirection(activeMoveAction.ReadValue<Vector2>());
+            Vector2Int direction = QuantiseDirection(ReadMove());
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
@@ -157,10 +167,11 @@ namespace Lumenfall.GridMovement
             }
 
             heldDirection = direction;
-            bool sprinting = activeSprintAction != null && activeSprintAction.IsPressed();
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
             TryMoveHeldDirection();
         }
+
+        private void OnPreferencesChanged(AccessibilitySnapshot _) { sprintPreference.Reset(); sprinting = false; }
 
         private void TryMoveHeldDirection()
         {
@@ -168,6 +179,12 @@ namespace Lumenfall.GridMovement
             {
                 nextRepeatTime = Time.unscaledTime + repeatInterval;
             }
+        }
+
+        private Vector2 ReadMove()
+        {
+            Vector2 keys = KeyBindings.MoveVector();
+            return keys != Vector2.zero || activeMoveAction?.activeControl?.device is Keyboard ? keys : activeMoveAction.ReadValue<Vector2>();
         }
 
         private Vector2Int QuantiseDirection(Vector2 value)

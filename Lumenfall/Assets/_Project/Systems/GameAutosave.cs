@@ -1,23 +1,23 @@
-﻿using System.Collections;
 using UnityEngine;
-using Lumenfall.GridMovement;
-using Lumenfall.Spells;
+using UnityEngine.InputSystem;
+using Lumenfall.Inventory;
+using Lumenfall.Quests;
+using Lumenfall.Startup;
 
 namespace Lumenfall.GameEvents
 {
-    /// <summary>Debounces autosaves after meaningful game-state changes and flushes on suspend/quit.</summary>
+    /// <summary>Writes periodic autosaves to the dedicated autosave slot.</summary>
     [DefaultExecutionOrder(-9980)]
     [DisallowMultipleComponent]
     public sealed class GameAutosave : MonoBehaviour
     {
-        private const float DebounceSeconds = 0.75f;
+        private const float PeriodicSaveSeconds = 30f;
         private static GameAutosave instance;
-        private GameEventRuntime subscribedRuntime;
-        private WorldStateService subscribedWorldState;
-        private GridMover subscribedPlayer;
         private GameSaveManager saveManager;
-        private Coroutine pendingSave;
         private bool saving;
+        private bool initialAutosavePending;
+        private bool waitingForNewRunToBegin;
+        private float nextPeriodicSaveTime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -41,102 +41,65 @@ namespace Lumenfall.GameEvents
             DontDestroyOnLoad(gameObject);
             saveManager = GameSaveManager.Instance;
             saveManager.LoadCompleted += OnLoadCompleted;
+            RestartTimer();
         }
 
         private void Update()
         {
-            GameEventRuntime currentRuntime = GameEventManager.Instance.Runtime;
-            if (currentRuntime != subscribedRuntime)
+            if (waitingForNewRunToBegin && Time.timeScale > 0f && !StartupMenu.IsVisible)
             {
-                UnsubscribeRuntime();
-                subscribedRuntime = currentRuntime;
-                SubscribeRuntime();
+                waitingForNewRunToBegin = false;
+                nextPeriodicSaveTime = Time.unscaledTime + PeriodicSaveSeconds;
             }
 
-            WorldStateService currentWorldState = WorldStateService.Instance;
-            if (currentWorldState != subscribedWorldState)
+            if (Time.unscaledTime >= nextPeriodicSaveTime)
             {
-                UnsubscribeWorldState();
-                subscribedWorldState = currentWorldState;
-                if (subscribedWorldState != null)
-                    subscribedWorldState.StateChanged += OnWorldStateChanged;
-            }
-
-            GridMover currentPlayer = FindAnyObjectByType<GridMover>();
-            if (currentPlayer != subscribedPlayer)
-            {
-                UnsubscribePlayer();
-                subscribedPlayer = currentPlayer;
-                if (subscribedPlayer != null)
-                {
-                    subscribedPlayer.MoveCompleted += OnPlayerMoved;
-                    subscribedPlayer.Teleported += OnPlayerMoved;
-                }
+                nextPeriodicSaveTime = Time.unscaledTime + PeriodicSaveSeconds;
+                if (CanAutosave()) SaveCurrentSlot();
             }
         }
 
         private void OnDestroy()
         {
-            UnsubscribeRuntime();
-            UnsubscribeWorldState();
-            UnsubscribePlayer();
             if (saveManager != null) saveManager.LoadCompleted -= OnLoadCompleted;
             if (instance == this) instance = null;
         }
 
-        private void OnApplicationPause(bool paused)
+        private void OnLoadCompleted(string _) => RestartTimer();
+
+        /// <summary>Starts a fresh 30-second interval after a load/new game.</summary>
+        public static void RestartTimer()
         {
-            if (paused) FlushPendingSave();
+            if (instance == null) return;
+            instance.initialAutosavePending = false;
+            instance.waitingForNewRunToBegin = false;
+            instance.nextPeriodicSaveTime = Time.unscaledTime + PeriodicSaveSeconds;
         }
 
-        private void OnApplicationQuit()
+        /// <summary>Arms the first autosave for 30 seconds after the new game actually enters gameplay.</summary>
+        public static void BeginNewRun()
         {
-            FlushPendingSave();
+            if (instance == null) return;
+            instance.initialAutosavePending = true;
+            instance.waitingForNewRunToBegin = true;
         }
 
-        private void SubscribeRuntime()
+        /// <summary>Writes the current game state to the dedicated autosave slot immediately.</summary>
+        public static bool SaveNow()
         {
-            if (subscribedRuntime == null) return;
-            subscribedRuntime.EventTriggered += OnEventTriggered;
-            subscribedRuntime.FlagChanged += OnFlagChanged;
-            subscribedRuntime.CounterChanged += OnCounterChanged;
-            subscribedRuntime.QuestStatusChanged += OnQuestStatusChanged;
-        }
-
-        private void OnEventTriggered(GameEventDefinition _) => ScheduleSave();
-        private void OnFlagChanged(string _, bool __) => ScheduleSave();
-        private void OnCounterChanged(string _, int __) => ScheduleSave();
-        private void OnQuestStatusChanged(QuestDefinition _, QuestStatus __, QuestStatus ___) => ScheduleSave();
-        private void OnWorldStateChanged(MapStateSnapshot _) => ScheduleSave();
-        private void OnPlayerMoved(GridMover _, Vector2Int __) => ScheduleSave();
-
-        private void OnLoadCompleted(string _)
-        {
-            if (pendingSave == null) return;
-            StopCoroutine(pendingSave);
-            pendingSave = null;
-        }
-
-        private void ScheduleSave()
-        {
-            if (saving || !CanAutosave()) return;
-            if (pendingSave != null) StopCoroutine(pendingSave);
-            pendingSave = StartCoroutine(SaveAfterDebounce());
-        }
-
-        private IEnumerator SaveAfterDebounce()
-        {
-            yield return new WaitForSecondsRealtime(DebounceSeconds);
-            pendingSave = null;
-            SaveCurrentSlot();
-        }
-
-        private void FlushPendingSave()
-        {
-            if (pendingSave == null) return;
-            StopCoroutine(pendingSave);
-            pendingSave = null;
-            SaveCurrentSlot();
+            GameAutosave autosave = instance;
+            GameSaveManager saves = GameSaveManager.Instance;
+            GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
+            GameSaveOverlay.NotifySaveStarted();
+            bool succeeded = saves.Save(GameSaveManager.AutosaveSlot);
+            if (succeeded) SaveSlotSummary.RequestThumbnailRefresh(GameSaveManager.AutosaveSlot);
+            if (autosave != null)
+            {
+                autosave.initialAutosavePending = false;
+                autosave.waitingForNewRunToBegin = false;
+                autosave.nextPeriodicSaveTime = Time.unscaledTime + PeriodicSaveSeconds;
+            }
+            return succeeded;
         }
 
         private void SaveCurrentSlot()
@@ -145,7 +108,15 @@ namespace Lumenfall.GameEvents
             saving = true;
             try
             {
-                saveManager.Save(GameSaveOverlay.CurrentSlot);
+                GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
+                GameSaveOverlay.NotifySaveStarted();
+                bool wasInitialAutosave = initialAutosavePending;
+                bool saved = saveManager.Save(GameSaveManager.AutosaveSlot);
+                if (saved && wasInitialAutosave)
+                {
+                    initialAutosavePending = false;
+                    saveManager.MarkPlayed(GameSaveManager.AutosaveSlot);
+                }
             }
             finally
             {
@@ -155,32 +126,8 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            return saveManager != null && saveManager.HasSave(GameSaveOverlay.CurrentSlot);
-        }
-
-        private void UnsubscribeRuntime()
-        {
-            if (subscribedRuntime == null) return;
-            subscribedRuntime.EventTriggered -= OnEventTriggered;
-            subscribedRuntime.FlagChanged -= OnFlagChanged;
-            subscribedRuntime.CounterChanged -= OnCounterChanged;
-            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
-            subscribedRuntime = null;
-        }
-
-        private void UnsubscribeWorldState()
-        {
-            if (subscribedWorldState == null) return;
-            subscribedWorldState.StateChanged -= OnWorldStateChanged;
-            subscribedWorldState = null;
-        }
-
-        private void UnsubscribePlayer()
-        {
-            if (subscribedPlayer == null) return;
-            subscribedPlayer.MoveCompleted -= OnPlayerMoved;
-            subscribedPlayer.Teleported -= OnPlayerMoved;
-            subscribedPlayer = null;
+            return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible &&
+                (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
         }
     }
 }

@@ -8,7 +8,7 @@ using Lumenfall.Spells;
 namespace Lumenfall.DataDriven
 {
     /// <summary>Instantiates inspector-authored world area and NPC assets.</summary>
-    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider
+    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider, ISaveStateValidator, ISaveStateRestorePhases
     {
         public static DataDrivenWorldLoader Instance { get; private set; }
         [SerializeField] private WorldAreaAsset startingArea;
@@ -28,6 +28,14 @@ namespace Lumenfall.DataDriven
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             if (GameSaveManager.Instance != null) GameSaveManager.Instance.RegisterProvider(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            GameSaveManager manager = FindAnyObjectByType<GameSaveManager>();
+            if (manager != null) manager.UnregisterProvider(this);
+            Instance = null;
         }
 
         private void Start()
@@ -99,14 +107,39 @@ namespace Lumenfall.DataDriven
                 playerX = player == null ? 0 : player.CurrentCell.x, playerY = player == null ? 0 : player.CurrentCell.y });
         }
 
+        public bool ValidateStateJson(string json)
+        {
+            try
+            {
+                if (!GameSaveManager.IsValidPayloadObject(json, "mapId", "playerX", "playerY")) return false;
+                SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+                WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
+                GridMover player = FindAnyObjectByType<GridMover>();
+                GridWorld grid = world == null ? FindAnyObjectByType<GridWorld>() : world;
+                return area != null && area.areaPrefab != null && area.definition != null && player != null && !player.IsMoving && grid != null &&
+                    state.playerX >= 0 && state.playerY >= 0 && state.playerX < area.definition.width && state.playerY < area.definition.height;
+            }
+            catch { return false; }
+        }
+
+        public bool PrepareRestoreStateJson(string json)
+        {
+            if (!ValidateStateJson(json)) return false;
+            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (world == null) world = FindAnyObjectByType<GridWorld>();
+            Load(area, npcCatalog);
+            return CurrentArea == area;
+        }
+
         public bool RestoreStateJson(string json)
         {
+            if (!ValidateStateJson(json)) return false;
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
-            WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
-            if (area == null) return false;
-            Load(area, npcCatalog);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (CurrentArea != area && !PrepareRestoreStateJson(json)) return false;
             GridMover player = FindAnyObjectByType<GridMover>();
-            return player == null || world == null || player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
+            return CurrentArea == area && player != null && world != null && player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)
@@ -124,6 +157,13 @@ namespace Lumenfall.DataDriven
             if (player.TryTeleportTo(world, arrival, target)) return true;
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;
+        }
+
+        public bool TryGetMapDefinition(string id, out MapDefinition definition)
+        {
+            WorldAreaAsset area = FindArea(id);
+            definition = area == null ? null : area.definition;
+            return definition != null;
         }
 
         private WorldAreaAsset FindArea(string id)

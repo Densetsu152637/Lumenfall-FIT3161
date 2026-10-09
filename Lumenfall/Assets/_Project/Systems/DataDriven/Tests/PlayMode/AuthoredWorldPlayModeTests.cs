@@ -13,11 +13,21 @@ namespace Lumenfall.Tests.World
 {
     public sealed class AuthoredWorldPlayModeTests
     {
+        [UnityTearDown]
+        public IEnumerator UnloadWorld()
+        {
+            Scene scene = SceneManager.GetSceneByName("SampleScene");
+            if (scene.IsValid() && scene.isLoaded) yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
         [UnityTest]
         public IEnumerator SampleWorldLoadsRoutesRestoresAndRefreshesQuestGatedNpcs()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            // Keep the test runner alive and isolate quest assertions from the menu's saved backdrop.
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Additive);
+            SceneManager.SetActiveScene(SceneManager.GetSceneByName("SampleScene"));
             yield return null;
+            GameEventManager.Instance.ReloadDefinitions();
 
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             Assert.That(loader, Is.Not.Null, "SampleScene should have a wired world loader.");

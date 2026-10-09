@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lumenfall.Accessibility;
 
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
@@ -27,6 +28,34 @@ public class CameraFollow2_5D : MonoBehaviour
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
 
+    /// <summary>Resting pose used when the menu hands its drifting camera back to gameplay.</summary>
+    public bool TryGetFollowPose(out Vector3 position, out Vector3 focusPoint)
+    {
+        position = transform.position;
+        focusPoint = transform.position + transform.forward;
+        if (target == null) return false;
+        position = target.position + offset;
+        focusPoint = target.position + focusOffset;
+        return true;
+    }
+
+    public void ResetSmoothing() { currentVelocity = Vector3.zero; }
+    private bool reducedMotion;
+    private void OnEnable()
+    {
+        AccessibilitySettings.Changed += OnPreferencesChanged;
+        SetReducedMotion(AccessibilitySettings.Current.ReducedMotion);
+    }
+    private void OnDisable() => AccessibilitySettings.Changed -= OnPreferencesChanged;
+    private void OnPreferencesChanged(AccessibilitySnapshot value) => SetReducedMotion(value.ReducedMotion);
+    public void SetReducedMotion(bool value)
+    {
+        if (reducedMotion == value) return;
+        reducedMotion = value;
+        currentVelocity = Vector3.zero;
+        if (target != null) transform.position = target.position + offset;
+    }
+
     /// <summary>
     /// Updates the camera after the target has completed its movement for the
     /// current frame. This helps reduce visible camera jitter.
@@ -43,7 +72,7 @@ public class CameraFollow2_5D : MonoBehaviour
             target.position + offset;
 
         // Smoothly move the camera toward its desired position.
-        transform.position = Vector3.SmoothDamp(
+        transform.position = reducedMotion ? desiredPosition : Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref currentVelocity,

@@ -1,114 +1,52 @@
-# Startup menu
+# Startup menu and shared settings
 
-`StartupMenu` creates a static overlay after the first scene has loaded. The current world stays
-visible below it, while every `GridPlayerInput` component is disabled until Start or a successful
-Load closes the menu. This keeps the backdrop useful for orientation without allowing movement or
-portal interaction through the menu.
+`StartupMenu` bootstraps after scene load and pauses gameplay until Start or a successful Load completes its closing transition. It owns an `OverlayInputGate` lease, disables active gameplay input and dialogue overlays, and restores its previous time scale and input state when destroyed. Generated textures and event subscriptions are released with their owner.
 
-The menu uses the three slots `save-1`, `save-2`, and `save-3`. On first launch it reloads the
-event definitions and creates a blank seed in the first available slot. On later launches the
-newest valid slot is loaded as the backdrop. A separate `last-played.json` marker takes precedence
-when valid, while save timestamps provide recovery when the marker is absent or invalid. Start
-reuses the blank seed or selects the first empty slot. Load displays all three slots and labels
-missing files `empty save file`.
+## Settings
 
-If all three slots are occupied, the first Start press asks for an explicit second Start press
-before replacing slot 1. The overlay also disables active dialogue overlays while it is visible,
-so dialogue choices cannot be selected behind the menu.
+The startup Settings page, in-game pause/settings panel (`QuestHintOverlay`) and journal Settings page (`InventoryEncyclopediaUI`) all draw the same `OptionsPanel`. Each opening starts on **Main**. Changing tabs cancels any pending rebind and resets scroll/focus.
 
-Button sheets are authored in `Assets/2D` and copied into `Resources/StartupButtons` for player
-build loading. The source files remain the authoring assets; replace both locations when art is
-updated, or change `LoadButtonTextures` to use a different asset pipeline. Master volume is stored
-in the `lumenfall.master-volume` PlayerPrefs key and currently maps to `AudioListener.volume`.
+| Tab | Options |
+| --- | --- |
+| Main | Quest hints; master, music, sound effects and ambience volume; text size; dialogue reveal speed; instant reveal; reduced camera motion; high contrast; hold/toggle sprint; reduced menu motion; Controls/key rebinding. |
+| Graphics | Fullscreen; VSync; antialiasing (Off/FXAA/SMAA); ambient occlusion; shading quality (Low/Medium/High); Use Recommended. |
 
-The startup overlay freezes `Time.timeScale`, restores its previous value on exit, and repeatedly
-guards movement, dialogue, and the legacy save overlay as world objects are created. Successful
-gameplay loads and New Game starts update the last-played marker; backdrop restoration does not.
+Use the pointer, or Up/Down to focus a tab or setting, Left/Right to select a tab or adjust the focused value, and Enter/Space to activate it. A controller uses the d-pad/left stick and A/B. Fullscreen is available in a player build. Unsupported URP/AO controls display Unavailable and preserve their saved values.
 
-Future menus can replace the IMGUI drawing methods while retaining the slot constants and the
-`GameSaveManager.FindMostRecentSlot` contract. A scene-specific menu may call `GameSaveManager.Load`
-or `Save` directly and can reuse the same three-slot naming convention.
+The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay, F10, controller Start or the Settings button opens the pause panel. The pause panel provides Save now, Main menu, Quit game and Close. A failed save remains visible and prevents Quit from closing the game.
 
-## Graphics options
+Controls groups movement, spell and interface actions. Selecting an action captures its next key; a conflicting assignment requires an explicit Swap or Cancel. Escape cancels the capture. Runtime movement, sprint, talk, spell selection/casting and journal input use these bindings.
 
-Settings offers VSync (Off/On), antialiasing (Off/FXAA/SMAA), ambient occlusion (Off/On),
-and shading quality (Low/Medium/High). Changes apply immediately and save automatically;
-Use Recommended restores the hardware-based recommendation without changing master volume or gameplay saves.
-The settings content scrolls on smaller windows.
+## First-install graphics recommendations
 
-`GraphicsOptions` bootstraps before the first scene and survives the startup menu and scene
-loads. It applies antialiasing to game cameras before they render, including cameras created
-later. FXAA/SMAA enable camera post-processing; Off preserves the camera's authored
-post-processing state. MSAA is omitted because the PC renderer uses deferred rendering.
+`GraphicsPreferences.LoadOrCreate` fills missing graphics keys from `GraphicsRecommendations.ForCurrentDevice`. Existing choices survive launch and hardware changes. Use Recommended explicitly reapplies the current device's preset without changing Main settings.
 
-Shading quality controls shadow distance, main-light shadow-map resolution, cascade count,
-and LOD bias. Low caps these at 20 units / 512 pixels / 1 cascade / 0.75 LOD bias.
-Medium uses 35 / 1024 / 2 / 1 LOD bias. Soft-shadow support remains as authored.
-High uses the authored pipeline and LOD settings. The caps never exceed the authored values.
-This setting preserves the project's materials and lighting model.
-
-The AO control is unavailable when the active renderer configuration contains no
-`ScreenSpaceAmbientOcclusion` feature, as with the current
-mobile pipeline. The system applies to the active quality pipeline at session startup;
-external quality-pipeline switching during a session is not part of this menu.
-
-Preferences use the `lumenfall.graphics.vsync`, `lumenfall.graphics.antialiasing`,
-`lumenfall.graphics.ambient-occlusion`, and `lumenfall.graphics.shading` PlayerPrefs keys.
-Missing entries use defaults; invalid enum values fall back safely. No save migration or
-Inspector wiring is required. Shading uses a transient pipeline copy. Shared AO feature state,
-camera settings, VSync, LOD bias, and the quality pipeline are restored when the graphics
-component is destroyed, including leaving Play Mode.
-
-URP unused-variant stripping is disabled in the global settings so runtime AO and shadow-cascade
-switches remain available in players. See the [render settings guide](../../Settings/README.md)
-for the build-size tradeoff. EditMode preference tests live in `Tests/EditMode`.
-
-### First-launch recommendations
-
-On first launch for an OS user with no graphics preferences, `GraphicsRecommendations` reads
-Unity `SystemInfo` once at startup and picks a conservative PC preset. `GraphicsOptions`
-immediately saves the resulting four preferences, even if Settings is never opened. Later
-launches and hardware changes preserve the saved choices. For partial preferences, only missing
-keys are filled with the recommendation and saved; existing choices are retained. Reinstalling
-over an existing user's PlayerPrefs preserves those preferences.
-
-| PC preset | Approximate hardware threshold (all required) | VSync | Antialiasing | Ambient occlusion | Shading |
+| PC tier | Minimum reported specs | VSync | AA | AO | Shading |
 | --- | --- | --- | --- | --- | --- |
-| High | 16 GB RAM, 8 logical CPU processors, 4 GB graphics memory, shader model 4.5+ | On | SMAA | On | High |
-| Medium | 8 GB RAM, 4 logical CPU processors, 2 GB graphics memory, shader model 4.5+ | On | FXAA | Off | Medium |
-| Low | Below Medium, unknown hardware reports, or a null graphics device | On | Off | Off | Low |
+| High | 15,000 MB RAM, 8 logical processors, 4,000 MB VRAM, shader level 45, graphics device | On | SMAA | On | High |
+| Medium | 7,500 MB RAM, 4 logical processors, 2,000 MB VRAM, shader level 45, graphics device | On | FXAA | Off | Medium |
+| Low | Below any Medium threshold, or unknown/headless hardware | On | Off | Off | Low |
 
-The exact memory thresholds are 15,000/7,500 MB system RAM and 4,000/2,000 MB graphics memory
-for High/Medium. The small allowance below nominal capacities accommodates reserved memory
-and approximate driver reports. CPU count is logical processors, not physical cores.
-Mobile retains its existing defaults: VSync Off, AA Off, AO Off, authored shading (High).
+These are conservative hardware heuristics, not measured frame-rate guarantees. Shared/integrated GPU memory can be reported imprecisely; manual overrides remain available. Mobile retains Off VSync/AA/AO and High shading to preserve the existing mobile configuration.
 
-These are starting heuristics, not benchmarked minimum/recommended system requirements.
-Reported VRAM can include shared memory and does not measure GPU speed; CPU generation,
-resolution, drivers, thermals, and scene cost also affect frame time. Test representative PCs
-before tuning the thresholds. No benchmark, GPU-model allowlist, remote hardware reporting,
-or continuous automatic quality adjustment is introduced. Players can override every setting;
-the Settings page shows the recommended tier and Use Recommended reapplies the current PC's
-recommendation explicitly.
+Preferences use `lumenfall.graphics.vsync`, `.antialiasing`, `.ambient-occlusion`, and `.shading`. `GraphicsOptions` applies them before scene load, clones the active URP asset for runtime changes, configures current and later game cameras, and restores authored resources on destruction. VSync maps to `QualitySettings.vSyncCount`; AA uses URP camera FXAA/SMAA; AO toggles the renderer's existing SSAO feature. Shading adjusts shadow distance/resolution/cascades and LOD bias. Disabling AA restores each camera's original post-processing state. URP runtime variant stripping is disabled so player builds retain selectable AA variants.
 
-Unity API references: [graphics memory](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-graphicsMemorySize.html),
-[logical processor count](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-processorCount.html),
-and [shader capability](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-graphicsShaderLevel.html).
-EditMode tests cover each threshold boundary, incomplete/unknown reports, mobile compatibility,
-first-launch persistence, subsequent hardware changes, and preservation of custom/partial preferences.
+Main preferences retain their own stores: `AudioMixSettings` owns bus levels, `AccessibilitySettings` owns accessibility preferences, `KeyBindings` owns keyboard bindings and `GameSettingsPanel` owns reduced menu motion. The old display VSync adapter delegates to `GraphicsOptions`, so no second VSync authority competes with it.
 
-### Manual verification
+## Main menu and saves
 
-1. Open `SampleScene` in Unity 6000.4.10f1, enter Play Mode, and choose Settings.
-2. Change each option. Check game-camera antialiasing/post-processing, the transient URP
-   shadow settings, and the AO renderer feature. Inspect visible edges and contact shadows
-   in a lit 3D area; flat/unlit sprites may show little difference.
-3. Use Recommended, then select non-default choices. Start or load a game and confirm those
-   settings remain active. Restart and confirm they are restored.
-4. Resize the window to 800x600 and confirm all settings and Back remain reachable by scrolling.
-5. Exit Play Mode and confirm the authored pipeline, cameras, AO feature, VSync, and LOD bias
-   have their original values. Repeat in a Windows player to check shader availability.
-6. With a separate test user or isolated PlayerPrefs, launch without graphics keys and check
-   that the recommended tier and all four choices are saved before opening Settings. Relaunch
-   after customising choices and confirm they remain unchanged. Repeat on representative
-   Low/Medium/High PCs; check frame times before treating the heuristics as performance guidance.
+The first launch presents the authored starting world behind the menu without creating a placeholder save. Later launches load `autosave` as a backdrop. Legacy manual saves can be promoted to autosave without overwriting their originals. Backdrop loading does not mark a slot as newly played.
+
+Start resets event/world state through the save manager's reset transaction. Replacing an existing autosave requires a second Start press. Gameplay autosaves use the dedicated `autosave` slot every 30 seconds and on eligible events. Three manual snapshots (`save-1`, `save-2`, `save-3`) are available from the Save page; overwrites require confirmation. Loading a manual snapshot resumes it into autosave, leaving the manual file unchanged.
+
+The Load page shows location, quest, playtime, timestamp and thumbnail summaries. If a primary save is invalid, the menu offers explicit valid previous/interrupted-write recovery candidates. Save validation, migrations, unknown-provider preservation and rollback live in `GameSaveManager`; the menu never silently promotes a recovery candidate. See [save recovery](../../../../../docs/implementation/feature-save-recovery-migrations.md).
+
+`SaveSlotSummary` writes optional `.summary.json` and `.thumb.png` sidecars. They affect presentation only. Missing/stale summaries do not invalidate saves. `GameSaveOverlay` presents save feedback without a competing full-screen slot UI.
+
+## Presentation and ownership
+
+The IMGUI menu uses Nunito, the existing button sheets and runtime-generated gold/cream/lavender art. `MenuArt`, `MenuProps`, `MenuSparks`, `MenuCameraDrift`, `MenuSkin` and `MenuSkinProps` contain reusable presentation. Hosts dispose their own generated textures. Animation uses unscaled time. Reduced menu motion suppresses camera drift, pointer parallax, motes and spark trails; it is separate from reduced gameplay camera motion.
+
+Panels scale to the available window. Settings use scrollable rows and honor text-size preferences. Input leases prevent the journal, spell wheel, dialogue and pause menu from controlling gameplay simultaneously; each closes only its own movement lock. Spell and inventory subscriptions rebind when New Game replaces the event runtime.
+
+See [UI integration sources and validation](../../../../../docs/implementation/graphics-ui-integration.md) for branch provenance, scoped imports, verification and remaining graphical checks.

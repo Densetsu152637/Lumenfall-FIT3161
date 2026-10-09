@@ -1,34 +1,23 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.GameEvents;
 
 namespace Lumenfall.Startup
 {
-    /// Input adapter lives in Runtime; the save presenter remains in GameEvents.
+    /// <summary>Save shortcuts share the menu's save authority; Start belongs to settings accessibility.</summary>
     public sealed class GameSaveInput : MonoBehaviour
     {
-        private readonly UiNavigationInput navigation = new UiNavigationInput();
-        private Lumenfall.GameEvents.GameSaveOverlay overlay;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            var view = FindAnyObjectByType<Lumenfall.GameEvents.GameSaveOverlay>();
+            var view = FindAnyObjectByType<GameSaveOverlay>();
             if (view != null && view.GetComponent<GameSaveInput>() == null) view.gameObject.AddComponent<GameSaveInput>();
         }
-        private void Awake() { overlay = GetComponent<Lumenfall.GameEvents.GameSaveOverlay>(); }
         private void Update()
         {
-            if (overlay == null || !overlay.isActiveAndEnabled) return;
-            var key = Keyboard.current; var pad = Gamepad.current;
-            if (overlay.IsOpen)
-            {
-                navigation.Read();
-                overlay.HandleNavigation(navigation.Vertical, navigation.Submit, navigation.Cancel);
-            }
-            else if (!Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
-            {
-                if (key?.f5Key.wasPressedThisFrame == true) overlay.SaveCurrent();
-                if (key?.f9Key.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true) overlay.TogglePanel();
-            }
+            if (OverlayInputGate.IsBlocked || Time.timeScale <= 0f) return;
+            if (Keyboard.current?.f5Key.wasPressedThisFrame == true) GameAutosave.SaveNow();
+            else if (Keyboard.current?.f9Key.wasPressedThisFrame == true) StartupMenu.ReturnToMainMenu();
         }
     }
 }

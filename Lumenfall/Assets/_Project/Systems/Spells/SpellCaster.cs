@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
+using Lumenfall.Controls;
 
 namespace Lumenfall.Spells
 {
@@ -24,6 +25,9 @@ namespace Lumenfall.Spells
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
+        private readonly SpellWheelView wheelView = new SpellWheelView();
+        private float nextScrollAt;
+        private GameEventRuntime subscribedRuntime;
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public event Action<SpellId, string, bool> CastCompleted;
@@ -33,9 +37,25 @@ namespace Lumenfall.Spells
         private void OnEnable()
         { SubscribeProgression(); RefreshSelection(); }
         private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += RefreshSelection; }
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (runtime == subscribedRuntime) return;
+            UnsubscribeProgression();
+            subscribedRuntime = runtime;
+            if (runtime == null) return;
+            runtime.QuestStatusChanged += OnQuestStatusChanged;
+            runtime.DialogueEnded += OnDialogueEnded;
+            runtime.StateRestored += RefreshSelection;
+            RefreshSelection();
+        }
         private void UnsubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null) return; runtime.QuestStatusChanged -= OnQuestStatusChanged; runtime.DialogueEnded -= OnDialogueEnded; runtime.StateRestored -= RefreshSelection; }
+        {
+            if (subscribedRuntime == null) return;
+            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
+            subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+            subscribedRuntime.StateRestored -= RefreshSelection;
+            subscribedRuntime = null;
+        }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
         { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
         private void OnDialogueEnded(DialogueSession session)
@@ -52,6 +72,7 @@ namespace Lumenfall.Spells
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
+            SubscribeProgression();
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
                 CloseSpellWheel();
@@ -59,9 +80,11 @@ namespace Lumenfall.Spells
             }
             Mouse mouse = Mouse.current;
             Gamepad pad = Gamepad.current;
-            if (mouse?.middleButton.wasPressedThisFrame == true || Keyboard.current?.qKey.wasPressedThisFrame == true || pad?.rightShoulder.wasPressedThisFrame == true)
+            if (mouse?.middleButton.wasPressedThisFrame == true || KeyBindings.WasPressed(GameAction.SpellWheel) || pad?.rightShoulder.wasPressedThisFrame == true)
             {
-                spellWheelOpen = !spellWheelOpen;
+                if (spellWheelOpen) { CloseSpellWheel(); return; }
+                spellWheelOpen = true;
+                wheelView.Open();
                 wheelMovementLockOwned = spellWheelOpen;
                 GetComponent<GridMover>()?.SetMovementLocked(this, spellWheelOpen);
                 if (spellWheelOpen) OverlayInputGate.Acquire(this); else OverlayInputGate.Release(this);
@@ -83,7 +106,8 @@ namespace Lumenfall.Spells
             if (mouse != null && spellWheelOpen)
             {
                 float scroll = mouse.scroll.ReadValue().y;
-                if (Mathf.Abs(scroll) > 0.01f) SelectSpellByOffset(scroll > 0f ? -1 : 1);
+                if (Mathf.Abs(scroll) > 0.01f && Time.unscaledTime >= nextScrollAt)
+                { SelectSpellByOffset(scroll > 0f ? -1 : 1); wheelView.Scrolled(); nextScrollAt = Time.unscaledTime + 0.06f; }
             }
 
             if (mouse != null && mouse.rightButton.wasPressedThisFrame)
@@ -95,14 +119,17 @@ namespace Lumenfall.Spells
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
-            Vector2Int inputDirection = new Vector2Int((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0), (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0)); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
-            if (keyboard.digit1Key.wasPressedThisFrame) SelectSpell(SpellId.Ampere);
-            if (keyboard.digit2Key.wasPressedThisFrame) SelectSpell(SpellId.Weave);
-            if (keyboard.digit3Key.wasPressedThisFrame) SelectSpell(SpellId.Gravitate);
-            if (keyboard.digit4Key.wasPressedThisFrame) SelectSpell(SpellId.Rotara);
-            if (keyboard.digit5Key.wasPressedThisFrame) SelectSpell(SpellId.Glaciate);
-            if (keyboard.digit6Key.wasPressedThisFrame) SelectSpell(SpellId.Vis);
-            if (keyboard.digit7Key.wasPressedThisFrame) SelectSpell(SpellId.LostEchoes);
+            Vector2 move = KeyBindings.MoveVector();
+            Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y);
+            if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
+            for (int i = 0; i < AllSpells.Length; i++)
+                if (KeyBindings.WasPressed(GameAction.Spell1 + i)) SelectSpell((SpellId)i);
+            if (KeyBindings.WasPressed(GameAction.Interact))
+            {
+                string target = FindNearestTarget();
+                if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                CloseSpellWheel();
+            }
         }
 
         private SpellId[] AvailableSpells
@@ -118,6 +145,7 @@ namespace Lumenfall.Spells
                 return available.ToArray();
             }
         }
+        public bool IsSpellLearned(SpellId spell) => IsProgressionUnlocked(spell);
         public bool IsSpellUnlocked(SpellId spell) { return Array.IndexOf(AvailableSpells, spell) >= 0; }
         private bool IsProgressionUnlocked(SpellId spell)
         {
@@ -138,10 +166,11 @@ namespace Lumenfall.Spells
         }
 
         private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
-        private void CloseSpellWheel()
+        private void CloseSpellWheel(SpellId? picked = null)
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
+            wheelView.Close(picked);
             // Legacy portal locks and sibling UI owner locks remain untouched.
             if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
             OverlayInputGate.Release(this);
@@ -150,30 +179,21 @@ namespace Lumenfall.Spells
         private void OnDisable()
         { UnsubscribeProgression(); CloseSpellWheel(); }
 
+        private void OnDestroy() { wheelView.Dispose(); }
         private void OnGUI()
         {
-            if (!spellWheelOpen || InputBlockedByOverlay) return;
+            if (InputBlockedByOverlay || Time.timeScale <= 0f) return;
+            if (!wheelView.Visible)
+            {
+                if (Event.current.type == EventType.Repaint && AvailableSpells.Length > 0)
+                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel), 0f);
+                return;
+            }
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
-
-            float radius = 112f;
-            Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            GUI.Box(new Rect(center.x - 155f, center.y - 155f, 310f, 310f), "Spell wheel");
-            GUI.Box(new Rect(center.x - 48f, center.y - 18f, 96f, 36f), selectedSpell.ToString());
-            for (int i = 0; i < spells.Length; i++)
-            {
-                float angle = i * Mathf.PI * 2f / spells.Length - Mathf.PI * 0.5f;
-                Vector2 position = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                Rect item = new Rect(position.x - 52f, position.y - 16f, 104f, 32f);
-                Color previous = GUI.color;
-                GUI.color = spells[i] == selectedSpell ? new Color(0.55f, 1f, 0.65f, 1f) : Color.white;
-                GUI.Box(item, string.Empty);
-                Texture2D icon = LoadIcon(spells[i]);
-                if (icon != null) GUI.DrawTexture(new Rect(item.x + 4f, item.y + 3f, 26f, 26f), icon, ScaleMode.ScaleToFit, true);
-                GUI.Label(new Rect(item.x + 34f, item.y + 7f, item.width - 36f, 22f), spells[i].ToString());
-                GUI.color = previous;
-            }
-            GUI.Label(new Rect(center.x - 155f, center.y + 160f, 310f, 50f), "Arrows / stick / scroll: select\nEnter / A: cast   Q / RB / Esc / B: close");
+            SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon,
+                "Arrows / stick / scroll: select   Enter / A: cast   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close");
+            if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(picked); }
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)

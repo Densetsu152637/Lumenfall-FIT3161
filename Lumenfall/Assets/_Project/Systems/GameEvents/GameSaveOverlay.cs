@@ -2,116 +2,186 @@ using UnityEngine;
 
 namespace Lumenfall.GameEvents
 {
-    /// Current-slot save presenter; input adapter resides in Runtime to avoid assembly cycles.
+    /// <summary>Tracks the active save slot and shows a small bottom-right autosave indicator.</summary>
     public sealed class GameSaveOverlay : MonoBehaviour
     {
+        // Saves finish within a frame, so the saving phase is held briefly to be readable before it turns to saved.
+        private const float MinimumSavingSeconds = 0.8f;
+        private const float SavedSeconds = 1.6f;
+        private const float FadeSeconds = 0.5f;
+        private const float SavingTimeoutSeconds = 10f;
+        private static readonly Color SavingColorA = new Color(0.68f, 0.52f, 1f);
+        private static readonly Color SavingColorB = new Color(0.45f, 0.9f, 1f);
+        private static readonly Color SavedColor = new Color(1f, 0.86f, 0.45f);
+        private static readonly Color FailedColor = new Color(1f, 0.42f, 0.38f);
+
+        private enum Phase { Hidden, Saving, Saved, Failed }
+
+        private static GameSaveOverlay instance;
         public static string CurrentSlot { get; private set; } = "save-1";
-        public bool IsOpen { get; private set; }
-        private string status = "";
-        private GUIStyle statusStyle;
-        private GameSaveManager subscribedManager;
-        private int focused;
-        private bool confirmLoad;
-        private int openedFrame;
+        private Phase phase;
+        private Phase pendingResult;
+        private float phaseStarted;
+        private Texture2D sparkle;
+        private GUIStyle labelStyle;
+
         public static void SetCurrentSlot(string slot)
         {
             if (!string.IsNullOrWhiteSpace(slot)) CurrentSlot = slot;
         }
+
+        /// <summary>Called by autosave just before it writes, so the indicator can show the save in progress.</summary>
+        public static void NotifySaveStarted()
+        {
+            if (instance != null) instance.BeginPhase(Phase.Saving);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
-            if (FindAnyObjectByType<GameSaveOverlay>() != null) return;
-            new GameObject("[GameSaveOverlay]").AddComponent<GameSaveOverlay>();
-        }
-        private void Awake() { DontDestroyOnLoad(gameObject); }
-        private void OnEnable()
-        {
-            subscribedManager = GameSaveManager.Instance;
-            subscribedManager.SaveCompleted += OnSaved;
-            subscribedManager.LoadCompleted += OnLoaded;
-            subscribedManager.SaveFailed += OnFailed;
-        }
-        private void OnDisable()
-        {
-            Close();
-            if (subscribedManager == null) return;
-            subscribedManager.SaveCompleted -= OnSaved;
-            subscribedManager.LoadCompleted -= OnLoaded;
-            subscribedManager.SaveFailed -= OnFailed;
-            subscribedManager = null;
-        }
-        public void TogglePanel()
-        {
-            if (IsOpen) { Close(); return; }
-            if (OverlayInputGate.IsBlocked) return;
-            IsOpen = true; focused = 0; confirmLoad = false; openedFrame = Time.frameCount;
-            OverlayInputGate.Acquire(this);
-        }
-        public void SaveCurrent()
-        {
-            if (OverlayInputGate.IsBlockedExcept(this)) return;
-            status = "";
-            if (!GameSaveManager.Instance.Save(CurrentSlot) && string.IsNullOrEmpty(status)) status = "Save failed. Try again or select another slot from startup.";
-        }
-        public void HandleNavigation(int direction, bool submit, bool cancel)
-        {
-            if (!IsOpen || Time.frameCount <= openedFrame || OverlayInputGate.IsBlockedExcept(this)) return;
-            if (cancel) { if (confirmLoad) { confirmLoad = false; focused = 1; } else Close(); return; }
-            if (direction != 0) focused = UiFocusIndex.Move(focused, direction, confirmLoad ? 2 : 3);
-            if (submit) Activate(focused);
-        }
-        private void Activate(int index)
-        {
-            if (confirmLoad)
+            if (FindAnyObjectByType<GameSaveOverlay>() == null)
             {
-                confirmLoad = false;
-                if (index == 0)
-                {
-                    status = "";
-                    if (GameSaveManager.Instance.Load(CurrentSlot)) Close();
-                    else if (string.IsNullOrEmpty(status)) status = "Load failed. The current game is still available.";
-                }
-                focused = 1;
+                GameObject go = new GameObject("[GameSaveOverlay]");
+                go.AddComponent<GameSaveOverlay>();
+            }
+        }
+
+        private void Awake()
+        {
+            if (instance != null && instance != this)
+            {
+                Destroy(gameObject);
                 return;
             }
-            if (index == 0) SaveCurrent();
-            else if (index == 1)
-            {
-                if (!GameSaveManager.Instance.HasSave(CurrentSlot)) { status = "This slot has no save yet. Save your progress first."; return; }
-                confirmLoad = true; focused = 1;
-            }
-            else Close();
+
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+            GameSaveManager.Instance.SaveCompleted += OnSaved;
+            GameSaveManager.Instance.SaveFailed += OnFailed;
         }
-        private void Close() { IsOpen = false; confirmLoad = false; OverlayInputGate.Release(this); }
+
+        private void OnDestroy()
+        {
+            if (sparkle != null) Destroy(sparkle);
+            if (instance != this) return;
+            instance = null;
+            GameSaveManager manager = FindAnyObjectByType<GameSaveManager>();
+            if (manager == null) return;
+            manager.SaveCompleted -= OnSaved;
+            manager.SaveFailed -= OnFailed;
+        }
+
+        private void OnSaved(string slot) { Finish(Phase.Saved); }
+        private void OnFailed(string message) { Finish(Phase.Failed); }
+
+        private void Finish(Phase result)
+        {
+            if (phase == Phase.Saving && Elapsed < MinimumSavingSeconds) pendingResult = result;
+            else BeginPhase(result);
+        }
+
+        private void BeginPhase(Phase next)
+        {
+            phase = next;
+            pendingResult = Phase.Hidden;
+            phaseStarted = Time.unscaledTime;
+        }
+
+        private float Elapsed => Time.unscaledTime - phaseStarted;
+
+        private void Update()
+        {
+            float elapsed = Elapsed;
+            if (phase == Phase.Saving && pendingResult != Phase.Hidden && elapsed >= MinimumSavingSeconds) BeginPhase(pendingResult);
+            else if (phase == Phase.Saving && elapsed >= SavingTimeoutSeconds) phase = Phase.Hidden;
+            else if ((phase == Phase.Saved || phase == Phase.Failed) && elapsed >= SavedSeconds + FadeSeconds) phase = Phase.Hidden;
+        }
+
         private void OnGUI()
         {
-            if (statusStyle == null) statusStyle = new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 16, normal = { textColor = Color.white } };
-            if (!IsOpen)
+            if (phase == Phase.Hidden) return;
+            GameEventManager manager = FindAnyObjectByType<GameEventManager>();
+            if (manager != null && manager.Runtime != null && manager.Runtime.ActiveDialogue != null) return;
+            if (sparkle == null) sparkle = CreateSparkleTexture(64);
+            if (labelStyle == null)
+                labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, normal = { textColor = Color.white } };
+
+            float t = Elapsed;
+            float alpha = phase == Phase.Saving ? Mathf.Clamp01(t / 0.15f) : 1f - Mathf.Clamp01((t - SavedSeconds) / FadeSeconds);
+            Rect area = new Rect(Screen.width - 168f, Screen.height - 54f, 152f, 38f);
+            Rect icon = new Rect(area.x + 6f, area.y + 4f, 30f, 30f);
+            Color previousColor = GUI.color;
+            Matrix4x4 previousMatrix = GUI.matrix;
+
+            GUI.color = new Color(0.05f, 0.06f, 0.12f, 0.55f * alpha);
+            GUI.DrawTexture(area, Texture2D.whiteTexture);
+
+            string label;
+            if (phase == Phase.Saving)
             {
-                if (OverlayInputGate.IsBlocked) return;
-                GUILayout.BeginArea(new Rect(Mathf.Max(12f, Screen.width - 260f), 12f, Mathf.Min(248f, Screen.width - 24f), 145f), GUI.skin.box);
-                GUILayout.Label("Current slot: " + CurrentSlot, statusStyle);
-                if (GUILayout.Button("Save / Load (F9 / Menu)")) TogglePanel();
-                GUILayout.Label(string.IsNullOrEmpty(status) ? "F5: save   Tab / View: journal   E / A: interact" : status, statusStyle);
-                GUILayout.EndArea();
-                return;
+                // A spinning, colour-shifting star with three motes orbiting it while the save is in progress.
+                Color tint = Color.Lerp(SavingColorA, SavingColorB, 0.5f + 0.5f * Mathf.Sin(t * 4f));
+                GUIUtility.RotateAroundPivot(t * 180f, icon.center);
+                DrawSparkle(Scale(icon, 1f + 0.12f * Mathf.Sin(t * 6f)), tint, alpha);
+                GUI.matrix = previousMatrix;
+                for (int i = 0; i < 3; i++)
+                {
+                    float angle = t * 3f + i * Mathf.PI * 2f / 3f;
+                    Vector2 mote = icon.center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 13f;
+                    DrawSparkle(new Rect(mote.x - 5f, mote.y - 5f, 10f, 10f), SavingColorB, alpha * 0.85f);
+                }
+                label = "Saving" + new string('.', 1 + (int)(t * 3f) % 3);
             }
-            float width = Mathf.Min(520f, Screen.width - 32f), height = Mathf.Min(340f, Screen.height - 32f);
-            GUILayout.BeginArea(new Rect((Screen.width - width) / 2f, (Screen.height - height) / 2f, width, height), GUI.skin.window);
-            GUILayout.Label("Progress — " + CurrentSlot, statusStyle);
-            GUILayout.Label(confirmLoad ? "Reload this slot? Progress since your last save will be lost." : "Save and reload the slot selected at startup.", statusStyle);
-            bool wasEnabled = GUI.enabled;
-            GUI.enabled = Time.frameCount > openedFrame && !OverlayInputGate.IsBlockedExcept(this);
-            string[] labels = confirmLoad ? new[] { "Reload saved progress", "Cancel" } : new[] { "Save current progress", "Load current slot", "Close" };
-            for (int i = 0; i < labels.Length; i++)
-                if (GUILayout.Button((i == focused ? "> " : "") + labels[i], GUILayout.MinHeight(40f))) { Activate(i); break; }
-            GUI.enabled = wasEnabled;
-            GUILayout.Label(status, statusStyle);
-            GUILayout.Label("Up/Down: choose   Enter / A: confirm   Esc / B: cancel", statusStyle);
-            GUILayout.EndArea();
+            else
+            {
+                // Settles into a steady glow with a small pop as the save lands.
+                Color tint = phase == Phase.Saved ? SavedColor : FailedColor;
+                DrawSparkle(Scale(icon, 1f + 0.35f * Mathf.Exp(-t * 8f)), tint, alpha);
+                label = phase == Phase.Saved ? "Saved" : "Save failed";
+            }
+
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            GUI.Label(new Rect(icon.xMax + 8f, area.y, area.xMax - icon.xMax - 10f, area.height), label, labelStyle);
+            GUI.color = previousColor;
+            GUI.matrix = previousMatrix;
         }
-        private void OnSaved(string slot) { status = "Saved " + slot; }
-        private void OnLoaded(string slot) { SetCurrentSlot(slot); status = "Loaded " + slot; }
-        private void OnFailed(string message) { status = message; }
+
+        private void DrawSparkle(Rect rect, Color tint, float alpha)
+        {
+            GUI.color = new Color(tint.r, tint.g, tint.b, alpha);
+            GUI.DrawTexture(rect, sparkle, ScaleMode.ScaleToFit, true);
+        }
+
+        private static Rect Scale(Rect rect, float scale)
+        {
+            Vector2 size = rect.size * scale;
+            return new Rect(rect.center - size * 0.5f, size);
+        }
+
+        /// <summary>Four-pointed star with a soft halo, generated so the indicator needs no imported art.</summary>
+        public static Texture2D CreateSparkleTexture(int size)
+        {
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "AutosaveSparkle", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.HideAndDontSave
+            };
+            Color32[] pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (x + 0.5f) / size * 2f - 1f;
+                    float v = (y + 0.5f) / size * 2f - 1f;
+                    float r2 = u * u + v * v;
+                    float arms = Mathf.Pow(Mathf.Max(0f, 1f - Mathf.Abs(u)), 2f) * Mathf.Exp(-v * v / 0.006f)
+                               + Mathf.Pow(Mathf.Max(0f, 1f - Mathf.Abs(v)), 2f) * Mathf.Exp(-u * u / 0.006f);
+                    float core = Mathf.Exp(-r2 / 0.02f);
+                    float halo = Mathf.Exp(-r2 / 0.16f) * 0.35f;
+                    byte a = (byte)(Mathf.Clamp01(arms + core + halo) * 255f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, a);
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+            return texture;
+        }
     }
 }
