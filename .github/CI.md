@@ -95,18 +95,30 @@ the existing EditMode CI job does not automatically discover them on main.
 
 ## Feature acceptance workflows
 
-Each catalog suite has a separate `.yaml` workflow named **Feature PR NN -
-<feature>**. For example, `feature-pr-18-camera.yaml` appears as **Feature PR 18 -
-Camera** in Actions. The 22 workflows call `pr-feature-suite.yaml` for shared
-setup, while retaining separate workflow runs, check names, rerun controls and
-artifacts. Within a run, EditMode and PlayMode have separate named steps; both
+Six `.yaml` workflows group the catalog by feature area in the Actions overview:
+
+| Workflow | Target PR suites |
+| --- | --- |
+| **Feature tests - Quests and spells** | 1, 3, 4, 5, 8, 14, 20 |
+| **Feature tests - World and story** | 6, 10, 12, 16 |
+| **Feature tests - Presentation and UI** | 11, 13, 15, 18, 23 |
+| **Feature tests - Audio** | 9, 22 |
+| **Feature tests - Persistence and recovery** | 7, 19 |
+| **Feature tests - Validation and diagnostics** | 2, 17 |
+
+Each workflow calls `pr-feature-suite.yaml` through a matrix with one named job
+per suite, such as **PR 18 - Camera**. Individual job status, rerun controls,
+summaries and artifacts still identify the precise failing suite. A suite failure
+does not cancel sibling jobs (`fail-fast: false`), and each group runs at most
+three suites concurrently. Within a job, EditMode and PlayMode have separate named steps; both
 are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
 pinned requirements from the extracted target and runs Python mutations without a
 Unity image or license.
 
-They run on pull requests and pushes to `main` that change their suite, its workflow,
+They run on pull requests and pushes to `main` that change a suite in their area, its workflow,
 the shared workflow, manifest, runner or CI adapter. Updating shared execution code
-or the manifest starts all 22 suites. A suite-only change starts that suite. Each
+or the manifest starts all six groups covering all 22 suites. A suite-only change
+starts its feature group. Each
 workflow also supports **Run workflow** from Actions after it is on the default
 branch. These are catalog validation workflows: they fetch the exact manifest SHA,
 not the current feature-branch head. Refresh the pinned SHA and any expectations

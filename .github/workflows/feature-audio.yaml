@@ -1,12 +1,13 @@
-name: Feature PR 09 - Event audio
+name: Feature tests - Audio
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - '.github/workflows/feature-pr-09-event-audio.yaml'
+      - '.github/workflows/feature-audio.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
       - 'tests/pr_features/pr_09/**'
+      - 'tests/pr_features/pr_22/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -14,9 +15,10 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/feature-pr-09-event-audio.yaml'
+      - '.github/workflows/feature-audio.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
       - 'tests/pr_features/pr_09/**'
+      - 'tests/pr_features/pr_22/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -27,15 +29,24 @@ permissions:
   contents: read
 
 concurrency:
-  group: feature-pr-09-${{ github.event.pull_request.number || github.ref }}
+  group: feature-audio-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  suite:
-    name: Event audio
+  suites:
+    name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - pr: 9
+            feature: Event audio
+          - pr: 22
+            feature: Area music
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:
-      pr-number: 9
+      pr-number: ${{ matrix.pr }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

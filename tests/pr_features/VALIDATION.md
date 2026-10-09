@@ -113,11 +113,12 @@ GitHub-hosted runner execution. No merge or production implementation was perfor
 
 ## Actions integration follow-up
 
-The branch now includes 22 named suite workflows and a shared GameCI workflow.
+The branch now includes six workflows grouped by feature area and a shared GameCI
+workflow, with a separate named matrix job for every one of the 22 PR suites.
 The CI adapter adds strict action-outcome, source-revision, suite-hash and result
 verification, plus per-platform job summaries and diagnostic artifacts. The local
 Python harness passes **56/56** checks, including nine CI adapter regressions in
-addition to the original 18 runner regressions. All 23 new YAML workflow documents
+addition to the original 18 runner regressions. All seven feature YAML workflow documents
 pass actionlint 1.7.12; the existing release workflow's `concurrency.queue` field
 is outside that linter's supported schema and was left unchanged. Repository
 integrity and whitespace validation pass. See the PR's live checks for hosted
@@ -144,3 +145,8 @@ Local cleanup/reuse verification also found that a retained snapshot marker
 could prevent re-extraction after its source directory was removed. Preparation
 now recreates missing snapshots, with that case covered by the existing source
 restoration regression. The full 56-check Python harness passed after this fix.
+
+The grouped workflow matrices cover all 22 manifest entries exactly once, with
+group-specific source path filters, unique suite names, independent outcomes and
+at most three concurrent suites per group. Grouping changes the Actions overview;
+the acceptance sources, pinned revisions and shared execution steps are unchanged.

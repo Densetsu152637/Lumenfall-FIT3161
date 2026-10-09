@@ -1,12 +1,13 @@
-name: Feature PR 04 - Weave network
+name: Feature tests - Validation and diagnostics
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - '.github/workflows/feature-pr-04-weave-network.yaml'
+      - '.github/workflows/feature-validation-diagnostics.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_04/**'
+      - 'tests/pr_features/pr_02/**'
+      - 'tests/pr_features/pr_17/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -14,9 +15,10 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/feature-pr-04-weave-network.yaml'
+      - '.github/workflows/feature-validation-diagnostics.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_04/**'
+      - 'tests/pr_features/pr_02/**'
+      - 'tests/pr_features/pr_17/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -27,15 +29,24 @@ permissions:
   contents: read
 
 concurrency:
-  group: feature-pr-04-${{ github.event.pull_request.number || github.ref }}
+  group: feature-validation-diagnostics-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  suite:
-    name: Weave network
+  suites:
+    name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - pr: 2
+            feature: Content validators
+          - pr: 17
+            feature: Diagnostics
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:
-      pr-number: 4
+      pr-number: ${{ matrix.pr }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

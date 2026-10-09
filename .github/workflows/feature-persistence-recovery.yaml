@@ -1,12 +1,13 @@
-name: Feature PR 13 - World presentation
+name: Feature tests - Persistence and recovery
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - '.github/workflows/feature-pr-13-world-presentation.yaml'
+      - '.github/workflows/feature-persistence-recovery.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_13/**'
+      - 'tests/pr_features/pr_07/**'
+      - 'tests/pr_features/pr_19/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -14,9 +15,10 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/feature-pr-13-world-presentation.yaml'
+      - '.github/workflows/feature-persistence-recovery.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_13/**'
+      - 'tests/pr_features/pr_07/**'
+      - 'tests/pr_features/pr_19/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -27,15 +29,24 @@ permissions:
   contents: read
 
 concurrency:
-  group: feature-pr-13-${{ github.event.pull_request.number || github.ref }}
+  group: feature-persistence-recovery-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  suite:
-    name: World presentation
+  suites:
+    name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - pr: 7
+            feature: Save recovery
+          - pr: 19
+            feature: Optional recovery
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:
-      pr-number: 13
+      pr-number: ${{ matrix.pr }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

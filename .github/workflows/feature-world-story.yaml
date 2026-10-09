@@ -1,12 +1,15 @@
-name: Feature PR 10 - Optional dormitory power
+name: Feature tests - World and story
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - '.github/workflows/feature-pr-10-optional-dormitory-power.yaml'
+      - '.github/workflows/feature-world-story.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_06/**'
       - 'tests/pr_features/pr_10/**'
+      - 'tests/pr_features/pr_12/**'
+      - 'tests/pr_features/pr_16/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -14,9 +17,12 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/feature-pr-10-optional-dormitory-power.yaml'
+      - '.github/workflows/feature-world-story.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_06/**'
       - 'tests/pr_features/pr_10/**'
+      - 'tests/pr_features/pr_12/**'
+      - 'tests/pr_features/pr_16/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -27,15 +33,28 @@ permissions:
   contents: read
 
 concurrency:
-  group: feature-pr-10-${{ github.event.pull_request.number || github.ref }}
+  group: feature-world-story-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  suite:
-    name: Optional dormitory power
+  suites:
+    name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - pr: 6
+            feature: Chapter 1 story
+          - pr: 10
+            feature: Optional dormitory power
+          - pr: 12
+            feature: Reserved regions
+          - pr: 16
+            feature: Ambient NPC travel
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:
-      pr-number: 10
+      pr-number: ${{ matrix.pr }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
