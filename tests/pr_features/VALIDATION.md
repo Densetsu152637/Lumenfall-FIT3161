@@ -130,3 +130,17 @@ and stopped before launching Unity. The shared workflow now uses GameCI's defaul
 coverage setting, matching the existing repository workflow. The suite summary and
 diagnostic artifact correctly retained this setup failure; it was not classified
 as a failed feature assertion. Hosted results must be read from the latest PR head.
+
+The first hosted PR 2 Python run also exposed a missing dependency setup step:
+its pinned validator fixture imports PyYAML. The workflow now installs the exact
+target's `scripts/requirements-validation.txt` before executing mutations, and
+the per-suite README documents the same setup for a fresh local environment.
+The complete prepare/install/run/verify sequence passed all three cases in a
+fresh task-local virtual environment. That follow-up's report and Python log
+are retained under `Temp/pr-tests/pr_02/`; the final audit uses this current
+suite hash after the setup documentation update.
+
+Local cleanup/reuse verification also found that a retained snapshot marker
+could prevent re-extraction after its source directory was removed. Preparation
+now recreates missing snapshots, with that case covered by the existing source
+restoration regression. The full 56-check Python harness passed after this fix.

@@ -3,6 +3,7 @@
 import importlib.util
 import io
 import json
+import shutil
 import tarfile
 import tempfile
 import unittest
@@ -228,6 +229,12 @@ class FeatureRunnerTests(unittest.TestCase):
             self.assertEqual(json.loads((output / "snapshot.json").read_text())["commit"], "b" * 40)
             self.assertEqual(archives, ["a" * 40, "a" * 40, "b" * 40])
             self.assertEqual(cache.read_text(), "keep cache")
+            # Cleanup may retire source/cache while retaining the ownership marker
+            # and reports. The next invocation must recreate the pinned source.
+            shutil.rmtree(project.parent)
+            runner.prepare(self.entry(commit="b" * 40), output, allow_retarget=True)
+            self.assertEqual(source.read_text(), "authoritative source")
+            self.assertEqual(archives, ["a" * 40, "a" * 40, "b" * 40, "b" * 40])
     def test_python_only_all_does_not_require_unity(self):
         suite = self.root / "catalog/pr_03"
         suite.mkdir(parents=True)

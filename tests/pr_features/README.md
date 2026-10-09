@@ -35,6 +35,10 @@ Editor path. Unity licensing and package access must be available. Missing Git
 objects fail explicitly; fetch the pinned revision from the repository before
 running if it is not already local. The runner does not fetch or publish.
 
+PR 2's Python fixture requires the target's pinned validator dependencies. On a
+fresh Python environment, follow [its setup instructions](pr_02/README.md) before
+running Python or all-mode selection. Its Actions workflow installs them automatically.
+
 For source compilation without launching the Editor, an already imported
 **separate** Unity project can supply read-only dependency references:
 

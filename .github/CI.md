@@ -100,8 +100,9 @@ Each catalog suite has a separate `.yaml` workflow named **Feature PR NN -
 Camera** in Actions. The 22 workflows call `pr-feature-suite.yaml` for shared
 setup, while retaining separate workflow runs, check names, rerun controls and
 artifacts. Within a run, EditMode and PlayMode have separate named steps; both
-are attempted when applicable, even if EditMode fails. PR 2 runs Python mutations
-without a Unity image or license.
+are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
+pinned requirements from the extracted target and runs Python mutations without a
+Unity image or license.
 
 They run on pull requests and pushes to `main` that change their suite, its workflow,
 the shared workflow, manifest, runner or CI adapter. Updating shared execution code

@@ -47,6 +47,12 @@ jobs:
         id: prepare
         run: python scripts/pr_feature_ci.py prepare --pr "$PR_NUMBER"
 
+      - name: Install pinned validator dependencies
+        if: ${{ steps.prepare.outputs.python == 'true' }}
+        env:
+          TARGET_PROJECT: ${{ steps.prepare.outputs.project }}
+        run: python -m pip install --requirement "$TARGET_PROJECT/../scripts/requirements-validation.txt"
+
       - name: Run Python mutation tests
         id: python-tests
         if: ${{ steps.prepare.outputs.python == 'true' }}

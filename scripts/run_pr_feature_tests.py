@@ -141,7 +141,7 @@ def prepare(entry: dict, output: Path, allow_retarget: bool = False) -> tuple[Pa
                 elif path.exists():
                     path.unlink()
             marker.unlink()
-    if not marker.exists():
+    if not marker.exists() or not snapshot.exists():
         subprocess.run(["git", "cat-file", "-e", entry["commit"] + "^{commit}"], cwd=ROOT, check=True)
         archive = output / "source.tar"
         try:
