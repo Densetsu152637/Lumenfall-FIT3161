@@ -1,12 +1,11 @@
 """Additional PR02 gate mutations; run against an isolated PR02 checkout."""
 import importlib.util
-import os
 from pathlib import Path
 import sys
 import tempfile
 import unittest
 
-REPO = Path(os.environ.get('LUMENFALL_TARGET_REPO', Path.cwd()))
+REPO = Path.cwd()  # The runner sets this to the pinned, isolated source snapshot.
 sys.path.insert(0, str(REPO / 'scripts'))
 spec = importlib.util.spec_from_file_location('pr02_fixture', REPO / 'scripts/tests/test_validate_authored_content.py')
 fixture_module = importlib.util.module_from_spec(spec)

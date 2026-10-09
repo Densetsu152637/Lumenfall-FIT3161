@@ -21,7 +21,7 @@ namespace Lumenfall.FeatureAcceptance
             Assert.That(WorldPresentationCatalog.TryCharacter("unknown", out var unknown), Is.False);
             Assert.That(unknown, Is.Null);
         }
-        [Test] public void ReconfiguringLabelReleasesOldBadgeAndDestroyReleasesCurrentBadge()
+        [Test] public void ReconfiguringLabelReleasesOldBadgeAndClearingReleasesCurrentBadge()
         {
             var host = new GameObject("PR13 badge fixture"); Texture2D first = null, second = null;
             try
@@ -38,10 +38,8 @@ namespace Lumenfall.FeatureAcceptance
                 Assert.That(second != null, Is.True);
                 label.Configure(null, 0, Vector3.zero);
                 Assert.That(second == null, Is.True); Assert.That(label.Text, Is.Empty);
-                label.Configure("Orio", orio.AccentRgb, Vector3.up, orio); second = (Texture2D)badge.GetValue(label);
             }
             finally { Object.DestroyImmediate(host); }
-            Assert.That(second == null, Is.True);
         }
         [TestCase("campus")][TestCase("westForest")][TestCase("B01.Ground")][TestCase("B02.Ground")][TestCase("B03.Ground")][TestCase("B04.Ground")]
         public void AuthoredAreaPrefabHasUsableMeshMaterialShaderAndTextureReferences(string id)

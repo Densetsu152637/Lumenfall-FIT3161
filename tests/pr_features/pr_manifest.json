@@ -167,6 +167,9 @@
       "expected_cases": {
         "EditMode": {
           "Lumenfall.FeatureAcceptance.Pr13PresentationAcceptanceTests": 8
+        },
+        "PlayMode": {
+          "Lumenfall.FeatureAcceptance.Pr13BadgeLifecycleAcceptanceTests": 1
         }
       }
     },

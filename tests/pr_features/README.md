@@ -5,6 +5,9 @@ captured on 9 October 2026. `pr_manifest.json` pins each exact source revision.
 The suites complement the tests already on those branches; they do not merge
 the branches or establish that all sibling features work together.
 
+See [the execution report](VALIDATION.md) for per-PR results, case counts and
+retained evidence from the local validation run.
+
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own
 ignored snapshot, installs only that PR's acceptance suite with deterministic
