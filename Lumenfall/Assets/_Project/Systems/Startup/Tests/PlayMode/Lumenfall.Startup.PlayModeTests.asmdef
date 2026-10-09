@@ -1,0 +1,10 @@
+{
+    "name": "Lumenfall.Startup.PlayModeTests",
+    "rootNamespace": "Lumenfall.Startup.Tests",
+    "references": [
+        "Lumenfall.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

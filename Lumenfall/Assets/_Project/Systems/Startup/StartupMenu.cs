@@ -19,6 +19,9 @@ namespace Lumenfall.Startup
     {
         private static readonly string[] Slots = { "save-1", "save-2", "save-3" };
         private const string MasterVolumeKey = "lumenfall.master-volume";
+        private static readonly string[] ToggleLabels = { "OFF", "ON" };
+        private static readonly string[] AntialiasingLabels = { "OFF", "FXAA", "SMAA" };
+        private static readonly string[] ShadingLabels = { "LOW", "MEDIUM", "HIGH" };
 
         private enum Page { Main, Load, Settings }
 
@@ -29,6 +32,7 @@ namespace Lumenfall.Startup
         private string backdropSlot;
         private string message;
         private float masterVolume;
+        private Vector2 settingsScroll;
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
@@ -114,7 +118,7 @@ namespace Lumenfall.Startup
             GUI.color = previous;
 
             float panelWidth = Mathf.Min(560f, Screen.width - 48f);
-            float panelHeight = page == Page.Main ? 540f : 620f;
+            float panelHeight = Mathf.Min(page == Page.Main ? 540f : 620f, Screen.height - 24f);
             Rect panel = new Rect((Screen.width - panelWidth) * 0.5f, (Screen.height - panelHeight) * 0.5f,
                 panelWidth, panelHeight);
             GUI.Box(panel, GUIContent.none, GUI.skin.window);
@@ -164,8 +168,11 @@ namespace Lumenfall.Startup
 
         private void DrawSettings(Rect panel)
         {
-            GUI.Label(new Rect(panel.x + 54f, panel.y + 130f, 220f, 40f), "MASTER VOLUME", BodyStyle());
-            float newVolume = GUI.HorizontalSlider(new Rect(panel.x + 54f, panel.y + 192f, panel.width - 108f, 30f),
+            Rect viewport = new Rect(panel.x + 24f, panel.y + 90f, panel.width - 48f, panel.height - 200f);
+            float width = viewport.width - 24f;
+            settingsScroll = GUI.BeginScrollView(viewport, settingsScroll, new Rect(0f, 0f, width, 470f));
+            GUI.Label(new Rect(0f, 0f, width, 32f), "MASTER VOLUME", BodyStyle());
+            float newVolume = GUI.HorizontalSlider(new Rect(20f, 40f, width - 40f, 24f),
                 masterVolume, 0f, 1f);
             if (!Mathf.Approximately(newVolume, masterVolume))
             {
@@ -174,9 +181,42 @@ namespace Lumenfall.Startup
                 PlayerPrefs.SetFloat(MasterVolumeKey, masterVolume);
                 PlayerPrefs.Save();
             }
-            GUI.Label(new Rect(panel.x + 54f, panel.y + 224f, panel.width - 108f, 40f),
+            GUI.Label(new Rect(0f, 66f, width, 28f),
                 $"{Mathf.RoundToInt(masterVolume * 100f)}%", BodyStyle());
+
+            GraphicsOptions graphics = GraphicsOptions.Instance;
+            if (graphics != null)
+            {
+                GraphicsPreferences current = graphics.Preferences;
+                bool vSync = DrawGraphicsChoice(108f, width, "VSYNC", current.VSync ? 1 : 0, ToggleLabels) == 1;
+                bool previousEnabled = GUI.enabled;
+                GUI.enabled = previousEnabled && graphics.SupportsUrpOptions;
+                GraphicsAntialiasing antialiasing = (GraphicsAntialiasing)DrawGraphicsChoice(176f, width,
+                    "ANTIALIASING", (int)current.Antialiasing, AntialiasingLabels);
+                GUI.enabled = previousEnabled && graphics.SupportsAmbientOcclusion;
+                bool ao = DrawGraphicsChoice(244f, width, graphics.SupportsAmbientOcclusion
+                    ? "AMBIENT OCCLUSION" : "AMBIENT OCCLUSION (UNAVAILABLE)",
+                    graphics.SupportsAmbientOcclusion && current.AmbientOcclusion ? 1 : 0, ToggleLabels) == 1;
+                GUI.enabled = previousEnabled && graphics.SupportsUrpOptions;
+                ShadingQuality shading = (ShadingQuality)DrawGraphicsChoice(312f, width,
+                    "SHADING QUALITY", (int)current.Shading, ShadingLabels);
+                GUI.enabled = previousEnabled;
+                if (vSync != current.VSync || antialiasing != current.Antialiasing ||
+                    (graphics.SupportsAmbientOcclusion && ao != current.AmbientOcclusion) || shading != current.Shading)
+                    graphics.SetPreferences(new GraphicsPreferences(vSync, antialiasing,
+                        graphics.SupportsAmbientOcclusion ? ao : current.AmbientOcclusion, shading));
+                GUI.Label(new Rect(0f, 384f, width, 36f), "Changes are saved automatically.", BodyStyle());
+                if (GUI.Button(new Rect(20f, 428f, width - 40f, 34f), "RESET GRAPHICS"))
+                    graphics.SetPreferences(GraphicsPreferences.Defaults);
+            }
+            GUI.EndScrollView();
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK")) page = Page.Main;
+        }
+
+        private static int DrawGraphicsChoice(float y, float width, string label, int selected, string[] choices)
+        {
+            GUI.Label(new Rect(0f, y, width, 28f), label, BodyStyle());
+            return GUI.SelectionGrid(new Rect(20f, y + 30f, width - 40f, 30f), selected, choices, choices.Length);
         }
 
         private bool Button(string textureKey, Rect rect, string fallbackLabel)

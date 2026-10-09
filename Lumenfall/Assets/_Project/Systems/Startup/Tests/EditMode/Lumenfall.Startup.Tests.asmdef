@@ -1,0 +1,7 @@
+{
+    "name": "Lumenfall.Startup.Tests",
+    "rootNamespace": "Lumenfall.Startup.Tests",
+    "references": ["Lumenfall.Runtime"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
