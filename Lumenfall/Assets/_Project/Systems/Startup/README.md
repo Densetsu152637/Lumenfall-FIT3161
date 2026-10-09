@@ -33,7 +33,7 @@ or `Save` directly and can reuse the same three-slot naming convention.
 
 Settings offers VSync (Off/On), antialiasing (Off/FXAA/SMAA), ambient occlusion (Off/On),
 and shading quality (Low/Medium/High). Changes apply immediately and save automatically;
-Reset Graphics restores the device defaults without changing master volume or gameplay saves.
+Use Recommended restores the hardware-based recommendation without changing master volume or gameplay saves.
 The settings content scrolls on smaller windows.
 
 `GraphicsOptions` bootstraps before the first scene and survives the startup menu and scene
@@ -47,9 +47,8 @@ Medium uses 35 / 1024 / 2 / 1 LOD bias. Soft-shadow support remains as authored.
 High uses the authored pipeline and LOD settings. The caps never exceed the authored values.
 This setting preserves the project's materials and lighting model.
 
-Defaults retain VSync Off, antialiasing Off, and authored shading (High). Ambient occlusion
-defaults On for desktop and Off for mobile. The AO control is unavailable when the active
-renderer configuration contains no `ScreenSpaceAmbientOcclusion` feature, as with the current
+The AO control is unavailable when the active renderer configuration contains no
+`ScreenSpaceAmbientOcclusion` feature, as with the current
 mobile pipeline. The system applies to the active quality pipeline at session startup;
 external quality-pipeline switching during a session is not part of this menu.
 
@@ -64,14 +63,52 @@ URP unused-variant stripping is disabled in the global settings so runtime AO an
 switches remain available in players. See the [render settings guide](../../Settings/README.md)
 for the build-size tradeoff. EditMode preference tests live in `Tests/EditMode`.
 
+### First-launch recommendations
+
+On first launch for an OS user with no graphics preferences, `GraphicsRecommendations` reads
+Unity `SystemInfo` once at startup and picks a conservative PC preset. `GraphicsOptions`
+immediately saves the resulting four preferences, even if Settings is never opened. Later
+launches and hardware changes preserve the saved choices. For partial preferences, only missing
+keys are filled with the recommendation and saved; existing choices are retained. Reinstalling
+over an existing user's PlayerPrefs preserves those preferences.
+
+| PC preset | Approximate hardware threshold (all required) | VSync | Antialiasing | Ambient occlusion | Shading |
+| --- | --- | --- | --- | --- | --- |
+| High | 16 GB RAM, 8 logical CPU processors, 4 GB graphics memory, shader model 4.5+ | On | SMAA | On | High |
+| Medium | 8 GB RAM, 4 logical CPU processors, 2 GB graphics memory, shader model 4.5+ | On | FXAA | Off | Medium |
+| Low | Below Medium, unknown hardware reports, or a null graphics device | On | Off | Off | Low |
+
+The exact memory thresholds are 15,000/7,500 MB system RAM and 4,000/2,000 MB graphics memory
+for High/Medium. The small allowance below nominal capacities accommodates reserved memory
+and approximate driver reports. CPU count is logical processors, not physical cores.
+Mobile retains its existing defaults: VSync Off, AA Off, AO Off, authored shading (High).
+
+These are starting heuristics, not benchmarked minimum/recommended system requirements.
+Reported VRAM can include shared memory and does not measure GPU speed; CPU generation,
+resolution, drivers, thermals, and scene cost also affect frame time. Test representative PCs
+before tuning the thresholds. No benchmark, GPU-model allowlist, remote hardware reporting,
+or continuous automatic quality adjustment is introduced. Players can override every setting;
+the Settings page shows the recommended tier and Use Recommended reapplies the current PC's
+recommendation explicitly.
+
+Unity API references: [graphics memory](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-graphicsMemorySize.html),
+[logical processor count](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-processorCount.html),
+and [shader capability](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/SystemInfo-graphicsShaderLevel.html).
+EditMode tests cover each threshold boundary, incomplete/unknown reports, mobile compatibility,
+first-launch persistence, subsequent hardware changes, and preservation of custom/partial preferences.
+
 ### Manual verification
 
 1. Open `SampleScene` in Unity 6000.4.10f1, enter Play Mode, and choose Settings.
 2. Change each option. Check game-camera antialiasing/post-processing, the transient URP
    shadow settings, and the AO renderer feature. Inspect visible edges and contact shadows
    in a lit 3D area; flat/unlit sprites may show little difference.
-3. Reset Graphics, then select non-default choices. Start or load a game and confirm those
+3. Use Recommended, then select non-default choices. Start or load a game and confirm those
    settings remain active. Restart and confirm they are restored.
 4. Resize the window to 800x600 and confirm all settings and Back remain reachable by scrolling.
 5. Exit Play Mode and confirm the authored pipeline, cameras, AO feature, VSync, and LOD bias
    have their original values. Repeat in a Windows player to check shader availability.
+6. With a separate test user or isolated PlayerPrefs, launch without graphics keys and check
+   that the recommended tier and all four choices are saved before opening Settings. Relaunch
+   after customising choices and confirm they remain unchanged. Repeat on representative
+   Low/Medium/High PCs; check frame times before treating the heuristics as performance guidance.

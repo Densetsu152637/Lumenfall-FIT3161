@@ -29,12 +29,25 @@ namespace Lumenfall.Startup
                 ? shading : ShadingQuality.High;
         }
 
-        public static GraphicsPreferences Defaults => new GraphicsPreferences(false, GraphicsAntialiasing.Off,
-            !Application.isMobilePlatform, ShadingQuality.High);
+        public static GraphicsPreferences Defaults => GraphicsRecommendations.ForCurrentDevice();
 
         public static GraphicsPreferences Load()
         {
-            GraphicsPreferences defaults = Defaults;
+            return Load(Defaults);
+        }
+
+        /// <summary>Persist first-launch defaults and fill missing keys without replacing saved choices.</summary>
+        public static GraphicsPreferences LoadOrCreate(GraphicsPreferences defaults)
+        {
+            GraphicsPreferences preferences = Load(defaults);
+            if (!PlayerPrefs.HasKey(VSyncKey) || !PlayerPrefs.HasKey(AntialiasingKey)
+                || !PlayerPrefs.HasKey(AmbientOcclusionKey) || !PlayerPrefs.HasKey(ShadingKey))
+                preferences.Save();
+            return preferences;
+        }
+
+        private static GraphicsPreferences Load(GraphicsPreferences defaults)
+        {
             return new GraphicsPreferences(
                 PlayerPrefs.GetInt(VSyncKey, defaults.VSync ? 1 : 0) == 1,
                 (GraphicsAntialiasing)PlayerPrefs.GetInt(AntialiasingKey, (int)defaults.Antialiasing),

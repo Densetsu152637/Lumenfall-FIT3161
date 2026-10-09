@@ -43,6 +43,18 @@ namespace Lumenfall.Startup.Tests
         }
 
         [Test]
+        public void BootstrapPersistsInitialPreferencesWithoutOpeningSettings()
+        {
+            GraphicsPreferences saved = GraphicsPreferences.Load();
+            foreach (string key in previousKeys.Keys) Assert.That(PlayerPrefs.HasKey(key), Is.True);
+            Assert.That(saved.VSync, Is.EqualTo(options.Preferences.VSync));
+            Assert.That(saved.Antialiasing, Is.EqualTo(options.Preferences.Antialiasing));
+            Assert.That(saved.AmbientOcclusion, Is.EqualTo(options.Preferences.AmbientOcclusion));
+            Assert.That(saved.Shading, Is.EqualTo(options.Preferences.Shading));
+            Assert.That(options.RecommendedPreferences.Shading, Is.EqualTo(GraphicsPreferences.Defaults.Shading));
+        }
+
+        [Test]
         public void VSyncChangesImmediatelyAndPersists()
         {
             options.SetPreferences(new GraphicsPreferences(true, GraphicsAntialiasing.Off, true, ShadingQuality.High));

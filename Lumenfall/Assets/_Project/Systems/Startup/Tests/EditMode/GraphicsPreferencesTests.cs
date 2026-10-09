@@ -83,6 +83,48 @@ namespace Lumenfall.Startup.Tests
             AssertPreferences(GraphicsPreferences.Load(), GraphicsPreferences.Defaults);
         }
 
+        [Test]
+        public void FreshInstallPersistsRecommendationBeforeOpeningSettings()
+        {
+            GraphicsPreferences recommended = GraphicsRecommendations.Recommend(7500, 4, 2000, 45, false, true);
+            AssertPreferences(GraphicsPreferences.LoadOrCreate(recommended), recommended);
+            foreach (string key in Keys) Assert.That(PlayerPrefs.HasKey(key), Is.True);
+            AssertPreferences(GraphicsPreferences.Load(), recommended);
+        }
+
+        [Test]
+        public void LaterLaunchWithDifferentHardwareKeepsInitialRecommendation()
+        {
+            GraphicsPreferences initial = GraphicsRecommendations.Recommend(7500, 4, 2000, 45, false, true);
+            GraphicsPreferences upgraded = GraphicsRecommendations.Recommend(15000, 8, 4000, 45, false, true);
+            GraphicsPreferences.LoadOrCreate(initial);
+            AssertPreferences(GraphicsPreferences.LoadOrCreate(upgraded), initial);
+            AssertPreferences(GraphicsPreferences.Load(), initial);
+        }
+
+        [Test]
+        public void ExistingCustomChoicesAreNeverReplacedByRecommendation()
+        {
+            GraphicsPreferences custom = new GraphicsPreferences(false, GraphicsAntialiasing.SMAA, true, ShadingQuality.Low);
+            custom.Save();
+            GraphicsPreferences recommended = GraphicsRecommendations.Recommend(15000, 8, 4000, 45, false, true);
+            AssertPreferences(GraphicsPreferences.LoadOrCreate(recommended), custom);
+            AssertPreferences(GraphicsPreferences.Load(), custom);
+        }
+
+        [Test]
+        public void PartialPreferencesFillMissingKeysAndPreserveSavedChoice()
+        {
+            PlayerPrefs.SetInt(GraphicsPreferences.VSyncKey, 0);
+            PlayerPrefs.SetInt(GraphicsPreferences.AntialiasingKey, (int)GraphicsAntialiasing.SMAA);
+            GraphicsPreferences recommended = GraphicsRecommendations.Recommend(7500, 4, 2000, 45, false, true);
+            GraphicsPreferences expected = new GraphicsPreferences(false, GraphicsAntialiasing.SMAA,
+                recommended.AmbientOcclusion, recommended.Shading);
+            AssertPreferences(GraphicsPreferences.LoadOrCreate(recommended), expected);
+            foreach (string key in Keys) Assert.That(PlayerPrefs.HasKey(key), Is.True);
+            AssertPreferences(GraphicsPreferences.Load(), expected);
+        }
+
         private static void AssertPreferences(GraphicsPreferences actual, GraphicsPreferences expected)
         {
             Assert.That(actual.VSync, Is.EqualTo(expected.VSync));

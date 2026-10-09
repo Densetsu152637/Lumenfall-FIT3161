@@ -35,6 +35,7 @@ namespace Lumenfall.Startup
 
         public static GraphicsOptions Instance { get; private set; }
         public GraphicsPreferences Preferences { get; private set; }
+        public GraphicsPreferences RecommendedPreferences { get; private set; }
         public bool SupportsAmbientOcclusion => ambientOcclusionStates.Count > 0;
         public bool SupportsUrpOptions => runtimePipeline != null;
 
@@ -76,7 +77,8 @@ namespace Lumenfall.Startup
                 QualitySettings.renderPipeline = runtimePipeline;
             }
 
-            Preferences = GraphicsPreferences.Load();
+            RecommendedPreferences = GraphicsPreferences.Defaults;
+            Preferences = GraphicsPreferences.LoadOrCreate(RecommendedPreferences);
             Apply();
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
         }

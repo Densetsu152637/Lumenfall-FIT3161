@@ -170,7 +170,7 @@ namespace Lumenfall.Startup
         {
             Rect viewport = new Rect(panel.x + 24f, panel.y + 90f, panel.width - 48f, panel.height - 200f);
             float width = viewport.width - 24f;
-            settingsScroll = GUI.BeginScrollView(viewport, settingsScroll, new Rect(0f, 0f, width, 470f));
+            settingsScroll = GUI.BeginScrollView(viewport, settingsScroll, new Rect(0f, 0f, width, 480f));
             GUI.Label(new Rect(0f, 0f, width, 32f), "MASTER VOLUME", BodyStyle());
             float newVolume = GUI.HorizontalSlider(new Rect(20f, 40f, width - 40f, 24f),
                 masterVolume, 0f, 1f);
@@ -205,9 +205,11 @@ namespace Lumenfall.Startup
                     (graphics.SupportsAmbientOcclusion && ao != current.AmbientOcclusion) || shading != current.Shading)
                     graphics.SetPreferences(new GraphicsPreferences(vSync, antialiasing,
                         graphics.SupportsAmbientOcclusion ? ao : current.AmbientOcclusion, shading));
-                GUI.Label(new Rect(0f, 384f, width, 36f), "Changes are saved automatically.", BodyStyle());
-                if (GUI.Button(new Rect(20f, 428f, width - 40f, 34f), "RESET GRAPHICS"))
-                    graphics.SetPreferences(GraphicsPreferences.Defaults);
+                GUI.Label(new Rect(0f, 384f, width, 44f),
+                    "Recommended: " + ShadingLabels[(int)graphics.RecommendedPreferences.Shading]
+                    + "\nChanges are saved automatically.", BodyStyle());
+                if (GUI.Button(new Rect(20f, 438f, width - 40f, 34f), "USE RECOMMENDED"))
+                    graphics.SetPreferences(graphics.RecommendedPreferences);
             }
             GUI.EndScrollView();
             if (Button("exit", new Rect(panel.x + 86f, panel.yMax - 108f, panel.width - 172f, 66f), "BACK")) page = Page.Main;
