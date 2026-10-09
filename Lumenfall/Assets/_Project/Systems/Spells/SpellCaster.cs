@@ -17,6 +17,8 @@ namespace Lumenfall.Spells
     {
         [SerializeField] private SpellId selectedSpell = SpellId.Ampere;
         [SerializeField, Min(1)] private int interactionRadius = 2;
+        [Tooltip("Manhattan search radius of a Lost Echoes cast, separate from the targeting radius of other spells.")]
+        [SerializeField, Min(1)] private int lostEchoesRadius = 4;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
         private Vector2Int lastDirection = Vector2Int.up;
@@ -32,7 +34,7 @@ namespace Lumenfall.Spells
         public event Action<SpellId, string, bool> CastCompleted;
         /// <summary>Raised for every Lost Echoes search with the caster's cell, the search radius and how many objects were found.</summary>
         public event Action<Vector2Int, int, int> LostEchoesCast;
-        public int InteractionRadius => interactionRadius;
+        public int LostEchoesRadius => lostEchoesRadius;
         private int lastLostEchoesFrame = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
@@ -233,8 +235,8 @@ namespace Lumenfall.Spells
             if (lastLostEchoesFrame == Time.frameCount) return 0;
             lastLostEchoesFrame = Time.frameCount;
             GridMover player = GetComponent<GridMover>();
-            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, interactionRadius, revealed);
-            if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, interactionRadius, found);
+            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, lostEchoesRadius, revealed);
+            if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, lostEchoesRadius, found);
             return found;
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }

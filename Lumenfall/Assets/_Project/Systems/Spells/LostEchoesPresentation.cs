@@ -10,7 +10,7 @@ namespace Lumenfall.Spells
     /// <list type="bullet">
     /// <item>Casting: the player flares (point light, hand glow, brief cast pose) and a diamond pulse expands.</item>
     /// <item>Sonar: if something hidden remains within <see cref="SonarRange"/> cells, a quieter echo of the pulse returns,
-    /// sooner and louder the closer it is; if it is out of reach, a wisp drifts towards it.</item>
+    /// sooner and louder the closer it is. It gives distance only, never direction, so the player still searches.</item>
     /// <item>Reveal: motes gather into the spot, then a glow and light beam fade out in the object's kind colour.</item>
     /// </list>
     /// Sounds load from <c>Resources/Audio/LostEchoes/{Pulse,Echo,Gather,Reveal}</c> when present and otherwise fall back
@@ -31,7 +31,6 @@ namespace Lumenfall.Spells
         private const float PulseSeconds = 0.5f;
         private const float GatherSeconds = 0.55f;
         private const float FlashSeconds = 1.4f;
-        private const float WispSeconds = 1.2f;
         private const int MoteCount = 16;
         private static LostEchoesPresentation instance;
 
@@ -71,7 +70,7 @@ namespace Lumenfall.Spells
             DontDestroyOnLoad(host);
         }
 
-        /// <summary>Kind colour from tags: <c>echo:passage</c> blue, <c>echo:memory</c> violet, <c>echo:item</c> or <c>pickup</c> gold.</summary>
+        /// <summary>Reveal colour from tags: <c>echo:passage</c> blue, <c>echo:memory</c> violet, <c>echo:item</c> or <c>pickup</c> gold.</summary>
         public static Color KindColour(WorldObjectSnapshot target)
         {
             string[] tags = target?.tags ?? Array.Empty<string>();
@@ -143,13 +142,12 @@ namespace Lumenfall.Spells
 
             // Sonar: the nearest thing still hidden answers the pulse. Closer means a sooner, louder echo.
             WorldStateService state = WorldStateService.Instance;
-            if (state == null || !state.TryFindNearestConcealed(cell, SonarRange, out WorldObjectSnapshot hidden, out int distance)) return;
+            if (state == null || !state.TryFindNearestConcealed(cell, SonarRange, out _, out int distance)) return;
             float closeness = 1f - Mathf.Clamp01((distance - 1f) / (SonarRange - 1f));
             float delay = Mathf.Lerp(0.95f, 0.18f, closeness);
             float volume = Mathf.Lerp(0.1f, 0.4f, closeness);
             Schedule(echoClip, delay, volume);
             Schedule(echoClip, delay * 2f, volume * 0.45f);
-            if (distance > radius) Wisp(world, hidden, delay * 0.5f);
         }
 
         private void PlayerFlare(GridWorld world)
@@ -233,43 +231,6 @@ namespace Lumenfall.Spells
                 Color colour = EchoColor; colour.a = Mathf.Min(1f, t * 8f) * (1f - t);
                 line.startColor = line.endColor = colour;
             });
-        }
-
-        // A wisp drifts part of the way towards an out-of-reach hidden object: a direction, not a destination.
-        private void Wisp(GridWorld world, WorldObjectSnapshot hidden, float delay)
-        {
-            Vector3 start = caster.transform.position + Vector3.up * 0.6f;
-            Vector3 toward = world.CellToWorld(hidden.cell, start.y) - start;
-            toward.y = 0f;
-            if (toward.sqrMagnitude < 0.01f) return;
-            Vector3 end = start + toward.normalized * Mathf.Min(toward.magnitude * 0.6f, world.CellSize * 3.5f);
-            Color colour = KindColour(hidden);
-            GameObject wisp = Billboard("Lost Echoes Wisp", colour, out Material wispMaterial);
-            wisp.transform.position = start;
-            TrailRenderer trail = wisp.AddComponent<TrailRenderer>();
-            trail.sharedMaterial = material;
-            trail.time = 0.45f;
-            trail.widthMultiplier = world.CellSize * 0.12f;
-            trail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
-            Color faded = colour; faded.a = 0f;
-            trail.startColor = colour;
-            trail.endColor = faded;
-            trail.emitting = false;
-            Effect effect = AddEffect(wisp, delay, WispSeconds, (e, t) =>
-            {
-                trail.emitting = true;
-                float eased = t * t * (3f - 2f * t);
-                Vector3 position = Vector3.Lerp(start, end, eased);
-                position.y += Mathf.Sin(t * Mathf.PI * 3f) * 0.08f;
-                e.root.transform.position = position;
-                FaceCamera(e.root.transform);
-                e.root.transform.localScale = Vector3.one * world.CellSize * 0.35f;
-                float alpha = Mathf.Min(1f, t * 6f) * (1f - t);
-                SetAlpha(wispMaterial, alpha);
-                Color head = colour; head.a = alpha;
-                trail.startColor = head;
-            });
-            effect.materials.Add(wispMaterial);
         }
 
         private void OnRevealed(WorldObjectSnapshot revealed)

@@ -54,7 +54,7 @@ namespace Lumenfall.Quests
                 ? "You have the keepsake. Return it to Katrina on campus."
                 : $"1. Press {KeyBindings.GetKeyLabel(GameAction.Spell7)} to select Lost Echoes " +
                   $"(or {KeyBindings.GetKeyLabel(GameAction.SpellWheel)} for the spell wheel).\n" +
-                  "2. Stand within two cells of a hidden spot.\n" +
+                  "2. Stand within four cells of a hidden spot.\n" +
                   $"3. Right-click or press {KeyBindings.GetKeyLabel(GameAction.Interact)} to cast. No trace? Move closer and try again.\n" +
                   $"4. Press {KeyBindings.GetKeyLabel(GameAction.Talk)} to pick up what you find.";
             float width = Mathf.Min(360f, Screen.width - 40f);
