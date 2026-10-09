@@ -5,7 +5,7 @@ using Lumenfall.Diagnostics;
 using NUnit.Framework;
 namespace Lumenfall.FeatureAcceptance
 {
-    [Category("PR17"), NonParallelizable]
+    [Category("PR17")]
     public sealed class Pr17DiagnosticsAcceptanceTests
     {
         private readonly Dictionary<FieldInfo, object> prior = new Dictionary<FieldInfo, object>();

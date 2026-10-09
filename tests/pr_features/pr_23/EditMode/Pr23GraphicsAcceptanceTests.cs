@@ -3,7 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 namespace Lumenfall.FeatureAcceptance
 {
-    [Category("PR23"), NonParallelizable]
+    [Category("PR23")]
     public sealed class Pr23GraphicsAcceptanceTests
     {
         private readonly string[] keys = { GraphicsPreferences.VSyncKey, GraphicsPreferences.AntialiasingKey, GraphicsPreferences.AmbientOcclusionKey, GraphicsPreferences.ShadingKey };

@@ -86,6 +86,13 @@ python scripts/validate_unity_project.py Lumenfall
 
 Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
 
+Branch-specific acceptance tests for the active PR snapshot are documented in
+[`tests/pr_features/README.md`](../tests/pr_features/README.md). Run
+`python scripts/run_pr_feature_tests.py --pr <number> --mode all` to materialize
+the pinned PR project and execute its added suite without changing a checkout.
+These catalog tests live outside `Assets` and therefore require this runner;
+the existing EditMode CI job does not automatically discover them on main.
+
 ## Downloadable game releases
 
 [`Release game bundle`](workflows/release-build.yml) builds a **Windows x64 Mono**
