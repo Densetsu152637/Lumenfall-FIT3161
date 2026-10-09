@@ -95,30 +95,28 @@ It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 It requires the same three Unity secrets described above. The Windows build cache
 is separate from the EditMode cache.
 
-After this workflow is merged, it runs automatically on every push to `main`,
-including the merge that adds the workflow. A successful build creates a
-`main-<workflow-run-id>` prerelease with the runnable ZIP and checksum. Its tag
-points to the exact pushed commit. These prereleases do not replace the latest
-stable release, and rerunning the same workflow updates the same release assets.
-Each main push builds independently, so a newer push does not cancel an older one.
+The workflow runs automatically on every push to `main`. A successful build of the
+current `main` head publishes a `main-<workflow-run-id>` release with the runnable
+ZIP and checksum and marks it **Latest**. Its tag points to the exact pushed commit.
+After the assets are uploaded and the replacement is published, the workflow deletes
+all previous game bundle releases and their attached assets, including older tagged
+bundles. It recognizes bundle releases by their `main-<workflow-run-id>` tag or a
+`Lumenfall-*-windows-x64.zip` / `.zip.sha256` asset. Git tags and unrelated releases
+are preserved. Deleted bundle download links stop working; use the
+[latest release page](https://github.com/Densetsu152637/Lumenfall-FIT3161/releases/latest).
 
-You can also:
+Each main push builds independently. Publication and cleanup share a serialized
+queue, and `scripts/publish_main_bundle.py` checks the live `main` head before staging
+and again after uploading. Superseded builds and old reruns cannot publish or prune
+releases. The last successful public bundle remains available while a newer build
+runs or fails. New releases are staged as drafts until both assets have uploaded;
+a failed or superseded upload can leave a draft that is retried by a rerun or removed
+by the next successful publication. Reruns reuse the same release and asset names.
 
-- Push a version tag such as `v0.1.0` to build the tagged commit and automatically
-  create a GitHub Release with generated notes. Tags containing a hyphen, such as
-  `v0.1.0-rc.1`, create prereleases.
-- Publish a release through GitHub's **Releases > Draft a new release** UI. Publishing
-  a release or prerelease builds its tag and attaches the bundle to that release.
-- Select **Actions > Release game bundle > Run workflow** to build the selected
-  branch or tag and download a test bundle from the workflow's artifacts. Manual
-  runs do not create or modify GitHub Releases.
-
-For example, from an up-to-date `main` checkout:
-
-```sh
-git tag v0.1.0
-git push origin v0.1.0
-```
+Select **Actions > Release game bundle > Run workflow** to build the selected branch
+or tag and download a test bundle from the workflow's artifacts. Manual runs do not
+create or modify GitHub Releases. Tag pushes and manually publishing releases no
+longer trigger the bundler; automatic game releases follow `main` only.
 
 The release assets are `Lumenfall-<tag>-windows-x64.zip` and its `.zip.sha256`
 checksum. Download the game ZIP from the release's **Assets**, extract the entire
@@ -131,7 +129,7 @@ access releases; this repository is currently private.
 Every ZIP includes launch instructions, the repository license, and
 `build-info.json` with the source commit, triggering tag/ref, Unity version, and
 platform. Main builds use their `main-<workflow-run-id>` identifier as the bundle
-version. All builds check out the exact event commit or release tag, even if the
+version. All builds check out the exact event commit, even if the
 branch advances while the workflow is queued. Player version settings are
 preserved; changing the release tag does not change `PlayerSettings.bundleVersion`.
 Windows is the only bundled platform.
@@ -139,10 +137,11 @@ Windows is the only bundled platform.
 Packaging fails before publication if the executable, engine DLL, scene data,
 managed assemblies, or Mono runtime are missing or empty. Successful bundles and
 available build logs are retained as workflow artifacts for 14 days. Releases keep
-their attached assets independently of that retention period. A failed build
-does not create a release on a main or tag push; an already-published release remains
-visible without the bundle until a successful rerun. Reruns replace the same
-named ZIP/checksum assets and preserve existing release notes.
+their attached assets independently of that retention period, until replaced by
+the next successful main bundle. A failed build does not create a release or remove
+the previous bundle. Upload/publication failures prevent cleanup; cleanup failures
+fail the job after the new bundle is available and can be retried with a rerun.
+Reruns replace the same named ZIP/checksum assets and preserve existing release notes.
 
 To package a local Windows Mono player and verify its checksum:
 
@@ -153,8 +152,8 @@ sha256sum --check Lumenfall-v0.1.0-windows-x64.zip.sha256
 ```
 
 Only the publication job receives `contents: write`; build jobs have read access.
-Tag pushes and release publication are serialized per tag. GitHub's built-in token
-does not trigger another workflow when it creates a release. No release or tag is
+Release publication and cleanup are serialized across all main builds. GitHub's built-in
+token does not trigger another workflow when it creates a release. No release or tag is
 created by pull-request validation.
 
 ## Recommended branch protection
