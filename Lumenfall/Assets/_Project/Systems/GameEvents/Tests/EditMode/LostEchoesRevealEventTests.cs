@@ -145,6 +145,21 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(state.TryCollectObject("plain", Cell, 1), Is.False);
         }
 
+        [Test]
+        public void SonarFindsNearestConcealedObjectWithinRangeOnly()
+        {
+            Register("near", Cell + new Vector2Int(3, 0), new[] { "hidden" });
+            Register("closer-but-revealed", Cell + Vector2Int.right, new[] { "hidden" });
+            Register("far", Cell + new Vector2Int(9, 0), new[] { "hidden" });
+            Register("visible", Cell + Vector2Int.up, null);
+            state.EndMapRebuild();
+            state.TryRevealObject("closer-but-revealed", Cell, 2);
+            Assert.That(state.TryFindNearestConcealed(Cell, 8, out WorldObjectSnapshot nearest, out int distance), Is.True);
+            Assert.That(nearest.id, Is.EqualTo("near"));
+            Assert.That(distance, Is.EqualTo(3));
+            Assert.That(state.TryFindNearestConcealed(Cell + new Vector2Int(-6, 0), 8, out _, out _), Is.False, "Nothing hidden within eight cells.");
+        }
+
         private GameObject Create(string name) { var go = new GameObject(name); objects.Add(go); return go; }
         private GameObject Register(string id, Vector2Int cell, string[] tags, bool render = false)
         {

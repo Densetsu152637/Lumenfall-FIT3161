@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Lumenfall.GridMovement;
@@ -5,36 +6,61 @@ using Lumenfall.GridMovement;
 namespace Lumenfall.Spells
 {
     /// <summary>
-    /// Code-built feedback for Lost Echoes, so the spell needs no art or audio assets: an expanding pulse on every cast,
-    /// and a short glow, light beam and chime where something is revealed. The glow fades completely, so a revealed
-    /// spot returns to its unfound look.
+    /// Feedback for Lost Echoes, built in code so the spell needs no art assets:
+    /// <list type="bullet">
+    /// <item>Casting: the player flares (point light, hand glow, brief cast pose) and a diamond pulse expands.</item>
+    /// <item>Sonar: if something hidden remains within <see cref="SonarRange"/> cells, a quieter echo of the pulse returns,
+    /// sooner and louder the closer it is; if it is out of reach, a wisp drifts towards it.</item>
+    /// <item>Reveal: motes gather into the spot, then a glow and light beam fade out in the object's kind colour.</item>
+    /// </list>
+    /// Sounds load from <c>Resources/Audio/LostEchoes/{Pulse,Echo,Gather,Reveal}</c> when present and otherwise fall back
+    /// to generated tones with a natural echo tail.
     /// </summary>
     public sealed class LostEchoesPresentation : MonoBehaviour
     {
+        public const int SonarRange = 8;
         private static readonly Color EchoColor = new Color(0.72f, 0.62f, 1f);
+        private static readonly Color ItemColor = new Color(1f, 0.82f, 0.4f);
+        private static readonly Color PassageColor = new Color(0.45f, 0.75f, 1f);
+        private static readonly Color MemoryColor = new Color(0.8f, 0.55f, 1f);
+        // The player controller comes from a demo whose attack_01 chains on through attack, hide and death states, so the
+        // pose is held briefly, never extended by repeated casts, and always handed back to the default idle state.
+        private const string CastPoseState = "Base Layer.attack_01";
+        private const string IdleState = "Base Layer.idle_01";
+        private const float PoseSeconds = 0.35f;
         private const float PulseSeconds = 0.5f;
+        private const float GatherSeconds = 0.55f;
         private const float FlashSeconds = 1.4f;
+        private const float WispSeconds = 1.2f;
+        private const int MoteCount = 16;
         private static LostEchoesPresentation instance;
 
         private readonly List<Effect> effects = new List<Effect>();
+        private readonly List<ScheduledSound> sounds = new List<ScheduledSound>();
         private SpellCaster caster;
         private WorldStateService subscribedState;
         private Material material;
         private Texture2D glowTexture;
         private AudioSource audioSource;
-        private AudioClip pulseClip;
-        private AudioClip revealClip;
+        private AudioClip pulseClip, echoClip, gatherClip, revealClip;
+        private Animator poseAnimator;
+        private float poseReturnAt = -1f;
+        private float poseStartedAt;
 
         private sealed class Effect
         {
             public GameObject root;
             public float started;
+            public float delay;
             public float duration;
-            public Vector3 startScale;
-            public Vector3 endScale;
-            public Renderer[] renderers;
-            public float peakAlpha;
+            public Action<Effect, float> animate;
+            public readonly List<Material> materials = new List<Material>();
+            public readonly List<Transform> parts = new List<Transform>();
+            public readonly List<Vector3> origins = new List<Vector3>();
+            public Vector3 target;
         }
+
+        private struct ScheduledSound { public float at; public AudioClip clip; public float volume; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -45,6 +71,17 @@ namespace Lumenfall.Spells
             DontDestroyOnLoad(host);
         }
 
+        /// <summary>Kind colour from tags: <c>echo:passage</c> blue, <c>echo:memory</c> violet, <c>echo:item</c> or <c>pickup</c> gold.</summary>
+        public static Color KindColour(WorldObjectSnapshot target)
+        {
+            string[] tags = target?.tags ?? Array.Empty<string>();
+            bool Has(string tag) => Array.Exists(tags, value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
+            if (Has("echo:passage")) return PassageColor;
+            if (Has("echo:memory")) return MemoryColor;
+            if (Has("echo:item") || Has(WorldStateService.PickupTag)) return ItemColor;
+            return EchoColor;
+        }
+
         private void Awake()
         {
             if (instance != null && instance != this) { Destroy(gameObject); return; }
@@ -52,16 +89,20 @@ namespace Lumenfall.Spells
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
-            pulseClip = BuildTone("LostEchoesPulse", 0.35f, 520f, 330f, 0f, 0.25f);
-            revealClip = BuildTone("LostEchoesReveal", 1.1f, 880f, 880f, 1320f, 0.35f);
+            pulseClip = LoadClip("Pulse") ?? BuildTone("LostEchoesPulse", 0.35f, 520f, 330f, 0f, 0.25f);
+            echoClip = LoadClip("Echo") ?? pulseClip;
+            gatherClip = LoadClip("Gather") ?? BuildTone("LostEchoesGather", 0.5f, 300f, 700f, 0f, 0.12f);
+            revealClip = LoadClip("Reveal") ?? BuildTone("LostEchoesReveal", 1.1f, 880f, 880f, 1320f, 0.35f);
         }
+
+        private static AudioClip LoadClip(string name) => Resources.Load<AudioClip>("Audio/LostEchoes/" + name);
 
         private void OnDestroy()
         {
             if (caster != null) caster.LostEchoesCast -= OnCast;
             if (subscribedState != null) subscribedState.ObjectRevealed -= OnRevealed;
             if (instance == this) instance = null;
-            foreach (Effect effect in effects) if (effect.root != null) Destroy(effect.root);
+            foreach (Effect effect in effects) DestroyEffect(effect);
             if (material != null) Destroy(material);
             if (glowTexture != null) Destroy(glowTexture);
         }
@@ -69,6 +110,8 @@ namespace Lumenfall.Spells
         private void Update()
         {
             Subscribe();
+            UpdateSounds();
+            UpdatePose();
             UpdateEffects();
         }
 
@@ -94,24 +137,139 @@ namespace Lumenfall.Spells
             if (caster == null || !EnsureMaterial()) return;
             GridWorld world = caster.GetComponent<GridMover>()?.World;
             if (world == null) return;
+            PlayerFlare(world);
+            Pulse(world, radius);
+            audioSource.PlayOneShot(pulseClip, found > 0 ? 0.35f : 0.45f);
+
+            // Sonar: the nearest thing still hidden answers the pulse. Closer means a sooner, louder echo.
+            WorldStateService state = WorldStateService.Instance;
+            if (state == null || !state.TryFindNearestConcealed(cell, SonarRange, out WorldObjectSnapshot hidden, out int distance)) return;
+            float closeness = 1f - Mathf.Clamp01((distance - 1f) / (SonarRange - 1f));
+            float delay = Mathf.Lerp(0.95f, 0.18f, closeness);
+            float volume = Mathf.Lerp(0.1f, 0.4f, closeness);
+            Schedule(echoClip, delay, volume);
+            Schedule(echoClip, delay * 2f, volume * 0.45f);
+            if (distance > radius) Wisp(world, hidden, delay * 0.5f);
+        }
+
+        private void PlayerFlare(GridWorld world)
+        {
+            Transform player = caster.transform;
+            // A brief point light around the player.
+            GameObject flare = new GameObject("Lost Echoes Cast Light");
+            flare.transform.SetParent(transform, false);
+            Light light = flare.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = EchoColor;
+            light.range = world.CellSize * 3.5f;
+            light.intensity = 0f;
+            AddEffect(flare, 0f, 0.7f, (effect, t) =>
+            {
+                effect.root.transform.position = player.position + Vector3.up * 1f;
+                light.intensity = 2.5f * Mathf.Sin(t * Mathf.PI);
+            });
+
+            // A glow at hand height in front of the player.
+            GameObject hand = Billboard("Lost Echoes Hand Glow", EchoColor, out Material handMaterial);
+            Effect handEffect = AddEffect(hand, 0f, 0.6f, (effect, t) =>
+            {
+                effect.root.transform.position = player.position + Vector3.up * 0.9f + player.forward * 0.35f;
+                FaceCamera(effect.root.transform);
+                effect.root.transform.localScale = Vector3.one * world.CellSize * (0.25f + 0.45f * Mathf.Sin(t * Mathf.PI));
+                SetAlpha(handMaterial, Mathf.Sin(t * Mathf.PI));
+            });
+            handEffect.materials.Add(handMaterial);
+
+            // A short cast pose. A cast during an active pose only flares; it never restarts or extends the pose.
+            Animator animator = player.GetComponentInChildren<Animator>();
+            int pose = Animator.StringToHash(CastPoseState);
+            if (poseReturnAt < 0f && animator != null && animator.isActiveAndEnabled &&
+                animator.HasState(0, pose) && animator.HasState(0, Animator.StringToHash(IdleState)))
+            {
+                animator.CrossFadeInFixedTime(pose, 0.08f, 0);
+                poseAnimator = animator;
+                poseStartedAt = Time.unscaledTime;
+                poseReturnAt = poseStartedAt + PoseSeconds;
+            }
+        }
+
+        private void UpdatePose()
+        {
+            if (poseReturnAt < 0f) return;
+            bool expired = Time.unscaledTime >= poseReturnAt;
+            // Hand back early if the animator has already moved on from the pose into the demo chain. The crossfade
+            // only takes effect on the animator's next update, so the check waits briefly after the pose starts.
+            bool leftPose = Time.unscaledTime - poseStartedAt > 0.12f && poseAnimator != null && poseAnimator.isActiveAndEnabled && !poseAnimator.IsInTransition(0) &&
+                poseAnimator.GetCurrentAnimatorStateInfo(0).fullPathHash != Animator.StringToHash(CastPoseState);
+            if (!expired && !leftPose) return;
+            // idle_01 is the default state; its Speed transition takes over at once if the player is walking.
+            if (poseAnimator != null && poseAnimator.isActiveAndEnabled)
+                poseAnimator.CrossFadeInFixedTime(Animator.StringToHash(IdleState), 0.15f, 0);
+            poseReturnAt = -1f;
+            poseAnimator = null;
+        }
+
+        private void Pulse(GridWorld world, int radius)
+        {
             float reach = (radius + 0.5f) * world.CellSize;
             GameObject pulse = new GameObject("Lost Echoes Pulse");
             pulse.transform.SetParent(transform, false);
             pulse.transform.SetPositionAndRotation(caster.transform.position + Vector3.up * 0.06f, world.transform.rotation);
+            pulse.transform.Rotate(90f, 0f, 0f, Space.Self);
             LineRenderer line = pulse.AddComponent<LineRenderer>();
             line.sharedMaterial = material;
             line.useWorldSpace = false;
             line.loop = true;
             line.positionCount = 4;
             // A diamond matches the Manhattan search range. Points are unit-sized in local XY; the 90-degree X rotation
-            // below lays that plane flat on the ground and the transform scale grows it.
+            // lays that plane flat on the ground and the transform scale grows it.
             line.SetPositions(new[] { Vector3.up, Vector3.right, Vector3.down, Vector3.left });
             line.widthMultiplier = 0.07f;
-            line.startColor = line.endColor = EchoColor;
             line.alignment = LineAlignment.TransformZ;
-            pulse.transform.Rotate(90f, 0f, 0f, Space.Self);
-            AddEffect(pulse, PulseSeconds, Vector3.one * 0.2f, Vector3.one * reach, 1f);
-            audioSource.PlayOneShot(pulseClip, found > 0 ? 0.35f : 0.45f);
+            AddEffect(pulse, 0f, PulseSeconds, (effect, t) =>
+            {
+                float eased = 1f - (1f - t) * (1f - t);
+                effect.root.transform.localScale = Vector3.one * Mathf.Lerp(0.2f, reach, eased);
+                Color colour = EchoColor; colour.a = Mathf.Min(1f, t * 8f) * (1f - t);
+                line.startColor = line.endColor = colour;
+            });
+        }
+
+        // A wisp drifts part of the way towards an out-of-reach hidden object: a direction, not a destination.
+        private void Wisp(GridWorld world, WorldObjectSnapshot hidden, float delay)
+        {
+            Vector3 start = caster.transform.position + Vector3.up * 0.6f;
+            Vector3 toward = world.CellToWorld(hidden.cell, start.y) - start;
+            toward.y = 0f;
+            if (toward.sqrMagnitude < 0.01f) return;
+            Vector3 end = start + toward.normalized * Mathf.Min(toward.magnitude * 0.6f, world.CellSize * 3.5f);
+            Color colour = KindColour(hidden);
+            GameObject wisp = Billboard("Lost Echoes Wisp", colour, out Material wispMaterial);
+            wisp.transform.position = start;
+            TrailRenderer trail = wisp.AddComponent<TrailRenderer>();
+            trail.sharedMaterial = material;
+            trail.time = 0.45f;
+            trail.widthMultiplier = world.CellSize * 0.12f;
+            trail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+            Color faded = colour; faded.a = 0f;
+            trail.startColor = colour;
+            trail.endColor = faded;
+            trail.emitting = false;
+            Effect effect = AddEffect(wisp, delay, WispSeconds, (e, t) =>
+            {
+                trail.emitting = true;
+                float eased = t * t * (3f - 2f * t);
+                Vector3 position = Vector3.Lerp(start, end, eased);
+                position.y += Mathf.Sin(t * Mathf.PI * 3f) * 0.08f;
+                e.root.transform.position = position;
+                FaceCamera(e.root.transform);
+                e.root.transform.localScale = Vector3.one * world.CellSize * 0.35f;
+                float alpha = Mathf.Min(1f, t * 6f) * (1f - t);
+                SetAlpha(wispMaterial, alpha);
+                Color head = colour; head.a = alpha;
+                trail.startColor = head;
+            });
+            effect.materials.Add(wispMaterial);
         }
 
         private void OnRevealed(WorldObjectSnapshot revealed)
@@ -121,8 +279,52 @@ namespace Lumenfall.Spells
             if (world == null) return;
             float ground = caster != null ? world.WorldToElevation(caster.transform.position) : revealed.elevation;
             Vector3 spot = world.CellToWorld(revealed.cell, ground);
-            float size = world.CellSize;
+            Color colour = KindColour(revealed);
+            Gather(world, spot, colour);
+            audioSource.PlayOneShot(gatherClip, 0.4f);
+            Flash(world, spot, colour, GatherSeconds * 0.85f);
+            Schedule(revealClip, GatherSeconds * 0.8f, 0.6f);
+        }
 
+        // Motes pull in from around the spot and condense into it, so a find feels gathered rather than switched on.
+        private void Gather(GridWorld world, Vector3 spot, Color colour)
+        {
+            GameObject root = new GameObject("Lost Echoes Gather");
+            root.transform.SetParent(transform, false);
+            Material moteMaterial = new Material(material) { mainTexture = glowTexture, color = colour };
+            Effect effect = AddEffect(root, 0f, GatherSeconds, (e, t) =>
+            {
+                float pull = t * t;
+                for (int i = 0; i < e.parts.Count; i++)
+                {
+                    Transform mote = e.parts[i];
+                    mote.position = Vector3.Lerp(e.origins[i], e.target, pull);
+                    FaceCamera(mote);
+                    mote.localScale = Vector3.one * world.CellSize * Mathf.Lerp(0.22f, 0.1f, t);
+                }
+                SetAlpha(moteMaterial, Mathf.Min(1f, t * 4f));
+            });
+            effect.materials.Add(moteMaterial);
+            effect.target = spot + Vector3.up * 0.3f;
+            for (int i = 0; i < MoteCount; i++)
+            {
+                GameObject mote = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Destroy(mote.GetComponent<Collider>());
+                mote.transform.SetParent(root.transform, false);
+                mote.GetComponent<Renderer>().sharedMaterial = moteMaterial;
+                float angle = i * Mathf.PI * 2f / MoteCount + UnityEngine.Random.Range(-0.2f, 0.2f);
+                float distance = world.CellSize * UnityEngine.Random.Range(1.2f, 2.2f);
+                Vector3 origin = spot + new Vector3(Mathf.Cos(angle) * distance, UnityEngine.Random.Range(0.2f, 1.2f), Mathf.Sin(angle) * distance);
+                mote.transform.position = origin;
+                effect.parts.Add(mote.transform);
+                effect.origins.Add(origin);
+            }
+        }
+
+        // The glow and light beam fade out completely, so a revealed spot returns to its unfound look.
+        private void Flash(GridWorld world, Vector3 spot, Color colour, float delay)
+        {
+            float size = world.CellSize;
             GameObject flash = new GameObject("Lost Echoes Reveal");
             flash.transform.SetParent(transform, false);
             flash.transform.SetPositionAndRotation(spot, world.transform.rotation);
@@ -133,8 +335,8 @@ namespace Lumenfall.Spells
             glow.transform.localPosition = Vector3.up * 0.05f;
             glow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             glow.transform.localScale = Vector3.one * size * 1.6f;
-            // Each glow fades on its own material instance, destroyed with the effect.
-            glow.GetComponent<Renderer>().sharedMaterial = new Material(material) { mainTexture = glowTexture, color = EchoColor };
+            Material glowMaterial = new Material(material) { mainTexture = glowTexture, color = colour };
+            glow.GetComponent<Renderer>().sharedMaterial = glowMaterial;
 
             LineRenderer beam = flash.AddComponent<LineRenderer>();
             beam.sharedMaterial = material;
@@ -143,23 +345,50 @@ namespace Lumenfall.Spells
             beam.SetPositions(new[] { Vector3.zero, Vector3.up * 1.6f });
             beam.startWidth = size * 0.35f;
             beam.endWidth = 0f;
-            Color top = EchoColor; top.a = 0f;
-            beam.startColor = EchoColor;
+            Color top = colour; top.a = 0f;
             beam.endColor = top;
 
-            AddEffect(flash, FlashSeconds, Vector3.one * 0.6f, Vector3.one * 1.15f, 0.9f);
-            audioSource.PlayOneShot(revealClip, 0.6f);
+            Effect effect = AddEffect(flash, delay, FlashSeconds, (e, t) =>
+            {
+                float eased = 1f - (1f - t) * (1f - t);
+                e.root.transform.localScale = Vector3.one * Mathf.Lerp(0.6f, 1.15f, eased);
+                float alpha = 0.9f * Mathf.Min(1f, t * 8f) * (1f - t);
+                SetAlpha(glowMaterial, alpha);
+                Color bottom = colour; bottom.a = alpha;
+                beam.startColor = bottom;
+            });
+            effect.materials.Add(glowMaterial);
         }
 
-        private void AddEffect(GameObject root, float duration, Vector3 startScale, Vector3 endScale, float peakAlpha)
+        private GameObject Billboard(string name, Color colour, out Material instanceMaterial)
         {
-            root.transform.localScale = startScale;
-            effects.Add(new Effect
-            {
-                root = root, started = Time.unscaledTime, duration = duration,
-                startScale = startScale, endScale = endScale,
-                renderers = root.GetComponentsInChildren<Renderer>(), peakAlpha = peakAlpha
-            });
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = name;
+            Destroy(quad.GetComponent<Collider>());
+            quad.transform.SetParent(transform, false);
+            instanceMaterial = new Material(material) { mainTexture = glowTexture, color = colour };
+            quad.GetComponent<Renderer>().sharedMaterial = instanceMaterial;
+            return quad;
+        }
+
+        private static void FaceCamera(Transform target)
+        {
+            Camera camera = Camera.main;
+            if (camera != null) target.rotation = camera.transform.rotation;
+        }
+
+        private static void SetAlpha(Material target, float alpha)
+        {
+            Color colour = target.color; colour.a = Mathf.Clamp01(alpha); target.color = colour;
+        }
+
+        private Effect AddEffect(GameObject root, float delay, float duration, Action<Effect, float> animate)
+        {
+            Effect effect = new Effect { root = root, started = Time.unscaledTime, delay = delay, duration = duration, animate = animate };
+            if (delay > 0f) root.SetActive(false);
+            else animate(effect, 0f);
+            effects.Add(effect);
+            return effect;
         }
 
         private void UpdateEffects()
@@ -167,39 +396,38 @@ namespace Lumenfall.Spells
             for (int i = effects.Count - 1; i >= 0; i--)
             {
                 Effect effect = effects[i];
-                float t = (Time.unscaledTime - effect.started) / effect.duration;
-                if (effect.root == null || t >= 1f)
+                float elapsed = Time.unscaledTime - effect.started - effect.delay;
+                if (effect.root == null || elapsed >= effect.duration)
                 {
-                    if (effect.root != null) DestroyEffect(effect);
+                    DestroyEffect(effect);
                     effects.RemoveAt(i);
                     continue;
                 }
-                float eased = 1f - (1f - t) * (1f - t);
-                effect.root.transform.localScale = Vector3.LerpUnclamped(effect.startScale, effect.endScale, eased);
-                // Quick fade in, then a long fade out so the spot settles back to its unfound look.
-                float alpha = effect.peakAlpha * Mathf.Min(1f, t * 8f) * (1f - t);
-                foreach (Renderer renderer in effect.renderers)
-                {
-                    if (renderer is LineRenderer line)
-                    {
-                        Color start = line.startColor; start.a = alpha;
-                        Color end = line.endColor; end.a = line.loop ? alpha : 0f;
-                        line.startColor = start; line.endColor = end;
-                    }
-                    else if (renderer != null && renderer.sharedMaterial != null && renderer.sharedMaterial != material)
-                    {
-                        Color colour = renderer.sharedMaterial.color; colour.a = alpha;
-                        renderer.sharedMaterial.color = colour;
-                    }
-                }
+                if (elapsed < 0f) continue;
+                if (!effect.root.activeSelf) effect.root.SetActive(true);
+                effect.animate(effect, elapsed / effect.duration);
             }
         }
 
         private static void DestroyEffect(Effect effect)
         {
-            foreach (Renderer renderer in effect.renderers)
-                if (renderer != null && !(renderer is LineRenderer) && renderer.sharedMaterial != null) Destroy(renderer.sharedMaterial);
-            Destroy(effect.root);
+            foreach (Material owned in effect.materials) if (owned != null) Destroy(owned);
+            if (effect.root != null) Destroy(effect.root);
+        }
+
+        private void Schedule(AudioClip clip, float delay, float volume)
+        {
+            if (clip != null) sounds.Add(new ScheduledSound { at = Time.unscaledTime + delay, clip = clip, volume = volume });
+        }
+
+        private void UpdateSounds()
+        {
+            for (int i = sounds.Count - 1; i >= 0; i--)
+            {
+                if (Time.unscaledTime < sounds[i].at) continue;
+                audioSource.PlayOneShot(sounds[i].clip, sounds[i].volume);
+                sounds.RemoveAt(i);
+            }
         }
 
         // Sprites/Default is transparent, unlit, double-sided and uses vertex colours, which suits flat overlays.
@@ -221,25 +449,41 @@ namespace Lumenfall.Spells
             return true;
         }
 
-        // Short procedural tones keep the spell self-contained: a falling hum for the pulse and a bright two-note chime
-        // for a reveal.
+        // Fallback tones used until real clips are placed in Resources/Audio/LostEchoes. Each gets a short echo tail
+        // (decaying, slightly softened repeats) so it sounds less synthetic.
         private static AudioClip BuildTone(string name, float seconds, float startHz, float endHz, float harmonyHz, float volume)
         {
             const int sampleRate = 44100;
-            int samples = Mathf.CeilToInt(seconds * sampleRate);
-            float[] data = new float[samples];
+            const float tailDelay = 0.11f;
+            const int repeats = 3;
+            int dry = Mathf.CeilToInt(seconds * sampleRate);
+            int offset = Mathf.CeilToInt(tailDelay * sampleRate);
+            float[] source = new float[dry];
             float phase = 0f, harmonyPhase = 0f;
-            for (int i = 0; i < samples; i++)
+            for (int i = 0; i < dry; i++)
             {
-                float t = i / (float)samples;
+                float t = i / (float)dry;
                 float frequency = Mathf.Lerp(startHz, endHz, t);
                 phase += 2f * Mathf.PI * frequency / sampleRate;
                 harmonyPhase += 2f * Mathf.PI * harmonyHz / sampleRate;
                 float envelope = Mathf.Min(1f, t * 40f) * Mathf.Exp(-4f * t);
                 float harmony = harmonyHz > 0f && t > 0.12f ? 0.6f * Mathf.Sin(harmonyPhase) * Mathf.Exp(-4f * (t - 0.12f)) : 0f;
-                data[i] = volume * envelope * (Mathf.Sin(phase) + harmony);
+                source[i] = volume * envelope * (Mathf.Sin(phase) + harmony);
             }
-            AudioClip clip = AudioClip.Create(name, samples, 1, sampleRate, false);
+            float[] data = new float[dry + offset * repeats];
+            for (int i = 0; i < dry; i++) data[i] += source[i];
+            for (int r = 1; r <= repeats; r++)
+            {
+                float gain = Mathf.Pow(0.38f, r);
+                float previous = 0f;
+                for (int i = 0; i < dry; i++)
+                {
+                    // A one-pole low-pass makes each repeat a little duller, like a real reflection.
+                    previous = Mathf.Lerp(previous, source[i], 0.35f);
+                    data[i + offset * r] += previous * gain;
+                }
+            }
+            AudioClip clip = AudioClip.Create(name, data.Length, 1, sampleRate, false);
             clip.SetData(data, 0);
             return clip;
         }

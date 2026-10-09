@@ -50,7 +50,8 @@ namespace Lumenfall.Spells
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
-            pickupClip = BuildPickupClip();
+            // A real clip at Resources/Audio/Pickup replaces the generated blip.
+            pickupClip = Resources.Load<AudioClip>("Audio/Pickup") ?? BuildPickupClip();
         }
 
         private void OnDestroy()
@@ -107,7 +108,7 @@ namespace Lumenfall.Spells
         // Mirrors DynamicNpc's talk range so the talk key has exactly one meaning at a time.
         private static bool IsNpcInTalkRange(Vector3 position)
         {
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
                 if (Vector3.Distance(position, npc.transform.position) <= NpcTalkRange) return true;
             return false;
         }

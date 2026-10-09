@@ -135,6 +135,21 @@ namespace Lumenfall.Spells
                 if (Reveal(id)) { count++; revealedIds?.Add(id); }
             return count;
         }
+        /// <summary>Finds the nearest unrevealed Lost Echoes target on the current map within a Manhattan distance, for sonar hints.</summary>
+        public bool TryFindNearestConcealed(Vector2Int fromCell, int maxDistance, out WorldObjectSnapshot nearest, out int distance)
+        {
+            nearest = null; distance = int.MaxValue;
+            if (!IsReady) return false;
+            foreach (WorldEntry entry in entries.Values)
+            {
+                WorldObjectSnapshot target = entry.state;
+                if (target == null || target.revealed || target.collected || !IsLostEchoesTarget(target) ||
+                    !string.Equals(target.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase)) continue;
+                int d = Mathf.Abs(target.cell.x - fromCell.x) + Mathf.Abs(target.cell.y - fromCell.y);
+                if (d <= maxDistance && d < distance) { distance = d; nearest = Clone(target); }
+            }
+            return nearest != null;
+        }
         public bool TryRevealObject(string id, Vector2Int searchCell, int radius)
         {
             if (!IsReady || radius < 0 || !TryGetObject(id, out WorldObjectSnapshot target) ||
