@@ -145,6 +145,7 @@ namespace Lumenfall.GameEvents
             saving = true;
             try
             {
+                GameSaveOverlay.NotifySaveStarted();
                 saveManager.Save(GameSaveOverlay.CurrentSlot);
             }
             finally

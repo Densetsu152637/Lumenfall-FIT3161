@@ -71,13 +71,19 @@ def _relative(path: Path, root: Path) -> str:
 
 def _read_text(path: Path, errors: list[str], root: Path) -> str | None:
     try:
-        content = path.read_bytes()
-        # Some imported asset-pack text files use UTF-16 with a BOM.
-        encoding = "utf-16" if content.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig"
-        return content.decode(encoding)
+        data = path.read_bytes()
+        # Some vendor readmes ship as UTF-16; its byte-order mark makes the encoding unambiguous.
+        if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+            return data.decode("utf-16")
+        return data.decode("utf-8-sig")
     except (OSError, UnicodeDecodeError) as exception:
         errors.append(f"Cannot decode text in {_relative(path, root)}: {exception}")
         return None
+
+
+def _is_merge_conflict_marker(line: str) -> bool:
+    # Git writes the separator as exactly seven '=' characters, so longer decorative rules are not markers.
+    return line.startswith(("<<<<<<< ", ">>>>>>> ")) or line.rstrip() == "======="
 
 
 def _validate_required_structure(project: Path, errors: list[str]) -> None:
@@ -168,14 +174,13 @@ def _validate_build_scenes(project: Path, errors: list[str]) -> None:
 
 
 def _validate_text_files(project: Path, errors: list[str]) -> None:
-    markers = ("<<<<<<< ", ">>>>>>> ")
     for path in (item for item in _iter_source_paths(project) if item.is_file()):
         if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {"LICENSE"}:
             continue
         text = _read_text(path, errors, project)
         if text is None:
             continue
-        if any(line.startswith(markers) or line == "=======" for line in text.splitlines()):
+        if any(_is_merge_conflict_marker(line) for line in text.splitlines()):
             errors.append(f"Unresolved merge-conflict marker in {_relative(path, project)}")
 
 

@@ -33,6 +33,7 @@ namespace Lumenfall.Quests
         public string id;
         public string questId;
         public string completionEventId;
+        public string successDialogueId;
         public string mapId;
         public QuestPuzzleTarget[] targets = Array.Empty<QuestPuzzleTarget>();
     }
@@ -42,6 +43,8 @@ namespace Lumenfall.Quests
     {
         public string id;
         public string[] objectIds = Array.Empty<string>();
+        public string[] requiredConnections = Array.Empty<string>();
+        public float minimumEffectivePower;
         public string conditionMode = "All";
         public bool requiredPowered;
         public bool requiredConnected;
@@ -103,8 +106,14 @@ namespace Lumenfall.Quests
         {
             if (database == null || Time.unscaledTime < nextCheck) return;
             nextCheck = Time.unscaledTime + 0.1f;
+            EvaluatePuzzles();
+        }
+
+        public int EvaluatePuzzles()
+        {
             GameEventManager manager = GameEventManager.Instance;
-            if (manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return;
+            if (database == null || manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return 0;
+            int completed = 0;
             foreach (QuestPuzzleDefinition puzzle in database.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
             {
                 if (puzzle == null || string.IsNullOrWhiteSpace(puzzle.questId) || string.IsNullOrWhiteSpace(puzzle.completionEventId)) continue;
@@ -116,8 +125,18 @@ namespace Lumenfall.Quests
                 if (fired.Contains(key)) continue;
                 if (!SceneMatches(puzzle.mapId) || !TargetsReady(puzzle.targets)) continue;
                 GameEventTriggerResult result = manager.Runtime.TriggerEvent(puzzle.completionEventId);
-                if (result.Succeeded) fired.Add(key);
+                if (result.Succeeded)
+                {
+                    fired.Add(key);
+                    completed++;
+                    if (!string.IsNullOrWhiteSpace(puzzle.successDialogueId))
+                    {
+                        manager.Runtime.StartDialogue(puzzle.successDialogueId);
+                        if (manager.Runtime.ActiveDialogue != null) break;
+                    }
+                }
             }
+            return completed;
         }
 
         private static bool SceneMatches(string mapId)
@@ -134,6 +153,13 @@ namespace Lumenfall.Quests
             foreach (QuestPuzzleTarget target in targets)
             {
                 if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
+                foreach (string requiredConnection in target.requiredConnections ?? Array.Empty<string>())
+                {
+                    string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
+                    if (endpoints.Length != 2 || string.IsNullOrWhiteSpace(endpoints[0]) || string.IsNullOrWhiteSpace(endpoints[1]) ||
+                        !state.IsConnected(endpoints[0], endpoints[1]) ||
+                        state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
+                }
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)

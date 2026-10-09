@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Static validation for Lumenfall's shipped data-driven world assets."""
 import json
+import math
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "Lumenfall" / "Assets"
@@ -57,6 +59,31 @@ for map_id, (path, data) in maps.items():
         y = portal.get("arrivalOffsetY", 0) - offset.get("y", 0)
         if not (0 <= x < target_map.get("width", 0) and 0 <= y < target_map.get("height", 0)):
             pending_portals.append(f"{map_id}/{portal.get('id')} -> {dest}@{x},{y}")
+
+# WorldStateService.AddConnection rejects cables weaker than 0.2 (strength = 1 / (1 + tile distance)),
+# so every authored weave-with pair must sit within four tiles or the quest cannot be completed.
+def check_weave_pairs(source, cells, partners):
+    for object_id, partner in partners.items():
+        if partner not in cells or object_id not in cells:
+            errors.append(f"{source}: {object_id} weaves with missing object {partner!r}")
+            continue
+        (ax, ay), (bx, by) = cells[object_id], cells[partner]
+        if 1 / (1 + math.hypot(ax - bx, ay - by)) < 0.2:
+            errors.append(f"{source}: weave pair {object_id}|{partner} is too far apart to connect")
+
+for map_id, (path, data) in maps.items():
+    objects = data.get("objects", [])
+    check_weave_pairs(path.name, {o.get("id"): (o.get("x", 0), o.get("y", 0)) for o in objects},
+                      {o.get("id"): t.split(":", 1)[1] for o in objects for t in o.get("tags", []) if t.startswith("weave-with:")})
+
+REGISTRATION = re.compile(r"objectId: (\S+)\r?\n  cell: \{x: (-?\d+), y: (-?\d+)\}(.*?)(?=\r?\n--- |\Z)", re.S)
+for path in sorted((ROOT / "_Project" / "World" / "Areas" / "Prefabs").glob("*.prefab")):
+    cells, partners = {}, {}
+    for object_id, x, y, rest in REGISTRATION.findall(path.read_text(encoding="utf-8")):
+        cells[object_id] = (int(x), int(y))
+        partner = re.search(r"- weave-with:(\S+)", rest)
+        if partner: partners[object_id] = partner.group(1)
+    check_weave_pairs(path.name, cells, partners)
 
 npcs = json.loads(NPCS.read_text(encoding="utf-8"))
 event_docs = [json.loads(path.read_text(encoding="utf-8")) for directory in EVENTS_DIRS for path in sorted(directory.glob("*.json"))]

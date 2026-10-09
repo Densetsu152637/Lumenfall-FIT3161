@@ -15,114 +15,114 @@ MonoBehaviour:
   definition:
     schemaVersion: 1
     id: campus
-    width: 92
-    height: 54
+    width: 54
+    height: 92
     tileFile: campus.txt
     portalGlyph: X
     spawn:
       x: 1
-      y: 1
+      y: 90
     regions:
     - id: A01
-      name: East gate forecourt
+      name: West gate forecourt
       rect:
-        x: 43
+        x: 35
         y: 35
-        width: 14
-        height: 10
+        width: 10
+        height: 14
       walkable: 1
     - id: C01
       name: Campus commons
       rect:
-        x: 30
-        y: 28
-        width: 40
-        height: 28
+        x: 28
+        y: 22
+        width: 28
+        height: 40
       walkable: 1
     - id: C02
       name: Orientation terrace
       rect:
-        x: 34
-        y: 18
-        width: 18
-        height: 8
+        x: 18
+        y: 40
+        width: 8
+        height: 18
       walkable: 1
     - id: C03
       name: Orientation trial strip
       rect:
-        x: 15
-        y: 30
-        width: 12
-        height: 8
+        x: 30
+        y: 65
+        width: 8
+        height: 12
       walkable: 1
     - id: C04
       name: Garden walk
       rect:
-        x: 10
-        y: 32
-        width: 26
-        height: 18
+        x: 32
+        y: 56
+        width: 18
+        height: 26
       walkable: 1
     - id: C05
       name: Campus path loop
       rect:
         x: 25
-        y: 25
-        width: 50
-        height: 40
+        y: 17
+        width: 40
+        height: 50
       walkable: 1
     - id: B01
       name: B01
       rect:
-        x: 12
-        y: 56
-        width: 20
-        height: 14
+        x: 56
+        y: 60
+        width: 14
+        height: 20
       walkable: 1
     - id: B02
       name: B02
       rect:
-        x: 10
-        y: 12
-        width: 26
-        height: 20
+        x: 12
+        y: 56
+        width: 20
+        height: 26
       walkable: 1
     - id: B03
       name: B03
       rect:
-        x: 40
-        y: 8
-        width: 30
-        height: 18
+        x: 8
+        y: 22
+        width: 18
+        height: 30
       walkable: 1
     - id: B04
       name: B04
       rect:
-        x: 72
-        y: 48
-        width: 20
-        height: 24
+        x: 48
+        y: 0
+        width: 24
+        height: 20
       walkable: 1
     B01:
+      x: 56
+      y: 60
+      width: 14
+      height: 20
+    B02:
       x: 12
       y: 56
       width: 20
-      height: 14
-    B02:
-      x: 10
-      y: 12
-      width: 26
-      height: 20
+      height: 26
     B03:
-      x: 40
-      y: 8
-      width: 30
-      height: 18
+      x: 8
+      y: 22
+      width: 18
+      height: 30
     B04:
-      x: 72
-      y: 48
-      width: 20
-      height: 24
+      x: 48
+      y: 0
+      width: 24
+      height: 20
     B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
     B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
     B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
@@ -131,12 +131,12 @@ MonoBehaviour:
     - id: relic.stella.power
       prefab: {fileID: 0}
       type: relic
-      x: 44
-      y: 35
+      x: 35
+      y: 47
       width: 1
       height: 1
       elevation: 0
-      rotation: 0
+      rotation: 90
       blocks: 0
       tags:
       - ampere
@@ -146,12 +146,12 @@ MonoBehaviour:
     - id: circuit.stella.link
       prefab: {fileID: 0}
       type: relic
-      x: 46
-      y: 35
+      x: 35
+      y: 45
       width: 1
       height: 1
       elevation: 0
-      rotation: 0
+      rotation: 90
       blocks: 0
       tags:
       - weave
@@ -160,12 +160,12 @@ MonoBehaviour:
     - id: orientation.cinna.align
       prefab: {fileID: 0}
       type: orientation
-      x: 40
-      y: 22
+      x: 22
+      y: 51
       width: 1
       height: 1
       elevation: 0
-      rotation: 0
+      rotation: 90
       blocks: 0
       tags:
       - vis
@@ -174,43 +174,29 @@ MonoBehaviour:
     - id: trial.cinna.ice
       prefab: {fileID: 0}
       type: surface
-      x: 20
-      y: 34
+      x: 34
+      y: 71
       width: 1
       height: 1
       elevation: 0
-      rotation: 0
+      rotation: 90
       blocks: 0
       tags:
       - glaciate
-      - slide-goal:24,34
+      - slide-goal:34,67
       compatibleWithSpells: 1
     - id: mechanism.orio.rotate
       prefab: {fileID: 0}
       type: mechanism
-      x: 57
-      y: 25
+      x: 25
+      y: 34
       width: 1
       height: 1
       elevation: 0
-      rotation: 0
+      rotation: 180
       blocks: 0
       tags:
       - rotara
-      compatibleWithSpells: 1
-    - id: keepsake.katrina.hidden
-      prefab: {fileID: 0}
-      type: keepsake
-      x: 31
-      y: 42
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 0
-      blocks: 0
-      tags:
-      - hidden
-      - lost-echoes
       compatibleWithSpells: 1
     puzzleTargets:
     - id: quest.stella.first-light
@@ -229,11 +215,11 @@ MonoBehaviour:
     - id: quest.stella.string-them-together
       objectIds:
       - relic.stella.power
-      - circuit.stella.link
       requiredConnections:
       - relic.stella.power|circuit.stella.link
+      minimumEffectivePower: 0.2
       conditionMode: All
-      requiredPowered: 0
+      requiredPowered: 1
       requiredConnected: 1
       requiredRevealed: 0
       requiredFrozen: 0
@@ -265,8 +251,8 @@ MonoBehaviour:
       requiredFrozen: 1
       requiredAligned: 0
       requiredRotation: -1
-      requiredPositionX: 24
-      requiredPositionY: 34
+      requiredPositionX: 34
+      requiredPositionY: 67
     - id: quest.orio.patch-notes
       objectIds:
       - mechanism.orio.rotate
@@ -277,229 +263,15 @@ MonoBehaviour:
       requiredRevealed: 0
       requiredFrozen: 0
       requiredAligned: 0
-      requiredRotation: 90
+      requiredRotation: 180
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
-    - id: quest.katrina.something-borrowed
-      objectIds:
-      - keepsake.katrina.hidden
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 1
-      requiredFrozen: 0
-      requiredAligned: 0
-      requiredRotation: -1
-      requiredPositionX: -2147483648
-      requiredPositionY: -2147483648
-    portals:
-    - id: P.A01.C01
-      x: 50
-      y: 35
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 70d47be18b9c6414181bf2f3d10d6ed9, type: 2}
-      arrivalOffset: {x: 50, y: 35}
-      reserved: 0
-    - id: P.B01.C05
-      x: 20
-      y: 58
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
-      arrivalOffset: {x: 25, y: 56}
-      reserved: 1
-    - id: P.B02.C05
-      x: 18
-      y: 14
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
-      arrivalOffset: {x: 23, y: 12}
-      reserved: 0
-    - id: P.B03.C05
-      x: 48
-      y: 10
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: b0caa62ccb2f27a4486d399e5832aa9b, type: 2}
-      arrivalOffset: {x: 53, y: 8}
-      reserved: 0
-    - id: P.B04.C05
-      x: 80
-      y: 50
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 41c184c10886e40449ff7576f4f40ebf, type: 2}
-      arrivalOffset: {x: 85, y: 48}
-      reserved: 0
-    - id: P.C01.A01
-      x: 50
-      y: 35
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: d74df04b6c197ab4baff13fc618dcd59, type: 2}
-      arrivalOffset: {x: 50, y: 35}
-      reserved: 0
-    - id: P.C01.C02
-      x: 42
-      y: 28
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 0553c32970b59d44a93e9d069a96e420, type: 2}
-      arrivalOffset: {x: 42, y: 26}
-      reserved: 0
-    - id: P.C01.C03
-      x: 30
-      y: 34
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: f0f8f999003eb6448ab763a6c3f71e21, type: 2}
-      arrivalOffset: {x: 27, y: 34}
-      reserved: 0
-    - id: P.C01.C04
-      x: 60
-      y: 50
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 5122872584e5fab458f74956d744556b, type: 2}
-      arrivalOffset: {x: 60, y: 55}
-      reserved: 1
-    - id: P.C01.C05
-      x: 35
-      y: 40
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 24cb2d9760bb8e840bdc8d9f974819e3, type: 2}
-      arrivalOffset: {x: 35, y: 39}
-      reserved: 0
-    - id: P.C02.C01
-      x: 42
-      y: 26
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 6cb2dcaa5ed8fe0498c36d15450d94a3, type: 2}
-      arrivalOffset: {x: 42, y: 28}
-      reserved: 0
-    - id: P.C03.C01
-      x: 27
-      y: 34
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 957693631e02a9a459ce4855cab4bf58, type: 2}
-      arrivalOffset: {x: 30, y: 34}
-      reserved: 0
-    - id: P.C04.C01
-      x: 60
-      y: 55
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 32651ed2cf520d7468d63a61b8eefa44, type: 2}
-      arrivalOffset: {x: 60, y: 50}
-      reserved: 0
-    - id: P.C05.C01
-      x: 35
-      y: 39
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: a74908775345e9c4bbcc3e71bc586481, type: 2}
-      arrivalOffset: {x: 35, y: 40}
-      reserved: 0
-    - id: P.C05.B01
-      x: 25
-      y: 56
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 14784508c4d2cf948946e594564fd637, type: 2}
-      arrivalOffset: {x: 20, y: 58}
-      reserved: 0
-    - id: P.C05.B02
-      x: 23
-      y: 12
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: de1180b4ea288b2498f14342f81e85ee, type: 2}
-      arrivalOffset: {x: 18, y: 14}
-      reserved: 0
-    - id: P.C05.B03
-      x: 53
-      y: 8
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 34a8113bdba92cf45916471fd6ca67cb, type: 2}
-      arrivalOffset: {x: 48, y: 10}
-      reserved: 0
-    - id: P.C05.B04
-      x: 85
-      y: 48
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: cedd9b5ed211ce2489890abf46f4f7c8, type: 2}
-      arrivalOffset: {x: 80, y: 50}
-      reserved: 0
-    - id: P.A01.F03
-      x: 86
-      y: 25
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 604ce7d6f1e05024b9b0731771c6a743, type: 2}
-      arrivalOffset: {x: 2, y: 34}
-      reserved: 0
-    - id: P.A01.F03.86_26
-      x: 86
-      y: 26
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: 604ce7d6f1e05024b9b0731771c6a743, type: 2}
-      arrivalOffset: {x: 2, y: 34}
-      reserved: 0
-    - id: reserved.X.45_19
-      x: 45
-      y: 19
-      width: 1
-      height: 1
-      destination: {fileID: 0}
-      arrivalOffset: {x: 0, y: 0}
-      reserved: 1
-    - id: reserved.X.46_19
-      x: 46
-      y: 19
-      width: 1
-      height: 1
-      destination: {fileID: 0}
-      arrivalOffset: {x: 0, y: 0}
-      reserved: 1
-    - id: reserved.X.68_23
-      x: 68
-      y: 23
-      width: 1
-      height: 1
-      destination: {fileID: 0}
-      arrivalOffset: {x: 0, y: 0}
-      reserved: 1
-  areaPrefab: {fileID: 2761501048540058367, guid: edab88b9e67aceb42962756885b25787, type: 3}
+    portals: []
+  areaPrefab: {fileID: 7035163530281894877, guid: edab88b9e67aceb42962756885b25787, type: 3}
   portals:
-  - {fileID: 11400000, guid: d74df04b6c197ab4baff13fc618dcd59, type: 2}
-  - {fileID: 11400000, guid: d265d548b1c29fa4389272c02be1114d, type: 2}
-  - {fileID: 11400000, guid: ca6a2c6172df9a64e8d25be195866bef, type: 2}
-  - {fileID: 11400000, guid: 9b80be2d09965364b945bebdd464dced, type: 2}
-  - {fileID: 11400000, guid: 7e2cca63f8125cb42baa37c0e2c03568, type: 2}
-  - {fileID: 11400000, guid: 70d47be18b9c6414181bf2f3d10d6ed9, type: 2}
-  - {fileID: 11400000, guid: 6cb2dcaa5ed8fe0498c36d15450d94a3, type: 2}
-  - {fileID: 11400000, guid: 957693631e02a9a459ce4855cab4bf58, type: 2}
-  - {fileID: 11400000, guid: 32651ed2cf520d7468d63a61b8eefa44, type: 2}
-  - {fileID: 11400000, guid: a74908775345e9c4bbcc3e71bc586481, type: 2}
-  - {fileID: 11400000, guid: 0553c32970b59d44a93e9d069a96e420, type: 2}
-  - {fileID: 11400000, guid: f0f8f999003eb6448ab763a6c3f71e21, type: 2}
-  - {fileID: 11400000, guid: 5122872584e5fab458f74956d744556b, type: 2}
-  - {fileID: 11400000, guid: 24cb2d9760bb8e840bdc8d9f974819e3, type: 2}
-  - {fileID: 11400000, guid: 472fac0f85660ab4aa8286f19f77aad4, type: 2}
-  - {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
-  - {fileID: 11400000, guid: b0caa62ccb2f27a4486d399e5832aa9b, type: 2}
-  - {fileID: 11400000, guid: 41c184c10886e40449ff7576f4f40ebf, type: 2}
-  - {fileID: 11400000, guid: 9fb41c35c7a33b4469fbc69a4eb70403, type: 2}
-  - {fileID: 11400000, guid: 67ff985442c01aa4fa6fd3274716df6b, type: 2}
-  - {fileID: 11400000, guid: e915cf0b38ae93d48b7e939a25f79ab4, type: 2}
-  - {fileID: 11400000, guid: ea2cb3ab9a2f7654cba69c0a4119fc8b, type: 2}
-  - {fileID: 11400000, guid: 2be54a9befd2bc74d977c47039777a07, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000003, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000004, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000005, type: 2}
+  - {fileID: 11400000, guid: 5c6583157f574a3ba761c6ce4fc0a078, type: 2}
