@@ -68,6 +68,7 @@ MonoBehaviour:
       blocks: 0
       tags:
       - hidden
+      - pickup
       compatibleWithSpells: 1
     - id: recess.planter.1
       prefab: {fileID: 0}

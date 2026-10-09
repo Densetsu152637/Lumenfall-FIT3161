@@ -12,7 +12,7 @@ namespace Lumenfall.Spells
     [Serializable] public sealed class WorldObjectSnapshot
     {
         public string id; public string mapId; public Vector2Int cell; public Vector2Int size = Vector2Int.one;
-        public float elevation; public float rotation; public bool powered; public bool frozen; public bool revealed;
+        public float elevation; public float rotation; public bool powered; public bool frozen; public bool revealed; public bool collected;
         public bool aligned; public bool spellCompatible = true; public string[] tags = Array.Empty<string>();
     }
     [Serializable] public sealed class MapStateSnapshot { public string mapId; public WorldObjectSnapshot[] objects = Array.Empty<WorldObjectSnapshot>(); public string[] connections = Array.Empty<string>(); public float[] connectionStrengths = Array.Empty<float>(); }
@@ -40,6 +40,16 @@ namespace Lumenfall.Spells
         public event Action<MapStateSnapshot> StateChanged;
         public event Action<MapRebuildEvent> MapRebuilt;
         public event Action<string> EffectQueued;
+        /// <summary>Raised once each time Lost Echoes reveals an object. Restoring saved state does not raise it.</summary>
+        public event Action<WorldObjectSnapshot> ObjectRevealed;
+        /// <summary>Tag prefix naming a GameEvent to trigger when the object is revealed, e.g. <c>on-reveal:open_hidden_door</c>.</summary>
+        public const string OnRevealTagPrefix = "on-reveal:";
+        /// <summary>Raised once when the player picks up an object. Restoring saved state does not raise it.</summary>
+        public event Action<WorldObjectSnapshot> ObjectCollected;
+        /// <summary>Tag marking an object the player can pick up with the talk key. Hidden pickups can be picked up too; Lost Echoes helps locate them.</summary>
+        public const string PickupTag = "pickup";
+        /// <summary>Tag prefix naming a GameEvent to trigger when the object is picked up, e.g. <c>on-pickup:found_old_letter</c>.</summary>
+        public const string OnPickupTagPrefix = "on-pickup:";
         public PuzzleTargetDefinition[] PuzzleTargets => puzzleTargets;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] private static void Bootstrap()
@@ -122,7 +132,7 @@ namespace Lumenfall.Spells
             }
             int count = 0;
             foreach (string id in found)
-                if (SetProperty(id, value => value.revealed = true)) { count++; revealedIds?.Add(id); }
+                if (Reveal(id)) { count++; revealedIds?.Add(id); }
             return count;
         }
         public bool TryRevealObject(string id, Vector2Int searchCell, int radius)
@@ -131,7 +141,53 @@ namespace Lumenfall.Spells
                 !string.Equals(target.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase) ||
                 !IsLostEchoesTarget(target) || target.revealed ||
                 Mathf.Abs(target.cell.x - searchCell.x) + Mathf.Abs(target.cell.y - searchCell.y) > radius) return false;
-            return SetProperty(id, value => value.revealed = true);
+            return Reveal(id);
+        }
+        // Every Lost Echoes reveal goes through here: presentation listens to ObjectRevealed, and authored
+        // "on-reveal:<eventId>" tags trigger GameEvents directly, so hidden passages, memories or collectibles need
+        // only data. Each event's own conditions and repeatability still apply.
+        private bool Reveal(string id)
+        {
+            if (!SetProperty(id, value => value.revealed = true) || !TryGetObject(id, out WorldObjectSnapshot revealed)) return false;
+            ObjectRevealed?.Invoke(revealed);
+            TriggerTaggedEvents(revealed, OnRevealTagPrefix);
+            return true;
+        }
+        /// <summary>True when the object is tagged <c>pickup</c> and not yet collected, whether or not it is hidden.</summary>
+        public static bool IsCollectable(WorldObjectSnapshot target)
+        {
+            return target != null && !target.collected && HasTag(target, PickupTag);
+        }
+        /// <summary>True when the object is tagged <c>hidden</c> and has not been revealed, so it should not be shown.</summary>
+        public static bool IsConcealed(WorldObjectSnapshot target)
+        {
+            return target != null && !target.revealed && HasTag(target, "hidden");
+        }
+        /// <summary>Picks up a collectable object on the current map within a Manhattan radius of the player's cell.</summary>
+        public bool TryCollectObject(string id, Vector2Int fromCell, int radius)
+        {
+            if (!IsReady || radius < 0 || !TryGetObject(id, out WorldObjectSnapshot target) ||
+                !string.Equals(target.mapId, CurrentMapId, StringComparison.OrdinalIgnoreCase) || !IsCollectable(target) ||
+                Mathf.Abs(target.cell.x - fromCell.x) + Mathf.Abs(target.cell.y - fromCell.y) > radius) return false;
+            // Picking up an unrevealed hidden object finds it too, so reveal feedback and on-reveal hooks still run.
+            if (IsConcealed(target)) Reveal(id);
+            if (!SetProperty(id, value => value.collected = true) || !TryGetObject(id, out WorldObjectSnapshot collected)) return false;
+            ObjectCollected?.Invoke(collected);
+            TriggerTaggedEvents(collected, OnPickupTagPrefix);
+            return true;
+        }
+        private static bool HasTag(WorldObjectSnapshot target, string tag) =>
+            Array.Exists(target.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
+        private static void TriggerTaggedEvents(WorldObjectSnapshot target, string prefix)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (runtime == null) return;
+            foreach (string tag in target.tags ?? Array.Empty<string>())
+            {
+                if (tag == null || !tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+                string eventId = tag.Substring(prefix.Length).Trim();
+                if (eventId.Length > 0) runtime.TriggerEvent(eventId);
+            }
         }
         public bool AddConnection(string a, string b) { if (!entries.ContainsKey(a) || !entries.ContainsKey(b) || a == b) return false; string key = ConnectionKey(a, b); if (connections.Contains(key)) return false; float strength = 1f / (1f + Vector2Int.Distance(entries[a].state.cell, entries[b].state.cell)); if (strength < 0.2f) return false; connections.Add(key); connectionStrengths[key] = strength; NotifyChanged(); return true; }
         public void QueueEffect(string key) { if (string.IsNullOrWhiteSpace(key) || pendingEffects.Contains(key)) return; pendingEffects.Add(key); EffectQueued?.Invoke(key); }
@@ -160,17 +216,19 @@ namespace Lumenfall.Spells
         }
         private static void SyncPresentation(WorldEntry entry)
         {
-            if (!entry.authoredHidden) return;
+            // A picked-up object leaves the world, so its spot returns to its unfound look.
+            if (!entry.authoredHidden && !entry.state.collected) return;
             for (int i = 0; i < entry.renderers.Length; i++)
                 if (entry.renderers[i] != null)
-                    entry.renderers[i].enabled = entry.rendererEnabledStates[i] && entry.state.revealed;
+                    entry.renderers[i].enabled = entry.rendererEnabledStates[i] && !entry.state.collected &&
+                        (!entry.authoredHidden || entry.state.revealed);
         }
         private bool IsConnectedToAny(string id) { foreach (string key in connections) if (key.StartsWith(id + "|", StringComparison.Ordinal) || key.EndsWith("|" + id, StringComparison.Ordinal)) return true; return false; }
         private void NotifyChanged() { if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
         private MapStateSnapshot CaptureSnapshot() { return new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths() }; }
         private float[] CaptureConnectionStrengths() { float[] values = new float[connections.Count]; int i = 0; foreach (string key in connections) values[i++] = connectionStrengths.TryGetValue(key, out float value) ? value : 1f; return values; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;
-        private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, aligned = s.aligned, spellCompatible = s.spellCompatible, tags = s.tags ?? Array.Empty<string>() };
+        private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, collected = s.collected, aligned = s.aligned, spellCompatible = s.spellCompatible, tags = s.tags ?? Array.Empty<string>() };
         private sealed class WorldEntry { public GameObject sceneObject; public WorldObjectSnapshot state; public Renderer[] renderers; public bool[] rendererEnabledStates; public bool authoredHidden; }
         [Serializable] private sealed class SaveData { public string mapId; public WorldObjectSnapshot[] objects = Array.Empty<WorldObjectSnapshot>(); public string[] connections = Array.Empty<string>(); public float[] connectionStrengths = Array.Empty<float>(); public string[] pendingEffects = Array.Empty<string>(); public MapArchive[] maps = Array.Empty<MapArchive>(); }
         [Serializable] private sealed class MapArchive { public string mapId; public MapStateSnapshot snapshot; public string[] pendingEffects = Array.Empty<string>(); }
