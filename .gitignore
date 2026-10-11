@@ -49,6 +49,5 @@ __pycache__/
 *.ulf
 
 # Personal agents files
-agents.md
 agents.*.md
 .agents/

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Controls;
+using Lumenfall.Quests;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
 
@@ -15,6 +16,8 @@ namespace Lumenfall.Inventory
     public static class InventoryUiState
     {
         public static bool IsOpen { get; internal set; }
+        /// Frame the journal last closed on, so a key press that closed it is not reused by another overlay.
+        public static int ClosedFrame { get; internal set; } = -1;
     }
 
     /// Runtime inventory and character encyclopedia. It is bootstrapped after a scene loads so
@@ -52,15 +55,32 @@ namespace Lumenfall.Inventory
             };
 
         private enum Page { Inventory, Encyclopedia, Settings }
+        private static readonly string[] PageLabels = { "Inventory", "Character encyclopedia", "Settings" };
+        private const float OpenSeconds = 0.35f;
+        private const float PageFlipSeconds = 0.4f;
+
         private Page page;
-        private readonly GameSettingsPanel settingsPanel = new GameSettingsPanel();
+        private readonly MenuSkin skin = new MenuSkin();
+        private readonly OptionsPanel options = new OptionsPanel { FlipPages = true };
+        private readonly Rect[] tabRects = new Rect[PageLabels.Length];
         private GridMover lockedMover;
         private GameEventRuntime subscribedRuntime;
-        private GUIStyle panelStyle;
-        private GUIStyle headingStyle;
-        private GUIStyle bodyStyle;
-        private GUIStyle mutedStyle;
-        private GUIStyle buttonStyle;
+        private float openedAt;
+        private float pageChangedAt;
+        private Vector2 listScroll;
+        // The active-tab underline slides between tabs; it is stored relative to the panel so parallax does not drag it.
+        private float underlineOffset;
+        private float underlineWidth;
+        private bool underlinePlaced;
+        // Footer save status: it writes itself in again whenever its text changes, and a wax seal marks a Save this visit.
+        private string saveStatus;
+        private float saveStatusAt = float.NegativeInfinity;
+        private string saveFeedback;
+        private string inkText;
+        private float inkedAt;
+        private float sealedAt = float.NegativeInfinity;
+
+        private enum FooterAction { None, MainMenu, Save, Quit }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -84,6 +104,11 @@ namespace Lumenfall.Inventory
         {
             UnsubscribeRuntime();
             Close();
+        }
+
+        private void OnDestroy()
+        {
+            skin.Dispose();
         }
 
         // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
@@ -110,13 +135,21 @@ namespace Lumenfall.Inventory
         private void Update()
         {
             SubscribeRuntime();
-            // While a control is being rebound, every key (including the journal key) belongs to the rebind.
-            if (InventoryUiState.IsOpen && settingsPanel.IsRebinding)
-            {
-                settingsPanel.Tick();
-                return;
-            }
             Keyboard keyboard = Keyboard.current;
+            if (InventoryUiState.IsOpen)
+            {
+                float deltaTime = Time.unscaledDeltaTime;
+                skin.Tick(deltaTime);
+                // While a control is being rebound, every key (including the journal key and Escape) belongs to the rebind.
+                bool wasRebinding = options.IsRebinding;
+                options.Tick(deltaTime);
+                if (wasRebinding) return;
+                if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                {
+                    Close();
+                    return;
+                }
+            }
             if (keyboard == null || !KeyBindings.WasPressed(GameAction.Journal)) return;
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             if (InventoryUiState.IsOpen) Close();
@@ -125,16 +158,26 @@ namespace Lumenfall.Inventory
 
         private void Open()
         {
-            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null) return;
+            if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
+                QuestHintOverlay.IsSettingsOpen) return;
             InventoryUiState.IsOpen = true;
+            openedAt = pageChangedAt = Time.unscaledTime;
+            underlinePlaced = false;
+            saveFeedback = null;
+            saveStatusAt = sealedAt = float.NegativeInfinity;
+            inkText = null;
+            options.Reset();
+            skin.ResetAmbience();
             lockedMover = FindAnyObjectByType<GridMover>();
             if (lockedMover != null) lockedMover.SetMovementLocked(true);
         }
 
         private void Close()
         {
+            if (InventoryUiState.IsOpen) InventoryUiState.ClosedFrame = Time.frameCount;
             InventoryUiState.IsOpen = false;
-            settingsPanel.CancelRebind();
+            options.CancelRebind();
+            skin.ShowWandCursor(false);
             if (lockedMover != null) lockedMover.SetMovementLocked(false);
             lockedMover = null;
         }
@@ -164,88 +207,261 @@ namespace Lumenfall.Inventory
         private void OnGUI()
         {
             if (!InventoryUiState.IsOpen) return;
-            EnsureStyles();
+            skin.Ensure();
+            skin.ShowWandCursor(true);
+            // Draw above the quest hint card and dialogue; IMGUI puts lower depths in front.
+            GUI.depth = -10;
+            Color previousColor = GUI.color;
+            float now = Time.unscaledTime;
+            float open = MenuSkin.Smooth((now - openedAt) / OpenSeconds);
+            skin.Fade = open;
+            skin.DrawBackdrop(0.85f, now);
+
             float width = Mathf.Min(Screen.width - 48f, 920f);
             float height = Mathf.Min(Screen.height - 48f, 640f);
-            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            GUILayout.BeginArea(panel, panelStyle);
-            GUILayout.Label("Journal", headingStyle);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Inventory", page == Page.Inventory ? buttonStyle : GUI.skin.button)) page = Page.Inventory;
-            if (GUILayout.Button("Character encyclopedia", page == Page.Encyclopedia ? buttonStyle : GUI.skin.button)) page = Page.Encyclopedia;
-            if (GUILayout.Button("Settings", page == Page.Settings ? buttonStyle : GUI.skin.button)) page = Page.Settings;
-            GUILayout.FlexibleSpace();
-            bool returnToMenu = GUILayout.Button("Main menu", GUILayout.Width(120f));
-            GUILayout.Label(KeyBindings.GetKeyLabel(GameAction.Journal) + ": close", mutedStyle, GUILayout.Width(120f));
-            GUILayout.EndHorizontal();
-            GUILayout.Space(12f);
-            if (page == Page.Inventory) DrawInventory();
-            else if (page == Page.Encyclopedia) DrawEncyclopedia();
-            else DrawSettings(height);
-            GUILayout.EndArea();
-            if (returnToMenu)
+            Rect panel = new Rect((Screen.width - width) * 0.5f - skin.Parallax.x * 4f,
+                (Screen.height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
+            skin.PanelFrame(panel, now);
+            skin.DrawTitle(new Rect(panel.x + 24f, panel.y + 20f, panel.width - 48f, 50f), "Journal", now);
+            skin.Divider(panel.center.x, panel.y + 80f, Mathf.Min(280f, panel.width - 120f), now);
+
+            float tabY = panel.y + 98f;
+            DrawTabs(panel, tabY);
+            Rect lastTab = tabRects[tabRects.Length - 1];
+            skin.Label(new Rect(lastTab.xMax + 16f, tabY, panel.xMax - 36f - lastTab.xMax - 16f, 36f),
+                KeyBindings.GetKeyLabel(GameAction.Journal) + " or Esc to close", skin.SmallRight, MenuArt.Muted);
+
+            // Choosing a tab turns a page in from the left, like a book; Reduce motion shows the page at once.
+            float turn = skin.Motion > 0f ? Mathf.Clamp01((now - pageChangedAt) / PageFlipSeconds) : 1f;
+            float top = tabY + 62f;
+            Rect content = new Rect(panel.x + 36f, top, panel.width - 72f, panel.yMax - 72f - top);
+            Matrix4x4 unturned = skin.BeginPageFlip(content, turn);
+            if (page == Page.Settings) options.Draw(content, skin);
+            else DrawListPage(content);
+            skin.EndPageFlip(content, turn, unturned);
+
+            skin.Fade = open;
+            FooterAction action = DrawFooter(panel);
+            skin.Fade = 1f;
+            skin.DrawSparks(1f);
+            GUI.color = previousColor;
+            if (action == FooterAction.MainMenu)
             {
                 Close();
                 StartupMenu.ReturnToMainMenu();
             }
+            else if (action == FooterAction.Save) SaveNow();
+            else if (action == FooterAction.Quit) QuitGame();
         }
 
-        private void DrawSettings(float panelHeight)
+        /// <summary>Main menu, Save to the game's slot (with the hourglass) and Quit game, then the inked save status.</summary>
+        private FooterAction DrawFooter(Rect panel)
         {
-            GUILayout.Label("Audio", headingStyle);
-            settingsPanel.DrawVolume(bodyStyle);
-            GUILayout.Space(16f);
-            GUILayout.Label("Controls", headingStyle);
-            settingsPanel.DrawControls(bodyStyle, GUI.skin.button, mutedStyle, Mathf.Max(120f, panelHeight - 340f));
+            const float Height = 36f;
+            const float Gap = 12f;
+            float y = panel.yMax - 58f;
+            float x = panel.x + 36f;
+            FooterAction action = FooterAction.None;
+            if (skin.Button(new Rect(x, y, 140f, Height), "Main menu")) action = FooterAction.MainMenu;
+            x += 140f + Gap;
+            if (SaveButton(new Rect(x, y, 160f, Height))) action = FooterAction.Save;
+            x += 160f + Gap;
+            if (skin.Button(new Rect(x, y, 130f, Height), "Quit game")) action = FooterAction.Quit;
+            x += 130f + Gap;
+            DrawSaveStatus(new Rect(x + 8f, y, panel.xMax - 36f - x - 8f, Height));
+            return action;
+        }
+
+        private bool SaveButton(Rect rect)
+        {
+            string slot = ManualSaveSlot.Linked;
+            bool clicked = skin.Button(rect, slot != null ? "Save · " + ManualSaveSlot.Label(slot) : "Save");
+            float lift = rect.Contains(Event.current.mousePosition) ? 2f : 0f;
+            skin.DrawHourglass(new Rect(rect.x + 10f, rect.center.y - 9f - lift, 12f, 18f));
+            return clicked;
+        }
+
+        /// <summary>Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.</summary>
+        private void DrawSaveStatus(Rect area)
+        {
+            const float SealSize = 24f;
+            string status = SaveStatus();
+            if (status != inkText)
+            {
+                inkText = status;
+                inkedAt = Time.unscaledTime;
+            }
+            GUIStyle style = skin.Status;
+            float textWidth = style.CalcSize(new GUIContent(status)).x;
+            bool stamped = !float.IsNegativeInfinity(sealedAt) && saveFeedback == null;
+            float x = Mathf.Max(area.x, area.xMax - textWidth - (stamped ? SealSize + 8f : 0f));
+            if (stamped)
+            {
+                skin.DrawSeal(new Rect(x, area.center.y - SealSize * 0.5f, SealSize, SealSize), sealedAt);
+                x += SealSize + 8f;
+            }
+            skin.InkLabel(new Rect(x, area.y, Mathf.Max(0f, area.xMax - x), area.height), status, style, inkedAt,
+                saveFeedback != null ? MenuArt.Ember : MenuArt.Muted);
+        }
+
+        /// <summary>"Slot 1 saved 2 min ago", from the linked slot's file time. The file is checked at most once a second.</summary>
+        private string SaveStatus()
+        {
+            if (saveFeedback != null) return saveFeedback;
+            if (Time.unscaledTime - saveStatusAt < 1f && saveStatus != null) return saveStatus;
+            saveStatusAt = Time.unscaledTime;
+            string slot = ManualSaveSlot.Linked;
+            if (slot == null) return saveStatus = ManualSaveSlot.FirstEmpty() != null ? "Save picks an empty slot" : "No save slot yet";
+            string label = ManualSaveSlot.Label(slot);
+            if (!GameSaveManager.Instance.TryGetSavedAt(slot, out DateTime savedAt)) return saveStatus = label + " not saved yet";
+            TimeSpan age = DateTime.Now - savedAt;
+            saveStatus = age.TotalSeconds < 10 ? label + " saved just now"
+                : age.TotalMinutes < 1 ? label + " saved moments ago"
+                : age.TotalHours < 1 ? $"{label} saved {(int)age.TotalMinutes} min ago"
+                : age.TotalDays < 1 ? $"{label} saved {(int)age.TotalHours} h ago"
+                : label + " saved " + savedAt.ToString("d MMM 'at' h:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant();
+            return saveStatus;
+        }
+
+        /// <summary>
+        /// Saves to the game's manual slot (the autosave is refreshed too). A game with no slot yet, such as one carried
+        /// over from before slots were linked, takes the first empty slot; if all are full it asks the player to load one.
+        /// </summary>
+        private void SaveNow()
+        {
+            saveStatusAt = float.NegativeInfinity;
+            if (ManualSaveSlot.Linked == null)
+            {
+                string empty = ManualSaveSlot.FirstEmpty();
+                if (empty == null)
+                {
+                    saveFeedback = "Every slot is full. Load one from the main menu to save over it.";
+                    return;
+                }
+                ManualSaveSlot.Link(empty);
+            }
+            bool saved = ManualSaveSlot.SaveToLinked(out string error);
+            saveFeedback = saved ? null : error ?? "Could not save. Please try again.";
+            if (saved) sealedAt = Time.unscaledTime;
+        }
+
+        /// <summary>
+        /// Autosaves (unless nothing has been played since the last load), then quits. Like the main menu's Exit, quitting
+        /// does nothing in the editor.
+        /// </summary>
+        private static void QuitGame()
+        {
+            if (GameAutosave.HasPlayedSinceLoad) GameAutosave.SaveNow();
+            Application.Quit();
+        }
+
+        private void DrawTabs(Rect panel, float y)
+        {
+            float x = panel.x + 36f;
+            for (int i = 0; i < PageLabels.Length; i++)
+            {
+                float tabWidth = skin.Tab.CalcSize(new GUIContent(PageLabels[i])).x;
+                tabRects[i] = new Rect(x, y, tabWidth, 36f);
+                x += tabWidth + 8f;
+                if (skin.TabButton(tabRects[i], PageLabels[i], (int)page == i)) SetPage((Page)i);
+            }
+
+            if (Event.current.type != EventType.Repaint) return;
+            skin.Draw(new Rect(panel.x + 36f, y + 44f, panel.width - 72f, 2f), skin.Glow, MenuArt.Gold, 0.3f);
+            Rect active = tabRects[(int)page];
+            float blend = underlinePlaced ? 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime) : 1f;
+            underlineOffset = Mathf.Lerp(underlineOffset, active.center.x - panel.x, blend);
+            underlineWidth = Mathf.Lerp(underlineWidth, active.width - 20f, blend);
+            underlinePlaced = true;
+            skin.TabUnderline(panel.x + underlineOffset, y + 44f, underlineWidth);
+        }
+
+        private void SetPage(Page next)
+        {
+            if (next == page) return;
+            if (page == Page.Settings) options.CancelRebind();
+            page = next;
+            pageChangedAt = Time.unscaledTime;
+            listScroll = Vector2.zero;
+        }
+
+        private void DrawListPage(Rect content)
+        {
+            using (skin.ThemedScrollbars())
+            {
+                skin.SetColor(Color.white, 1f);
+                GUILayout.BeginArea(content);
+                listScroll = GUILayout.BeginScrollView(listScroll);
+                if (page == Page.Inventory) DrawInventory();
+                else DrawEncyclopedia();
+                GUILayout.EndScrollView();
+                GUILayout.EndArea();
+            }
         }
 
         private void DrawInventory()
         {
-            GUILayout.Label("Owned key items", headingStyle);
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            Heading("Owned key items");
             bool shown = false;
             foreach (string id in KeyItemIds)
             {
                 if (!IsKeyItemOwned(id)) continue;
                 shown = true;
-                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id, bodyStyle);
+                GUILayout.BeginVertical(skin.Entry);
+                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id, skin.EntryTitle);
+                GUILayout.EndVertical();
             }
-            if (!shown) GUILayout.Label("No key items discovered yet.", mutedStyle);
+            if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);
 
-            GUILayout.Space(18f);
-            GUILayout.Label("Unlocked spells", headingStyle);
+            GUILayout.Space(14f);
+            Heading("Unlocked spells");
             SpellCaster caster = FindAnyObjectByType<SpellCaster>();
             bool spellsShown = false;
             foreach (SpellId spell in (SpellId[])Enum.GetValues(typeof(SpellId)))
             {
                 if (caster == null || !caster.IsSpellLearned(spell)) continue;
                 spellsShown = true;
-                GUILayout.BeginHorizontal(GUILayout.Height(42f));
+                GUILayout.BeginHorizontal(skin.Entry);
                 Texture2D icon = Resources.Load<Texture2D>(SpellCaster.GetIconResourcePath(spell));
-                if (icon != null) GUILayout.Label(icon, GUILayout.Width(36f), GUILayout.Height(36f));
+                if (icon != null)
+                {
+                    GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));
+                    GUILayout.Space(12f);
+                }
                 GUILayout.BeginVertical();
-                GUILayout.Label(spell.ToString(), bodyStyle);
-                GUILayout.Label(SpellDescriptions[spell], mutedStyle);
+                GUILayout.Label(spell.ToString(), skin.EntryTitle);
+                GUILayout.Label(SpellDescriptions[spell], skin.Muted);
                 GUILayout.EndVertical();
                 GUILayout.EndHorizontal();
             }
-            if (!spellsShown) GUILayout.Label("No spells unlocked yet.", mutedStyle);
+            if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
         }
 
         private void DrawEncyclopedia()
         {
-            GUILayout.Label("Discovered characters", headingStyle);
+            Heading("Discovered characters");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool shown = false;
             foreach (KeyValuePair<string, CharacterEntry> pair in CharacterEntries)
             {
-                if (!runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
+                if (runtime == null || !runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
                 shown = true;
-                GUILayout.Label(pair.Value.Name, bodyStyle);
-                GUILayout.Label(pair.Value.Description, mutedStyle);
-                GUILayout.Space(8f);
+                GUILayout.BeginVertical(skin.Entry);
+                GUILayout.Label(pair.Value.Name, skin.EntryTitle);
+                GUILayout.Label(pair.Value.Description, skin.Muted);
+                GUILayout.EndVertical();
             }
-            if (!shown) GUILayout.Label("Talk to a character to add them here.", mutedStyle);
+            if (!shown) GUILayout.Label("Talk to a character to add them here.", skin.Muted);
+        }
+
+        /// <summary>Gold section heading laid out in the current GUILayout group.</summary>
+        private void Heading(string text)
+        {
+            Rect rect = GUILayoutUtility.GetRect(10f, 28f, GUILayout.ExpandWidth(true));
+            skin.SectionHeading(rect, text);
+            // The heading's star tints GUI.color gold; reset it so the entries below keep their own colours.
+            skin.SetColor(Color.white, 1f);
+            GUILayout.Space(6f);
         }
 
         public static void DiscoverCharacter(string id)
@@ -272,16 +488,6 @@ namespace Lumenfall.Inventory
         {
             return !string.IsNullOrWhiteSpace(id) && CharacterEntries.ContainsKey(id) &&
                    GameEventManager.Instance?.Runtime?.GetFlag(CharacterFlagPrefix + id) == true;
-        }
-
-        private void EnsureStyles()
-        {
-            if (panelStyle != null) return;
-            panelStyle = new GUIStyle(GUI.skin.box) { padding = new RectOffset(22, 22, 18, 18) };
-            headingStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, wordWrap = true, normal = { textColor = Color.white } };
-            bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 17, wordWrap = true, normal = { textColor = Color.white } };
-            mutedStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true, normal = { textColor = new Color(0.75f, 0.78f, 0.82f) } };
-            buttonStyle = new GUIStyle(GUI.skin.button) { fontSize = 16 };
         }
 
         private static string MetadataValue(GameMetadataEntry[] metadata, string key)

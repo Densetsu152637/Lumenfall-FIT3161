@@ -338,6 +338,15 @@ namespace Lumenfall.GameEvents
             }
         }
 
+        /// <summary>Local time the slot's save file was last written, for "last saved" labels.</summary>
+        public bool TryGetSavedAt(string slot, out DateTime savedAt)
+        {
+            savedAt = default;
+            if (!TryGetSlotPath(slot, out string path, out _) || !File.Exists(path)) return false;
+            savedAt = File.GetLastWriteTime(path);
+            return true;
+        }
+
         public bool HasSave(string slot = DefaultSlot)
         {
             return TryGetSlotPath(slot, out string path, out _) && File.Exists(path);
