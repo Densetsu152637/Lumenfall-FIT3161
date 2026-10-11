@@ -48,7 +48,7 @@ namespace Lumenfall.Startup
         private const int InnerRingTexture = 192;
         private const int InnerRingTick = 6;
 
-        private enum Page { Main, Load, Settings, Controls }
+        private enum Page { Main, Load, NewGame, Settings, Controls }
         private enum Phase { Intro, Menu, Closing }
 
         private static readonly string[] OptionKeys = { "start", "load", "options", "exit" };
@@ -71,7 +71,10 @@ namespace Lumenfall.Startup
 
         private Page page;
         private bool ready;
-        private bool confirmOverwrite;
+        // New Game asks for a second START before replacing a filled slot (or the autosave); this holds the slot asked about.
+        private string confirmSlot;
+        // The manual slot the backdrop game belongs to, read when a slot page opens, for the Current tag.
+        private string linkedSlot;
         private string backdropSlot;
         private string message;
         private bool questHintsEnabled;
@@ -162,7 +165,8 @@ namespace Lumenfall.Startup
         public static void ReturnToMainMenu()
         {
             if (FindAnyObjectByType<StartupMenu>() != null) return;
-            GameAutosave.SaveNow();
+            // Peeking at a load and backing straight out leaves every file as it was.
+            if (GameAutosave.HasPlayedSinceLoad) GameAutosave.SaveNow();
             new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
 
@@ -206,6 +210,7 @@ namespace Lumenfall.Startup
                 {
                     if (saves.Load(legacySlot, false))
                     {
+                        ManualSaveSlot.Link(legacySlot);
                         backdropSlot = GameSaveManager.AutosaveSlot;
                         if (!saves.Save(GameSaveManager.AutosaveSlot)) message = saves.LastError;
                         else saves.MarkPlayed(GameSaveManager.AutosaveSlot);
@@ -395,7 +400,7 @@ namespace Lumenfall.Startup
         private void Activate(int option)
         {
             if (phase != Phase.Menu) return;
-            if (option == 0) StartNewGame();
+            if (option == 0) SetPage(Page.NewGame);
             else if (option == 1) SetPage(Page.Load);
             else if (option == 2)
             {
@@ -412,15 +417,16 @@ namespace Lumenfall.Startup
             page = next;
             pageChangedAt = Time.unscaledTime;
             keyboardMode = false;
-            if (next == Page.Load) RefreshSlotDetails();
+            if (next == Page.Load || next == Page.NewGame) RefreshSlotDetails();
         }
 
         /// <summary>Back buttons and Escape share one route so both always return to the parent page.</summary>
         private void GoBack()
         {
-            if (page == Page.Load)
+            if (page == Page.Load || page == Page.NewGame)
             {
                 message = string.Empty;
+                confirmSlot = null;
                 SetPage(Page.Main);
             }
             else if (page == Page.Settings)
@@ -518,6 +524,7 @@ namespace Lumenfall.Startup
         {
             return value == Page.Main ? new Vector2(640f, 520f)
                 : value == Page.Load ? new Vector2(700f, 780f)
+                : value == Page.NewGame ? new Vector2(700f, 690f)
                 : value == Page.Controls ? new Vector2(560f, Mathf.Clamp(Screen.height - 40f, 440f, 720f))
                 : new Vector2(560f, 560f);
         }
@@ -534,6 +541,7 @@ namespace Lumenfall.Startup
             float top = DrawTitle(value, panel, now);
             if (value == Page.Main) DrawMain(panel, top, now);
             else if (value == Page.Load) DrawLoad(panel, top);
+            else if (value == Page.NewGame) DrawNewGame(panel, top);
             else if (value == Page.Controls) DrawControls(panel, top);
             else DrawSettings(panel, top);
         }
@@ -617,7 +625,8 @@ namespace Lumenfall.Startup
         private float DrawTitle(Page value, Rect panel, float now)
         {
             bool main = value == Page.Main;
-            string title = main ? GameTitle : value == Page.Load ? "Load Game" : value == Page.Controls ? "Controls" : "Settings";
+            string title = main ? GameTitle : value == Page.Load ? "Load Game" : value == Page.NewGame ? "New Game"
+                : value == Page.Controls ? "Controls" : "Settings";
             float height = main ? 76f : 54f;
             Rect rect = new Rect(panel.x + 24f, panel.y + 24f, panel.width - 48f, height);
             int size = main ? MainTitleFontSize : 36;
@@ -842,72 +851,105 @@ namespace Lumenfall.Startup
 
         private void DrawLoad(Rect panel, float top)
         {
-            GameSaveManager saves = GameSaveManager.Instance;
             float y = top + 4f;
             for (int i = 0; i < Slots.Length; i++)
             {
-                string slot = Slots[i];
-                bool isAutosave = i == 0;
-                bool hasSave = saves.HasSave(slot);
-                Rect card = new Rect(panel.x + 32f, y, panel.width - 64f, 118f);
-                Box(card, cardStyle, hasSave ? 1f : 0.55f);
-
-                Rect thumb = new Rect(card.x + 14f, card.y + 14f, 160f, 90f);
-                if (hasSave && slotThumbnails[i] != null)
-                {
-                    SetColor(Color.white, 1f);
-                    GUI.DrawTexture(thumb, slotThumbnails[i], ScaleMode.ScaleAndCrop, false);
-                    Box(thumb, thumbFrameStyle, 1f);
-                }
-                else
-                {
-                    Box(thumb, thumbFrameStyle, 0.6f);
-                    Draw(new Rect(thumb.center.x - 12f, thumb.center.y - 12f, 24f, 24f), sparkleTexture, MenuArt.Muted, hasSave ? 0.6f : 0.35f);
-                }
-
-                // Right column: the LOAD button with the save time and playtime tucked underneath it.
-                float textX = thumb.xMax + 16f;
-                Rect button = SpriteRect("load", 0f, 0f, 50f);
-                button = new Rect(card.xMax - 14f - button.width, card.y + 12f, button.width, button.height);
-                float textWidth = button.x - 14f - textX;
-                string title = isAutosave ? "Autosave" : $"Manual Slot {i}";
-                Rect titleRect = new Rect(textX, card.y + 10f, textWidth, 26f);
-                Label(titleRect, title, rowStyle, hasSave ? MenuArt.Cream : MenuArt.Muted);
-                if (hasSave && slot == backdropSlot)
-                {
-                    // Marks the save the backdrop was restored from, so returning players can find their place.
-                    float badgeX = titleRect.x + rowStyle.CalcSize(new GUIContent(title)).x + 10f;
-                    Draw(new Rect(badgeX, titleRect.center.y - 7f, 14f, 14f), sparkleTexture, MenuArt.Lavender, 0.9f);
-                    Label(new Rect(badgeX + 18f, titleRect.y, textWidth, titleRect.height), "Most recent", mutedStyle, MenuArt.Lavender);
-                }
-
-                if (hasSave)
-                {
-                    SaveSlotSummary.Info info = slotInfos[i];
-                    string location = info != null && !string.IsNullOrWhiteSpace(info.location) ? info.location : "Somewhere in Lumenfall";
-                    string quest = info != null && !string.IsNullOrWhiteSpace(info.quest) ? info.quest : string.Empty;
-                    FitLabel(new Rect(textX, card.y + 37f, textWidth, 22f), location, loadDetailStyle, MenuArt.Cream, 1f, 15);
-                    FitLabel(new Rect(textX, card.y + 59f, textWidth, 22f), quest, loadDetailStyle, MenuArt.Muted, 1f, 15);
-                    if (info != null && info.questsTotal > 0) DrawQuestStars(new Rect(textX, card.y + 84f, textWidth, 16f), info.questsDone, info.questsTotal);
-
-                    Rect details = new Rect(button.x - 10f, button.yMax + 6f, button.width + 20f, 18f);
-                    Draw(new Rect(details.x + 16f, details.y - 2f, details.width - 32f, 3f), glowTexture, MenuArt.Gold, 0.4f);
-                    Label(new Rect(details.x, details.y + 2f, details.width, 20f), slotDetails[i], loadMetaStyle, MenuArt.Cream, 0.9f);
-                    if (info != null)
-                        Label(new Rect(details.x, details.y + 22f, details.width, 20f), FormatPlaytime(info.playSeconds), loadMetaStyle, MenuArt.Muted);
-                    if (Button("load", button, "LOAD")) LoadSlot(slot);
-                }
-                else
-                {
-                    Label(new Rect(textX, card.y + 45f, card.xMax - 14f - textX, 24f),
-                        "Empty — a fresh page awaits", loadDetailStyle, MenuArt.Muted);
-                }
+                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), "load", "LOAD", false)) LoadSlot(Slots[i]);
                 y += 130f;
             }
 
             Rect back = BackRect(panel);
             DrawMessage(new Rect(panel.x + 36f, back.y - 58f, panel.width - 72f, 52f));
             if (Button("exit", back, "BACK")) GoBack();
+        }
+
+        /// <summary>New Game: choose one of the manual slots to play in. Empty slots start straight away.</summary>
+        private void DrawNewGame(Rect panel, float top)
+        {
+            Label(new Rect(panel.x + 36f, top - 4f, panel.width - 72f, 24f), "Choose a page for your new story", promptStyle, MenuArt.Muted);
+            float y = top + 30f;
+            for (int i = 1; i < Slots.Length; i++)
+            {
+                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), "start", "START", true)) StartNewGame(Slots[i]);
+                y += 130f;
+            }
+
+            Rect back = BackRect(panel);
+            DrawMessage(new Rect(panel.x + 36f, back.y - 58f, panel.width - 72f, 52f));
+            if (Button("exit", back, "BACK")) GoBack();
+        }
+
+        /// <summary>
+        /// One save slot as a journal card: thumbnail, title with its tags, location, quest and stars, and a sprite button
+        /// with the save time and playtime under it. Empty slots show the button only when <paramref name="buttonWhenEmpty"/>.
+        /// Returns true when the button was pressed.
+        /// </summary>
+        private bool DrawSlotCard(int i, Rect card, string buttonKey, string buttonLabel, bool buttonWhenEmpty)
+        {
+            GameSaveManager saves = GameSaveManager.Instance;
+            string slot = Slots[i];
+            bool isAutosave = i == 0;
+            bool hasSave = saves.HasSave(slot);
+            Box(card, cardStyle, hasSave ? 1f : 0.55f);
+
+            Rect thumb = new Rect(card.x + 14f, card.y + 14f, 160f, 90f);
+            if (hasSave && slotThumbnails[i] != null)
+            {
+                SetColor(Color.white, 1f);
+                GUI.DrawTexture(thumb, slotThumbnails[i], ScaleMode.ScaleAndCrop, false);
+                Box(thumb, thumbFrameStyle, 1f);
+            }
+            else
+            {
+                Box(thumb, thumbFrameStyle, 0.6f);
+                Draw(new Rect(thumb.center.x - 12f, thumb.center.y - 12f, 24f, 24f), sparkleTexture, MenuArt.Muted, hasSave ? 0.6f : 0.35f);
+            }
+
+            // Right column: the button with the save time and playtime tucked underneath it.
+            float textX = thumb.xMax + 16f;
+            Rect button = SpriteRect(buttonKey, 0f, 0f, 50f);
+            button = new Rect(card.xMax - 14f - button.width, card.y + 12f, button.width, button.height);
+            float textWidth = button.x - 14f - textX;
+            string title = isAutosave ? "Autosave" : $"Manual Slot {i}";
+            Rect titleRect = new Rect(textX, card.y + 10f, textWidth, 26f);
+            Label(titleRect, title, rowStyle, hasSave ? MenuArt.Cream : MenuArt.Muted);
+            float badgeX = titleRect.x + rowStyle.CalcSize(new GUIContent(title)).x + 10f;
+            // Most recent marks the save the backdrop was restored from; Current marks the slot this game belongs to.
+            if (hasSave && slot == backdropSlot) badgeX = DrawSlotTag(badgeX, titleRect, "Most recent", MenuArt.Lavender);
+            if (slot == linkedSlot) DrawSlotTag(badgeX, titleRect, "Current", MenuArt.Gold);
+
+            bool pressed = false;
+            if (hasSave)
+            {
+                SaveSlotSummary.Info info = slotInfos[i];
+                string location = info != null && !string.IsNullOrWhiteSpace(info.location) ? info.location : "Somewhere in Lumenfall";
+                string quest = info != null && !string.IsNullOrWhiteSpace(info.quest) ? info.quest : string.Empty;
+                FitLabel(new Rect(textX, card.y + 37f, textWidth, 22f), location, loadDetailStyle, MenuArt.Cream, 1f, 15);
+                FitLabel(new Rect(textX, card.y + 59f, textWidth, 22f), quest, loadDetailStyle, MenuArt.Muted, 1f, 15);
+                if (info != null && info.questsTotal > 0) DrawQuestStars(new Rect(textX, card.y + 84f, textWidth, 16f), info.questsDone, info.questsTotal);
+
+                Rect details = new Rect(button.x - 10f, button.yMax + 6f, button.width + 20f, 18f);
+                Draw(new Rect(details.x + 16f, details.y - 2f, details.width - 32f, 3f), glowTexture, MenuArt.Gold, 0.4f);
+                Label(new Rect(details.x, details.y + 2f, details.width, 20f), slotDetails[i], loadMetaStyle, MenuArt.Cream, 0.9f);
+                if (info != null)
+                    Label(new Rect(details.x, details.y + 22f, details.width, 20f), FormatPlaytime(info.playSeconds), loadMetaStyle, MenuArt.Muted);
+                pressed = Button(buttonKey, button, buttonLabel);
+            }
+            else
+            {
+                Label(new Rect(textX, card.y + 45f, (buttonWhenEmpty ? button.x - 14f : card.xMax - 14f) - textX, 24f),
+                    "Empty — a fresh page awaits", loadDetailStyle, MenuArt.Muted);
+                if (buttonWhenEmpty) pressed = Button(buttonKey, button, buttonLabel);
+            }
+            return pressed;
+        }
+
+        /// <summary>A small sparkle and label after a slot title. Returns the x where a following tag can start.</summary>
+        private float DrawSlotTag(float x, Rect titleRect, string text, Color colour)
+        {
+            Draw(new Rect(x, titleRect.center.y - 7f, 14f, 14f), sparkleTexture, colour, 0.9f);
+            Label(new Rect(x + 18f, titleRect.y, titleRect.xMax - x - 18f, titleRect.height), text, mutedStyle, colour);
+            return x + 18f + mutedStyle.CalcSize(new GUIContent(text)).x + 12f;
         }
 
         /// <summary>One star per quest, lit gold for each completed one, followed by a short count.</summary>
@@ -1076,25 +1118,33 @@ namespace Lumenfall.Startup
 
         // ---- Game flow ----
 
-        private void StartNewGame()
+        /// <summary>
+        /// Starts a new game in a manual slot. A filled slot, or an existing autosave, needs a second START to confirm. The
+        /// run is linked to the slot straight away, but nothing is written until the run's first save (30 seconds of play,
+        /// or an earlier Save), so a new game abandoned at once leaves the old files intact.
+        /// </summary>
+        private void StartNewGame(string slot)
         {
             GameSaveManager saves = GameSaveManager.Instance;
-            string slot = GameSaveManager.AutosaveSlot;
-            if (saves.HasSave(slot) && !confirmOverwrite)
+            bool replacesSlot = saves.HasSave(slot);
+            if ((replacesSlot || saves.HasSave(GameSaveManager.AutosaveSlot)) && confirmSlot != slot)
             {
-                confirmOverwrite = true;
-                message = "Starting a new game replaces your autosave. Press START again to confirm.";
+                confirmSlot = slot;
+                message = replacesSlot
+                    ? $"{ManualSaveSlot.Label(slot)} already holds a save. Press START again; it is replaced once the new game first saves."
+                    : "A new game replaces your autosave once it first saves. Press START again to begin.";
                 return;
             }
 
             GameEventManager.Instance.ReloadDefinitions();
             DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
             if (worldLoader != null) worldLoader.ResetToStartingState();
+            ManualSaveSlot.Link(slot);
             SaveSlotSummary.BeginNewGame();
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
-            GameAutosave.BeginNewRun();
-            backdropSlot = slot;
-            confirmOverwrite = false;
+            GameAutosave.BeginNewRun(slot);
+            backdropSlot = GameSaveManager.AutosaveSlot;
+            confirmSlot = null;
             message = string.Empty;
             BeginClosing();
         }
@@ -1114,17 +1164,13 @@ namespace Lumenfall.Startup
                 GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
                 if (isManual)
                 {
-                    // A manual save is a source snapshot; resume it, then immediately make autosave
-                    // the active writable copy so subsequent timed/event saves cannot alter the manual.
-                    if (!saves.Save(GameSaveManager.AutosaveSlot))
-                    {
-                        message = saves.LastError ?? "Loaded the manual save, but could not update autosave.";
-                        return;
-                    }
-                    saves.MarkPlayed(GameSaveManager.AutosaveSlot);
+                    // Older manual saves carry no link, so set it from the slot that was chosen. The manual file stays a
+                    // source snapshot: play continues in autosave, which is first written after 30 seconds of real play.
+                    ManualSaveSlot.Link(slot);
+                    GameAutosave.BeginNewRun();
                 }
+                else GameAutosave.RestartTimer();
                 backdropSlot = GameSaveManager.AutosaveSlot;
-                GameAutosave.RestartTimer();
                 message = string.Empty;
                 BeginClosing();
             }
@@ -1199,6 +1245,7 @@ namespace Lumenfall.Startup
         private void RefreshSlotDetails()
         {
             ClearThumbnails();
+            linkedSlot = ManualSaveSlot.Linked;
             string directory = GameSaveManager.Instance.SaveDirectory;
             for (int i = 0; i < Slots.Length; i++)
             {

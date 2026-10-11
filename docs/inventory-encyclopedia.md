@@ -8,7 +8,12 @@ after the player starts one of their dialogues; duplicate Cinna Cirra placements
 authored character description. The Settings page draws the shared `OptionsPanel` (Gameplay, Audio,
 Display, Controls and Accessibility sections), the same content as the in-game Settings pop-out.
 Unlike the pop-out, the journal does not pause the world. The
-Main menu button saves and reopens the startup menu through `StartupMenu.ReturnToMainMenu`.
+footer has **Main menu** (reopens the startup menu through `StartupMenu.ReturnToMainMenu`, saving
+first if the player has played since the last load),
+**Save · Slot N** with a small hourglass, which writes the manual slot this game belongs to (see
+[the Startup README](../Lumenfall/Assets/_Project/Systems/Startup/README.md)), and **Quit game**
+(autosaves under the same rule, then quits). That slot's "saved 2 min ago" time writes itself in beside them, and a wax
+seal marks a Save.
 
 The journal uses the startup menu's look through `MenuSkin`: a dusk wash and drifting motes over
 the world, the plum and gold panel, a `Journal` title with a star divider, tabs with a sliding
