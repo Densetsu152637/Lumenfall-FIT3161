@@ -17,6 +17,8 @@ namespace Lumenfall.Spells
     {
         [SerializeField] private SpellId selectedSpell = SpellId.Ampere;
         [SerializeField, Min(1)] private int interactionRadius = 2;
+        [Tooltip("Manhattan search radius of a Lost Echoes cast, separate from the targeting radius of other spells.")]
+        [SerializeField, Min(1)] private int lostEchoesRadius = 4;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
         private Vector2Int lastDirection = Vector2Int.up;
@@ -30,14 +32,16 @@ namespace Lumenfall.Spells
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
-        public string LastSearchFeedback { get; private set; }
-        public event Action<string> SearchFeedbackChanged;
         /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
         private float feedbackUntil;
         private const string CircuitTag = "circuit";
         public event Action<SpellId, string, bool> CastCompleted;
+        /// <summary>Raised for every Lost Echoes search with the caster's cell, the search radius and how many objects were found.</summary>
+        public event Action<Vector2Int, int, int> LostEchoesCast;
+        public int LostEchoesRadius => lostEchoesRadius;
+        private int lastLostEchoesFrame = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
@@ -114,6 +118,9 @@ namespace Lumenfall.Spells
                 }
                 CloseSpellWheel();
             }
+
+            // The interact key also casts Lost Echoes; picking up what it reveals is on the talk key (WorldPickupInteraction).
+            if (selectedSpell == SpellId.LostEchoes && KeyBindings.WasPressed(GameAction.Interact)) CastLostEchoes();
 
             if (keyboard == null) return;
             Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
@@ -228,18 +235,19 @@ namespace Lumenfall.Spells
             WorldStateService state = WorldStateService.Instance;
             if (state == null || !state.IsReady) return false;
             List<string> revealed = new List<string>();
-            RevealHiddenAroundPlayer(state, false, revealed);
+            RevealHiddenAroundPlayer(state, revealed);
             foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
             return revealed.Count > 0;
         }
-        private int RevealHiddenAroundPlayer(WorldStateService state, bool targetAlreadyRevealed, List<string> revealed = null)
+        // Results are shown by LostEchoesPresentation (pulse, glow and sound), so the search reports no text.
+        private int RevealHiddenAroundPlayer(WorldStateService state, List<string> revealed = null)
         {
+            // Mechanism handlers may also cast the selected spell on the same key press; search only once per frame.
+            if (lastLostEchoesFrame == Time.frameCount) return 0;
+            lastLostEchoesFrame = Time.frameCount;
             GridMover player = GetComponent<GridMover>();
-            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, interactionRadius, revealed);
-            SearchFeedback(found == 1 ? "An echo reveals something hidden nearby." :
-                found > 1 ? $"Echoes reveal {found} hidden things nearby." :
-                targetAlreadyRevealed ? "This spot is already revealed. Search somewhere else." :
-                $"No hidden traces within {interactionRadius} cells. Move closer and try again.");
+            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, lostEchoesRadius, revealed);
+            if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, lostEchoesRadius, found);
             return found;
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
@@ -269,7 +277,7 @@ namespace Lumenfall.Spells
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
                 case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
                 case SpellId.LostEchoes:
-                    changed = RevealHiddenAroundPlayer(state, target.revealed) > 0;
+                    changed = RevealHiddenAroundPlayer(state) > 0;
                     break;
             }
             if (spell == SpellId.Weave && !HasTag(target, CircuitTag))
@@ -366,8 +374,6 @@ namespace Lumenfall.Spells
             }
             return changed;
         }
-        private void SearchFeedback(string message)
-        { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
         private string FindNearestTarget()
         { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }

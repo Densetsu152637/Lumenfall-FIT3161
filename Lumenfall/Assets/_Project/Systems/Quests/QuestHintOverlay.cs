@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
@@ -132,6 +133,31 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
+                runtime.HasEventTriggered("found_katrina_keepsake"))
+            {
+                hint = "Return the keepsake to Katrina on campus.";
+                return;
+            }
+            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal) &&
+                IsOnMap(selectedPuzzle, world.CurrentMapId))
+            {
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Finish Orio's Rotara lesson, then rotate the west forest gear to the marked quarter turn.";
+                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
+                    hint = "The objective is complete. Return to Orio to confirm the patch.";
+                else
+                {
+                    hint = "Rotate the mechanism to 90 degrees with Rotara. Each cast turns it clockwise by 90 degrees.";
+                    if (world.TryGetObject(RotaraGearMechanism.PuzzleObjectId, out WorldObjectSnapshot gear))
+                    {
+                        string direction = DirectionToCell(gear.cell);
+                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                    }
+                }
+                return;
+            }
+
             if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
             {
                 if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
@@ -216,6 +242,7 @@ namespace Lumenfall.Quests
                 requiredPowered = questTarget.requiredPowered || best.requiredPowered,
                 requiredConnected = questTarget.requiredConnected || best.requiredConnected,
                 requiredRevealed = questTarget.requiredRevealed || best.requiredRevealed,
+                requiredCollected = questTarget.requiredCollected,
                 requiredFrozen = questTarget.requiredFrozen || best.requiredFrozen,
                 requiredAligned = questTarget.requiredAligned || best.requiredAligned,
                 requiredRotation = questTarget.requiredRotation >= 0 ? questTarget.requiredRotation : best.requiredRotation,
@@ -236,6 +263,14 @@ namespace Lumenfall.Quests
         {
             foreach (QuestPuzzleDefinition puzzle in puzzleDatabase?.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
                 if (puzzle != null && string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) return puzzle;
+            // Orio confirms the live gear through dialogue, so it has no automatic monitor.
+            // Keep its objective available to hints without adding an auto-completion event.
+            if (string.Equals(questId, "orio_patch_notes", StringComparison.Ordinal))
+                return new QuestPuzzleDefinition
+                {
+                    questId = questId,
+                    mapId = RotaraGearMechanism.PuzzleMapId
+                };
             return null;
         }
 
@@ -272,7 +307,7 @@ namespace Lumenfall.Quests
                 foreach (string otherId in target.objectIds)
                     if (!string.Equals(id, otherId, StringComparison.Ordinal) && world.IsConnected(id, otherId)) connected = true;
                 bool valid = (!target.requiredPowered || state.powered) && (!target.requiredConnected || connected) &&
-                    (!target.requiredRevealed || state.revealed) && (!target.requiredFrozen || state.frozen) &&
+                    (!target.requiredRevealed || state.revealed) && (!target.requiredCollected || state.collected) && (!target.requiredFrozen || state.frozen) &&
                     (!target.requiredAligned || state.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(state.rotation) % 360 == target.requiredRotation % 360) &&
                     (target.requiredPositionX == int.MinValue || state.cell.x == target.requiredPositionX) &&
                     (target.requiredPositionY == int.MinValue || state.cell.y == target.requiredPositionY);
@@ -300,6 +335,11 @@ namespace Lumenfall.Quests
             if (target.requiredAligned) return "Align the objects with Vis.";
             if (target.requiredFrozen) return "Freeze the trial object with Glaciate and move it to the marked cell.";
             if (target.requiredRotation >= 0) return $"Rotate the mechanism to {target.requiredRotation} degrees.";
+            if (target.requiredCollected)
+                foreach (string id in target.objectIds ?? Array.Empty<string>())
+                    if (world.TryGetObject(id, out WorldObjectSnapshot found) && found.revealed && !found.collected)
+                        return $"Pick up the revealed keepsake with {KeyBindings.GetKeyLabel(GameAction.Talk)}.";
+            if (target.requiredCollected) return $"Find the hidden keepsake and pick it up with {KeyBindings.GetKeyLabel(GameAction.Talk)}; Lost Echoes helps locate it.";
             if (target.requiredRevealed) return "Reveal the hidden keepsake with Lost Echoes.";
             return "Work on the quest puzzle.";
         }
