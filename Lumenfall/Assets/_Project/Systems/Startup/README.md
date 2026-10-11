@@ -12,11 +12,11 @@ the most recently played valid legacy slot is loaded and copied into `autosave` 
 available as a manual save. On a fresh profile no placeholder save is created. Starting a new game
 overwrites an existing autosave only after a second Start press confirms it.
 
-The Load page shows an Autosave card plus three Manual Slot cards, with no save actions. A separate
-Save page is available from the main menu and contains the three manual cards; saving an occupied
-manual slot requires a second confirmation. Loading a manual slot restores its state, copies that
-state into `autosave`, and continues with autosave active. Loading Autosave simply continues the
-current autosave. The overlay also disables
+The Load page shows an Autosave card plus three Manual Slot cards, with no save actions. The menu
+has no Save page, and nothing in the game writes to the manual slots, so they only hold snapshots
+that already existed (for example, legacy saves from before autosave). Loading a manual slot
+restores its state, copies that state into `autosave`, and continues with autosave active. Loading
+Autosave simply continues the current autosave. The overlay also disables
 active dialogue overlays while it is visible,
 so dialogue choices cannot be selected behind the menu.
 
