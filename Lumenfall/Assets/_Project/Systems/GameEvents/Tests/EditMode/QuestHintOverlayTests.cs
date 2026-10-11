@@ -188,28 +188,42 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing()
+        public void ColdFeetPointsToTheTrialPortalThenFollowsTheIceTrial()
         {
             GridWorld grid = NewGrid();
             NewPlayer(grid, "cold-feet-player");
             BeginMap("campus");
-            Register("trial.cinna.ice", new Vector2Int(34, 71), false);
             stateEnd();
             runtime.StartQuest("cinna_cold_feet_warm_idea");
-
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Target:"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("cell 34, 71"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("portal on the campus path at (47, 45)"));
 
-            world.SetProperty("trial.cinna.ice", state => state.frozen = true);
+            BeginMap(CinnaIceTrialRoom.MapId);
+            RegisterTagged(CinnaIceTrialRoom.RelicId, new Vector2Int(3, 1), "glaciate", "anchored");
+            RegisterTagged("switch.cinna.ice.01", new Vector2Int(2, 12), CinnaIceTrialRoom.SwitchTag);
+            RegisterTagged(CinnaIceTrialRoom.FinalSwitchId, new Vector2Int(11, 8), CinnaIceTrialRoom.FinalTag);
+            stateEnd();
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Goal:"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("cell 34, 67"));
-            Assert.That(ReadField<string>("hint"), Does.Not.Contain("cell 34, 71"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Cast Glaciate on the relic on its stand"));
 
-            world.SetProperty("trial.cinna.ice", state => state.cell = new Vector2Int(34, 67));
+            world.SetProperty(CinnaIceTrialRoom.RelicId, state => state.frozen = true);
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("objective is complete"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("0 of 1 lit"));
+
+            world.SetProperty("switch.cinna.ice.01", state => state.powered = true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Slide into the seal"));
+
+            world.SetProperty(CinnaIceTrialRoom.FinalSwitchId, state => state.powered = true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Talk to Cinna Cirra"));
+        }
+
+        private void RegisterTagged(string id, Vector2Int cell, params string[] tags)
+        {
+            GameObject sceneObject = new GameObject(id);
+            created.Add(sceneObject);
+            world.RegisterObject(id, sceneObject, cell, Vector2Int.one, false, tags);
         }
 
         [Test]

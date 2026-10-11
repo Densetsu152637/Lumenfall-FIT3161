@@ -1,38 +1,113 @@
 # Cinna Cirra: Out of Alignment
 
-Independent branch `codex/quest-out-of-alignment`, started at `origin/main` baseline `8ceebfa`; existing draft PR 5 is reused. The full contract is terminal Active-only Vis teaching, exact target rotation plus alignment, authored parity, readable objective/success, scoped reset/retry, saved/rebuilt progress, deterministic trial handoff, and meaningful rejection/restore tests. No Unity Editor, Unity MCP/CLI, Play Mode or build operations were used.
+Branch `codex/cinna-orientation-quests`, renamed on 2026-10-10 from `codex/quest-out-of-alignment` and started at `origin/main` baseline `8ceebfa`. It also carries Cold Feet, Warm Idea (see [its implementation notes](quest-cold-feet-warm-idea.md)), brought in from the local branch `codex/quest-cold-feet-ice-trial` (`f5c5821`). Out of Alignment teaches Vis as a lifting spell. The player carries an orientation relic from the C02 terrace into the ice trial and sets it on the pedestal there, where it becomes the frost relic that Glaciate freezes in the next quest. They then report back to Cinna Cirra, who goes ahead to the trial and asks the player to meet them there; a fade to black hides Cinna leaving, and the player walks over themselves.
 
-## Implemented
+## History
 
-- The existing provisional orientation marker `orientation.cinna.align` stays at campus `(40,22)`, authored angle 0, with target `vis-target:90`. This remains a generic marker category, not approved final art or prop design.
-- Completing Cinna's accept/reminder terminal node teaches Vis only while `cinna_out_of_alignment` is Active. Opening, acceptance without terminal Continue, leaving, abandonment and a Completed dialogue do not teach it. The existing saved `spell.unlocked.Vis` flag and quest-completion spell rewards remain compatible. The generic lesson guard supports the shared `spellRewardQuestId` / optional `spellRewardPrerequisite` contract and the baseline First Light fallback.
-- Vis requires the `vis` compatibility tag, rejects malformed/non-quarter-turn/duplicate target declarations (including an invalid declaration following a valid one), normalizes quarter turns, and aligns to the authored target. Generic `vis` targets without an explicit angle retain nearest-quarter-turn behavior. Recasting an already correct/aligned marker returns false without another world-state notification.
-- Both the live map predicate and quest monitor require this exact object, aligned AND normalized rotation 90. Wrong angle, facing-only, aligned-only, and other objects fail. Source map JSON, live WorldArea asset and prefab registration agree; existing GUIDs/file IDs are preserved.
-- The quest description/reminder explains the actual ninety-degree rule. Near the marker, a provisional existing IMGUI panel shows authoritative facing/alignment, the target, reset entry and completion/next trial at `(20,34)`.
-- Press R within the existing two-cell interaction radius or use the nearby Reset marker button while the quest is Active on campus. Dialogue/inventory overlays and pause block reset. Reset changes only the marker's authored rotation and aligned state, preserving spells, completed quests, unrelated flags/objects and map archives. The direct reset API follows the existing direct Cast integration style; player proximity is enforced by its input/UI entry points. Completed/NotStarted quests and other maps reject it; an already-reset marker is a no-op.
-- `WorldObjectRegistration` retains the original authored rotation across cached prefab disable/re-enable, and forwards it through an optional `RegisterObject` parameter. Registration reseeds the visual transform before saved mutable state is restored, including new-game reset of cached rotated instances.
-- Save restore keeps mutable progress but retains current authored ID/map/footprint/compatibility/tags. A baseline save with only `[vis]` therefore acquires the new live target tag rather than making the ninety-degree rule unsolvable. No save schema/provider-key change or second save authority was introduced.
-- Cinna's trial NPC has only its three next-quest status rules; the old Completed alignment dialogue can no longer be randomly selected there. Source NPC JSON, NpcCatalog and the baked campus DynamicNpc block agree. Orientation hide/trial show gates are retained, and ambient weighted selection code is untouched.
+- **First version:** a rotation marker, `orientation.cinna.align`, had to be turned to ninety degrees at campus `(40,22)`. After the campus rework the baked marker sat inactive on Cinna's own tile in `campus.prefab`, so it never registered and the quest could not be finished in game. The inactive GameObject is still in the prefab, untouched to avoid reserialising it; no data or code refers to it.
+- **Interim version (2026-10-10):** a relic was pushed one tile into a socket at `(23,52)`. It was replaced the same day by the lift-and-carry design below. Some of its animation work carries over: the anticipation dip, the shudder and bump on refusal, the idle wobble and the shockwave ring.
+
+## Player flow
+
+1. Talk to Cinna Cirra on the C02 terrace at `(22,51)` and accept. Finishing the accept or reminder node teaches Vis while the quest is Active.
+2. The relic `relic.cinna.orientation` rests at `(23,53)` and blocks its tile. Stand within two tiles, select Vis and right-click (or press F) to lift it. It rises to hover in front of the player at chest height and follows them, swinging round to stay in front whichever way they face. Lifting, setting down and delivering show no text; the relic's animation is the feedback.
+3. Carry it along the campus path to the ice-trial portal at `(47,45)`. To set it down on the way, face an open tile and cast Vis again. A ghost tile shows where it would land: green when allowed, red when not. On campus it may only land on walkable ground that is not a portal tile.
+4. Entering any other area (a building, the forest) lets go of it, and it settles back at its last safe placement on campus. This happens because world state never moves while it is carried.
+5. In the trial, face the empty pedestal at `(3,1)` and cast Vis. The relic floats onto it, the stand pulses and a shockwave ring spreads, and it locks in place. Anywhere else in the trial, placement is refused with a shudder.
+6. Return to Cinna on the terrace and choose "The relic is on the trial stand." Cinna says they will go ahead and asks to meet at the ice trial. When the dialogue ends, the screen fades to black. While black, the quest completes, which hides the terrace Cinna and shows the trial Cinna in the trial lobby at `(8,1)`. The screen fades back in with the player where they stood. They walk through the portal at `(47,45)` and start Cold Feet, Warm Idea by talking to Cinna there.
+
+While the quest is Active on campus, R near the relic lets go of a held relic and returns it to `(23,53)`. There is no on-screen reset box; Cinna's lines mention R.
+
+## Runtime pieces
+
+- **`SpellCaster`**
+  - Vis on an object tagged `vis-lift` sets `HeldRelic` and records its home map and its `vis-destination:` map; world state is unchanged.
+  - F (interact) also casts Vis and Glaciate, but only at objects tagged `vis` or `glaciate`, so it never acts on the board relics or gear that use F on their own maps.
+  - With a relic held, right-click or F with Vis calls `TryPlaceHeldRelic` on the faced tile (`TryGetPlacementCell`; a diagonal facing keeps its horizontal part).
+  - An object tagged `vis-stand:<relic id>` on that tile accepts the relic on any map. It sets the progression flag `vis.delivered.<relic id>` and marks the stand `aligned`.
+  - Otherwise, only on the home map, the relic moves there through `WorldStateService.TryMoveObject`, after a portal check. That covers bounds, obstacles and the player.
+  - `CanPlaceHeldRelicAt` makes the same checks for the preview.
+  - `ReleaseHeldRelicOutOfReach` lets go of the relic when the current map is neither the home map nor the destination. A loaded save or a new game also lets go (`OnProgressionRestored`).
+  - The events `VisLifted`, `VisPlaced`, `VisPlaceRefused` and `VisHoldReleased` drive the presentation.
+  - Objects without `vis-lift` keep the in-place `vis-target:` turn.
+  - Lifting, setting down and delivering show no text; refusals and an out-of-reach release still do.
+  - The departure fade blocks casting (`InputBlockedByOverlay`).
+- **`CinnaAlignmentRelic` (Systems/Quests)**
+  - The loader calls `RegisterForMap` before `EndMapRebuild`. On campus it registers the relic from the area definition, unless it has been delivered, in which case it neither registers nor blocks. On a map with the relic's stand it records the stand tile.
+  - It draws one relic visual on every map:
+    - At rest, the relic wobbles and its notch glows.
+    - When lifted, it dips and then rises to a hover 0.85 tiles in front of the player (their `SpellCaster.FacingDirection`) and 0.55 up, at chest height and clear of the character's hat, bobbing and turning slowly. Turning swings it round the player (`Mathf.LerpAngle`) rather than through them. Its position tracks the player exactly, without easing, so it stays ahead of a walking player instead of trailing back into the model's face.
+    - While held, a dim mark shows the tile it still occupies, and the preview shows where it would land.
+    - Placing it floats it down along a small arc.
+    - A refused placement makes it shudder (wrong place) or bump toward the blocked tile.
+    - Delivery floats it onto the pedestal (`CinnaIceTrialRoom.StandHeight`), then the relic pulses and the ring spreads.
+    - On the pedestal it rests, tinted icy once frozen.
+  - Loads, saves and releases snap without animating.
+  - Its static `DescribeStep` feeds `QuestHintOverlay`.
+- **`CinnaTrialDeparture` (Systems/Quests)**
+  - Cinna's `report` node sets `cinna.trial.departure`. When that dialogue completes with the quest Active, it fades out over 0.6 s, holds black for 0.35 s and fades in over 0.6 s, locking movement throughout.
+  - At black it clears the flag and triggers `complete_cinna_out_of_alignment`, so the terrace Cinna hides and the trial Cinna appears in the trial lobby. The player is not moved.
+  - Closing the dialogue early, or any other dialogue ending, does not start it.
+- **`CinnaIceTrialRoom`**
+  - It builds only the pedestal, and registers `relic.cinna.frost` as spell-compatible once the relic is delivered. If the delivery lands while the room is loaded, it switches compatibility on straight away.
+  - The relic look comes from `CinnaAlignmentRelic`.
+- **`WorldStateService`:** `authoredPoses` keeps each object's authored cell and rotation, so `ResetAlignmentObject` can return a moved relic. Reset is refused while someone stands on the start tile.
+- **Data**
+  - `campus.json` and `campus.asset`: the relic has the tags `vis`, `vis-lift` and `vis-destination:C03.IceTrial`, rotation 0, and it blocks its tile. The campus target and the quest monitor for Out of Alignment were removed.
+  - `C03.IceTrial.asset`: the pedestal gains `vis-stand:relic.cinna.orientation`.
+  - `quest_npc_dialogue.json`: new quest text and lesson lines. The `report` choice (needs Active plus the delivered flag) and the `active` choice (needs the flag unset) are split, and a `report` node sets the departure flag. The Cold Feet text now refers to the carried relic.
+- **Saves:** there is no schema change. Holding is never saved. The relic's last placement is campus world state, delivery is a progression flag, and completion is the quest state.
 
 ## Validation performed
 
-- License-free Roslyn compile of GameEvents, the first-party runtime, and the full GameEvents EditMode test assembly: PASS. Existing response files under this branch's `Lumenfall/Temp/codex-compile` use read-only `D:/Git Repositories/Lumenfall-FIT3161/Lumenfall/Library` reference assemblies; stale imported `Lumenfall.*` references were filtered, and output stayed in this worktree. The existing compiler response-file, unassigned serialized-field and deprecated Unity API warnings remain. Compilation does not execute Unity tests.
-- `python scripts/validate_npc_dialogue.py`: PASS, 6 quests / 15 dialogues / 9 events. Its expected trial count now matches the three deliberately retained rules.
-- `python scripts/validate_runtime_world.py`: PASS, 8 maps / 7 NPCs.
-- `python scripts/validate_out_of_alignment.py`: PASS, scoped source/baked marker position/rotation/metadata, map and monitor predicates, trial rules and visibility parity. This is an authoring check, not gameplay execution.
-- `python -m unittest discover -s scripts/tests -v`: PASS, 4 existing validator regression tests.
-- Full committed-range `git diff --check origin/main...HEAD`: PASS after commit; new test metadata trailing spaces were removed.
+On 2026-10-10:
 
-`OutOfAlignmentTests.cs` adds 20 authored NUnit cases, compiled but **not executed**: terminal teaching/abandon/reopen/saved flag, Completed-dialogue rejection; valid/negative/wrapped/invalid target angles; malformed and repeated target metadata in both orders; incompatible/locked/overlay casts; exact/normalized/wrong-object predicates; repeat-cast and monitor-event idempotence after save/rebuild; baseline-save metadata/compatibility preservation; Active reset/retry preserving unrelated progression and object power; NotStarted/Completed/wrong-map/overlay reset rejection; cached-prefab original rotation/visual reseeding; and deterministic repeated trial interaction/visibility.
+- `scripts/compile_runtime.ps1` and `scripts/compile_editmode_tests.ps1` pass.
+- The repository checks pass: `validate_out_of_alignment.py` (rewritten for the relic, its stand, Cinna's report and the meet tile), `validate_npc_dialogue.py` (6 quests, 17 dialogues, 10 events), `validate_runtime_world.py` and the 18 script unit tests.
 
-## Pending acceptance and provisional design
+A headless Unity `6000.4.10f1` EditMode run passed 102/115:
 
-Unity EditMode/PlayMode execution, rendered HUD/readability/small-screen/controller comfort, save-slot end-to-end acceptance, and platform builds remain unverified because the parallel contract forbids shared Editor use. The marker category, final art and physical presentation remain provisional. Cold Feet's Glaciate lesson/sequence implementation belongs to its independent branch; this branch provides the deterministic handoff only.
+- all 33 `OutOfAlignmentTests`: lesson gating; authored data and stand; campus registration until delivery; lifting; open-ground placement; travel limits and the last-placement return; stand-only placement in the trial; save release; locked and overlay input; reset; report gating; the departure timing; and the relic animations;
+- all 5 `CinnaIceTrialTests`;
+- the updated Cold Feet hint test.
 
-## Merge dependencies
+The 13 failures are the same tests that failed before this work, in `KatrinaBorrowedWorldTests`, `OrioPatchNotesTests`, `QuestDialogueLifecycleTests` (Gravitate), `QuestHintOverlayTests` and `StringThemTogetherTests`. They assert behaviour that has since changed elsewhere, and none of them touch Vis or the ice trial.
 
-- Preserve the First Light branch's captured-runtime subscription/replacement lifecycle and QuestPuzzleMonitor completion-feedback changes. This independent main-based branch retains baseline lifecycle code and does not duplicate that redesign. Merge `OnDialogueEnded`/lesson metadata narrowly so First Light and the later quest lessons all remain Active/terminal gated.
-- `SpellCaster` overlaps all quest spell/teaching changes and generic spell feedback/reset. Keep strict Vis metadata, ninety-degree alignment, no-op recast and the scoped reset entry when merging; the provisional HUD should move into production UI through the same authoritative world/progression APIs.
-- `WorldStateService` and `WorldObjectRegistration` overlap generic authored-baseline/reset and save-recovery work. Preserve current authoring on restore and original rotation on cached re-registration; combine per-puzzle baselines without duplicate owners. Save-recovery still owns invalid-payload rejection/provider cleanup.
-- Resolve campus asset/prefab, NpcCatalog, NPC/dialogue/quest JSON and `docs/quests.md` by exact Cinna blocks. Retain independent Cold Feet targets/teaching, Stella, Katrina and other NPC changes. Do not replace complete shared files with this branch's baseline.
-- Content-validation CI may call the new narrow parity script or incorporate its checks into its broader validator. No automatic merge/cherry-pick or worktree cleanup was performed.
+PlayMode runs were headless, with one test per Unity session.
+
+**`VisCarriesTheRelicToTheTrialAndCinnaGoesAheadToMeetThePlayer`** covers the route in the real scene. Its earlier version, where the player was moved to the trial, passed (5.0 s). On 2026-10-11 the departure, hover and text changes were made, and this version compiles but has not been re-run in Unity, because the editor was open. It checks:
+
+- the relic rests at `(23,53)` and blocks its tile;
+- the player stands at `(23,54)` and lifts it;
+- the campus portal carries it into the trial;
+- the player sets it on the pedestal;
+- the relic is gone from campus;
+- the player reports to Cinna and the departure fades;
+- the quest completes, the player stays where they stood on campus and the terrace Cinna is gone;
+- walking through the portal finds the trial Cinna waiting.
+
+**`IceTrialPortalSlidesFollowTheSketchRouteAndCompleteColdFeet` passes (7.3 s).** It first failed for two reasons:
+
+- `StartupMenu` sets `Time.timeScale` to 0 until Start is pressed, so slides never advanced.
+- The menu's backdrop save could start the room already frozen.
+
+Both tests now close the menu (`DismissStartupMenu`). The ice test also resets event and world state, as the route test does.
+
+**Known issues:**
+
+- Running the whole `AuthoredWorldPlayModeTests` class in one session fails every test after the first. The cause is a logged error that predates this work: on the second `SampleScene` load, the new loader registers the `data-driven-world` save provider before the old one is destroyed.
+- These PlayMode tests use the real save folder (`Application.persistentDataPath`), and the autosave writes the current slot.
+
+## Pending acceptance
+
+Not yet checked by hand in Play Mode:
+
+- the feel of the hover, the fade length and the camera during the cut;
+- placement previews against real props;
+- controller input;
+- a live save slot.
+
+Other gaps:
+
+- The portal rule (no placement on portal tiles) has no automated test.
+- The relic is a placeholder primitive.

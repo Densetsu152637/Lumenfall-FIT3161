@@ -288,7 +288,6 @@ namespace Lumenfall.Tests.GameEvents
             EditModeLifecycle.Call(ui, "OnEnable");
             try
             {
-                EnableForTest(inventory);
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
 
                 DialogueSession dialogue = manager.Runtime.StartDialogue("katrina_something_borrowed_dialogue");

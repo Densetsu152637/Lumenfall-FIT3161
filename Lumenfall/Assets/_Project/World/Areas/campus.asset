@@ -157,33 +157,20 @@ MonoBehaviour:
       - weave
       - weave-with:relic.stella.power
       compatibleWithSpells: 1
-    - id: orientation.cinna.align
+    - id: relic.cinna.orientation
       prefab: {fileID: 0}
-      type: orientation
-      x: 22
-      y: 51
+      type: relic
+      x: 23
+      y: 53
       width: 1
       height: 1
       elevation: 0
-      rotation: 90
-      blocks: 0
+      rotation: 0
+      blocks: 1
       tags:
       - vis
-      - vis-target:90
-      compatibleWithSpells: 1
-    - id: trial.cinna.ice
-      prefab: {fileID: 0}
-      type: surface
-      x: 34
-      y: 71
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 90
-      blocks: 0
-      tags:
-      - glaciate
-      - slide-goal:34,67
+      - vis-lift
+      - vis-destination:C03.IceTrial
       compatibleWithSpells: 1
     - id: mechanism.orio.rotate
       prefab: {fileID: 0}
@@ -227,32 +214,6 @@ MonoBehaviour:
       requiredRotation: -1
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
-    - id: quest.cinna.out-of-alignment
-      objectIds:
-      - orientation.cinna.align
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 0
-      requiredFrozen: 0
-      requiredAligned: 1
-      requiredRotation: 90
-      requiredPositionX: -2147483648
-      requiredPositionY: -2147483648
-    - id: quest.cinna.cold-feet-warm-idea
-      objectIds:
-      - trial.cinna.ice
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 0
-      requiredFrozen: 1
-      requiredAligned: 0
-      requiredRotation: -1
-      requiredPositionX: 34
-      requiredPositionY: 67
     - id: quest.orio.patch-notes
       objectIds:
       - mechanism.orio.rotate
@@ -275,3 +236,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 10000000000000000000000000000004, type: 2}
   - {fileID: 11400000, guid: 10000000000000000000000000000005, type: 2}
   - {fileID: 11400000, guid: 5c6583157f574a3ba761c6ce4fc0a078, type: 2}
+  - {fileID: 11400000, guid: a011ab476a1a41c3a23a192d810253cf, type: 2}

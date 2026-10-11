@@ -182,31 +182,19 @@
       "rotation": 90
     },
     {
-      "id": "orientation.cinna.align",
-      "type": "orientation",
-      "x": 22,
-      "y": 51,
-      "blocks": false,
+      "id": "relic.cinna.orientation",
+      "type": "relic",
+      "x": 23,
+      "y": 53,
+      "blocks": true,
       "tags": [
-        "vis"
+        "vis",
+        "vis-lift",
+        "vis-destination:C03.IceTrial"
       ],
       "width": 1,
       "height": 1,
-      "rotation": 90
-    },
-    {
-      "id": "trial.cinna.ice",
-      "type": "surface",
-      "x": 34,
-      "y": 71,
-      "blocks": false,
-      "tags": [
-        "glaciate",
-        "slide-goal:34,67"
-      ],
-      "width": 1,
-      "height": 1,
-      "rotation": 90
+      "rotation": 0
     },
     {
       "id": "mechanism.orio.rotate",
@@ -241,22 +229,6 @@
         "relic.stella.power|circuit.stella.link"
       ],
       "minimumEffectivePower": 0.2
-    },
-    {
-      "id": "quest.cinna.out-of-alignment",
-      "objectIds": [
-        "orientation.cinna.align"
-      ],
-      "requiredAligned": true
-    },
-    {
-      "id": "quest.cinna.cold-feet-warm-idea",
-      "objectIds": [
-        "trial.cinna.ice"
-      ],
-      "requiredFrozen": true,
-      "requiredPositionX": 34,
-      "requiredPositionY": 67
     },
     {
       "id": "quest.orio.patch-notes",

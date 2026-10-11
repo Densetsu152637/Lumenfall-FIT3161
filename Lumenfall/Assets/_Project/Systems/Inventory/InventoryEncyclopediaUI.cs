@@ -47,7 +47,7 @@ namespace Lumenfall.Inventory
                 { SpellId.Gravitate, "Move a compatible object across the grid." },
                 { SpellId.Rotara, "Rotate a compatible mechanism." },
                 { SpellId.Glaciate, "Freeze and slide a compatible object." },
-                { SpellId.Vis, "Align a compatible object." },
+                { SpellId.Vis, "Align a compatible object, or push a relic into its socket." },
                 { SpellId.LostEchoes, "Reveal hidden points of interest." }
             };
 

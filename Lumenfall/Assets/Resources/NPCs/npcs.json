@@ -130,11 +130,11 @@
     {
       "id": "cinna_cirra_trial",
       "displayName": "Cinna Cirra",
-      "mapId": "campus",
+      "mapId": "C03.IceTrial",
       "asset": "NPCs/Elara.prefab",
-      "x": 34,
-      "y": 71,
-      "layerSymbol": "c",
+      "x": 8,
+      "y": 1,
+      "layerSymbol": "",
       "dialogue": [
         {
           "dialogueId": "cinna_cold_feet_warm_idea_dialogue",
