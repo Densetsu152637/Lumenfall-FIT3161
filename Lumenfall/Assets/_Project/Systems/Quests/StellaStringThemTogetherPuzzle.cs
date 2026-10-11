@@ -220,7 +220,7 @@ namespace Lumenfall.Quests
             if (state == null) return;
             grid = world;
             viewCamera = Camera.main;
-            if (relicViews == null || relicViews.Length != Cells.Length || relayViews == null) CreateViews();
+            if (ViewsMissing()) CreateViews();
             bool circuit = CircuitMode();
             for (int i = 0; i < Cells.Length; i++)
             {
@@ -237,6 +237,15 @@ namespace Lumenfall.Quests
             RefreshViews();
         }
 
+        private bool ViewsMissing()
+        {
+            if (relicViews == null || relicViews.Length != Cells.Length || relayViews == null || relayViews.Length != RelayCells.Length)
+                return true;
+            for (int i = 0; i < relicViews.Length; i++) if (relicViews[i] == null) return true;
+            for (int i = 0; i < relayViews.Length; i++) if (relayViews[i] == null) return true;
+            return false;
+        }
+
         private void CreateViews()
         {
             relicViews = new GameObject[Cells.Length];
@@ -247,6 +256,14 @@ namespace Lumenfall.Quests
             presentationRoot = root.transform;
             for (int i = 0; i < Cells.Length; i++)
             {
+                GameObject authored = GameObject.Find(ObjectId(i));
+                if (authored != null)
+                {
+                    TextMesh authoredLabel = authored.GetComponentInChildren<TextMesh>(true);
+                    if (authoredLabel != null) authoredLabel.text = (i + 1).ToString();
+                    relicViews[i] = authored;
+                    continue;
+                }
                 GameObject relic = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 relic.name = "Circuit Relic " + (i + 1);
                 relic.transform.SetParent(root.transform, false);
@@ -263,6 +280,12 @@ namespace Lumenfall.Quests
             relayViews = new GameObject[RelayCells.Length];
             for (int i = 0; i < RelayCells.Length; i++)
             {
+                GameObject authored = FindInactiveObject(RelayId(i));
+                if (authored != null)
+                {
+                    relayViews[i] = authored;
+                    continue;
+                }
                 GameObject relay = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 relay.name = "Circuit Relay " + (i + 1);
                 relay.transform.SetParent(relays.transform, false);
@@ -271,6 +294,13 @@ namespace Lumenfall.Quests
                 if (collider != null) Destroy(collider);
                 relayViews[i] = relay;
             }
+        }
+
+        private static GameObject FindInactiveObject(string objectName)
+        {
+            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (candidate.name == objectName) return candidate.gameObject;
+            return null;
         }
 
         private static void AddBase(Transform relic, int index)
@@ -317,6 +347,9 @@ namespace Lumenfall.Quests
         {
             bool circuit = CircuitMode();
             if (relayRoot != null && relayRoot.gameObject.activeSelf != circuit) relayRoot.gameObject.SetActive(circuit);
+            if (relayViews != null)
+                for (int i = 0; i < relayViews.Length; i++)
+                    if (relayViews[i] != null && relayViews[i].activeSelf != circuit) relayViews[i].SetActive(circuit);
             for (int i = 0; i < Cells.Length; i++)
             {
                 int index = i;
@@ -445,6 +478,7 @@ namespace Lumenfall.Quests
         private static void SetColor(GameObject target, Color color)
         {
             Renderer renderer = target.GetComponent<Renderer>();
+            if (renderer == null) renderer = target.GetComponentInChildren<Renderer>(true);
             if (renderer == null) return;
             renderer.material.color = color;
             renderer.material.SetColor("_EmissionColor", color * 0.18f);
