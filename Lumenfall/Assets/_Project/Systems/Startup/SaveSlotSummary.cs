@@ -85,6 +85,12 @@ namespace Lumenfall.Startup
 
         public static string ThumbnailPath(string slot) => PathFor(slot, ".thumb.png");
 
+        /// <summary>Forces the next late-frame thumbnail capture for a slot, bypassing autosave throttling.</summary>
+        public static void RequestThumbnailRefresh(string slot)
+        {
+            if (instance != null && !string.IsNullOrWhiteSpace(slot)) instance.pendingThumbnails.Add(slot);
+        }
+
         private void Awake()
         {
             if (instance != null && instance != this)
