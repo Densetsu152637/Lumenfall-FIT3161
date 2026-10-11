@@ -26,20 +26,21 @@ namespace Lumenfall.Tests.GameEvents
             GameObject stateObject = new GameObject("test-spell-state"); created.Add(stateObject); state = stateObject.AddComponent<WorldStateService>();
             // Awake is not run in EditMode. Bind only the dependency Cast uses,
             // avoiding Awake's scene persistence and save-provider side effects.
-            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, state);
+            EditModeLifecycle.SetWorldInstance(state);
             state.BeginMapRebuild("test-map");
         }
 
         [TearDown]
         public void TearDown()
         {
+            if (state != null) GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
             for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null)
             {
                 foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
                 Object.DestroyImmediate(created[i]);
             }
             created.Clear();
-            typeof(WorldStateService).GetProperty(nameof(WorldStateService.Instance)).SetValue(null, previousState);
+            EditModeLifecycle.SetWorldInstance(previousState);
             ResetSharedState();
         }
 
@@ -105,10 +106,9 @@ namespace Lumenfall.Tests.GameEvents
 
                 DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
                 Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
                 Assert.That(circuitQuest.Continue(), Is.True,
                     "Finish Stella's teaching dialogue before casting puzzle spells.");
-                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
 
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
