@@ -40,6 +40,7 @@ namespace Lumenfall.Tests.GameEvents
             for (int i = objects.Count - 1; i >= 0; i--)
             {
                 foreach (SpellCaster caster in objects[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                foreach (QuestPuzzleMonitor monitor in objects[i].GetComponents<QuestPuzzleMonitor>()) EditModeLifecycle.Call(monitor, "OnDisable");
                 Object.DestroyImmediate(objects[i]);
             }
             objects.Clear();
@@ -156,6 +157,7 @@ namespace Lumenfall.Tests.GameEvents
         {
             QuestPuzzleMonitor monitor = Create("monitor").AddComponent<QuestPuzzleMonitor>();
             EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             Register("other", Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject("other", Cell, 2);
             Runtime.StartQuest("katrina_something_borrowed");
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

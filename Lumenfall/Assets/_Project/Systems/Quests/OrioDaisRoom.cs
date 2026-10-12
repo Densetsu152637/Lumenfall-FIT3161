@@ -8,8 +8,8 @@ namespace Lumenfall.Quests
 {
     /// <summary>
     /// Temporary practice hall for Orio's rune dais, which needs more floor than the F04 glade offers. A portal replaces
-    /// the old gear at the authored forest mechanism and a return portal in the hall leads back. Both follow
-    /// <see cref="StellaReturnPortal"/>: a <see cref="GridPortal"/> configured from portal content, so walking onto one
+    /// the old gear at the authored forest mechanism and a return portal in the hall leads back. Both use
+    /// a <see cref="GridPortal"/> configured from portal content, so walking onto one
     /// travels through <see cref="DataDrivenWorldLoader.SwitchArea"/>. The hall and its portal content are built in
     /// code; the loader resolves the hall by <see cref="MapId"/>, so saves made inside it restore normally.
     /// </summary>
@@ -66,7 +66,7 @@ namespace Lumenfall.Quests
             return area;
         }
 
-        /// <summary>Called by the area loader on every map load, before EndMapRebuild, like the Stella return portal.</summary>
+        /// <summary>Called by the area loader on every map load, before EndMapRebuild.</summary>
         public static void RegisterForMap(string mapId, GridWorld world, GameObject areaRoot)
         {
             if (instance == null)
@@ -79,7 +79,7 @@ namespace Lumenfall.Quests
             if (world != null && EnsurePortalContent())
             {
                 if (IsMap(mapId, ForestMapId)) instance.BindForest(world, areaRoot);
-                else if (IsMap(mapId, MapId)) instance.hallRing = Bind(ref instance.hallPortal, "Orio Hall Return Portal", hallPortalContent, world, instance.transform);
+                else if (IsMap(mapId, MapId)) instance.hallRing = Bind(ref instance.hallPortal, "Orio Hall Return Portal", hallPortalContent, world, instance.transform, ReturnPortalCell);
             }
             instance.RefreshVisibility();
         }
@@ -122,9 +122,8 @@ namespace Lumenfall.Quests
                         if (placeholder != null) placeholder.enabled = false;
                     }
             Vector2Int orio = OrioCell();
-            forestPortalContent.cell = orio + ForestPortalOffsetFromOrio;
-            forestRing = Bind(ref forestPortal, "Orio Forest Portal", forestPortalContent, world, transform);
-            ChooseForestArrival(world, orio);
+            Vector2Int cell = ChooseForestPortalCell(world, orio);
+            forestRing = Bind(ref forestPortal, "Orio Forest Portal", forestPortalContent, world, transform, cell);
         }
 
         /// <summary>Orio's authored forest cell from the loaded NPC catalogue, so the portal follows him if he is moved.</summary>
@@ -136,23 +135,21 @@ namespace Lumenfall.Quests
             return FallbackOrioCell;
         }
 
-        /// <summary>
-        /// Runs while the forest is loading, before SwitchArea places a player returning from the hall, so the arrival is
-        /// checked against the forest's real obstacles rather than assumed free. Orio's own tile is never used.
-        /// </summary>
-        private static void ChooseForestArrival(GridWorld world, Vector2Int orio)
+        // The live GridPortal transform owns placement. Returning onto its cell is safe because
+        // GridMover suppresses re-entry until the player leaves the destination portal.
+        private static Vector2Int ChooseForestPortalCell(GridWorld world, Vector2Int orio)
         {
+            Vector2Int preferred = orio + ForestPortalOffsetFromOrio;
+            if (world.IsCellAvailable(preferred)) return preferred;
             foreach (Vector2Int offset in ForestArrivalOffsets)
-                if (forestPortalContent.cell + offset != orio && world.IsCellAvailable(forestPortalContent.cell + offset))
-                {
-                    hallPortalContent.arrivalOffset = offset;
-                    return;
-                }
-            Debug.LogWarning($"No free cell beside Orio's forest portal at {forestPortalContent.cell}; returning from the hall will fail.");
+                if (preferred + offset != orio && world.IsCellAvailable(preferred + offset))
+                    return preferred + offset;
+            Debug.LogWarning($"No free cell beside Orio's forest portal at {preferred}; returning from the hall will fail.");
+            return preferred;
         }
 
-        /// <summary>Builds the portal once, then reconfigures it for the freshly loaded world, as StellaReturnPortal does.</summary>
-        private static Transform Bind(ref GameObject portalObject, string name, PortalContentAsset content, GridWorld world, Transform parent)
+        /// <summary>Builds the portal once, then reconfigures its live position for the freshly loaded world.</summary>
+        private static Transform Bind(ref GameObject portalObject, string name, PortalContentAsset content, GridWorld world, Transform parent, Vector2Int cell)
         {
             Transform ring;
             if (portalObject == null)
@@ -164,36 +161,34 @@ namespace Lumenfall.Quests
                 ring = CreateRing(portalObject.transform);
             }
             else ring = portalObject.transform.Find("Portal ring");
+            portalObject.transform.position = world.CellToWorld(cell, 0.03f);
             portalObject.GetComponent<GridPortal>().Configure(content, world);
-            portalObject.transform.position = world.CellToWorld(content.cell, 0.03f);
             return ring;
         }
 
         /// <summary>
-        /// The two portals point at each other. Arrival is the destination cell plus the source's offset, so each
-        /// player lands one tile from the far portal, never on it, and can't bounce straight back.
+        /// The two portals point at each other. The destination GridPortal owns its arrival cell,
+        /// and GridMover suppresses immediate re-entry until the player steps off it.
         /// </summary>
         private static bool EnsurePortalContent()
         {
             if (forestPortalContent != null) return true;
             WorldAreaAsset forest = DataDrivenWorldLoader.Instance?.GetArea(ForestMapId);
             if (forest == null) { Debug.LogError($"Orio's dais portal needs the '{ForestMapId}' area in the world loader."); return false; }
-            forestPortalContent = CreatePortalContent(ForestPortalId, forest, FallbackOrioCell + ForestPortalOffsetFromOrio, Vector2Int.up);
-            hallPortalContent = CreatePortalContent(HallPortalId, GetOrCreateArea(), ReturnPortalCell, Vector2Int.down);
+            forestPortalContent = CreatePortalContent(ForestPortalId, forest);
+            hallPortalContent = CreatePortalContent(HallPortalId, GetOrCreateArea());
             forestPortalContent.destination = hallPortalContent;
             hallPortalContent.destination = forestPortalContent;
             return true;
         }
 
-        private static PortalContentAsset CreatePortalContent(string id, WorldAreaAsset owner, Vector2Int cell, Vector2Int arrivalOffset)
+        private static PortalContentAsset CreatePortalContent(string id, WorldAreaAsset owner)
         {
             PortalContentAsset content = ScriptableObject.CreateInstance<PortalContentAsset>();
             content.name = id + " (runtime)";
             content.hideFlags = HideFlags.DontSave;
             content.id = id;
             content.area = owner;
-            content.cell = cell;
-            content.arrivalOffset = arrivalOffset;
             return content;
         }
 

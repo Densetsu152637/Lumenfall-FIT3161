@@ -20,7 +20,7 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 $lines = [System.Collections.Generic.List[string]]::new()
 foreach ($line in Get-Content $template) {
     if ($line -match '^-out:|^-refout:|^[-/]additionalfile:|^"Assets/(_Project/Systems/GameEvents/)?Tests/EditMode/') { continue }
-    if ($line -match 'Lumenfall\.GameEvents\.ref\.dll|Assembly-CSharp|Unity\.InputSystem') { continue }
+    if ($line -match 'Lumenfall\.GameEvents\.ref\.dll|Lumenfall\.Runtime\.ref\.dll|Assembly-CSharp|Unity\.InputSystem') { continue }
     if ($line -match '^-r:"Library/') { $line = $line.Replace('-r:"Library/', '-r:"' + (Join-Path $project 'Library/')) }
     $lines.Add($line)
 }

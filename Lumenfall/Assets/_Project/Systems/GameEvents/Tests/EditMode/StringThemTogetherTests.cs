@@ -44,7 +44,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ResetState();
         }
 
-        [Test] public void AcceptanceRequiresPrerequisiteAndTeachesWeaveWithoutCompletingQuest()
+        [Test] public void AcceptanceRequiresPrerequisiteAndTerminalLessonTeachesWeaveWithoutCompletingQuest()
         {
             DialogueSession blocked = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(blocked.SelectChoice("accept"), Is.False); blocked.End();
@@ -52,12 +52,12 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession session = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
             Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True, "The authored acceptance teaches Weave immediately.");
+            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False, "Accepting without finishing the lesson does not teach Weave.");
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             Assert.That(runtime.HasEventTriggered("complete_stella_string_them_together"), Is.False);
             session.End();
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("leave");
-            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("active"); session.Continue();
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);

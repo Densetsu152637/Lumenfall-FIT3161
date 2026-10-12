@@ -19,6 +19,8 @@ namespace Lumenfall.DataDriven
         [SerializeField] private GridWorld world;
         private readonly Dictionary<WorldAreaAsset, GameObject> areaInstances = new Dictionary<WorldAreaAsset, GameObject>();
         private string npcStateSignature;
+        private GameSaveManager saveManager;
+        private bool registeredSaveProvider;
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
@@ -28,7 +30,15 @@ namespace Lumenfall.DataDriven
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
-            if (GameSaveManager.Instance != null) GameSaveManager.Instance.RegisterProvider(this);
+            saveManager = GameSaveManager.Instance;
+            registeredSaveProvider = saveManager != null && saveManager.RegisterProvider(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            if (registeredSaveProvider && saveManager != null) saveManager.UnregisterProvider(SaveKey);
+            Instance = null;
         }
 
         private void Start()
@@ -81,7 +91,6 @@ namespace Lumenfall.DataDriven
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
             OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
-            StellaReturnPortal.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
@@ -135,7 +144,7 @@ namespace Lumenfall.DataDriven
                 return false;
             }
             // The live destination GridPortal is authoritative for its origin and footprint.
-            // PortalContentAsset only supplies the connection and optional legacy offset.
+            // PortalContentAsset only supplies the connection.
             Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             Debug.LogWarning($"Portal '{sourcePortal.id}' could not place the player at {arrival} in '{destinationPortal.area.definition.id}'; returning to the previous area.", this);

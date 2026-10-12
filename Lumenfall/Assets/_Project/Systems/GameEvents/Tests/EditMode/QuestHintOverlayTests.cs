@@ -67,6 +67,7 @@ namespace Lumenfall.Tests.GameEvents
                     if (created[i] != null)
                     {
                         foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                        foreach (QuestPuzzleMonitor monitor in created[i].GetComponents<QuestPuzzleMonitor>()) EditModeLifecycle.Call(monitor, "OnDisable");
                         UnityEngine.Object.DestroyImmediate(created[i]);
                     }
                 created.Clear();
@@ -117,6 +118,7 @@ namespace Lumenfall.Tests.GameEvents
                 created.Add(monitorHost);
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
                 EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             }
             RunMonitor(monitor);
             Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active), "The legacy placeholder cannot complete First Light.");

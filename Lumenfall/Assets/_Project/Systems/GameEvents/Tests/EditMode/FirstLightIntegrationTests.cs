@@ -126,7 +126,7 @@ namespace Lumenfall.Tests.GameEvents
             oldLesson.SelectChoice("accept");
             manager.ReloadDefinitions();
             oldLesson.Continue();
-            Assert.That(oldRuntime.GetFlag("spell.unlocked.Ampere"), Is.False);
+            Assert.That(oldRuntime.GetFlag("spell.unlocked.Ampere"), Is.True, "The old runtime owns its lesson reward; it must not affect the replacement runtime.");
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
             TeachAmpere();
             SetRelicsPowered(true);
@@ -152,12 +152,12 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void DisabledCasterUnsubscribesAndReenabledCasterRecoversTeaching()
+        public void DisabledCasterDoesNotBlockRuntimeTeachingAndReenablesWithReward()
         {
             Call(caster, "OnDisable");
             caster.enabled = false;
             TeachAmpere();
-            Assert.That(manager.Runtime.GetFlag("spell.unlocked.Ampere"), Is.False);
+            Assert.That(manager.Runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Lesson rewards belong to the runtime even while the caster is disabled.");
             caster.enabled = true;
             Call(caster, "OnEnable");
             DialogueSession hint = manager.Runtime.StartDialogue("stella_first_light_dialogue");

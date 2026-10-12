@@ -28,7 +28,7 @@
     "playmode": {
       "name": "World integration",
       "fixtures": {
-        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 5
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 6
       }
     }
   }

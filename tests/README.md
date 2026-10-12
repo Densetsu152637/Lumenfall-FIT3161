@@ -12,25 +12,31 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-All 78 existing EditMode cases remain, with three focused additions:
+The integrated suite contains 156 EditMode cases and six PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
+| Dialogue page splitting and rich-text balancing | DialoguePagingTests | 6 |
+| Dialogue text effects and spell highlighting | DialogueTextEffectsTests | 8 |
+| Cinna ice switches and seal | CinnaIceTrialTests | 5 |
+| First Light completion and runtime replacement | FirstLightIntegrationTests | 7 |
+| Lost Echoes reveals, collection and progression events | LostEchoesRevealEventTests | 8 |
+| Vis carry, placement, reset and Cinna hand-off | OutOfAlignmentTests | 33 |
 | Dialogue reveal and rich text | DialogueTextRevealTests | 8 |
 | Event dispatch, dialogue and quest runtime | GameEventRuntimeTests | 7 |
 | Save slot selection policy | GameSaveSlotPolicyTests | 2 |
 | Borrowed Light progression and spell rewards | KatrinaBorrowedProgressionTests | 8 |
 | Borrowed Light world state and restoration | KatrinaBorrowedWorldTests | 8 |
-| Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 19 |
+| Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
 | Authored quest dialogue references | QuestDialogueContentTests | 2 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
-| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 6 |
+| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 8 |
 | Spell state and world save round trips | SpellWorldStateTests | 4 |
 | Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 5 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
-| **Gameplay rules / EditMode** | | **81** |
-| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | **3** |
+| **Gameplay rules / EditMode** | | **156** |
+| Scene boot/references, saved-state refresh, forest gate, campus/Cinna routes and rune-hall portal save restoration | AuthoredWorldPlayModeTests | **6** |
 
 EditMode sources are under
 [`GameEvents/Tests/EditMode`](../Lumenfall/Assets/_Project/Systems/GameEvents/Tests/EditMode)
@@ -88,7 +94,7 @@ execution cost.
 
 Historical tests of retry/reset extensions, chapter transitions, audio signals and
 area audio, optional power/recovery activities, accessibility/localization,
-reserved regions, presentation catalogs, Lost Echoes collection, overlay/focus
+reserved regions, presentation catalogs, overlay/focus
 indexes, travel/ambient policies, performance diagnostics, camera framing,
 occlusion, ice-slide lanes and graphics preferences depend on APIs absent from this
 checkout. Their snapshot infrastructure and validator mutation tests were removed.

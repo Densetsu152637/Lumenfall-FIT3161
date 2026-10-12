@@ -194,7 +194,7 @@ namespace Lumenfall.Quests
             if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
             {
                 if (!runtime.GetFlag("spell.unlocked.Rotara"))
-                    hint = "Speak with Orio and finish his Rotara lesson before turning the rune dais.";
+                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
                 else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
                     hint = "The rune dais is aligned. Return to Orio and confirm the patch.";
                 else if (!string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))

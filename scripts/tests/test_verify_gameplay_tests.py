@@ -169,7 +169,7 @@ class GameplayVerificationTests(unittest.TestCase):
 class GameplayContractTests(unittest.TestCase):
     def test_manifest_matches_current_test_sources_and_expected_totals(self):
         platforms = gameplay.read_manifest()
-        for platform, expected_total in [("editmode", 156), ("playmode", 5)]:
+        for platform, expected_total in [("editmode", 156), ("playmode", 6)]:
             actual = {}
             for path in (gameplay.ROOT / "Lumenfall/Assets").rglob("*Tests.cs"):
                 if platform not in [part.lower() for part in path.parts]:
