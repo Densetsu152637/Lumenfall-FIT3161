@@ -29,6 +29,8 @@ namespace Lumenfall.Tests.World
         private GameObject host;
         private DialogueOverlay overlay;
         private GridMover mover;
+        private StartupMenu startupMenu;
+        private bool startupEnabled;
         private float previousTimeScale;
 
         [UnitySetUp]
@@ -43,12 +45,14 @@ namespace Lumenfall.Tests.World
             }
             // A standalone fixture can run before any authored-world test has dismissed startup.
             float deadline = Time.realtimeSinceStartup + 5f;
-            StartupMenu menu = Object.FindAnyObjectByType<StartupMenu>();
-            while (menu != null && !StartupMenu.IsVisible && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(menu == null || StartupMenu.IsVisible, Is.True, "Startup initialization must finish before testing dialogue.");
-            if (menu != null) Object.DestroyImmediate(menu.gameObject);
-            QuestHintOverlay.CloseSettings();
+            startupMenu = Object.FindAnyObjectByType<StartupMenu>();
+            startupEnabled = startupMenu != null && startupMenu.enabled;
+            while (startupEnabled && !StartupMenu.IsVisible && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(!startupEnabled || StartupMenu.IsVisible, Is.True, "Startup initialization must finish before testing dialogue.");
             previousTimeScale = Time.timeScale;
+            if (startupEnabled) startupMenu.enabled = false;
+            Time.timeScale = 1f;
+            QuestHintOverlay.CloseSettings();
             GameEventManager.Instance.ReloadDefinitions();
             Localization.Resolver = id => id == "speaker.Stella" ? "Localized Stella" :
                 id == Localization.DialogueTextId(DialogueId, "greeting") ? "<color=#b00000>" + Body + "</color>" :
@@ -84,6 +88,7 @@ namespace Lumenfall.Tests.World
                 else PlayerPrefs.SetString(key.Key, key.Value);
             savedKeys.Clear();
             PlayerPrefs.Save();
+            if (startupMenu != null) startupMenu.enabled = startupEnabled;
             Time.timeScale = previousTimeScale;
         }
 
