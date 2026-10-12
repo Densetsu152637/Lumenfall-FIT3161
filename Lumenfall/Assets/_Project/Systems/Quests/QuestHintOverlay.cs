@@ -164,6 +164,20 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            // Orio deliberately has no automatic monitor: the player reports the live gear alignment.
+            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
+            {
+                if (!string.Equals(world.CurrentMapId, RotaraGearMechanism.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Travel to the west forest and speak with Orio at the mechanism glade.";
+                else if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio and finish his Rotara lesson before turning the forest gear.";
+                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
+                    hint = "The forest gear is aligned. Return to Orio and confirm the patch.";
+                else
+                    hint = "Select Rotara and cast at the forest gear. Each cast turns it clockwise by 90 degrees; reach the 90-degree notch, then report to Orio.";
+                return;
+            }
+
             if (selectedPuzzle == null || selectedPuzzle.targets == null)
             {
                 hint = string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal)

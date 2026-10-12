@@ -12,6 +12,7 @@ namespace Lumenfall.Tests.GameEvents
     {
         private GameEventRuntime runtime;
         private WorldStateService state;
+        private WorldStateService previousState;
         private GameObject stateHost;
         private GameObject casterHost;
         private SpellCaster caster;
@@ -23,11 +24,13 @@ namespace Lumenfall.Tests.GameEvents
         {
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
-            state = WorldStateService.Instance;
-            if (state == null) { stateHost = new GameObject("orio-world-test"); state = stateHost.AddComponent<WorldStateService>(); }
-            state.ResetAllState();
+            previousState = WorldStateService.Instance;
+            stateHost = new GameObject("orio-world-test");
+            state = stateHost.AddComponent<WorldStateService>();
+            EditModeLifecycle.SetWorldInstance(state);
             casterHost = new GameObject("orio-caster-test");
             caster = casterHost.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
             RotaraGearMechanism.RegisterQuestConditions(runtime);
             RegisterForestGear(180);
         }
@@ -38,12 +41,10 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ActiveDialogue?.End();
             runtime.ResetState();
             state.ResetAllState();
+            EditModeLifecycle.Call(caster, "OnDisable");
             UnityEngine.Object.DestroyImmediate(casterHost);
-            if (stateHost != null)
-            {
-                GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
-                UnityEngine.Object.DestroyImmediate(stateHost);
-            }
+            UnityEngine.Object.DestroyImmediate(stateHost);
+            EditModeLifecycle.SetWorldInstance(previousState);
         }
 
         [Test]
