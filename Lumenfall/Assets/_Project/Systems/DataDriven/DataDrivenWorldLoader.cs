@@ -82,6 +82,7 @@ namespace Lumenfall.DataDriven
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
             OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             StellaReturnPortal.RegisterForMap(LoadedMap.id, world);
+            CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 

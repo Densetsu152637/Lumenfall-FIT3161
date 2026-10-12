@@ -14,11 +14,11 @@ Stella asks the player to complete the next stage of her assignment by connectin
 
 ## Cinna Cirra: Out of Alignment
 
-Cinna Cirra registers for an orientation duty without realising that the activity is intended for more experienced students. They are assigned to align objects whose operation they have not yet learned. After overhearing an explanation of Vis, the player helps Cinna Cirra reposition the objects and completes the alignment puzzle. The object type and exact alignment rules are open design decisions.
+Cinna Cirra registers for an orientation duty without realising that the activity is intended for more experienced students. They are assigned to align objects whose operation they have not yet learned. After overhearing an explanation of Vis, the player helps Cinna Cirra reposition the objects and completes the alignment puzzle. In the implemented version, an orientation relic beside Cinna Cirra on the C02 terrace belongs in the ice trial. The player learns Vis, lifts the relic, carries it through the trial portal and sets it on the empty pedestal inside, then reports back to Cinna. Cinna goes ahead and asks to meet at the trial; the scene fades to black and back with Cinna gone, and the player walks to the trial to find them there.
 
 ## Cinna Cirra: Cold Feet, Warm Idea
 
-Cinna Cirra receives another orientation task: triggering a sequence of traps in the required order. They suggest freezing the ground and sliding through the area. The player learns Glaciate and uses its movement rules to solve the sequence puzzle.
+Cinna Cirra receives another orientation task: triggering a sequence of traps in the required order. They suggest freezing the ground and sliding through the area. The player learns Glaciate and uses its movement rules to solve the sequence puzzle. In the implemented version the trial is an ice-slide room: Glaciate freezes the relic the player delivered during Out of Alignment, which freezes the pool, and the player slides onto twelve switches and then into a seal.
 
 ## Orio: Patch Notes
 
@@ -36,7 +36,7 @@ Potential side content includes restoring power to the dormitory grid and locati
 
 First Light uses five runtime toggle relics in `B02.Ground`; all five must be powered. After First Light, finishing String Them Together's lesson teaches Weave while the new quest remains Active. Its five board relics take power only through a woven chain from `relic.stella.power`, using `circuit.stella.link` and the authored relays as needed. All five must be lit for completion.
 
-Cinna's alignment target is on `campus`: `orientation.cinna.align` must be aligned. The ice trial requires `trial.cinna.ice` to be frozen at `(34,67)`. Katrina's keepsake is in `C04.Recess` at `(12,9)`; revealing it there grants the key item and starts the recovery conversation, and returning it to Katrina completes the quest.
+Cinna's Out of Alignment teaches Vis, then requires carrying her relic from campus to its stand in `C03.IceTrial` and reporting back before she leaves for the trial. Cold Feet, Warm Idea teaches temporary Glaciate access; freeze the pool, light all twelve switches and enter the east-wall seal to complete it. Katrina's keepsake is in `C04.Recess` at `(12,9)`; reveal it with Lost Echoes, pick it up nearby, then return it to Katrina on campus.
 
 Orio's westForest mechanism is a teleport pad to `orioDaisRoom`. Finish his Rotara lesson, cast at the four sockets until all three rune discs point to their teal notches, then return to Orio to report. Completion reads the live or archived hall state and requires the learned spell; the automatic quest monitor does not complete this quest. Orio teaches Rotara only, and Gravitate stays locked. See [the implementation note](implementation/quest-orio-patch-notes.md).
 
