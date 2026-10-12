@@ -65,7 +65,9 @@ jobs:
 
       - name: Prepare isolated target and acceptance tests
         id: prepare
-        run: python3 scripts/pr_feature_ci.py prepare --pr "$PR_NUMBER"
+        run: |
+          python3 scripts/pr_feature_ci.py prepare --pr "$PR_NUMBER"
+          echo "runner-owner=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python and cache validator downloads
         if: ${{ steps.prepare.outputs.python == 'true' }}
@@ -116,6 +118,7 @@ jobs:
           projectPath: ${{ steps.prepare.outputs.project }}
           unityVersion: auto
           cliVersion: v0.1.72
+          chownFilesTo: ${{ steps.prepare.outputs.runner-owner }}
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: editmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance
@@ -134,6 +137,7 @@ jobs:
           projectPath: ${{ steps.prepare.outputs.project }}
           unityVersion: auto
           cliVersion: v0.1.72
+          chownFilesTo: ${{ steps.prepare.outputs.runner-owner }}
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: playmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance

@@ -1,6 +1,8 @@
 """Ensure Actions summaries cannot turn missing or stale tests into success."""
 
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -216,6 +218,54 @@ class FeatureCacheTests(unittest.TestCase):
         self.assertFalse(ci.cache_restore(self.entry, self.output))
         self.assertFalse(self.library.exists())
         self.assertFalse(self.seed.exists())
+
+    def test_both_unity_modes_return_files_to_the_runner_owner(self):
+        workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/pr-feature-suite.yaml").read_text()
+        self.assertIn('echo "runner-owner=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"', workflow)
+        modes = workflow.split("uses: game-ci/unity-test-runner@v4")[1:]
+        self.assertEqual(len(modes), 2)
+        for mode in modes:
+            self.assertIn("chownFilesTo: ${{ steps.prepare.outputs.runner-owner }}", mode)
+
+    @unittest.skipUnless(sys.platform == "linux" and hasattr(os, "geteuid") and os.geteuid() == 0,
+                         "requires Linux root to simulate Docker and unprivileged runner ownership")
+    def test_linux_root_created_library_needs_runner_ownership_for_guarded_move(self):
+        self.successful_verification()
+        self.root.chmod(0o755)
+        runner_id = 65534
+        # Preparation runs as the runner; Unity's default container then creates Library as root.
+        os.chown(self.root / "Temp", runner_id, runner_id)
+        for path in [self.location, *self.location.rglob("*")]:
+            os.chown(path, runner_id, runner_id)
+        self.seed_content(self.library)
+        script = """
+import json
+import sys
+from pathlib import Path
+import pr_feature_ci as ci
+ci.runner.ROOT = Path(sys.argv[1])
+ci.runner.CATALOG = ci.runner.ROOT / "catalog"
+ci.cache_save(json.loads(sys.argv[2]), ci.runner.ROOT / "Temp/pr-tests")
+"""
+        command = [sys.executable, "-c", script, str(self.root), json.dumps(self.entry)]
+        environment = dict(os.environ, PYTHONPATH=str(Path(ci.__file__).parent))
+        before = subprocess.run(command, env=environment, user=runner_id, group=runner_id,
+                                extra_groups=[], capture_output=True, text=True, check=False)
+        self.assertNotEqual(before.returncode, 0)
+        self.assertIn("PermissionError: [Errno 13]", before.stderr)
+        self.assertIn(str(self.library), before.stderr)
+        self.assertIn(str(self.seed), before.stderr)
+        self.assertTrue((self.library / "imported.bin").exists())
+        self.assertTrue(self.seed.parent.is_dir())
+        self.assertFalse(self.seed.exists())
+        # GameCI chownFilesTo applies this ownership to the complete project after each mode.
+        for path in [self.project, *self.project.rglob("*")]:
+            os.chown(path, runner_id, runner_id)
+        after = subprocess.run(command, env=environment, user=runner_id, group=runner_id,
+                               extra_groups=[], capture_output=True, text=True, check=False)
+        self.assertEqual(after.returncode, 0, after.stderr)
+        self.assertFalse(self.library.exists())
+        self.assertEqual((self.seed / "imported.bin").read_bytes(), b"imported data")
 
     def test_restore_and_validated_save_move_only_library(self):
         self.seed_content(self.seed)

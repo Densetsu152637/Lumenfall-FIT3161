@@ -235,6 +235,16 @@ runs on a separate hosted runner with its own source and preferences. A shared
 seed can require incremental reimport; compare latest hosted cache/import timings
 and strict suite results before claiming a speedup.
 
+Preparation also captures the hosted runner's numeric UID:GID. Both GameCI modes
+pass it through the supported `chownFilesTo` input, which the pinned CLI uses to
+return ownership of the extracted project (including Library), test artifacts and
+coverage output after execution. A root-owned Library directory can otherwise
+deny the runner's guarded rename into the fixed cache path even after tests pass.
+The ownership change stays within GameCI's project/result paths; the adapter's
+occupied-destination, link and ownership guards remain unchanged. See the
+[action input forwarding](https://github.com/game-ci/unity-test-runner/blob/32e57712352b500e17974b245a6dce9e11a73213/src/test-args.ts)
+and [CLI v0.1.72 permissions block](https://github.com/game-ci/cli/blob/v0.1.72/dist/platforms/ubuntu/steps/test.sh#L303).
+
 `scripts/pr_feature_ci.py` verifies each action outcome, pinned revision, suite
 hash and every expected fixture/case count. Missing, duplicate, partial, failed or
 skipped test results fail the workflow. The job summary lists the target commit

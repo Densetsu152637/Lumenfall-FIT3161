@@ -208,3 +208,16 @@ repository validator, whitespace validation and actionlint 1.7.12 with ShellChec
 0.11.0 on all three PR/feature workflows. Selector regressions cover mixed-area
 changes, empty documentation matrices, shared/uncertain inputs, unknown new suites,
 legacy workflow migration and complete manifest coverage without duplicate jobs.
+
+The first consolidated hosted run passed strict acceptance verification for its
+first five Unity suites, then failed cache staging with `Errno 13: Permission
+denied`. A Linux ownership regression reproduces the same guarded rename failure
+with a runner-owned prepared snapshot and a root-created Library directory;
+returning the project to the runner's UID:GID makes that unchanged move pass.
+The shared workflow now captures the actual runner UID:GID during preparation and
+passes it to GameCI's supported `chownFilesTo` input in both EditMode and PlayMode.
+CLI v0.1.72 returns ownership of the project, artifacts and coverage through this
+input. Cache guards, strict verification, pinned sources and expected counts are
+unchanged. The permission regression executes under Linux root with an
+unprivileged child and is skipped on Windows; hosted seed upload/reuse still
+requires successful evidence on the repaired head.

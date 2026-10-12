@@ -38,6 +38,9 @@ complete successful verification stages a seed with `cache-save` for upload.
 Existing seeds are reused without replacement. Moves reject occupied destinations,
 linked paths and ownership escapes. Cache failures fail the job; latest hosted
 cache-hit execution remains necessary to verify cross-suite import behavior.
+Both Unity modes use GameCI's `chownFilesTo` input with the actual runner UID:GID,
+so root-created project/Library files return to runner ownership before guarded
+cache staging. This also applies to GameCI's artifacts and coverage output.
 
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own
