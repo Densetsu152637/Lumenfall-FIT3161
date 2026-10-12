@@ -55,6 +55,28 @@ class UnityProjectValidatorTests(unittest.TestCase):
 
         self.assertEqual([], validate_project(self.project))
 
+    def test_lfs_pointers_require_materialization_only_for_builds(self) -> None:
+        for index, suffix in enumerate((".png", ".wav", ".fbx", ".asset")):
+            with self.subTest(suffix=suffix):
+                asset = self.create_asset(f"player{suffix}", f"{index + 10:032x}")
+                newline = b"\r\n" if suffix == ".asset" else b"\n"
+                asset.write_bytes(
+                    b"version https://git-lfs.github.com/spec/v1" + newline
+                    + b"oid sha256:" + b"1" * 64 + newline + b"size 1234" + newline
+                )
+
+                self.assertEqual([], validate_project(self.project))
+                errors = validate_project(self.project, require_lfs_assets=True)
+                self.assertTrue(any(
+                    "Git LFS pointer" in error and asset.name in error for error in errors
+                ))
+
+    def test_materialized_binary_assets_pass_build_validation(self) -> None:
+        asset = self.create_asset("Textures/player.png", "b" * 32)
+        asset.write_bytes(b"\x89PNG\r\n\x1a\n\x00\xff\x80binary-content")
+
+        self.assertEqual([], validate_project(self.project, require_lfs_assets=True))
+
     def test_missing_metadata_is_reported(self) -> None:
         asset = self.create_asset("Data/config.json", "2" * 32)
         asset.with_name(f"{asset.name}.meta").unlink()
