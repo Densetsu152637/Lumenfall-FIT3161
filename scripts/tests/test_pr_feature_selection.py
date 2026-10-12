@@ -12,6 +12,15 @@ import select_pr_feature_suites as selector
 
 
 class FeatureSelectionTests(unittest.TestCase):
+    def test_readiness_transition_does_not_repeat_draft_checks(self):
+        root = Path(__file__).resolve().parents[2]
+        workflows = [root / ".github/workflows/pr-validation.yml"]
+        workflows.extend(root / f".github/workflows/feature-{group}.yaml" for group in selector.GROUPS)
+        for path in workflows:
+            with self.subTest(workflow=path.name):
+                self.assertIn("types: [opened, synchronize, reopened]", path.read_text())
+                self.assertNotIn("ready_for_review", path.read_text())
+
     def test_group_mapping_covers_manifest_exactly_once(self):
         numbers = [number for suites in selector.GROUPS.values() for number, _ in suites]
         manifest = json.loads((Path(__file__).resolve().parents[2] / "tests/pr_features/pr_manifest.json").read_text())

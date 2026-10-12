@@ -1,7 +1,8 @@
 # Pull request validation
 
-`Pull Request Validation` runs when a pull request is opened, updated, reopened, or
-marked ready for review. With no pull-request branch filter, it applies to PRs into
+`Pull Request Validation` runs when a pull request is opened, updated, or reopened.
+Drafts execute the same checks; marking an unchanged PR ready for review does not
+repeat them. With no pull-request branch filter, it applies to PRs into
 `main` and every other branch. It also runs after changes are pushed to `main`, and
 can be started manually from the Actions tab.
 
@@ -169,7 +170,8 @@ matrix containing only suites whose inputs changed. Known acceptance documentati
 does not select a suite. Renames consider both old and new paths. A group's workflow
 change selects its whole group; shared execution changes, unknown paths, malformed
 events and missing history select the whole applicable group. Main and manual runs
-select every suite in each triggered group. Draft PRs follow the same rules. Each
+select every suite in each triggered group. Draft PRs follow the same rules, so
+marking an unchanged PR ready for review does not start another suite run. Each
 workflow also supports **Run workflow** from Actions after it is on the default
 branch. These are catalog validation workflows: they fetch the exact manifest SHA,
 not the current feature-branch head. Refresh the pinned SHA and any expectations

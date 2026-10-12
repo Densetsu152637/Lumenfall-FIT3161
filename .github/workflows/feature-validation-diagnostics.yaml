@@ -2,7 +2,7 @@ name: Feature tests - Validation and diagnostics
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
     paths:
       - '.github/workflows/feature-validation-diagnostics.yaml'
       - '.github/workflows/pr-feature-suite.yaml'

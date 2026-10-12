@@ -2,7 +2,7 @@ name: Feature tests - Audio
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
     paths:
       - '.github/workflows/feature-audio.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
