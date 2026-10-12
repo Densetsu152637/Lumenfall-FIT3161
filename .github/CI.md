@@ -10,7 +10,7 @@ The workflow always reports the same two required checks on Ubuntu 24.04:
 
 1. `Repository integrity` runs the Python harness tests and validates Unity metadata,
    JSON files, build scenes, case-safe paths, merge markers, and generated-file hygiene.
-   It also selects the needed checks and validates the eight PR/feature workflows with actionlint
+   It also selects the needed checks and validates the three PR/feature workflows with actionlint
    1.7.12, downloaded from its official release and verified with a pinned SHA256.
    The Python checks require no third-party packages or secrets.
 2. `Unity EditMode tests` is an always-run gate. It requires repository integrity to
@@ -125,7 +125,7 @@ and fail-closed cases. `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, and `GITHUB_OUT
 are the selector's standard Actions inputs/output; it can be rehearsed with sanitized
 event JSON and existing local commit SHAs. The release workflow currently uses
 `concurrency.queue`, which actionlint 1.7.12 does not recognize; the syntax check above
-intentionally targets the eight PR and feature workflows maintained here.
+intentionally targets the three PR and feature workflows maintained here.
 
 Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
 Synchronous EditMode fixtures must explicitly provide the world-service singleton and
@@ -145,45 +145,52 @@ the existing EditMode CI job does not automatically discover them on main.
 
 ## Feature acceptance workflows
 
-Six `.yaml` workflows group the catalog by feature area in the Actions overview:
+**Feature acceptance tests** (`feature-acceptance.yaml`) selects and runs the catalog
+through one shared matrix. The six logical feature areas remain available through
+`scripts/select_pr_feature_suites.py --group <area>`:
 
-| Workflow | Target PR suites |
+| Logical area / CLI group | Target PR suites |
 | --- | --- |
-| **Feature tests - Quests and spells** | 1, 3, 4, 5, 8, 14, 20 |
-| **Feature tests - World and story** | 6, 10, 12, 16 |
-| **Feature tests - Presentation and UI** | 11, 13, 15, 18, 23 |
-| **Feature tests - Audio** | 9, 22 |
-| **Feature tests - Persistence and recovery** | 7, 19 |
-| **Feature tests - Validation and diagnostics** | 2, 17 |
+| Quests and spells / `quests-spells` | 1, 3, 4, 5, 8, 14, 20 |
+| World and story / `world-story` | 6, 10, 12, 16 |
+| Presentation and UI / `presentation-ui` | 11, 13, 15, 18, 23 |
+| Audio / `audio` | 9, 22 |
+| Persistence and recovery / `persistence-recovery` | 7, 19 |
+| Validation and diagnostics / `validation-diagnostics` | 2, 17 |
 
-Each workflow calls `pr-feature-suite.yaml` through a matrix with one named job
+The workflow calls `pr-feature-suite.yaml` through a matrix with one named job
 per suite, such as **PR 18 - Camera**. Individual job status, rerun controls,
 summaries and artifacts still identify the precise failing suite. A suite failure
-does not cancel sibling jobs (`fail-fast: false`). Each group runs one suite at a
-time (`max-parallel: 1`) after concurrent runs repeatedly hit Unity's
-`143.002 maximumsameuser` account login limit. Six groups can still run concurrently
-alongside the basic EditMode job; this bounds login pressure but is not a global
-account queue. Single-suite selection still avoids unrelated work. Full-catalog
-wall time is constrained by Unity account activation capacity, so raising GitHub
-runner concurrency alone can cause failures instead of speeding execution.
+does not cancel sibling jobs (`fail-fast: false`). A single `max-parallel: 6` cap
+bounds feature jobs across all areas in this workflow run. This replaces six
+selectors and per-area queues with one selector and a shared pool of six slots;
+finished areas no longer leave slots idle while another area still has suites
+queued. The cap follows recurrent hosted Unity `143.002 maximumsameuser` account
+login failures. It does not serialize the separate basic EditMode job, other PRs
+or other workflow runs against the same account. Full-catalog wall time remains
+constrained by activation capacity, cache/import work and runner availability;
+latest hosted timings are needed to measure the scheduling improvement.
 Within a job, EditMode and PlayMode have separate named steps; both
 are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
 pinned requirements from the extracted target and runs Python mutations without a
 Unity image or license.
 
-They run on pull requests and pushes to `main` that change a suite in their area, its workflow,
+It runs on pull requests and pushes to `main` that change a suite, an entry workflow,
 the shared workflow, manifest, runner or CI adapter. Updating shared execution code
-or the manifest starts all six groups covering all 22 suites. Shared selectors,
-disk-cleanup code and their regression tests are included in every group's path
-filters. Within a triggered group, `scripts/select_pr_feature_suites.py` builds a
+or the manifest selects all 22 suites. Shared selectors, disk-cleanup code and their
+regression tests are included in the positive path filters. The `feature-*.yaml`
+filter covers the new entry workflow and deletion of the six old entry workflows;
+`pr-feature-suite.yaml` remains explicit. The suite glob also covers newly added
+suite directories. `scripts/select_pr_feature_suites.py --group all` builds a
 matrix containing only suites whose inputs changed. Known acceptance documentation
-does not select a suite. Renames consider both old and new paths. A group's workflow
-change selects its whole group; shared execution changes, unknown paths, malformed
-events and missing history select the whole applicable group. Main and manual runs
-select every suite in each triggered group. Draft PRs follow the same rules, so
-marking an unchanged PR ready for review does not start another suite run. Each
+does not select a suite, so a triggered documentation-only run has an empty matrix.
+Renames consider both old and new paths. Legacy group-workflow changes retain their
+logical-area selection during migration; new entry/shared execution changes,
+unknown suites or paths, malformed events and missing history select all 22 suites.
+Main and manual runs select every suite. Draft PRs follow the same rules, so
+marking an unchanged PR ready for review does not start another suite run. The
 workflow also supports **Run workflow** from Actions after it is on the default
-branch. These are catalog validation workflows: they fetch the exact manifest SHA,
+branch. This catalog validation workflow fetches the exact manifest SHA,
 not the current feature-branch head. Refresh the pinned SHA and any expectations
 when adopting a later implementation; ordinary gameplay changes alone do not
 trigger these historical snapshots.

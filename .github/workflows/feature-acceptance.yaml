@@ -1,16 +1,12 @@
-name: Feature tests - Presentation and UI
+name: Feature acceptance tests
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - '.github/workflows/feature-presentation-ui.yaml'
+      - '.github/workflows/feature-*.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_11/**'
-      - 'tests/pr_features/pr_13/**'
-      - 'tests/pr_features/pr_15/**'
-      - 'tests/pr_features/pr_18/**'
-      - 'tests/pr_features/pr_23/**'
+      - 'tests/pr_features/pr_*/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -23,13 +19,9 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/feature-presentation-ui.yaml'
+      - '.github/workflows/feature-*.yaml'
       - '.github/workflows/pr-feature-suite.yaml'
-      - 'tests/pr_features/pr_11/**'
-      - 'tests/pr_features/pr_13/**'
-      - 'tests/pr_features/pr_15/**'
-      - 'tests/pr_features/pr_18/**'
-      - 'tests/pr_features/pr_23/**'
+      - 'tests/pr_features/pr_*/**'
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
@@ -62,9 +54,9 @@ jobs:
           fetch-depth: 2
           sparse-checkout: scripts
           persist-credentials: false
-      - name: Select suites for this group
+      - name: Select catalog suites
         id: selection
-        run: python3 scripts/select_pr_feature_suites.py --group presentation-ui
+        run: python3 scripts/select_pr_feature_suites.py --group all
 
   suites:
     name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
@@ -72,7 +64,7 @@ jobs:
     if: ${{ needs.select.outputs.has_suites == 'true' }}
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 6
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:

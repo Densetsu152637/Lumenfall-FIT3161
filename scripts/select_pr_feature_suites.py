@@ -55,14 +55,16 @@ def select_matrix(group: str, event_name: str, event: object, repository: Path) 
         try:
             paths = changed_paths(event, repository)
         except (KeyError, TypeError, ValueError, OSError, subprocess.SubprocessError):
-            pass  # Fail closed to all suites in this group.
-    selected = select_numbers(group, paths)
-    return {"include": [{"pr": number, "feature": feature} for number, feature in GROUPS[group] if number in selected]}
+            pass  # Fail closed to all applicable suites.
+    groups = GROUPS if group == "all" else [group]
+    selected = set().union(*(select_numbers(name, paths) for name in groups))
+    return {"include": [{"pr": number, "feature": feature} for name in groups
+                        for number, feature in GROUPS[name] if number in selected]}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--group", required=True, choices=GROUPS)
+    parser.add_argument("--group", required=True, choices=[*GROUPS, "all"])
     args = parser.parse_args()
     try:
         event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))

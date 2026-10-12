@@ -113,7 +113,7 @@ GitHub-hosted runner execution. No merge or production implementation was perfor
 
 ## Actions integration follow-up
 
-The branch now includes six workflows grouped by feature area and a shared GameCI
+The initial Actions integration added six workflows grouped by feature area and a shared GameCI
 workflow, with a separate named matrix job for every one of the 22 PR suites.
 The CI adapter adds strict action-outcome, source-revision, suite-hash and result
 verification, plus per-platform job summaries and diagnostic artifacts. The local
@@ -146,15 +146,15 @@ could prevent re-extraction after its source directory was removed. Preparation
 now recreates missing snapshots, with that case covered by the existing source
 restoration regression. The full 56-check Python harness passed after this fix.
 
-The grouped workflow catalog covers all 22 manifest entries exactly once. The
+The initial grouped workflow catalog covered all 22 manifest entries exactly once. The
 October 12 efficiency update adds precise PR matrix selection within each group,
 conservative full-group fallback, Ubuntu 24.04 runners, sparse catalog checkout,
 early license validation, conditional Python setup/pip caching, and shared bounded
 incremental disk cleanup. Independent outcomes and unique suite names remain.
 The initial update removed the group cap; recurrent hosted Unity
 `143.002 maximumsameuser` login failures then required one suite at a time per
-group. This contains activation pressure while retaining six concurrent groups;
-it does not establish a global account-level queue.
+group. This contained activation pressure while retaining six concurrent groups;
+it did not establish a global account-level queue.
 Acceptance assertions, pinned revisions, expected counts and strict result
 verification are unchanged. These workflow changes require their own latest-head
 hosted evidence; the 101-case local execution report above remains historical.
@@ -188,3 +188,23 @@ regressions), the Unity repository validator, whitespace validation and actionli
 1.7.12 with ShellCheck 0.11.0 on the changed shared workflow. Local tests use a
 checkout-local temporary directory because the Windows sandbox's default temporary
 directory denies nested writes; this does not change the hosted workflow.
+
+The scheduling follow-up consolidates the six entry workflows into
+`feature-acceptance.yaml`, with one **Select affected suites** job and one matrix
+capped at six concurrent feature suites (`fail-fast: false`). Logical areas and
+their individual selector CLI options remain, while `--group all` unions the same
+area-selection rules. Every one of the 22 caller PR/feature names and reusable
+acceptance names remains unchanged, as do the required repository-integrity and
+Unity EditMode checks. Positive path filters cover the union of the old triggers,
+new suites and entry-workflow migration. Known documentation-only diffs yield an
+empty matrix; uncertain/shared diffs select all suites. The single queue allows
+available slots to serve any area and removes five selector jobs. This is a
+scheduling projection, not a measured speedup or an account-wide login queue.
+Hosted cache reuse, activation behavior and final-head strict results still need
+verification after publication. No acceptance pins, assertions or counts changed.
+
+The consolidated revision passes all 92 local Python harness tests, the Unity
+repository validator, whitespace validation and actionlint 1.7.12 with ShellCheck
+0.11.0 on all three PR/feature workflows. Selector regressions cover mixed-area
+changes, empty documentation matrices, shared/uncertain inputs, unknown new suites,
+legacy workflow migration and complete manifest coverage without duplicate jobs.

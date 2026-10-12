@@ -8,17 +8,19 @@ the branches or establish that all sibling features work together.
 See [the execution report](VALIDATION.md) for per-PR results, case counts and
 retained evidence from the local validation run.
 
-Six **Feature tests - <area>** GitHub Actions workflows group the suites by target
-area, with one named matrix job per PR suite. See [CI instructions](../../.github/CI.md#feature-acceptance-workflows)
-for the group mapping, triggers, pinned revisions, summaries and result artifacts.
-On PRs, each group selects only suites with changed inputs. Shared execution changes
-or uncertain change detection run the whole applicable group; catalog README/report
-edits skip suite execution. Main and manual runs select all suites in each triggered
-group. Drafts use the same rules; readiness transitions do not repeat unchanged
-checks. Jobs retain independent outcomes, with one suite at a time per group to
-contain the observed Unity account login limit. The six groups can run concurrently;
-this does not serialize all logins globally. Single-suite changes retain precise
-selection; full-catalog runtime is constrained by account activation capacity.
+The **Feature acceptance tests** GitHub Actions workflow uses one selector and a
+shared matrix, with one named job per PR suite. See [CI instructions](../../.github/CI.md#feature-acceptance-workflows)
+for the six logical areas, triggers, pinned revisions, summaries and result artifacts.
+On PRs, `--group all` selects suites with changed inputs across every area. Shared
+execution changes or uncertain detection select all 22 suites; known catalog
+README/report edits select none. Main and manual runs select all suites. The six
+individual CLI groups remain available. Drafts use the same rules; readiness
+transitions do not repeat unchanged checks. Jobs retain independent outcomes and
+share a `max-parallel: 6` cap within the feature workflow run, so another queued
+suite can use a slot as soon as one finishes. The cap does not cover the separate
+basic EditMode job or other runs using the Unity account. Single-suite changes
+retain precise selection; hosted timing and activation results remain necessary
+to assess full-catalog throughput.
 
 Hosted Unity jobs share immutable Library seeds when OS, Unity version and the
 SHA-256 of extracted `Packages/**` and `ProjectSettings/**` names/bytes match.
