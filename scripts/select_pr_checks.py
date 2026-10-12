@@ -10,8 +10,7 @@ import subprocess
 from pathlib import Path
 
 
-DOCUMENTATION_FILES = {"README.md", "LICENSE", ".github/CI.md", ".github/PULL_REQUEST_TEMPLATE.md"}
-CATALOG_DOCUMENTATION = re.compile(r"tests/pr_features/(?:(?:pr_\d{2}/)?README\.md|VALIDATION\.md)")
+DOCUMENTATION_FILES = {"README.md", "LICENSE", ".github/CI.md", ".github/PULL_REQUEST_TEMPLATE.md", "tests/README.md"}
 COMMIT_PATTERN = re.compile(r"[0-9a-fA-F]{40}")
 
 
@@ -23,8 +22,6 @@ def requires_unity(paths: list[str]) -> bool:
         if not path or "\\" in path or any(part in {"", ".", ".."} for part in path.split("/")):
             return True
         if path in DOCUMENTATION_FILES:
-            continue
-        if CATALOG_DOCUMENTATION.fullmatch(path):
             continue
         if path.startswith("docs/") and path.endswith(".md"):
             continue

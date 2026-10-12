@@ -43,7 +43,7 @@ jobs:
             --output "$RUNNER_TEMP/actionlint.tar.gz"
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
           tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
-          "$RUNNER_TEMP/actionlint" .github/workflows/pr-validation.yml .github/workflows/feature-*.yaml .github/workflows/pr-feature-suite.yaml
+          "$RUNNER_TEMP/actionlint" .github/workflows/pr-validation.yml
 
       - name: Test the validation harness
         run: python3 -m unittest discover --start-directory scripts/tests --verbose
@@ -51,8 +51,8 @@ jobs:
       - name: Validate Unity project structure
         run: python3 scripts/validate_unity_project.py Lumenfall
 
-  run-unity-edit-mode:
-    name: Run Unity EditMode tests
+  run-gameplay-tests:
+    name: Gameplay regression tests
     needs: repository-integrity
     if: ${{ needs.repository-integrity.outputs.unity_required == 'true' }}
     runs-on: ubuntu-24.04
@@ -78,6 +78,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Free disk space for Unity
@@ -106,6 +107,15 @@ jobs:
               output.write(f"version={version}\n")
           print(f"Using Unity version {version} for the test image.")
           PY
+          echo "runner-owner=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"
+
+      - name: Require fresh gameplay results
+        shell: bash
+        run: |
+          if [[ -e artifacts/gameplay || -L artifacts/gameplay ]]; then
+            echo "::error::Gameplay artifact directory already exists; refusing stale results."
+            exit 1
+          fi
 
       - name: Restore Unity Library cache
         id: unity-library
@@ -116,7 +126,7 @@ jobs:
           restore-keys: |
             unity-editmode-v2-${{ runner.os }}-${{ steps.unity-version.outputs.version }}-${{ hashFiles('Lumenfall/Packages/**', 'Lumenfall/ProjectSettings/**') }}-
 
-      - name: Run Unity EditMode tests
+      - name: Run gameplay rules and world integration
         id: unity-tests
         uses: game-ci/unity-test-runner@v4
         env:
@@ -127,22 +137,32 @@ jobs:
           projectPath: Lumenfall
           unityVersion: auto
           cliVersion: v0.1.72
+          chownFilesTo: ${{ steps.unity-version.outputs.runner-owner }}
           customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-base-3
-          testMode: editmode
-          artifactsPath: artifacts/editmode
+          testMode: all
+          artifactsPath: artifacts/gameplay
           githubToken: ''
 
-      - name: Upload Unity test results
+      - name: Verify both gameplay suites
+        id: verify-gameplay
+        if: ${{ !cancelled() && steps.unity-tests.outcome != 'skipped' }}
+        env:
+          UNITY_OUTCOME: ${{ steps.unity-tests.outcome }}
+        run: |
+          python3 scripts/verify_gameplay_tests.py --artifacts artifacts/gameplay \
+            --outcome "$UNITY_OUTCOME" --revision "$GITHUB_SHA"
+
+      - name: Upload gameplay results and diagnostics
         if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
         uses: actions/upload-artifact@v7
         with:
-          name: unity-editmode-results
-          path: ${{ steps.unity-tests.outputs.artifactsPath }}
+          name: gameplay-test-results
+          path: artifacts/gameplay/
           if-no-files-found: warn
           retention-days: 14
 
       - name: Save Unity Library cache
-        if: ${{ !cancelled() && steps.unity-library.outputs.cache-hit != 'true' && hashFiles('artifacts/editmode/editmode-results.xml') != '' }}
+        if: ${{ !cancelled() && steps.verify-gameplay.outcome == 'success' && steps.unity-library.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5
         with:
           path: Lumenfall/Library
@@ -150,7 +170,7 @@ jobs:
 
   unity-edit-mode:
     name: Unity EditMode tests
-    needs: [repository-integrity, run-unity-edit-mode]
+    needs: [repository-integrity, run-gameplay-tests]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -159,7 +179,7 @@ jobs:
         env:
           INTEGRITY_RESULT: ${{ needs.repository-integrity.result }}
           UNITY_REQUIRED: ${{ needs.repository-integrity.outputs.unity_required }}
-          UNITY_RESULT: ${{ needs.run-unity-edit-mode.result }}
+          UNITY_RESULT: ${{ needs.run-gameplay-tests.result }}
         shell: bash
         run: |
           if [[ "$INTEGRITY_RESULT" != "success" ]]; then
@@ -169,7 +189,7 @@ jobs:
           if [[ "$UNITY_REQUIRED" == "false" && "$UNITY_RESULT" == "skipped" ]]; then
             echo "Documentation-only PR: Unity was intentionally skipped."
           elif [[ "$UNITY_REQUIRED" == "true" && "$UNITY_RESULT" == "success" ]]; then
-            echo "Required Unity EditMode tests passed."
+            echo "Required gameplay rules and world integration tests passed."
           else
             echo "::error::Required Unity result is missing, failed, or cancelled."
             exit 1

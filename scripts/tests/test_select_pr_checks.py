@@ -20,7 +20,7 @@ def pr_event(base: str = "a" * 40, head: str = "b" * 40) -> dict:
 class CheckSelectionTests(unittest.TestCase):
     def test_documentation_only_can_skip_unity(self) -> None:
         self.assertFalse(requires_unity(["README.md", "LICENSE", "docs/architecture/design.md", ".github/CI.md"]))
-        self.assertFalse(requires_unity(["tests/pr_features/README.md", "tests/pr_features/VALIDATION.md", "tests/pr_features/pr_09/README.md"]))
+        self.assertFalse(requires_unity(["tests/README.md"]))
 
     def test_affected_inputs_and_unknown_paths_require_unity(self) -> None:
         for path in [
@@ -28,7 +28,7 @@ class CheckSelectionTests(unittest.TestCase):
             "Lumenfall/Assets/README.md", "Lumenfall/Assets/picture.png.meta",
             "Lumenfall/Packages/packages-lock.json", "Lumenfall/ProjectSettings/ProjectVersion.txt",
             ".github/workflows/pr-validation.yml", ".github/workflows/release-build.yml",
-            "scripts/check.py", "tools/test.sh", ".gitattributes", "new-input.json",
+            "scripts/check.py", "tools/test.sh", ".gitattributes", "new-input.json", "tests/gameplay_suites.json",
         ]:
             with self.subTest(path=path):
                 self.assertTrue(requires_unity(["README.md", path]))

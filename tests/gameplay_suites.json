@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "platforms": {
+    "editmode": {
+      "name": "Gameplay rules",
+      "fixtures": {
+        "Lumenfall.GameEvents.Tests.DialogueTextRevealTests": 8,
+        "Lumenfall.Tests.GameEvents.GameEventRuntimeTests": 7,
+        "Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests": 2,
+        "Lumenfall.Tests.GameEvents.KatrinaBorrowedProgressionTests": 8,
+        "Lumenfall.Tests.GameEvents.KatrinaBorrowedWorldTests": 8,
+        "Lumenfall.Tests.GameEvents.OrioPatchNotesTests": 19,
+        "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 2,
+        "Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests": 9,
+        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 6,
+        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
+        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 5,
+        "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
+        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
+      }
+    },
+    "playmode": {
+      "name": "World integration",
+      "fixtures": {
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 3
+      }
+    }
+  }
+}
