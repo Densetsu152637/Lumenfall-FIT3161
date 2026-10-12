@@ -317,6 +317,8 @@ namespace Lumenfall.Tests.World
 
             // A second Glaciate thaws the pool; anyone standing in it steps out to the entrance first.
             events.ActiveDialogue?.End(); // Cinna's success line would block casting.
+            yield return null; // Dialogue closing consumes input for the rest of its frame.
+            Assert.That(OverlayInputGate.IsBlocked, Is.False, "The closed dialogue must release its input ownership on the next frame.");
             Vector2Int poolSwitch = new Vector2Int(3, 3);
             Assert.That(player.TryTeleportTo(world, poolSwitch), Is.True);
             Assert.That(player.GetComponent<SpellCaster>().Cast(SpellId.Glaciate, CinnaIceTrialRoom.RelicId, Vector2Int.up), Is.True);

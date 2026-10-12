@@ -205,8 +205,27 @@ namespace Lumenfall.Tests.World
         {
             VisualElement row = Document.rootVisualElement.Q(className: "dialogue-choice");
             Assert.That(row, Is.Not.Null);
-            using (PointerDownEvent click = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0 }))
-                row.SendEvent(click);
+            Assert.That(row.panel, Is.Not.Null, "The choice must belong to the live Toolkit panel.");
+            bool delivered = false;
+            EventCallback<PointerDownEvent> observe = evt =>
+            {
+                Assert.That(evt.target, Is.SameAs(row));
+                delivered = true;
+            };
+            row.RegisterCallback(observe);
+            try
+            {
+                using (PointerDownEvent click = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0 }))
+                {
+                    click.target = row;
+                    row.SendEvent(click);
+                }
+                Assert.That(delivered, Is.True, "Even blocked choices must receive the actual pointer event.");
+            }
+            finally
+            {
+                row.UnregisterCallback(observe);
+            }
         }
 
         private IEnumerator Capture(string name)
