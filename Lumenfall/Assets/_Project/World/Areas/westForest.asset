@@ -114,6 +114,7 @@ MonoBehaviour:
       objectIds:
       - mechanism.orio.rotate
       requiredConnections: []
+      minimumEffectivePower: 0
       conditionMode: All
       requiredPowered: 0
       requiredConnected: 0
@@ -123,7 +124,7 @@ MonoBehaviour:
       requiredRotation: 90
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
-    portals: []
   areaPrefab: {fileID: 5632919234203233261, guid: f54d29105f80c8242b39536dc4282947, type: 3}
   portals:
   - {fileID: 11400000, guid: 10000000000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: 5317742e7cff35f448a9640a933c9434, type: 2}
