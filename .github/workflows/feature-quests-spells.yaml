@@ -16,6 +16,11 @@ on:
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
+      - 'scripts/select_pr_checks.py'
+      - 'scripts/select_pr_feature_suites.py'
+      - 'scripts/free_unity_disk_space.py'
+      - 'scripts/tests/test_select_pr_checks.py'
+      - 'scripts/tests/test_free_unity_disk_space.py'
       - 'scripts/tests/test_*pr_feature*.py'
   push:
     branches: [main]
@@ -32,6 +37,11 @@ on:
       - 'tests/pr_features/pr_manifest.json'
       - 'scripts/run_pr_feature_tests.py'
       - 'scripts/pr_feature_ci.py'
+      - 'scripts/select_pr_checks.py'
+      - 'scripts/select_pr_feature_suites.py'
+      - 'scripts/free_unity_disk_space.py'
+      - 'scripts/tests/test_select_pr_checks.py'
+      - 'scripts/tests/test_free_unity_disk_space.py'
       - 'scripts/tests/test_*pr_feature*.py'
   workflow_dispatch:
 
@@ -39,31 +49,34 @@ permissions:
   contents: read
 
 concurrency:
-  group: feature-quests-spells-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  select:
+    name: Select affected suites
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      matrix: ${{ steps.selection.outputs.matrix }}
+      has_suites: ${{ steps.selection.outputs.has_suites }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Select suites for this group
+        id: selection
+        run: python3 scripts/select_pr_feature_suites.py --group quests-spells
+
   suites:
     name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    needs: select
+    if: ${{ needs.select.outputs.has_suites == 'true' }}
     strategy:
       fail-fast: false
-      max-parallel: 3
-      matrix:
-        include:
-          - pr: 1
-            feature: Hint feedback and reset
-          - pr: 3
-            feature: First Light
-          - pr: 4
-            feature: Weave network
-          - pr: 5
-            feature: Vis alignment
-          - pr: 8
-            feature: Rotara rotation
-          - pr: 14
-            feature: Lost Echoes
-          - pr: 20
-            feature: Glaciate lanes
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:
       pr-number: ${{ matrix.pr }}

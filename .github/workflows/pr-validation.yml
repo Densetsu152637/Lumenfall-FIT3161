@@ -43,7 +43,7 @@ jobs:
             --output "$RUNNER_TEMP/actionlint.tar.gz"
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check
           tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
-          "$RUNNER_TEMP/actionlint" .github/workflows/pr-validation.yml
+          "$RUNNER_TEMP/actionlint" .github/workflows/pr-validation.yml .github/workflows/feature-*.yaml .github/workflows/pr-feature-suite.yaml
 
       - name: Test the validation harness
         run: python3 -m unittest discover --start-directory scripts/tests --verbose
@@ -75,32 +75,14 @@ jobs:
             exit 1
           fi
 
-      - name: Free disk space for Unity
-        shell: bash
-        timeout-minutes: 6
-        run: |
-          if [[ "$RUNNER_ENVIRONMENT" != "github-hosted" ]]; then
-            echo "::error::Disk cleanup is restricted to disposable GitHub-hosted runners."
-            exit 1
-          fi
-          echo "Disk space before cleanup:"
-          df -h /
-          # The base test image needs extraction space as well as the Library.
-          minimum_kib=$((30 * 1024 * 1024))
-          for sdk in /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL; do
-            available_kib=$(df -Pk / | awk 'NR == 2 {print $4}')
-            if (( available_kib >= minimum_kib )); then
-              break
-            fi
-            sudo rm -rf -- "$sdk"
-          done
-          echo "Disk space after cleanup:"
-          df -h /
-
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Free disk space for Unity
+        timeout-minutes: 6
+        run: python3 scripts/free_unity_disk_space.py
 
       - name: Read Unity version
         id: unity-version
@@ -123,6 +105,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"version={version}\n")
           print(f"Using Unity version {version} for the test image.")
+          PY
 
       - name: Restore Unity Library cache
         id: unity-library

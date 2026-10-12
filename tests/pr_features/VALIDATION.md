@@ -146,7 +146,16 @@ could prevent re-extraction after its source directory was removed. Preparation
 now recreates missing snapshots, with that case covered by the existing source
 restoration regression. The full 56-check Python harness passed after this fix.
 
-The grouped workflow matrices cover all 22 manifest entries exactly once, with
-group-specific source path filters, unique suite names, independent outcomes and
-at most three concurrent suites per group. Grouping changes the Actions overview;
-the acceptance sources, pinned revisions and shared execution steps are unchanged.
+The grouped workflow catalog covers all 22 manifest entries exactly once. The
+October 12 efficiency update adds precise PR matrix selection within each group,
+conservative full-group fallback, Ubuntu 24.04 runners, sparse catalog checkout,
+early license validation, conditional Python setup/pip caching, and shared bounded
+incremental disk cleanup. Independent outcomes and unique suite names remain;
+GitHub account scheduling now bounds concurrency without an extra group cap.
+Acceptance assertions, pinned revisions, expected counts and strict result
+verification are unchanged. These workflow changes require their own latest-head
+hosted evidence; the 101-case local execution report above remains historical.
+Local checks for the efficiency update passed all 76 Python harness tests, the
+Unity repository validator, and actionlint 1.7.12 with ShellCheck 0.11.0 against
+all eight PR/feature workflows. The adapter's existing revision, suite-hash,
+platform-discovery and complete-result regressions remain in that harness.

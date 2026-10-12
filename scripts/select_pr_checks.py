@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 DOCUMENTATION_FILES = {"README.md", "LICENSE", ".github/CI.md", ".github/PULL_REQUEST_TEMPLATE.md"}
+CATALOG_DOCUMENTATION = re.compile(r"tests/pr_features/(?:(?:pr_\d{2}/)?README\.md|VALIDATION\.md)")
 COMMIT_PATTERN = re.compile(r"[0-9a-fA-F]{40}")
 
 
@@ -23,10 +24,34 @@ def requires_unity(paths: list[str]) -> bool:
             return True
         if path in DOCUMENTATION_FILES:
             continue
+        if CATALOG_DOCUMENTATION.fullmatch(path):
+            continue
         if path.startswith("docs/") and path.endswith(".md"):
             continue
         return True
     return False
+
+
+def changed_paths(event: object, repository: Path) -> list[str]:
+    """Read both sides of moves from exact event commits; reject ambiguous data."""
+    pull_request = event["pull_request"]
+    base = pull_request["base"]["sha"]
+    head = pull_request["head"]["sha"]
+    if not all(isinstance(sha, str) and COMMIT_PATTERN.fullmatch(sha) for sha in (base, head)):
+        raise ValueError("Invalid event commit")
+    if base == head:
+        raise ValueError("No distinct PR commits")
+    # Comparing endpoints conservatively includes base changes since the PR forked.
+    result = subprocess.run(
+        ["git", "diff", "--no-ext-diff", "--no-renames", "--name-only", "-z", base, head, "--"],
+        cwd=repository, capture_output=True, check=True, timeout=30,
+    )
+    if not result.stdout.endswith(b"\0"):
+        raise ValueError("Missing or incomplete changed-path data")
+    paths = result.stdout[:-1].decode("utf-8").split("\0")
+    if any(not path or "\\" in path or any(part in {"", ".", ".."} for part in path.split("/")) for path in paths):
+        raise ValueError("Noncanonical changed path")
+    return paths
 
 
 def select_checks(event_name: str, event: object, repository: Path) -> tuple[bool, str]:
@@ -34,25 +59,7 @@ def select_checks(event_name: str, event: object, repository: Path) -> tuple[boo
     if event_name != "pull_request":
         return True, "Unity is required for manual, main, and other non-PR runs."
     try:
-        pull_request = event["pull_request"]
-        base = pull_request["base"]["sha"]
-        head = pull_request["head"]["sha"]
-        if not all(isinstance(sha, str) and COMMIT_PATTERN.fullmatch(sha) for sha in (base, head)):
-            raise ValueError("Invalid event commit")
-        if base == head:
-            raise ValueError("No distinct PR commits")
-        # Comparing both endpoints conservatively includes changes made on the base
-        # since the PR forked. --no-renames retains both sides of every move.
-        result = subprocess.run(
-            ["git", "diff", "--no-ext-diff", "--no-renames", "--name-only", "-z", base, head, "--"],
-            cwd=repository,
-            capture_output=True,
-            check=True,
-            timeout=30,
-        )
-        if not result.stdout.endswith(b"\0"):
-            raise ValueError("Missing or incomplete changed-path data")
-        paths = result.stdout[:-1].decode("utf-8").split("\0")
+        paths = changed_paths(event, repository)
     except (KeyError, TypeError, ValueError, OSError, subprocess.SubprocessError):
         return True, "Changed paths could not be established; Unity is required."
     if requires_unity(paths):

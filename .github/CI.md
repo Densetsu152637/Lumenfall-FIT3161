@@ -9,7 +9,7 @@ The workflow always reports the same two required checks on Ubuntu 24.04:
 
 1. `Repository integrity` runs the Python harness tests and validates Unity metadata,
    JSON files, build scenes, case-safe paths, merge markers, and generated-file hygiene.
-   It also selects the needed checks and validates this PR workflow with actionlint
+   It also selects the needed checks and validates the eight PR/feature workflows with actionlint
    1.7.12, downloaded from its official release and verified with a pinned SHA256.
    The Python checks require no third-party packages or secrets.
 2. `Unity EditMode tests` is an always-run gate. It requires repository integrity to
@@ -18,7 +18,8 @@ The workflow always reports the same two required checks on Ubuntu 24.04:
 
 Unity runs for every manual and `main` push, and for draft PRs with relevant changes.
 Only PRs changing exclusively `README.md`, `LICENSE`, `.github/CI.md`,
-`.github/PULL_REQUEST_TEMPLATE.md`, or Markdown files under `docs/` skip the expensive
+`.github/PULL_REQUEST_TEMPLATE.md`, Markdown files under `docs/`, or the acceptance
+catalog's `README.md`, `VALIDATION.md`, and `pr_XX/README.md` files skip the expensive
 job. `scripts/select_pr_checks.py` compares the event's exact base and head commits
 from the depth-two merge checkout. Renames are treated as deletion plus addition.
 Source, assets (including their documentation), tests, packages, project settings,
@@ -109,7 +110,7 @@ From the repository root:
 ```sh
 python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
-actionlint .github/workflows/pr-validation.yml
+actionlint .github/workflows/pr-validation.yml .github/workflows/feature-*.yaml .github/workflows/pr-feature-suite.yaml
 ```
 
 Use actionlint 1.7.12 to match CI. The harness covers the selector's documentation,
@@ -118,7 +119,7 @@ and fail-closed cases. `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, and `GITHUB_OUT
 are the selector's standard Actions inputs/output; it can be rehearsed with sanitized
 event JSON and existing local commit SHAs. The release workflow currently uses
 `concurrency.queue`, which actionlint 1.7.12 does not recognize; the syntax check above
-intentionally targets the PR workflow maintained here.
+intentionally targets the eight PR and feature workflows maintained here.
 
 Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
 Synchronous EditMode fixtures must explicitly provide the world-service singleton and
@@ -152,26 +153,42 @@ Six `.yaml` workflows group the catalog by feature area in the Actions overview:
 Each workflow calls `pr-feature-suite.yaml` through a matrix with one named job
 per suite, such as **PR 18 - Camera**. Individual job status, rerun controls,
 summaries and artifacts still identify the precise failing suite. A suite failure
-does not cancel sibling jobs (`fail-fast: false`), and each group runs at most
-three suites concurrently. Within a job, EditMode and PlayMode have separate named steps; both
+does not cancel sibling jobs (`fail-fast: false`). Groups have no additional
+parallelism cap; GitHub's account limits schedule the independent hosted runners,
+avoiding extra serial waves within large groups. Within a job, EditMode and PlayMode have separate named steps; both
 are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
 pinned requirements from the extracted target and runs Python mutations without a
 Unity image or license.
 
 They run on pull requests and pushes to `main` that change a suite in their area, its workflow,
 the shared workflow, manifest, runner or CI adapter. Updating shared execution code
-or the manifest starts all six groups covering all 22 suites. A suite-only change
-starts its feature group. Each
+or the manifest starts all six groups covering all 22 suites. Shared selectors,
+disk-cleanup code and their regression tests are included in every group's path
+filters. Within a triggered group, `scripts/select_pr_feature_suites.py` builds a
+matrix containing only suites whose inputs changed. Known acceptance documentation
+does not select a suite. Renames consider both old and new paths. A group's workflow
+change selects its whole group; shared execution changes, unknown paths, malformed
+events and missing history select the whole applicable group. Main and manual runs
+select every suite in each triggered group. Draft PRs follow the same rules. Each
 workflow also supports **Run workflow** from Actions after it is on the default
 branch. These are catalog validation workflows: they fetch the exact manifest SHA,
 not the current feature-branch head. Refresh the pinned SHA and any expectations
 when adopting a later implementation; ordinary gameplay changes alone do not
 trigger these historical snapshots.
 
-Every job prepares its own extracted project, uses the snapshot's Unity version,
+Every job uses Ubuntu 24.04, checks out only the catalog and scripts with a partial
+clone, and prepares its own extracted project. It avoids downloading a duplicate
+copy of the current gameplay assets before fetching the pinned target. It uses the snapshot's Unity version,
 and filters to `Lumenfall.FeatureAcceptance`. Unity jobs use the same three license
-secrets as the existing EditMode workflow and fail visibly if they are absent.
+secrets as the existing EditMode workflow and check them immediately after reading
+the manifest, before target fetching, preparation, cleanup or cache transfer. Python
+3.13 setup and pip download caching apply only to Python suites; the target's pinned
+requirements are installed even on a cache hit. Other adapter steps use Ubuntu
+24.04's Python 3.12. Both PR Unity workflows use the guarded, incremental 30 GiB
+cleanup helper, with a six-minute step limit and no Docker image pruning.
 The workflows use `contents: read`; GameCI's optional Checks reporter is disabled.
+Feature execution retains read-only checkout authentication for private exact-target
+fetches and partial-clone archive reads; selection jobs do not persist credentials.
 Library caches are scoped to PR, OS, Unity version, target SHA and suite hash, and
 saved only after complete result verification. Concurrent suites run on separate
 hosted runners; their source, preferences and caches are isolated.
@@ -183,7 +200,7 @@ and results by platform; annotations identify the failing platform or preparatio
 step. Download `pr-N-feature-acceptance` for the NUnit XML, Editor diagnostics,
 Python log, preparation metadata and `ci-report.json` (retained for 14 days).
 Artifacts are uploaded after failures as well. The original repository integrity
-and colocated EditMode checks continue unchanged.
+and colocated EditMode checks remain separate required checks.
 
 ## Downloadable game releases
 
@@ -223,7 +240,7 @@ archive, and run **Lumenfall.exe**. Keep the data directory, DLLs, Mono runtime,
 and all other included files beside the executable. Unity Editor is not required.
 GitHub's automatically generated **Source code** archives contain the project
 sources, not a runnable player. The repository's visibility also governs who can
-access releases; this repository is currently private.
+access releases; this repository is currently public.
 
 Every ZIP includes launch instructions, the repository license, and
 `build-info.json` with the source commit, triggering tag/ref, Unity version, and

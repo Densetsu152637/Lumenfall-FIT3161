@@ -11,6 +11,11 @@ retained evidence from the local validation run.
 Six **Feature tests - <area>** GitHub Actions workflows group the suites by target
 area, with one named matrix job per PR suite. See [CI instructions](../../.github/CI.md#feature-acceptance-workflows)
 for the group mapping, triggers, pinned revisions, summaries and result artifacts.
+On PRs, each group selects only suites with changed inputs. Shared execution changes
+or uncertain change detection run the whole applicable group; catalog README/report
+edits skip suite execution. Main and manual runs select all suites in each triggered
+group. Drafts use the same rules. Jobs retain independent outcomes without an extra
+per-group parallelism cap, subject to GitHub's account scheduling limits.
 
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own
