@@ -83,9 +83,16 @@ namespace Lumenfall.Tests.World
 
                 OverlayInputGate.Release(sibling);
                 yield return null;
+                var despawnTarget = new GameObject("Wheel despawn reveal target");
+                despawnTarget.transform.SetParent(host.transform, false);
+                state.RegisterObject("wheel-despawn-hidden", despawnTarget, mover.CurrentCell + Vector2Int.up,
+                    Vector2Int.one, true, new[] { "hidden" });
+                Assert.That(state.TryGetObject("wheel-despawn-hidden", out WorldObjectSnapshot beforeDespawn), Is.True);
+                Assert.That(beforeDespawn.revealed, Is.False);
                 OpenWheel(caster);
                 yield return null;
                 Assert.That(caster.CastLostEchoes(), Is.True);
+                Assert.That(state.TryGetObject("wheel-despawn-hidden", out WorldObjectSnapshot despawnRevealed) && despawnRevealed.revealed, Is.True);
                 LostEchoesPresentation presentation = Object.FindAnyObjectByType<LostEchoesPresentation>();
                 Assert.That(presentation, Is.Not.Null);
                 var boundRoots = new List<GameObject>();
