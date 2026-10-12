@@ -119,119 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &224033771
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 224033775}
-  - component: {fileID: 224033774}
-  - component: {fileID: 224033773}
-  - component: {fileID: 224033772}
-  m_Layer: 0
-  m_Name: Ground
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!64 &224033772
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 224033771}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &224033773
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 224033771}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &224033774
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 224033771}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &224033775
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 224033771}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.05658, y: 1.1938, z: 0.39597}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -245,6 +132,7 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   - component: {fileID: 330585548}
+  - component: {fileID: 330585549}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -386,6 +274,25 @@ MonoBehaviour:
   offset: {x: 8, y: 10, z: -8}
   focusOffset: {x: 0, y: 1.5, z: 0}
   smoothTime: 0.15
+--- !u!114 &330585549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ad825e0cc1d4ec89d773e482bcd426a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.CameraEffects.PlayerOcclusionReveal
+  target: {fileID: 488168670}
+  targetOffset: {x: 0, y: 0.8, z: 0}
+  viewOffset: {x: 0, y: 0}
+  radius: 0.4
+  feather: 0.175
+  centerOpacity: 0
+  depthPadding: 0.15
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -589,7 +496,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d7dd8557cf445ca94e39ad45a2e0637, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lumenfall.GridMovement.GridMover
   world: {fileID: 1980000002}
   useTransformAsStartingCell: 1
@@ -597,7 +504,7 @@ MonoBehaviour:
   snapToGridOnEnable: 1
   movementMode: 0
   walkMoveDuration: 0.15
-  sprintMoveDuration: 0.075
+  sprintMoveDuration: 0.1
   movementCurve:
     serializedVersion: 2
     m_Curve:
@@ -632,7 +539,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c0b8bf90b66f4214b649eef5f6eab2e4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lumenfall.GridMovement.GridPlayerInput
   moveAction: {fileID: 0}
   sprintAction: {fileID: 0}
@@ -691,7 +598,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d8d9c26f2f94cc8a64e8d1f7b6dd2f1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DialogueOverlay
 --- !u!114 &533968955
 MonoBehaviour:
@@ -703,16 +610,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9c2e9c3b524fe4b2ef0af3c4b9c003, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DataDrivenWorldLoader
-  startingArea: {fileID: 11400000, guid: 53c679ec98be46b47bb4677a059d5bf3, type: 2}
+  startingArea: {fileID: 11400000, guid: 40f5a879094cafd45a8e5ec898d345bd, type: 2}
   npcCatalog: {fileID: 11400000, guid: dc8764b9f775d914db403c673afee333, type: 2}
   availableAreas:
+  - {fileID: 11400000, guid: 53c679ec98be46b47bb4677a059d5bf3, type: 2}
   - {fileID: 11400000, guid: 40f5a879094cafd45a8e5ec898d345bd, type: 2}
   - {fileID: 11400000, guid: cc94a384b2f43314f9af20e26bc7374b, type: 2}
   - {fileID: 11400000, guid: 62ab6d591089bc842afc7cf6ccd98292, type: 2}
   - {fileID: 11400000, guid: b72fbd887f2fe20459ce48235df16f6d, type: 2}
   - {fileID: 11400000, guid: d03ed5a3b7f9f3e43ad14c8e3dc4104d, type: 2}
+  - {fileID: 11400000, guid: f16c2cedcc4a47d8ac2c16180b36b851, type: 2}
   contentRoot: {fileID: 956136189}
   world: {fileID: 1980000002}
 --- !u!4 &533968956
@@ -829,7 +738,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 700275467072806798, guid: 36a261ef035b9914fa8f5c4e99696da9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 700275467072806798, guid: 36a261ef035b9914fa8f5c4e99696da9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -928,7 +837,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b83b4e087c3e46e5a6c2809834dd049f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lumenfall.GridMovement.GridWorld
   cellSize: 1
   restrictToBounds: 0
@@ -946,6 +855,5 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 488168670}
-  - {fileID: 224033775}
   - {fileID: 1980000001}
   - {fileID: 533968956}

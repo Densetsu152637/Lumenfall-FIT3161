@@ -1,79 +1,59 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Lumenfall.DataDriven;
+using UnityEngine.Serialization;
 
 namespace Lumenfall.GridMovement
 {
-    public enum GridPortalDestinationMode
-    {
-        PortalReference,
-        WorldCell,
-        ScenePortalId
-    }
-
     /// <summary>
     /// A non-blocking, rectangular set of tiles that transfers a mover after it finishes entering.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
-    public sealed class GridPortal : MonoBehaviour
+    public sealed class GridPortal : MonoBehaviour, ISerializationCallbackReceiver
     {
         [Header("Entrance")]
         [SerializeField] private GridWorld world;
-        [FormerlySerializedAs("useTransformAsCell")]
-        [SerializeField] private bool useTransformAsAnchor = true;
-        [FormerlySerializedAs("cell")]
-        [SerializeField] private Vector2Int anchorCell;
-        [SerializeField] private Vector2Int footprintOffset;
-        [SerializeField] private Vector2Int footprintSize = Vector2Int.one;
-        [SerializeField] private string portalId;
+        [Tooltip("Portal cells extending from the centre towards local grid +X. Zero includes only the centre cell.")]
+        [SerializeField, Min(0)] private int extendPositiveX;
+        [Tooltip("Portal cells extending from the centre towards local grid -X.")]
+        [SerializeField, Min(0)] private int extendNegativeX;
+        [Tooltip("Portal cells extending from the centre towards local grid +Z (grid Y).")]
+        [SerializeField, Min(0)] private int extendPositiveZ;
+        [Tooltip("Portal cells extending from the centre towards local grid -Z (grid Y).")]
+        [SerializeField, Min(0)] private int extendNegativeZ;
 
-        [Header("Destination")]
-        [SerializeField] private GridPortalDestinationMode destinationMode =
-            GridPortalDestinationMode.PortalReference;
-        [SerializeField] private GridPortal destinationPortal;
-        [SerializeField] private GridWorld destinationWorld;
-        [SerializeField] private Vector2Int destinationCell;
-        [SerializeField] private string destinationScene;
-        [SerializeField] private string destinationPortalId;
+        [FormerlySerializedAs("footprintSize")]
+        [SerializeField, HideInInspector] private Vector2Int legacyFootprintSize;
+
+        [Header("Connection")]
         [SerializeField] private PortalContentAsset content;
-        [Tooltip("Maps the entered tile to the equivalent tile in the destination footprint.")]
+        [Tooltip("When enabled, preserve the player's relative position inside this portal footprint at the destination.")]
         [SerializeField] private bool preserveEntryOffset = true;
-        [SerializeField] private Vector2Int arrivalOffset;
 
         [Header("Editor Preview")]
-        [SerializeField] private Color gizmoColour = new Color(0.75f, 0.25f, 1f, 0.75f);
+        [SerializeField] private Color gizmoColour = new Color(0.65f, 0.15f, 0.95f, 0.55f);
+        [SerializeField, Range(0.05f, 1f)] private float gizmoFillOpacity = 0.22f;
 
         public GridWorld World => world;
-        public Vector2Int AnchorCell => useTransformAsAnchor && world != null
-            ? world.WorldToCell(transform.position)
-            : anchorCell;
-        public Vector2Int FirstCell => AnchorCell + footprintOffset;
-        public Vector2Int Cell => FirstCell;
-        public Vector2Int FootprintSize => footprintSize;
-        public string PortalId => portalId;
-        public GridPortalDestinationMode DestinationMode => destinationMode;
+        public Vector2Int CentreCell => world == null ? Vector2Int.zero : world.WorldToCell(transform.position);
+        public Vector2Int AnchorCell => CentreCell;
+        public Vector2Int FirstCell => CentreCell - new Vector2Int(extendNegativeX, extendNegativeZ);
+        public Vector2Int Cell => CentreCell;
+        public Vector2Int FootprintSize => new Vector2Int(
+            extendNegativeX + 1 + extendPositiveX,
+            extendNegativeZ + 1 + extendPositiveZ);
+        public int ExtendPositiveX => extendPositiveX;
+        public int ExtendNegativeX => extendNegativeX;
+        public int ExtendPositiveZ => extendPositiveZ;
+        public int ExtendNegativeZ => extendNegativeZ;
+        public string PortalId => content == null ? string.Empty : content.id;
         public PortalContentAsset Content => content;
 
         public void Configure(PortalContentAsset portalContent, GridWorld targetWorld)
         {
             content = portalContent;
             world = targetWorld;
-            portalId = portalContent == null ? string.Empty : portalContent.id;
-            anchorCell = portalContent == null ? Vector2Int.zero : portalContent.cell;
-            footprintSize = portalContent == null ? Vector2Int.one : portalContent.footprint;
-            useTransformAsAnchor = false;
-            destinationMode = GridPortalDestinationMode.PortalReference;
-            if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
-        }
-
-        public void Configure(string id, int width, int height, string scene, string targetId, Vector2Int offset)
-        {
-            portalId = id; footprintSize = new Vector2Int(Mathf.Max(1, width), Mathf.Max(1, height));
-            destinationMode = GridPortalDestinationMode.ScenePortalId; destinationScene = scene;
-            destinationPortalId = targetId; arrivalOffset = offset; ResolveWorld();
             if (isActiveAndEnabled && world != null) world.RegisterPortal(this, EnumeratePortalCells());
         }
 
@@ -110,58 +90,37 @@ namespace Lumenfall.GridMovement
                 return false;
             }
 
-            if (content != null && content.destination != null && DataDrivenWorldLoader.Instance != null)
+            if (content != null && content.disabled)
             {
-                Vector2Int entryOffset = preserveEntryOffset ? mover.CurrentCell - FirstCell : Vector2Int.zero;
-                return DataDrivenWorldLoader.Instance.SwitchArea(content, entryOffset);
+                return false;
             }
 
-            switch (destinationMode)
+            if (content == null || content.destination == null || DataDrivenWorldLoader.Instance == null)
             {
-                case GridPortalDestinationMode.PortalReference:
-                    return EnterReferencedPortal(mover);
-
-                case GridPortalDestinationMode.WorldCell:
-                    return EnterWorldCell(mover);
-
-                case GridPortalDestinationMode.ScenePortalId:
-                    Vector2Int entryOffset = preserveEntryOffset
-                        ? mover.CurrentCell - FirstCell
-                        : Vector2Int.zero;
-                    if (string.IsNullOrWhiteSpace(destinationScene) ||
-                        string.IsNullOrWhiteSpace(destinationPortalId))
-                    {
-                        Debug.LogError($"{name} needs both a destination scene and portal id.", this);
-                        return false;
-                    }
-                    mover.BeginSceneTransition(
-                        destinationScene,
-                        destinationPortalId,
-                        entryOffset,
-                        arrivalOffset);
-                    return true;
-
-                default:
-                    return false;
+                Debug.LogError($"{name} needs a valid Portal Content asset with a destination.", this);
+                return false;
             }
+
+            Vector2Int entryOffset = preserveEntryOffset ? mover.CurrentCell - CentreCell : Vector2Int.zero;
+            return DataDrivenWorldLoader.Instance.SwitchArea(content, entryOffset);
         }
 
         public bool ContainsCell(Vector2Int candidate)
         {
             Vector2Int first = FirstCell;
+            Vector2Int size = FootprintSize;
             return candidate.x >= first.x && candidate.y >= first.y &&
-                   candidate.x < first.x + footprintSize.x &&
-                   candidate.y < first.y + footprintSize.y;
+                   candidate.x < first.x + size.x &&
+                   candidate.y < first.y + size.y;
         }
 
         public IEnumerable<Vector2Int> EnumeratePortalCells()
         {
-            Vector2Int first = FirstCell;
-            for (int x = 0; x < footprintSize.x; x++)
+            for (int x = -extendNegativeX; x <= extendPositiveX; x++)
             {
-                for (int y = 0; y < footprintSize.y; y++)
+                for (int z = -extendNegativeZ; z <= extendPositiveZ; z++)
                 {
-                    yield return first + new Vector2Int(x, y);
+                    yield return CentreCell + new Vector2Int(x, z);
                 }
             }
         }
@@ -169,9 +128,9 @@ namespace Lumenfall.GridMovement
         public Vector2Int GetArrivalCell(Vector2Int sourceEntryOffset)
         {
             Vector2Int mappedOffset = new Vector2Int(
-                Mathf.Clamp(sourceEntryOffset.x, 0, footprintSize.x - 1),
-                Mathf.Clamp(sourceEntryOffset.y, 0, footprintSize.y - 1));
-            return FirstCell + mappedOffset;
+                Mathf.Clamp(sourceEntryOffset.x, -extendNegativeX, extendPositiveX),
+                Mathf.Clamp(sourceEntryOffset.y, -extendNegativeZ, extendPositiveZ));
+            return CentreCell + mappedOffset;
         }
 
         public void RefreshFootprint()
@@ -188,76 +147,6 @@ namespace Lumenfall.GridMovement
             }
         }
 
-        public static GridPortal FindById(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return null;
-            }
-
-            GridPortal[] allPortals = FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude);
-            foreach (GridPortal portal in allPortals)
-            {
-                if (string.Equals(portal.portalId, id, StringComparison.Ordinal))
-                {
-                    return portal;
-                }
-            }
-
-            return null;
-        }
-
-        private bool EnterReferencedPortal(GridMover mover)
-        {
-            if (destinationPortal == null || destinationPortal.World == null)
-            {
-                Debug.LogError($"{name} does not have a valid destination portal.", this);
-                return false;
-            }
-
-            mover.SetMovementLocked(true);
-            Vector2Int sourceOffset = preserveEntryOffset
-                ? mover.CurrentCell - FirstCell
-                : Vector2Int.zero;
-            bool moved = mover.TryTeleportTo(
-                destinationPortal.World,
-                destinationPortal.GetArrivalCell(sourceOffset) + arrivalOffset,
-                destinationPortal);
-            mover.SetMovementLocked(false);
-
-            if (!moved)
-            {
-                Debug.LogWarning($"{name}'s destination cell is blocked.", this);
-            }
-
-            return moved;
-        }
-
-        private bool EnterWorldCell(GridMover mover)
-        {
-            if (destinationWorld == null)
-            {
-                Debug.LogError($"{name} does not have a destination GridWorld.", this);
-                return false;
-            }
-
-            Vector2Int sourceOffset = preserveEntryOffset
-                ? mover.CurrentCell - FirstCell
-                : Vector2Int.zero;
-            Vector2Int targetCell = destinationCell + sourceOffset + arrivalOffset;
-            GridPortal portalAtDestination = destinationWorld.GetPortalAt(targetCell);
-
-            mover.SetMovementLocked(true);
-            bool moved = mover.TryTeleportTo(destinationWorld, targetCell, portalAtDestination);
-            mover.SetMovementLocked(false);
-
-            if (!moved)
-            {
-                Debug.LogWarning($"{name}'s destination cell is blocked.", this);
-            }
-
-            return moved;
-        }
 
         private void ResolveWorld()
         {
@@ -274,8 +163,11 @@ namespace Lumenfall.GridMovement
 
         private void OnValidate()
         {
-            footprintSize.x = Mathf.Max(1, footprintSize.x);
-            footprintSize.y = Mathf.Max(1, footprintSize.y);
+            MigrateLegacyFootprint();
+            extendPositiveX = Mathf.Max(0, extendPositiveX);
+            extendNegativeX = Mathf.Max(0, extendNegativeX);
+            extendPositiveZ = Mathf.Max(0, extendPositiveZ);
+            extendNegativeZ = Mathf.Max(0, extendNegativeZ);
 
             if (Application.isPlaying && isActiveAndEnabled)
             {
@@ -283,7 +175,30 @@ namespace Lumenfall.GridMovement
             }
         }
 
-        private void OnDrawGizmosSelected()
+        public void OnBeforeSerialize()
+        {
+        }
+
+        public void OnAfterDeserialize()
+        {
+            MigrateLegacyFootprint();
+        }
+
+        private void MigrateLegacyFootprint()
+        {
+            if (legacyFootprintSize.x <= 0 && legacyFootprintSize.y <= 0)
+            {
+                return;
+            }
+
+            // The old footprint expanded from its first cell towards +X/+Z. Keeping that cell as
+            // the new centre preserves all existing authored portal cells and offset mappings.
+            extendPositiveX = legacyFootprintSize.x > 1 ? legacyFootprintSize.x - 1 : 0;
+            extendPositiveZ = legacyFootprintSize.y > 1 ? legacyFootprintSize.y - 1 : 0;
+            legacyFootprintSize = Vector2Int.zero;
+        }
+
+        private void OnDrawGizmos()
         {
             ResolveWorld();
             if (world == null)
@@ -291,15 +206,29 @@ namespace Lumenfall.GridMovement
                 return;
             }
 
-            Gizmos.color = gizmoColour;
-            float radius = world.CellSize * 0.35f;
-            foreach (Vector2Int portalCell in EnumeratePortalCells())
-            {
-                Vector3 centre = world.CellToWorld(portalCell, 0.08f);
-                Gizmos.DrawWireSphere(centre, radius);
-                Gizmos.DrawLine(centre + Vector3.left * radius, centre + Vector3.right * radius);
-                Gizmos.DrawLine(centre + Vector3.back * radius, centre + Vector3.forward * radius);
-            }
+            Vector2Int first = FirstCell;
+            Vector2Int size = FootprintSize;
+            Vector2Int last = first + size - Vector2Int.one;
+            Vector3 firstWorld = world.CellToWorld(first, 0.06f);
+            Vector3 lastWorld = world.CellToWorld(last, 0.06f);
+            Vector3 centreWorld = world.CellToWorld(CentreCell, 0.06f);
+            float cellSize = Mathf.Max(0.01f, world.CellSize);
+            Vector3 footprintCentre = (firstWorld + lastWorld) * 0.5f;
+            Vector3 dimensions = new Vector3(size.x * cellSize, 0.08f, size.y * cellSize);
+
+            Color fill = gizmoColour;
+            fill.a = Mathf.Clamp01(gizmoFillOpacity);
+            Gizmos.color = fill;
+            Gizmos.DrawCube(footprintCentre, dimensions);
+
+            Color outline = gizmoColour;
+            outline.a = Mathf.Max(outline.a, 0.9f);
+            Gizmos.color = outline;
+            Gizmos.DrawWireCube(footprintCentre, dimensions);
+
+            // The purple sphere is the portal transmission centre and zero-offset arrival point.
+            Gizmos.DrawSphere(centreWorld + Vector3.up * 0.12f, cellSize * 0.12f);
+
         }
     }
 }

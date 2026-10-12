@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="29" result="Failed(Child)" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.2165396">
+  <test-suite type="TestSuite" id="1000" name="Lumenfall" fullname="Lumenfall" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.216540" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1042" name="Lumenfall.GameEvents.Tests.dll" fullname="D:/Git Repositories/Lumenfall-FIT3161/Lumenfall/Library/ScriptAssemblies/Lumenfall.GameEvents.Tests.dll" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.209894" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="41040" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1043" name="Lumenfall" fullname="Lumenfall" runstate="Runnable" testcasecount="34" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.209304" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1044" name="Tests" fullname="Lumenfall.Tests" runstate="Runnable" testcasecount="29" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.209076" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1045" name="GameEvents" fullname="Lumenfall.Tests.GameEvents" runstate="Runnable" testcasecount="29" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.208929" total="29" passed="28" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1001" name="GameEventRuntimeTests" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.064815" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1006" name="Catalog_RejectsBrokenDialogueLinks" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.Catalog_RejectsBrokenDialogueLinks" methodname="Catalog_RejectsBrokenDialogueLinks" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="2022100243" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.013963" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" methodname="DialogueChoiceConditions_ExposeOnlyCurrentQuestBranch" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="876920392" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.011856" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="ExportAndImport_RestoresGlobalState" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ExportAndImport_RestoresGlobalState" methodname="ExportAndImport_RestoresGlobalState" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="802566564" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.006012" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="NonRepeatableEvent_OnlyTriggersOnce" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.NonRepeatableEvent_OnlyTriggersOnce" methodname="NonRepeatableEvent_OnlyTriggersOnce" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="1561228015" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.000469" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="QuestLifecycleEvent_RunsWhenQuestCompletes" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.QuestLifecycleEvent_RunsWhenQuestCompletes" methodname="QuestLifecycleEvent_RunsWhenQuestCompletes" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="267530190" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.000450" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="ShippedSample_CompletesNpcDialogueAndQuestFlow" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ShippedSample_CompletesNpcDialogueAndQuestFlow" methodname="ShippedSample_CompletesNpcDialogueAndQuestFlow" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="284366088" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.015952" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ShippedSampleJson_ParsesAndHasValidReferences" fullname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests.ShippedSampleJson_ParsesAndHasValidReferences" methodname="ShippedSampleJson_ParsesAndHasValidReferences" classname="Lumenfall.Tests.GameEvents.GameEventRuntimeTests" runstate="Runnable" seed="374535489" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.002804" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1009" name="GameSaveSlotPolicyTests" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003464" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1011" name="InvalidMarkerFallsBackToNewestValidSave" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests.InvalidMarkerFallsBackToNewestValidSave" methodname="InvalidMarkerFallsBackToNewestValidSave" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" seed="1630482501" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.001835" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" fullname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests.ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" methodname="ValidLastPlayedMarkerWinsOverNewerSaveTimestamp" classname="Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests" runstate="Runnable" seed="260261675" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.000422" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1012" name="QuestDialogueContentTests" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.008855" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1013" name="QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests.QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" methodname="QuestDialoguePackage_HasAllLifecycleBranchesAndCompletionEvents" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" seed="1525303870" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.004042" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" fullname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests.QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" methodname="QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle" classname="Lumenfall.Tests.GameEvents.QuestDialogueContentTests" runstate="Runnable" seed="1484763959" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003847" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1015" name="QuestDialogueLifecycleTests" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.054849" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1023" name="AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" methodname="AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="891579592" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.029043" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" methodname="DependentQuestAcceptChoiceRemainsUnavailableUntilPrerequisiteCompletes" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="804830728" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.006659" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" methodname="EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="507997551" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.000958" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" methodname="EveryQuestDialogueTraversesNotStartedActiveAndCompletedBranches" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="276343657" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003196" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" methodname="FreshSpellCasterHasNoSpellsAndFirstQuestTeachesAmpere" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1091442209" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003254" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="GravitateArrivesThroughAuthoredLaterQuestCompletion" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.GravitateArrivesThroughAuthoredLaterQuestCompletion" methodname="GravitateArrivesThroughAuthoredLaterQuestCompletion" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1545544931" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.000725" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="SpellRewardFlagsSurviveRuntimeSaveRoundTrip" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.SpellRewardFlagsSurviveRuntimeSaveRoundTrip" methodname="SpellRewardFlagsSurviveRuntimeSaveRoundTrip" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1750154027" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003195" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" methodname="SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="1941272908" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.001251" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" fullname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests.StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" methodname="StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest" classname="Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests" runstate="Runnable" seed="80268226" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003300" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1025" name="QuestHintOverlayTests" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.057981" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1027" name="ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" methodname="ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="1703931907" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.010282" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1029" name="ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" methodname="ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="269804163" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.007961" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1026" name="FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" methodname="FirstLightHintFindsASolutionFromEveryBoardStateAndMonitorRequiresAllFive" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="290580222" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.024920" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1028" name="MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" methodname="MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="897713484" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.003139" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1030" name="SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" fullname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests.SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" methodname="SettingsRemainReachableWhenHintsAreOffAndRestoreOnlyOwnedPlayerInput" classname="Lumenfall.Tests.GameEvents.QuestHintOverlayTests" runstate="Runnable" seed="733358665" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.004023" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1031" name="SpellWorldStateTests" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.017016" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1032" name="AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" methodname="AmpereTogglesAndQueuesDurableEffectUntilAcknowledged" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="171424058" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.001459" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1035" name="GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" methodname="GlaciateStopsAtAuthoredGoalAndFootprintMovementRejectsBlocker" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="1863868888" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.005758" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1034" name="StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" methodname="StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="640831534" result="Failed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.002609" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Lumenfall.Tests.GameEvents.SpellWorldStateTests.StellaCircuitMonitorRequiresPoweredSourceAndExactWeaveConnectionAfterAcceptance () [0x0011c] in D:\Git Repositories\Lumenfall-FIT3161\Lumenfall\Assets\_Project\Systems\GameEvents\Tests\EditMode\SpellWorldStateTests.cs:83
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1033" name="WeaveUsesDeclaredEndpointAndPersistsAttenuation" fullname="Lumenfall.Tests.GameEvents.SpellWorldStateTests.WeaveUsesDeclaredEndpointAndPersistsAttenuation" methodname="WeaveUsesDeclaredEndpointAndPersistsAttenuation" classname="Lumenfall.Tests.GameEvents.SpellWorldStateTests" runstate="Runnable" seed="314840799" result="Passed" start-time="2026-10-01 12:00:43Z" end-time="2026-10-01 12:00:43Z" duration="0.005327" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/Nicholas/AppData/LocalLow/DefaultCompany/Lumenfall\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

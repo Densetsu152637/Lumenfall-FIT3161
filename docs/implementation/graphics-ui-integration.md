@@ -20,6 +20,14 @@ PR #23 combines the basic graphics settings with the UI work available on the re
 
 Other remote branches either inherit these UI changes or modify gameplay, levels, assets, infrastructure or documentation outside this integration. This is content integration for broad branches, not a claim that their complete histories are merged. A full options-menu merge would bring over 1,600 unrelated files; scoped imports keep this PR reviewable.
 
+### Full menu-branch merge
+
+`feat/options-menu` (`30df69c`, which contains all of `feat/main-menu`) was later merged into this branch in full, after both had been merged into `main` through PRs #26 and #27. The merge brings in the newer gameplay and quest content those branches carry, so the scoped exclusions above no longer apply to them. Conflicts were resolved as follows:
+
+- **Kept from this branch:** the consolidated Main/Graphics `OptionsPanel`, `MenuSkin`, `GameSettingsPanel`, graphics options, accessibility, audio buses, `OverlayInputGate` ownership, keyboard/controller navigation, transactional save recovery (`GameSaveManager`) and owner-scoped movement locks.
+- **Taken from the menu branches:** the New Game slot picker with linked manual slots (`ManualSaveSlot`), journal-footer Save/Main menu/Quit, deliberate autosaving (`GameAutosave.HasPlayedSinceLoad`, no save on load), the four-option main ring (the startup Save page is removed), quest hints for Stella and Orio, the `eastForest` save-id migration, NPC talk prompts and the dialogue text-colour fixes.
+- **Combined:** `SpellCaster` follows `main` (Weave threads, Lost Echoes area search, mechanism casts and the animated wheel) and adds gamepad/arrow wheel navigation and the input gate. `GridPlayerInput` keeps the hold/toggle sprint preference and ignores rebound keyboard keys in the input actions. `WorldStateService` and `DataDrivenWorldLoader` validate saves after normalising legacy map ids.
+
 ## Result
 
 One `OptionsPanel` is used in startup Settings, pause Settings and journal Settings:

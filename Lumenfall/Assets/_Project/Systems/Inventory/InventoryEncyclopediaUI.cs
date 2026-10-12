@@ -73,6 +73,15 @@ namespace Lumenfall.Inventory
         private float underlineOffset;
         private float underlineWidth;
         private bool underlinePlaced;
+        // Footer save status: it writes itself in again whenever its text changes, and a wax seal marks a Save this visit.
+        private string saveStatus;
+        private float saveStatusAt = float.NegativeInfinity;
+        private string saveFeedback;
+        private string inkText;
+        private float inkedAt;
+        private float sealedAt = float.NegativeInfinity;
+
+        private enum FooterAction { None, MainMenu, Save, Quit }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -171,6 +180,9 @@ namespace Lumenfall.Inventory
             OverlayInputGate.Acquire(this);
             openedAt = pageChangedAt = Time.unscaledTime;
             underlinePlaced = false;
+            saveFeedback = null;
+            saveStatusAt = sealedAt = float.NegativeInfinity;
+            inkText = null;
             options.Reset();
             skin.ResetAmbience();
             lockedMover = FindAnyObjectByType<GridMover>();
@@ -238,6 +250,9 @@ namespace Lumenfall.Inventory
 
             float tabY = panel.y + 98f;
             DrawTabs(panel, tabY);
+            Rect lastTab = tabRects[tabRects.Length - 1];
+            skin.Label(new Rect(lastTab.xMax + 16f, tabY, panel.xMax - 36f - lastTab.xMax - 16f, 36f),
+                KeyBindings.GetKeyLabel(GameAction.Journal) + " or Esc to close", skin.SmallRight, MenuArt.Muted);
 
             // Choosing a tab turns a page in from the left, like a book; Reduce motion shows the page at once.
             float turn = skin.Motion > 0f ? Mathf.Clamp01((now - pageChangedAt) / PageFlipSeconds) : 1f;
@@ -249,18 +264,118 @@ namespace Lumenfall.Inventory
             skin.EndPageFlip(content, turn, unturned);
 
             skin.Fade = open;
-            Rect footer = new Rect(panel.x + 36f, panel.yMax - 58f, panel.width - 72f, 36f);
-            bool returnToMenu = skin.Button(new Rect(footer.x, footer.y, 150f, footer.height), "Main menu");
-            skin.Label(new Rect(footer.x + 170f, footer.y, footer.width - 170f, footer.height),
-                KeyBindings.GetKeyLabel(GameAction.Journal) + " or Esc to close", skin.SmallRight, MenuArt.Muted);
+            FooterAction action = DrawFooter(panel);
             skin.Fade = 1f;
             skin.DrawSparks(1f);
             GUI.color = previousColor;
-            if (returnToMenu)
+            if (action == FooterAction.MainMenu)
             {
                 Close();
                 StartupMenu.ReturnToMainMenu();
             }
+            else if (action == FooterAction.Save) SaveNow();
+            else if (action == FooterAction.Quit) QuitGame();
+        }
+
+        /// <summary>Main menu, Save to the game's slot (with the hourglass) and Quit game, then the inked save status.</summary>
+        private FooterAction DrawFooter(Rect panel)
+        {
+            const float Height = 36f;
+            const float Gap = 12f;
+            float y = panel.yMax - 58f;
+            float x = panel.x + 36f;
+            FooterAction action = FooterAction.None;
+            if (skin.Button(new Rect(x, y, 140f, Height), "Main menu")) action = FooterAction.MainMenu;
+            x += 140f + Gap;
+            if (SaveButton(new Rect(x, y, 160f, Height))) action = FooterAction.Save;
+            x += 160f + Gap;
+            if (skin.Button(new Rect(x, y, 130f, Height), "Quit game")) action = FooterAction.Quit;
+            x += 130f + Gap;
+            DrawSaveStatus(new Rect(x + 8f, y, panel.xMax - 36f - x - 8f, Height));
+            return action;
+        }
+
+        private bool SaveButton(Rect rect)
+        {
+            string slot = ManualSaveSlot.Linked;
+            bool clicked = skin.Button(rect, slot != null ? "Save · " + ManualSaveSlot.Label(slot) : "Save");
+            float lift = rect.Contains(Event.current.mousePosition) ? 2f : 0f;
+            skin.DrawHourglass(new Rect(rect.x + 10f, rect.center.y - 9f - lift, 12f, 18f));
+            return clicked;
+        }
+
+        /// <summary>Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.</summary>
+        private void DrawSaveStatus(Rect area)
+        {
+            const float SealSize = 24f;
+            string status = SaveStatus();
+            if (status != inkText)
+            {
+                inkText = status;
+                inkedAt = Time.unscaledTime;
+            }
+            GUIStyle style = skin.Status;
+            float textWidth = style.CalcSize(new GUIContent(status)).x;
+            bool stamped = !float.IsNegativeInfinity(sealedAt) && saveFeedback == null;
+            float x = Mathf.Max(area.x, area.xMax - textWidth - (stamped ? SealSize + 8f : 0f));
+            if (stamped)
+            {
+                skin.DrawSeal(new Rect(x, area.center.y - SealSize * 0.5f, SealSize, SealSize), sealedAt);
+                x += SealSize + 8f;
+            }
+            skin.InkLabel(new Rect(x, area.y, Mathf.Max(0f, area.xMax - x), area.height), status, style, inkedAt,
+                saveFeedback != null ? MenuArt.Ember : MenuArt.Muted);
+        }
+
+        /// <summary>"Slot 1 saved 2 min ago", from the linked slot's file time. The file is checked at most once a second.</summary>
+        private string SaveStatus()
+        {
+            if (saveFeedback != null) return saveFeedback;
+            if (Time.unscaledTime - saveStatusAt < 1f && saveStatus != null) return saveStatus;
+            saveStatusAt = Time.unscaledTime;
+            string slot = ManualSaveSlot.Linked;
+            if (slot == null) return saveStatus = ManualSaveSlot.FirstEmpty() != null ? "Save picks an empty slot" : "No save slot yet";
+            string label = ManualSaveSlot.Label(slot);
+            if (!GameSaveManager.Instance.TryGetSavedAt(slot, out DateTime savedAt)) return saveStatus = label + " not saved yet";
+            TimeSpan age = DateTime.Now - savedAt;
+            saveStatus = age.TotalSeconds < 10 ? label + " saved just now"
+                : age.TotalMinutes < 1 ? label + " saved moments ago"
+                : age.TotalHours < 1 ? $"{label} saved {(int)age.TotalMinutes} min ago"
+                : age.TotalDays < 1 ? $"{label} saved {(int)age.TotalHours} h ago"
+                : label + " saved " + savedAt.ToString("d MMM 'at' h:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant();
+            return saveStatus;
+        }
+
+        /// <summary>
+        /// Saves to the game's manual slot (the autosave is refreshed too). A game with no slot yet, such as one carried
+        /// over from before slots were linked, takes the first empty slot; if all are full it asks the player to load one.
+        /// </summary>
+        private void SaveNow()
+        {
+            saveStatusAt = float.NegativeInfinity;
+            if (ManualSaveSlot.Linked == null)
+            {
+                string empty = ManualSaveSlot.FirstEmpty();
+                if (empty == null)
+                {
+                    saveFeedback = "Every slot is full. Load one from the main menu to save over it.";
+                    return;
+                }
+                ManualSaveSlot.Link(empty);
+            }
+            bool saved = ManualSaveSlot.SaveToLinked(out string error);
+            saveFeedback = saved ? null : error ?? "Could not save. Please try again.";
+            if (saved) sealedAt = Time.unscaledTime;
+        }
+
+        /// <summary>
+        /// Autosaves (unless nothing has been played since the last load), then quits. Like the main menu's Exit, quitting
+        /// does nothing in the editor.
+        /// </summary>
+        private static void QuitGame()
+        {
+            if (GameAutosave.HasPlayedSinceLoad) GameAutosave.SaveNow();
+            Application.Quit();
         }
 
         private void DrawTabs(Rect panel, float y)

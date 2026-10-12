@@ -29,7 +29,7 @@ for a in areas.values():
  graph={k:set() for k in maps}
  for a in areas.values():
   for p in a['portals']: graph[a['mapId']].add(p['destination']['mapId'])
- seen={'eastForest'}; q=['eastForest']
+ seen={'westForest'}; q=['westForest']
  while q:
   for n in graph[q.pop()]-seen: seen.add(n); q.append(n)
  assert seen==set(maps)

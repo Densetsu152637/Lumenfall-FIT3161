@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Acceptance checks for the campus garden, NPC layers, and east gate portals."""
+"""Acceptance checks for the campus garden, NPC layers, and west gate portals."""
 from __future__ import annotations
 
 import json
@@ -74,17 +74,17 @@ def main() -> int:
                         break
             if old_rows and new_rows and old_rows[0] != new_rows[0]:
                 fail("campus numeric ruler changed")
-    forest_source = ROOT / "docs" / "maps" / "layouts" / "eastForest.txt"
+    forest_source = ROOT / "docs" / "maps" / "layouts" / "westForest.txt"
     if forest_source.exists():
         digest = hashlib.sha256(forest_source.read_bytes()).hexdigest()
         if digest != "60c12ac737577e52e64dc32961e8d61f59789f16eb3af9a702ce2f15f47ef8bd":
-            fail(f"eastForest runtime source hash changed: {digest}")
+            fail(f"westForest runtime source hash changed: {digest}")
     campus_meta = load(MAPS / "campus.json")
-    forest_meta = load(MAPS / "eastForest.json")
+    forest_meta = load(MAPS / "westForest.json")
     cw, ch = campus_meta.get("width", 0), campus_meta.get("height", 0)
     fw, fh = forest_meta.get("width", 0), forest_meta.get("height", 0)
     campus = normalize(MAPS / "campus.txt", cw, ch)
-    forest = normalize(MAPS / "eastForest.txt", fw, fh)
+    forest = normalize(MAPS / "westForest.txt", fw, fh)
 
     garden = (10, 32, 35, 49)
     for region in campus_meta.get("regions", []):
@@ -120,9 +120,9 @@ def main() -> int:
     if not (walkable(campus, 22, 49) and walkable(campus, 23, 49)):
         fail("garden entrance (22,49)-(23,49) is not walkable")
 
-    # Exact active east-gate X cells and reserved future markers.
-    expected = {"campus": {(86, 25), (86, 26)}, "eastForest": {(0, 34), (1, 34), (0, 35), (1, 35)}}
-    for name, rows, cells in (("campus", campus, expected["campus"]), ("eastForest", forest, expected["eastForest"])):
+    # Exact active west-gate X cells and reserved future markers.
+    expected = {"campus": {(86, 25), (86, 26)}, "westForest": {(0, 34), (1, 34), (0, 35), (1, 35)}}
+    for name, rows, cells in (("campus", campus, expected["campus"]), ("westForest", forest, expected["westForest"])):
         actual = {(x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c == "X"}
         if name == "campus":
             actual -= {(45, 19), (46, 19), (68, 23)}
@@ -138,17 +138,17 @@ def main() -> int:
         maps = manifest.get("maps", {})
         if {tuple(v) for v in maps.get("campus", [])} != reserved | expected["campus"]:
             fail(f"portal manifest campus cells disagree with source: {maps.get('campus')}")
-        if {tuple(v) for v in maps.get("eastForest", [])} != expected["eastForest"]:
-            fail(f"portal manifest forest cells disagree with source: {maps.get('eastForest')}")
+        if {tuple(v) for v in maps.get("westForest", [])} != expected["westForest"]:
+            fail(f"portal manifest forest cells disagree with source: {maps.get('westForest')}")
     portals = campus_meta.get("portals", []) + forest_meta.get("portals", [])
     ids = [p.get("id") for p in portals]
     if len(ids) != len(set(ids)):
         fail("portal IDs are duplicated")
     for p in portals:
         if p.get("id", "").startswith("P.A01.F03") and p.get("x") not in (86,):
-            fail(f"legacy/noncanonical campus east portal remains: {p}")
+            fail(f"legacy/noncanonical campus west portal remains: {p}")
         dest = p.get("destinationScene")
-        if dest not in ("campus", "eastForest"):
+        if dest not in ("campus", "westForest"):
             continue
         target_rows = campus if dest == "campus" else forest
         ax, ay = p.get("arrivalOffsetX", -1), p.get("arrivalOffsetY", -1)
@@ -160,7 +160,7 @@ def main() -> int:
     for msg in FAILS:
         print("FAIL:", msg)
     if not FAILS:
-        print("PASS: garden, NPC, and east-gate acceptance checks")
+        print("PASS: garden, NPC, and west-gate acceptance checks")
     return 1 if FAILS else 0
 
 

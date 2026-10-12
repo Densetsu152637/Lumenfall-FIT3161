@@ -28,18 +28,6 @@ public class CameraFollow2_5D : MonoBehaviour
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
 
-    /// <summary>Resting pose used when the menu hands its drifting camera back to gameplay.</summary>
-    public bool TryGetFollowPose(out Vector3 position, out Vector3 focusPoint)
-    {
-        position = transform.position;
-        focusPoint = transform.position + transform.forward;
-        if (target == null) return false;
-        position = target.position + offset;
-        focusPoint = target.position + focusOffset;
-        return true;
-    }
-
-    public void ResetSmoothing() { currentVelocity = Vector3.zero; }
     private bool reducedMotion;
     private void OnEnable()
     {
@@ -54,6 +42,30 @@ public class CameraFollow2_5D : MonoBehaviour
         reducedMotion = value;
         currentVelocity = Vector3.zero;
         if (target != null) transform.position = target.position + offset;
+    }
+
+    /// <summary>
+    /// Reports where the camera would rest when fully caught up with its target. Overlays such as the
+    /// startup menu use this to move the camera themselves and hand it back without a jump.
+    /// </summary>
+    public bool TryGetFollowPose(out Vector3 position, out Vector3 focusPoint)
+    {
+        position = transform.position;
+        focusPoint = transform.position + transform.forward;
+        if (target == null)
+        {
+            return false;
+        }
+
+        position = target.position + offset;
+        focusPoint = target.position + focusOffset;
+        return true;
+    }
+
+    /// <summary>Clears smoothing velocity so following resumes cleanly after another script moved the camera.</summary>
+    public void ResetSmoothing()
+    {
+        currentVelocity = Vector3.zero;
     }
 
     /// <summary>

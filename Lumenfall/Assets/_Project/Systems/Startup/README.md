@@ -13,7 +13,7 @@ The startup Settings page, in-game pause/settings panel (`QuestHintOverlay`) and
 
 Use the pointer, or Up/Down to focus a tab or setting, Left/Right to select a tab or adjust the focused value, and Enter/Space to activate it. A controller uses the d-pad/left stick and A/B. Fullscreen is available in a player build. Unsupported URP/AO controls display Unavailable and preserve their saved values.
 
-The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay, F10, controller Start or the Settings button opens the pause panel. The pause panel provides Save now, Main menu, Quit game and Close. A failed save remains visible and prevents Quit from closing the game.
+The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay, F10, controller Start or the Settings button opens the pause panel. The pause panel holds only the options and a `Game paused · Esc to resume` line; its top-right button reads Close. The journal footer provides **Main menu**, **Save · Slot N** and **Quit game**, with the linked slot's save time inked beside them. A failed save stays visible in the footer and prevents Quit from closing the game.
 
 Controls groups movement, spell and interface actions. Selecting an action captures its next key; a conflicting assignment requires an explicit Swap or Cancel. Escape cancels the capture. Runtime movement, sprint, talk, spell selection/casting and journal input use these bindings.
 
@@ -37,7 +37,13 @@ Main preferences retain their own stores: `AudioMixSettings` owns bus levels, `A
 
 The first launch presents the authored starting world behind the menu without creating a placeholder save. Later launches load `autosave` as a backdrop. Legacy manual saves can be promoted to autosave without overwriting their originals. Backdrop loading does not mark a slot as newly played.
 
-Start resets event/world state through the save manager's reset transaction. Replacing an existing autosave requires a second Start press. Gameplay autosaves use the dedicated `autosave` slot every 30 seconds and on eligible events. Three manual snapshots (`save-1`, `save-2`, `save-3`) are available from the Save page; overwrites require confirmation. Loading a manual snapshot resumes it into autosave, leaving the manual file unchanged.
+Each game belongs to one manual slot (`save-1`, `save-2`, `save-3`). `ManualSaveSlot` stores the link as the game-event counter `save.manual-slot`, so it is written into every save and restored with it.
+
+- **New Game.** START opens a New Game page with the three manual slots as cards. A card's START resets event/world state through the save manager's reset transaction and links the run to that slot. A filled slot, or an existing autosave, needs a second START. Nothing is written until the run's first save (`GameAutosave.BeginNewRun(slot)`), so a new game abandoned at once leaves the old files untouched.
+- **Load.** The Load page shows an Autosave card and three Manual Slot cards, tagged `Most recent` and `Current`. Loading a manual slot links the run to it and continues in `autosave`; the manual file is never touched by autosave.
+- **Save.** The journal's Save button writes the linked slot (`ManualSaveSlot.SaveToLinked`) after refreshing the autosave. An unlinked run takes the first empty slot.
+
+`GameAutosave` writes `autosave` after every 30 seconds of active play (time running and the startup menu closed), and never while `GameSaveManager.AutosaveAllowed` is false during recovery or another save operation. There are no event-triggered autosaves. Main menu and Quit game save first only once the player has played five seconds since the last load (`GameAutosave.HasPlayedSinceLoad`). The startup menu has no Save option; on the main page Up/Down (W/S, d-pad or stick) select START, LOAD, SETTINGS or EXIT, and on the New Game and Load pages they move between cards.
 
 The Load page shows location, quest, playtime, timestamp and thumbnail summaries. If a primary save is invalid, the menu offers explicit valid previous/interrupted-write recovery candidates. Save validation, migrations, unknown-provider preservation and rollback live in `GameSaveManager`; the menu never silently promotes a recovery candidate. See [save recovery](../../../../../docs/implementation/feature-save-recovery-migrations.md).
 

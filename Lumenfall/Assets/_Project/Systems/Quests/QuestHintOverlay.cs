@@ -36,18 +36,11 @@ namespace Lumenfall.Quests
         // The pop-out pauses the world; the previous time scale comes back when it closes.
         private bool pausedTime;
         private float pausedTimeScale = 1f;
-        private string saveStatus;
-        private float saveStatusAt = float.NegativeInfinity;
-        private string saveFeedback;
         // Glaciate frost creeps in while paused and thaws after closing, starting from however far it had grown.
         private const float FrostSeconds = 1.2f;
         private const float ThawSeconds = 0.8f;
         private float frostAtClose;
         private float closedAt = float.NegativeInfinity;
-        // The save status writes itself in again whenever its text changes; the seal marks a Save now this session.
-        private string inkText;
-        private float inkedAt;
-        private float sealedAt = float.NegativeInfinity;
         private readonly List<GridPlayerInput> pausedInputs = new List<GridPlayerInput>();
         private readonly MenuSkin skin = new MenuSkin();
         private readonly OptionsPanel options = new OptionsPanel();
@@ -162,6 +155,52 @@ namespace Lumenfall.Quests
                 if (selectedPuzzle != null && !string.IsNullOrEmpty(selectedPuzzle.mapId) &&
                     !string.Equals(selectedPuzzle.mapId, world.CurrentMapId, StringComparison.OrdinalIgnoreCase))
                     hint += $"\nLocation: {MapName(selectedPuzzle.mapId)}.";
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
+            {
+                if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
+                    StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string boardHint, out Vector2Int boardCell))
+                {
+                    hint = boardHint;
+                    if (!string.IsNullOrWhiteSpace(boardHint) && boardCell != default)
+                    {
+                        string direction = DirectionToCell(boardCell);
+                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                    }
+                }
+                else hint = "Find the five circuit relics in Stella's room. Each switch changes several relics.";
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, "stella_string_them_together", StringComparison.Ordinal))
+            {
+                if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
+                    StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string circuitHint, out Vector2Int circuitCell))
+                {
+                    hint = circuitHint;
+                    if (circuitCell != default)
+                    {
+                        string direction = DirectionToCell(circuitCell);
+                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                    }
+                }
+                else hint = "Return to Stella's room and weave power from her relic to all five board relics.";
+                return;
+            }
+
+            // Orio deliberately has no automatic monitor: the player reports the live gear alignment.
+            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
+            {
+                if (!string.Equals(world.CurrentMapId, RotaraGearMechanism.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Travel to the west forest and speak with Orio at the mechanism glade.";
+                else if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio and finish his Rotara lesson before turning the forest gear.";
+                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
+                    hint = "The forest gear is aligned. Return to Orio and confirm the patch.";
+                else
+                    hint = "Select Rotara and cast at the forest gear. Each cast turns it clockwise by 90 degrees; reach the 90-degree notch, then report to Orio.";
                 return;
             }
 
@@ -366,23 +405,13 @@ namespace Lumenfall.Quests
             if (InventoryUiState.IsOpen) return;
             skin.Ensure();
             Color previousColor = GUI.color;
-            PanelAction action = settingsOpen ? DrawSettingsPanel() : PanelAction.None;
+            if (settingsOpen) DrawSettingsPanel();
             skin.Fade = 1f;
             if (!settingsOpen) skin.DrawFrost(ThawAmount());
             if (SettingsButton(new Rect(Screen.width - 156f, 16f, 140f, 36f))) SetSettingsOpen(!settingsOpen);
             if (settingsOpen) skin.DrawSparks(1f);
             GUI.color = previousColor;
-
-            if (action == PanelAction.Save) SaveNow();
-            else if (action == PanelAction.MainMenu)
-            {
-                SetSettingsOpen(false);
-                StartupMenu.ReturnToMainMenu();
-            }
-            else if (action == PanelAction.Quit) QuitGame();
         }
-
-        private enum PanelAction { None, Save, MainMenu, Quit }
 
         private void UpdateSettings()
         {
@@ -408,8 +437,8 @@ namespace Lumenfall.Quests
             return !OverlayInputGate.IsBlocked && SettingsClosedFrame != Time.frameCount && FindAnyObjectByType<StartupMenu>() == null;
         }
 
-        /// <summary>The Settings pop-out, styled like the startup menu. Returns the footer button that was pressed.</summary>
-        private PanelAction DrawSettingsPanel()
+        /// <summary>The Settings pop-out, styled like the startup menu: the options, then a short paused hint.</summary>
+        private void DrawSettingsPanel()
         {
             float now = Time.unscaledTime;
             float open = MenuSkin.Smooth((now - settingsOpenedAt) / 0.35f);
@@ -419,56 +448,32 @@ namespace Lumenfall.Quests
             skin.DrawFrost(FrostAmount());
 
             float width = Mathf.Min(Screen.width - 48f, 860f);
-            float height = Mathf.Min(Screen.height - 48f, 660f);
+            float height = Mathf.Min(Screen.height - 48f, 620f);
             Rect panel = new Rect((Screen.width - width) * 0.5f - skin.Parallax.x * 4f,
                 (Screen.height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
             skin.PanelFrame(panel, now);
             skin.DrawTitle(new Rect(panel.x + 24f, panel.y + 22f, panel.width - 48f, 50f), "Settings", now);
             skin.Divider(panel.center.x, panel.y + 84f, Mathf.Min(280f, panel.width - 120f), now);
 
-            float buttonsY = panel.yMax - 70f;
-            float statusY = buttonsY - 30f;
+            float hintY = panel.yMax - 46f;
             float top = panel.y + 106f;
-            options.Draw(new Rect(panel.x + 36f, top, panel.width - 72f, statusY - 10f - top), skin);
-
-            DrawStatusLine(new Rect(panel.x + 36f, statusY, panel.width - 72f, 22f));
-
-            // Save now, Main menu, Quit game and Close share the footer row.
-            const float Gap = 12f;
-            float buttonWidth = Mathf.Min(170f, (panel.width - 72f - Gap * 3f) / 4f);
-            float x = panel.center.x - (buttonWidth * 4f + Gap * 3f) * 0.5f;
-            PanelAction action = PanelAction.None;
-            if (skin.Button(new Rect(x, buttonsY, buttonWidth, 44f), "Save now")) action = PanelAction.Save;
-            if (skin.Button(new Rect(x + (buttonWidth + Gap), buttonsY, buttonWidth, 44f), "Main menu")) action = PanelAction.MainMenu;
-            if (skin.Button(new Rect(x + (buttonWidth + Gap) * 2f, buttonsY, buttonWidth, 44f), "Quit game")) action = PanelAction.Quit;
-            if (skin.Button(new Rect(x + (buttonWidth + Gap) * 3f, buttonsY, buttonWidth, 44f), "Close")) SetSettingsOpen(false);
-            return action;
+            options.Draw(new Rect(panel.x + 36f, top, panel.width - 72f, hintY - 14f - top), skin);
+            DrawPausedLine(new Rect(panel.x + 36f, hintY, panel.width - 72f, 22f));
         }
 
         private float FrostAmount() => skin.Motion > 0f ? MenuSkin.Smooth((Time.unscaledTime - settingsOpenedAt) / FrostSeconds) : 1f;
 
         private float ThawAmount() => skin.Motion > 0f ? frostAtClose * (1f - MenuSkin.Smooth((Time.unscaledTime - closedAt) / ThawSeconds)) : 0f;
 
-        /// <summary>
-        /// The centred status line: a frozen hourglass beside "Game paused", then the save status, which writes itself in
-        /// like ink. After Save now a wax seal is pressed beside it.
-        /// </summary>
-        private void DrawStatusLine(Rect line)
+        /// <summary>A frozen hourglass beside "Game paused", and how to resume.</summary>
+        private void DrawPausedLine(Rect line)
         {
             const string Paused = "Game paused";
-            const float SealSize = 24f;
-            string status = SaveStatus();
-            if (status != inkText)
-            {
-                inkText = status;
-                inkedAt = Time.unscaledTime;
-            }
+            const string next = "Esc to resume";
             GUIStyle style = skin.Status;
             float pausedWidth = style.CalcSize(new GUIContent(Paused)).x;
-            float statusWidth = style.CalcSize(new GUIContent(status)).x;
-            bool stamped = !float.IsNegativeInfinity(sealedAt) && saveFeedback == null;
-            float total = 22f + pausedWidth + 26f + (stamped ? SealSize + 8f : 0f) + statusWidth;
-            float x = line.center.x - total * 0.5f;
+            float nextWidth = style.CalcSize(new GUIContent(next)).x;
+            float x = line.center.x - (22f + pausedWidth + 26f + nextWidth) * 0.5f;
 
             skin.DrawHourglass(new Rect(x, line.center.y - 10f, 14f, 20f));
             x += 22f;
@@ -476,51 +481,7 @@ namespace Lumenfall.Quests
             x += pausedWidth;
             if (Event.current.type == EventType.Repaint) skin.Draw(new Rect(x + 11f, line.center.y - 2f, 4f, 4f), skin.Glow, MenuArt.Gold, 0.8f);
             x += 26f;
-            if (stamped)
-            {
-                skin.DrawSeal(new Rect(x, line.center.y - SealSize * 0.5f, SealSize, SealSize), sealedAt);
-                x += SealSize + 8f;
-            }
-            skin.InkLabel(new Rect(x, line.y, statusWidth + 4f, line.height), status, style, inkedAt,
-                saveFeedback != null ? MenuArt.Ember : MenuArt.Muted);
-        }
-
-        /// <summary>"Last saved 2 min ago", from the current slot's file time. The file is checked at most once a second.</summary>
-        private string SaveStatus()
-        {
-            if (saveFeedback != null) return saveFeedback;
-            if (Time.unscaledTime - saveStatusAt < 1f && saveStatus != null) return saveStatus;
-            saveStatusAt = Time.unscaledTime;
-            if (!GameSaveManager.Instance.TryGetSavedAt(GameSaveOverlay.CurrentSlot, out DateTime savedAt))
-                return saveStatus = "Not saved yet";
-            TimeSpan age = DateTime.Now - savedAt;
-            saveStatus = age.TotalSeconds < 10 ? "Saved just now"
-                : age.TotalMinutes < 1 ? "Last saved moments ago"
-                : age.TotalHours < 1 ? $"Last saved {(int)age.TotalMinutes} min ago"
-                : age.TotalDays < 1 ? $"Last saved {(int)age.TotalHours} h ago"
-                : "Last saved " + savedAt.ToString("d MMM 'at' h:mm tt", System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant();
-            return saveStatus;
-        }
-
-        private void SaveNow()
-        {
-            GameSaveOverlay.NotifySaveStarted();
-            bool saved = GameSaveManager.Instance.Save(GameSaveOverlay.CurrentSlot);
-            saveFeedback = saved ? null : GameSaveManager.Instance.LastError ?? "Could not save. Please try again.";
-            if (saved) sealedAt = Time.unscaledTime;
-            saveStatusAt = float.NegativeInfinity;
-        }
-
-        /// <summary>Saves the current slot, then quits. Like the main menu's Exit, this does nothing in the editor.</summary>
-        private void QuitGame()
-        {
-            GameSaveManager saves = GameSaveManager.Instance;
-            if (!saves.Save(GameSaveOverlay.CurrentSlot))
-            {
-                saveFeedback = saves.LastError ?? "Could not save. Please try again.";
-                return;
-            }
-            Application.Quit();
+            skin.Label(new Rect(x, line.y, nextWidth + 4f, line.height), next, style, MenuArt.Muted);
         }
 
         /// <summary>Top-right toggle with a small gold star; it reads Close while the pop-out is open.</summary>
@@ -546,10 +507,6 @@ namespace Lumenfall.Quests
             {
                 OverlayInputGate.Acquire(this);
                 settingsOpenedAt = Time.unscaledTime;
-                saveFeedback = null;
-                saveStatusAt = float.NegativeInfinity;
-                sealedAt = float.NegativeInfinity;
-                inkText = null;
                 options.Reset();
                 skin.ResetAmbience();
                 pausedTimeScale = Time.timeScale;

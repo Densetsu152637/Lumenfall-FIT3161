@@ -122,9 +122,9 @@ namespace Lumenfall.GridMovement
                 return;
             }
 
-            sprinting = sprintPreference.Resolve(AccessibilitySettings.Current.HoldToSprint,
-                KeyBindings.IsPressed(GameAction.Sprint) || (activeSprintAction?.activeControl?.device is Gamepad && activeSprintAction.IsPressed()),
-                KeyBindings.WasPressed(GameAction.Sprint) || (activeSprintAction?.activeControl?.device is Gamepad && activeSprintAction.WasPressedThisFrame()), mover.IsMovementLocked || Time.timeScale <= 0f);
+            // The accessibility preference turns sprint into hold or toggle; the raw input ignores rebound keyboard keys.
+            sprinting = sprintPreference.Resolve(AccessibilitySettings.Current.HoldToSprint, ReadSprint(), ReadSprintPressed(),
+                mover.IsMovementLocked || Time.timeScale <= 0f);
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
 
             Vector2Int direction = QuantiseDirection(ReadMove());
@@ -181,10 +181,31 @@ namespace Lumenfall.GridMovement
             }
         }
 
+        // Keyboard movement comes only from the player's key bindings, so a rebound key stops moving the player;
+        // the input actions still supply gamepad input.
         private Vector2 ReadMove()
         {
             Vector2 keys = KeyBindings.MoveVector();
-            return keys != Vector2.zero || activeMoveAction?.activeControl?.device is Keyboard ? keys : activeMoveAction.ReadValue<Vector2>();
+            if (keys != Vector2.zero) return keys;
+            return IsKeyboardDriven(activeMoveAction) ? Vector2.zero : activeMoveAction.ReadValue<Vector2>();
+        }
+
+        private bool ReadSprint()
+        {
+            if (KeyBindings.IsPressed(GameAction.Sprint)) return true;
+            return activeSprintAction != null && !IsKeyboardDriven(activeSprintAction) && activeSprintAction.IsPressed();
+        }
+
+        private bool ReadSprintPressed()
+        {
+            if (KeyBindings.WasPressed(GameAction.Sprint)) return true;
+            return activeSprintAction != null && !IsKeyboardDriven(activeSprintAction) && activeSprintAction.WasPressedThisFrame();
+        }
+
+        private static bool IsKeyboardDriven(InputAction action)
+        {
+            InputControl control = action.activeControl;
+            return control != null && control.device is Keyboard;
         }
 
         private Vector2Int QuantiseDirection(Vector2 value)

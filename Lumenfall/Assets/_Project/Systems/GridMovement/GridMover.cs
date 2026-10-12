@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 
 namespace Lumenfall.GridMovement
@@ -30,7 +29,7 @@ namespace Lumenfall.GridMovement
         [SerializeField] private GridMovementMode movementMode = GridMovementMode.Walk;
         [FormerlySerializedAs("moveDuration")]
         [SerializeField, Min(0f)] private float walkMoveDuration = 0.15f;
-        [SerializeField, Min(0f)] private float sprintMoveDuration = 0.075f;
+        [SerializeField, Min(0f)] private float sprintMoveDuration = 0.1f;
 
         [Header("Step Animation")]
         [SerializeField] private AnimationCurve movementCurve = null;
@@ -214,24 +213,14 @@ namespace Lumenfall.GridMovement
 
             currentCell = cell;
             destinationCell = cell;
-            suppressedPortal = portalToSuppress;
+            // Only suppress a portal the mover actually lands inside. When the arrival cell is beside the
+            // portal, suppressing it would make the first step back onto it silently do nothing.
+            suppressedPortal = portalToSuppress != null && portalToSuppress.ContainsCell(cell)
+                ? portalToSuppress
+                : null;
             transform.position = destinationWorld.CellToWorld(cell, elevation);
             Teleported?.Invoke(this, cell);
             return true;
-        }
-
-        internal void BeginSceneTransition(
-            string sceneName,
-            string destinationPortalId,
-            Vector2Int sourceEntryOffset,
-            Vector2Int arrivalOffset)
-        {
-            if (IsMovementLocked)
-            {
-                return;
-            }
-
-            StartCoroutine(TravelToScene(sceneName, destinationPortalId, sourceEntryOffset, arrivalOffset));
         }
 
         private IEnumerator AnimateStep(Vector2Int origin, Vector2Int destination)
@@ -275,80 +264,21 @@ namespace Lumenfall.GridMovement
             currentCell = destination;
             isMoving = false;
             moveRoutine = null;
-            MoveCompleted?.Invoke(this, currentCell);
 
+            // Resolve portals before MoveCompleted: held input chains the next step from that event,
+            // and a mover that is already moving again is refused by GridPortal.TryEnter.
             GridPortal portal = world.GetPortalAt(currentCell);
             if (portal == null)
             {
                 suppressedPortal = null;
             }
-            else if (portal != suppressedPortal)
+            else if (portal != suppressedPortal && portal.TryEnter(this))
             {
-                portal.TryEnter(this);
-            }
-        }
-
-        private IEnumerator TravelToScene(
-            string sceneName,
-            string destinationPortalId,
-            Vector2Int sourceEntryOffset,
-            Vector2Int arrivalOffset)
-        {
-            if (string.IsNullOrWhiteSpace(sceneName) || !Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogError($"Portal destination scene '{sceneName}' is not in Build Settings.", this);
+                // The portal raised Teleported; the step's destination is no longer where the mover is.
                 yield break;
             }
 
-            movementLocked = true;
-            if (transform.parent != null)
-            {
-                transform.SetParent(null, true);
-            }
-
-            DontDestroyOnLoad(gameObject);
-            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-            if (loadOperation == null)
-            {
-                movementLocked = false;
-                yield break;
-            }
-
-            yield return loadOperation;
-            yield return null;
-
-            GridPortal destinationPortal = GridPortal.FindById(destinationPortalId);
-            if (destinationPortal == null)
-            {
-                Debug.LogError(
-                    $"Scene '{sceneName}' loaded, but no enabled GridPortal has id '{destinationPortalId}'.",
-                    this);
-                world = null;
-                movementLocked = false;
-                yield break;
-            }
-
-            world = null;
-            currentCell = default;
-            if (!TryTeleportTo(
-                    destinationPortal.World,
-                    destinationPortal.GetArrivalCell(sourceEntryOffset) + arrivalOffset,
-                    destinationPortal))
-            {
-                Debug.LogError(
-                    $"Could not place {name} at portal '{destinationPortalId}' because its arrival cell is blocked.",
-                    this);
-                movementLocked = false;
-                yield break;
-            }
-
-            Scene activeScene = SceneManager.GetActiveScene();
-            if (gameObject.scene != activeScene && activeScene.IsValid())
-            {
-                SceneManager.MoveGameObjectToScene(gameObject, activeScene);
-            }
-
-            movementLocked = false;
+            MoveCompleted?.Invoke(this, currentCell);
         }
 
         private void OnValidate()

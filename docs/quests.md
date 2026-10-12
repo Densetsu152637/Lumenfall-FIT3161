@@ -34,4 +34,19 @@ Potential side content includes restoring power to the dormitory grid and locati
 
 ## Runtime puzzle targets
 
-The runtime target registry maps Stella’s two stable object IDs to `B02.Ground` (W02), Cinna’s trial and alignment targets plus Katrina’s keepsake to `campus` (C02/C03/C04), and Orio’s mechanism to `eastForest` (F04). First Light requires `relic.stella.power` to be powered; String Them Together requires that relic and `circuit.stella.link` to share their authored Weave connection; Out of Alignment requires `orientation.cinna.align` to be aligned; Cold Feet, Warm Idea requires `trial.cinna.ice` to be frozen at `(24,34)`; Patch Notes requires `mechanism.orio.rotate` to reach rotation 90; and Something Borrowed requires `keepsake.katrina.hidden` to be revealed at grid cell `(31,42)`. Each monitor waits until its quest is Active before triggering the existing completion event, so a solved object remains available when the player accepts the quest later.
+First Light uses five runtime toggle relics in `B02.Ground`; all five must be powered. After First Light, accepting String Them Together teaches Weave immediately while the new quest remains Active. Its five board relics take power only through a woven chain from `relic.stella.power`, using `circuit.stella.link` and the authored relays as needed. All five must be lit for completion.
+
+Cinna's alignment target is on `campus`: `orientation.cinna.align` must be aligned. The ice trial requires `trial.cinna.ice` to be frozen at `(34,67)`. Katrina's keepsake is in `C04.Recess` at `(12,9)`; revealing it there grants the key item and starts the recovery conversation, and returning it to Katrina completes the quest.
+
+Orio's `westForest` mechanism starts at 180 degrees. Finish his Rotara lesson, cast three clockwise quarter turns to reach 90 degrees, then report to Orio. Completion requires the learned spell and the exact live mechanism; the automatic quest monitor deliberately does not complete this quest. Orio teaches Rotara only, and Gravitate stays locked. The quest hint directs the player to the west forest, the unfinished lesson, the required turns, or the final confirmation according to live state.
+
+## Implementation trackers
+
+Detailed implementation and completion assessments are maintained separately for each quest:
+
+- [Stella: First Light](quest-implementation/stella-first-light.md)
+- [Stella: String Them Together](quest-implementation/stella-string-them-together.md)
+- [Cinna Cirra: Out of Alignment](quest-implementation/cinna-out-of-alignment.md)
+- [Cinna Cirra: Cold Feet, Warm Idea](quest-implementation/cinna-cold-feet-warm-idea.md)
+- [Orio: Patch Notes](quest-implementation/orio-patch-notes.md)
+- [Katrina: Something Borrowed](quest-implementation/katrina-something-borrowed.md)

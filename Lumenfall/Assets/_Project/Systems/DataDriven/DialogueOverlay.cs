@@ -24,6 +24,7 @@ namespace Lumenfall.DataDriven
         private float revealAccumulator;
         private string nodeId;
         private Texture2D borderTexture;
+        private Texture2D fallbackPanelTexture;
         private Font dialogueFont;
         private Texture2D speakerFrame;
         private Vector2 scrollPosition;
@@ -31,6 +32,8 @@ namespace Lumenfall.DataDriven
         private int choiceFocus;
         private bool scrollToFocus;
         private readonly AccessibilityMenuInput menuInput = new AccessibilityMenuInput();
+        // Keeps the key that closed a dialogue from immediately starting a nearby NPC's dialogue again.
+        private static int npcInteractionBlockUntilFrame = -1;
 
         private void OnEnable()
         {
@@ -76,6 +79,7 @@ namespace Lumenfall.DataDriven
         private void OnEnded(DialogueSession value)
         {
             if (session != value) return;
+            npcInteractionBlockUntilFrame = Time.frameCount + 1;
             if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
             session = null;
@@ -130,7 +134,8 @@ namespace Lumenfall.DataDriven
             Rect panel = new Rect((Screen.width - width) * 0.5f, Screen.height - height - 18f, width, height);
             string speaker = string.IsNullOrWhiteSpace(session.CurrentNode.speaker) ? session.Definition.id : session.CurrentNode.speaker;
             speakerFrame = SpeakerFrame(speaker);
-            panelStyle.normal.background = settings.HighContrast ? Texture2D.whiteTexture : speakerFrame != null ? speakerFrame : borderTexture;
+            panelStyle.normal.background = settings.HighContrast ? Texture2D.whiteTexture
+                : speakerFrame != null ? speakerFrame : borderTexture != null ? borderTexture : fallbackPanelTexture;
             Color previousBackground = GUI.backgroundColor;
             if (settings.HighContrast) GUI.backgroundColor = Color.black;
             GUI.Box(panel, GUIContent.none, panelStyle);
@@ -138,7 +143,7 @@ namespace Lumenfall.DataDriven
             float safeWidth = panel.width * 0.72f;
             float safeHeight = panel.height * 0.64f;
             GUILayout.BeginArea(new Rect(panel.x + panel.width * 0.14f, panel.y + panel.height * 0.16f, safeWidth, safeHeight));
-            nameStyle.normal.textColor = settings.HighContrast ? Color.white : SpeakerColor(speaker);
+            SetTextColor(nameStyle, settings.HighContrast ? Color.white : SpeakerColor(speaker));
             GUILayout.Label(Localization.Resolve("speaker." + speaker, speaker), nameStyle);
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true, GUILayout.Height(Mathf.Max(40f, safeHeight - nameStyle.fontSize * 1.8f)));
             GUILayout.Label(DialogueTextReveal.Reveal(settings.HighContrast ? highContrastText : displayedText, visibleCharacters), textStyle);
@@ -199,9 +204,19 @@ namespace Lumenfall.DataDriven
                 borderTexture = Resources.Load<Texture2D>("Dialogue/dialogue_border");
                 dialogueFont = Resources.Load<Font>("Dialogue/Nunito-Regular");
                 panelStyle = new GUIStyle(GUI.skin.box) { padding = new RectOffset(18, 18, 12, 12) };
+                if (borderTexture == null)
+                {
+                    fallbackPanelTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+                    fallbackPanelTexture.SetPixel(0, 0, new Color(0.055f, 0.07f, 0.09f, 0.94f));
+                    fallbackPanelTexture.Apply();
+                }
                 nameStyle = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft, wordWrap = true };
                 textStyle = new GUIStyle(GUI.skin.label) { wordWrap = true, richText = true };
                 buttonStyle = new GUIStyle(GUI.skin.button) { wordWrap = true };
+                // The default skin turns hovered text white; use a warm highlight that stays readable on the dark button.
+                SetTextColor(buttonStyle, new Color(0.92f, 0.90f, 0.86f));
+                buttonStyle.hover.textColor = new Color(1f, 0.82f, 0.36f);
+                buttonStyle.active.textColor = new Color(1f, 0.72f, 0.22f);
                 hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleRight, wordWrap = true };
                 if (dialogueFont != null) { nameStyle.font = dialogueFont; textStyle.font = dialogueFont; buttonStyle.font = dialogueFont; hintStyle.font = dialogueFont; }
             }
@@ -210,16 +225,32 @@ namespace Lumenfall.DataDriven
             textStyle.fontSize = Mathf.RoundToInt(18f * value.TextScale);
             buttonStyle.fontSize = Mathf.RoundToInt(16f * value.TextScale);
             hintStyle.fontSize = Mathf.RoundToInt(13f * value.TextScale);
-            textStyle.normal.textColor = value.HighContrast ? Color.white : new Color(0.12f, 0.11f, 0.16f);
-            hintStyle.normal.textColor = value.HighContrast ? Color.white : new Color(0.35f, 0.34f, 0.40f);
+            SetTextColor(textStyle, value.HighContrast ? Color.white : new Color(0.12f, 0.11f, 0.16f));
+            SetTextColor(hintStyle, value.HighContrast ? Color.white : new Color(0.35f, 0.34f, 0.40f));
         }
+
+        /// Applies one colour to every interaction state so hovering or clicking never swaps in the skin's white text.
+        private static void SetTextColor(GUIStyle style, Color color)
+        {
+            style.normal.textColor = color;
+            style.hover.textColor = color;
+            style.active.textColor = color;
+            style.focused.textColor = color;
+            style.onNormal.textColor = color;
+            style.onHover.textColor = color;
+            style.onActive.textColor = color;
+            style.onFocused.textColor = color;
+        }
+
         private static Texture2D SpeakerFrame(string speaker)
         {
             if (string.Equals(speaker, "Stella", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Stella");
             if (string.Equals(speaker, "Cinna Cirra", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/CinnaCirra");
             if (string.Equals(speaker, "Orio", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Orio");
             if (string.Equals(speaker, "Katrina", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Katrina");
-            return null;
+            // Students, the Narrator and any other speaker without a frame share the neutral parchment frame, so the
+            // dark body text never lands on the dark fallback panel.
+            return Resources.Load<Texture2D>("Dialogue/Random NPC");
         }
 
         private static Color SpeakerColor(string speaker)
@@ -230,5 +261,7 @@ namespace Lumenfall.DataDriven
             if (string.Equals(speaker, "Katrina", StringComparison.OrdinalIgnoreCase)) return new Color(0.64f, 0.33f, 0.58f);
             return new Color(0.26f, 0.25f, 0.30f);
         }
+
+        internal static bool IsNpcInteractionBlocked => Time.frameCount <= npcInteractionBlockUntilFrame;
     }
 }

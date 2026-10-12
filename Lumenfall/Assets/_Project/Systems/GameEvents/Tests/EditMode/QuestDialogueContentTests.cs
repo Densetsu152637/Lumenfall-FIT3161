@@ -41,6 +41,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(GameEventCatalog.TryParseJson(asset.text, asset.name,
                 out GameEventDatabaseDefinition database, out string error), Is.True, error);
             GameEventRuntime runtime = new GameEventRuntime(new GameEventCatalog(new[] { database }));
+            // This catalogue traversal isolates the world condition; OrioPatchNotesTests verifies the real resolver.
+            runtime.RegisterConditionHandler("OrioMechanismAligned", (condition, current) => true);
 
             Assert.That(runtime.StartDialogue("stella_string_them_together_dialogue"), Is.Not.Null);
             Assert.That(ChoiceIds(runtime.ActiveDialogue), Does.Not.Contain("accept"));

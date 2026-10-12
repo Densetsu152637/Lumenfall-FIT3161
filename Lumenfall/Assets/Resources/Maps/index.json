@@ -4,7 +4,7 @@
   "legendFile": "legend.json",
   "maps": {
     "campus": "campus.json",
-    "eastForest": "eastForest.json",
+    "westForest": "westForest.json",
     "B01.Ground": "B01.Ground.json",
     "B02.Ground": "B02.Ground.json",
     "B03.Ground": "B03.Ground.json",
@@ -13,7 +13,7 @@
   "areas": [
     {
       "id": "A01",
-      "name": "East gate forecourt",
+      "name": "West gate forecourt",
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Chapter 1",
@@ -23,15 +23,15 @@
         {
           "id": "P.A01.F03",
           "cell": {
-            "x": 43,
-            "y": 40
+            "x": 25,
+            "y": 5
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F03",
             "cell": {
-              "x": 41,
-              "y": 15
+              "x": 17,
+              "y": 47
             }
           },
           "state": "open",
@@ -40,15 +40,15 @@
         {
           "id": "P.A01.C01",
           "cell": {
-            "x": 50,
-            "y": 35
+            "x": 35,
+            "y": 41
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C01",
             "cell": {
-              "x": 50,
-              "y": 35
+              "x": 35,
+              "y": 41
             }
           },
           "state": "open",
@@ -68,15 +68,15 @@
         {
           "id": "P.B01.C05",
           "cell": {
-            "x": 20,
-            "y": 58
+            "x": 58,
+            "y": 71
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C05",
             "cell": {
-              "x": 25,
-              "y": 56
+              "x": 56,
+              "y": 66
             }
           },
           "state": "open",
@@ -96,15 +96,15 @@
         {
           "id": "P.B02.C05",
           "cell": {
-            "x": 18,
-            "y": 14
+            "x": 14,
+            "y": 73
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C05",
             "cell": {
-              "x": 23,
-              "y": 12
+              "x": 12,
+              "y": 68
             }
           },
           "state": "open",
@@ -124,15 +124,15 @@
         {
           "id": "P.B03.C05",
           "cell": {
-            "x": 48,
-            "y": 10
+            "x": 10,
+            "y": 43
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C05",
             "cell": {
-              "x": 53,
-              "y": 8
+              "x": 8,
+              "y": 38
             }
           },
           "state": "open",
@@ -152,15 +152,15 @@
         {
           "id": "P.B04.C05",
           "cell": {
-            "x": 80,
-            "y": 50
+            "x": 50,
+            "y": 11
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C05",
             "cell": {
-              "x": 85,
-              "y": 48
+              "x": 48,
+              "y": 6
             }
           },
           "state": "open",
@@ -180,15 +180,15 @@
         {
           "id": "P.C01.A01",
           "cell": {
-            "x": 50,
-            "y": 35
+            "x": 35,
+            "y": 41
           },
           "destination": {
             "mapId": "campus",
             "regionId": "A01",
             "cell": {
-              "x": 50,
-              "y": 35
+              "x": 35,
+              "y": 41
             }
           },
           "state": "open",
@@ -197,15 +197,15 @@
         {
           "id": "P.C01.C02",
           "cell": {
-            "x": 42,
-            "y": 28
+            "x": 28,
+            "y": 49
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C02",
             "cell": {
-              "x": 42,
-              "y": 26
+              "x": 26,
+              "y": 49
             }
           },
           "state": "open",
@@ -214,15 +214,15 @@
         {
           "id": "P.C01.C03",
           "cell": {
-            "x": 30,
-            "y": 34
+            "x": 34,
+            "y": 61
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C03",
             "cell": {
-              "x": 27,
-              "y": 34
+              "x": 34,
+              "y": 64
             }
           },
           "state": "open",
@@ -231,15 +231,15 @@
         {
           "id": "P.C01.C04",
           "cell": {
-            "x": 60,
-            "y": 50
+            "x": 50,
+            "y": 31
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C04",
             "cell": {
-              "x": 60,
-              "y": 55
+              "x": 55,
+              "y": 31
             }
           },
           "state": "open",
@@ -248,15 +248,15 @@
         {
           "id": "P.C01.C05",
           "cell": {
-            "x": 35,
-            "y": 40
+            "x": 40,
+            "y": 56
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C05",
             "cell": {
-              "x": 35,
-              "y": 39
+              "x": 39,
+              "y": 56
             }
           },
           "state": "open",
@@ -276,15 +276,15 @@
         {
           "id": "P.C02.C01",
           "cell": {
-            "x": 42,
-            "y": 26
+            "x": 26,
+            "y": 49
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C01",
             "cell": {
-              "x": 42,
-              "y": 28
+              "x": 28,
+              "y": 49
             }
           },
           "state": "open",
@@ -304,15 +304,15 @@
         {
           "id": "P.C03.C01",
           "cell": {
-            "x": 27,
-            "y": 34
+            "x": 34,
+            "y": 64
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C01",
             "cell": {
-              "x": 30,
-              "y": 34
+              "x": 34,
+              "y": 61
             }
           },
           "state": "open",
@@ -332,15 +332,15 @@
         {
           "id": "P.C04.C01",
           "cell": {
-            "x": 60,
-            "y": 55
+            "x": 55,
+            "y": 31
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C01",
             "cell": {
-              "x": 60,
-              "y": 50
+              "x": 50,
+              "y": 31
             }
           },
           "state": "open",
@@ -360,15 +360,15 @@
         {
           "id": "P.C05.C01",
           "cell": {
-            "x": 35,
-            "y": 39
+            "x": 39,
+            "y": 56
           },
           "destination": {
             "mapId": "campus",
             "regionId": "C01",
             "cell": {
-              "x": 35,
-              "y": 40
+              "x": 40,
+              "y": 56
             }
           },
           "state": "open",
@@ -377,8 +377,8 @@
         {
           "id": "P.C05.B01",
           "cell": {
-            "x": 25,
-            "y": 56
+            "x": 56,
+            "y": 66
           },
           "destination": {
             "mapId": "B01.Ground",
@@ -394,8 +394,8 @@
         {
           "id": "P.C05.B02",
           "cell": {
-            "x": 23,
-            "y": 12
+            "x": 12,
+            "y": 68
           },
           "destination": {
             "mapId": "B02.Ground",
@@ -411,8 +411,8 @@
         {
           "id": "P.C05.B03",
           "cell": {
-            "x": 53,
-            "y": 8
+            "x": 8,
+            "y": 38
           },
           "destination": {
             "mapId": "B03.Ground",
@@ -428,8 +428,8 @@
         {
           "id": "P.C05.B04",
           "cell": {
-            "x": 85,
-            "y": 48
+            "x": 48,
+            "y": 6
           },
           "destination": {
             "mapId": "B04.Ground",
@@ -590,21 +590,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Chapter 1",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F01",
       "portals": [
         {
           "id": "P.F01.F02",
           "cell": {
-            "x": 9,
-            "y": 15
+            "x": 15,
+            "y": 40
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F02",
             "cell": {
-              "x": 8,
-              "y": 15
+              "x": 15,
+              "y": 41
             }
           },
           "state": "open",
@@ -618,21 +618,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Chapter 1",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F02",
       "portals": [
         {
           "id": "P.F02.F01",
           "cell": {
-            "x": 8,
-            "y": 15
+            "x": 15,
+            "y": 41
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F01",
             "cell": {
-              "x": 9,
-              "y": 15
+              "x": 15,
+              "y": 40
             }
           },
           "state": "open",
@@ -641,15 +641,15 @@
         {
           "id": "P.F02.F03",
           "cell": {
-            "x": 31,
-            "y": 15
+            "x": 15,
+            "y": 18
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F03",
             "cell": {
-              "x": 30,
-              "y": 15
+              "x": 15,
+              "y": 19
             }
           },
           "state": "open",
@@ -658,15 +658,15 @@
         {
           "id": "P.F02.F04",
           "cell": {
-            "x": 20,
-            "y": 12
+            "x": 12,
+            "y": 29
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F04",
             "cell": {
-              "x": 25,
-              "y": 11
+              "x": 11,
+              "y": 24
             }
           },
           "state": "open",
@@ -675,15 +675,15 @@
         {
           "id": "P.F02.F05",
           "cell": {
-            "x": 15,
-            "y": 17
+            "x": 17,
+            "y": 34
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F05",
             "cell": {
               "x": 18,
-              "y": 18
+              "y": 31
             }
           },
           "state": "open",
@@ -697,21 +697,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Chapter 1",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F03",
       "portals": [
         {
           "id": "P.F03.F02",
           "cell": {
-            "x": 30,
-            "y": 15
+            "x": 15,
+            "y": 19
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F02",
             "cell": {
-              "x": 31,
-              "y": 15
+              "x": 15,
+              "y": 18
             }
           },
           "state": "open",
@@ -720,15 +720,15 @@
         {
           "id": "P.F03.A01",
           "cell": {
-            "x": 41,
-            "y": 15
+            "x": 16,
+            "y": 48
           },
           "destination": {
             "mapId": "campus",
             "regionId": "A01",
             "cell": {
-              "x": 43,
-              "y": 40
+              "x": 25,
+              "y": 6
             }
           },
           "state": "open",
@@ -742,21 +742,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Chapter 1",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F04",
       "portals": [
         {
           "id": "P.F04.F02",
           "cell": {
-            "x": 25,
-            "y": 11
+            "x": 11,
+            "y": 24
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F02",
             "cell": {
-              "x": 20,
-              "y": 12
+              "x": 12,
+              "y": 29
             }
           },
           "state": "open",
@@ -765,15 +765,15 @@
         {
           "id": "P.F04.F06",
           "cell": {
-            "x": 25,
-            "y": 5
+            "x": 5,
+            "y": 24
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F06",
             "cell": {
-              "x": 25,
-              "y": 4
+              "x": 4,
+              "y": 24
             }
           },
           "state": "open",
@@ -787,21 +787,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Optional",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F05",
       "portals": [
         {
           "id": "P.F05.F02",
           "cell": {
             "x": 18,
-            "y": 18
+            "y": 31
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F02",
             "cell": {
-              "x": 15,
-              "y": 17
+              "x": 17,
+              "y": 34
             }
           },
           "state": "open",
@@ -815,21 +815,21 @@
       "kind": "outdoor",
       "floor": "Ground",
       "access": "Reserved",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "regionId": "F06",
       "portals": [
         {
           "id": "P.F06.F04",
           "cell": {
-            "x": 25,
-            "y": 4
+            "x": 4,
+            "y": 24
           },
           "destination": {
-            "mapId": "eastForest",
+            "mapId": "westForest",
             "regionId": "F04",
             "cell": {
-              "x": 25,
-              "y": 5
+              "x": 5,
+              "y": 24
             }
           },
           "state": "open",

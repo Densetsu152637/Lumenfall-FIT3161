@@ -4,6 +4,7 @@ using UnityEngine;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Quests;
 
 namespace Lumenfall.DataDriven
 {
@@ -82,8 +83,10 @@ namespace Lumenfall.DataDriven
                 areaInstances.Add(area, root);
             }
             root.SetActive(true);
+            RotaraGearMechanism.AttachTo(root);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
+            StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -153,7 +156,15 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset previousArea = CurrentArea;
             Load(destinationPortal.area, npcCatalog);
             GridPortal target = FindLivePortal(destinationPortal);
-            Vector2Int arrival = destinationPortal.cell + sourcePortal.arrivalOffset + sourceEntryOffset;
+            if (target == null)
+            {
+                Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
+                if (previousArea != null) Load(previousArea, npcCatalog);
+                return false;
+            }
+            // The live destination GridPortal is authoritative for its origin and footprint.
+            // PortalContentAsset only supplies the connection and optional legacy offset.
+            Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;
@@ -166,8 +177,15 @@ namespace Lumenfall.DataDriven
             return definition != null;
         }
 
+        /// <summary>Saves made before the east forest was renamed still name it eastForest.</summary>
+        private static string NormalizeMapId(string id)
+        {
+            return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
+        }
+
         private WorldAreaAsset FindArea(string id)
         {
+            id = NormalizeMapId(id);
             if (startingArea != null && startingArea.definition.id == id) return startingArea;
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
             return null;
