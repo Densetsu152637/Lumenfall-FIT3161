@@ -12,6 +12,7 @@ namespace Lumenfall.Tests.GameEvents
     {
         private readonly List<GameObject> objects = new List<GameObject>();
         private WorldStateService state;
+        private WorldStateService previousState;
         private GridWorld grid;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
         private const string Keepsake = "keepsake.katrina.hidden";
@@ -24,15 +25,22 @@ namespace Lumenfall.Tests.GameEvents
         {
             Runtime.ResetState();
             grid = Create("grid").AddComponent<GridWorld>(); grid.ConfigureBounds(100, 60);
-            state = Create("state").AddComponent<WorldStateService>(); state.BeginMapRebuild("campus");
+            previousState = WorldStateService.Instance;
+            state = Create("state").AddComponent<WorldStateService>();
+            EditModeLifecycle.SetWorldInstance(state);
+            state.BeginMapRebuild("campus");
         }
         [TearDown]
         public void TearDown()
         {
             Runtime.ResetState();
-            GameSaveManager.Instance.UnregisterProvider(state.SaveKey);
-            for (int i = objects.Count - 1; i >= 0; i--) Object.DestroyImmediate(objects[i]);
+            for (int i = objects.Count - 1; i >= 0; i--)
+            {
+                foreach (SpellCaster caster in objects[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                Object.DestroyImmediate(objects[i]);
+            }
             objects.Clear();
+            EditModeLifecycle.SetWorldInstance(previousState);
         }
 
         [Test]
@@ -61,6 +69,7 @@ namespace Lumenfall.Tests.GameEvents
             Register("visible", new Vector2Int(1, 0), null);
             GameObject player = Create("player"); player.AddComponent<GridMover>();
             SpellCaster caster = player.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
             Runtime.SetFlag("spell.unlocked.LostEchoes", true); state.EndMapRebuild();
             Assert.That(caster.Cast(SpellId.LostEchoes, Keepsake, Vector2Int.up), Is.False);
             Assert.That(caster.LastSearchFeedback, Does.Contain("No hidden traces within 2 cells"));
@@ -144,6 +153,7 @@ namespace Lumenfall.Tests.GameEvents
         public void MonitorRejectsWrongMapPositionUnrelatedRevealAndInactiveQuestThenCompletesOnce()
         {
             QuestPuzzleMonitor monitor = Create("monitor").AddComponent<QuestPuzzleMonitor>();
+            EditModeLifecycle.Call(monitor, "Awake");
             Register("other", Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject("other", Cell, 2);
             Runtime.StartQuest("katrina_something_borrowed");
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
