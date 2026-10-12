@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
@@ -79,6 +80,32 @@ namespace Lumenfall.Tests.World
                 AssertClosed(caster, mover);
                 Assert.That(OverlayInputGate.Owns(sibling), Is.True);
                 Assert.That(state.TryGetObject("wheel-power", out powered) && powered.powered, Is.True);
+
+                OverlayInputGate.Release(sibling);
+                yield return null;
+                OpenWheel(caster);
+                yield return null;
+                Assert.That(caster.CastLostEchoes(), Is.True);
+                LostEchoesPresentation presentation = Object.FindAnyObjectByType<LostEchoesPresentation>();
+                Assert.That(presentation, Is.Not.Null);
+                var boundRoots = new List<GameObject>();
+                var boundMaterials = new List<Material>();
+                foreach (Transform effect in presentation.transform)
+                {
+                    if (effect.name != "Lost Echoes Cast Light" && effect.name != "Lost Echoes Hand Glow") continue;
+                    boundRoots.Add(effect.gameObject);
+                    Renderer renderer = effect.GetComponent<Renderer>();
+                    if (renderer != null) boundMaterials.Add(renderer.sharedMaterial);
+                }
+                Assert.That(boundRoots.Count, Is.GreaterThanOrEqualTo(2), "A successful cast must start its player-bound flare.");
+                Assert.That(boundMaterials.Count, Is.GreaterThanOrEqualTo(1));
+                Object.Destroy(caster.gameObject);
+                yield return null;
+                yield return null; // Presentation update and deferred destruction must both complete.
+                foreach (GameObject root in boundRoots)
+                    Assert.That(root == null, Is.True, "Player-bound effects must end when their caster despawns.");
+                foreach (Material material in boundMaterials)
+                    Assert.That(material == null, Is.True, "Player-bound effects must release their owned materials.");
             }
             finally
             {

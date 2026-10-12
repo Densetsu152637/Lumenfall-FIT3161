@@ -53,6 +53,9 @@ namespace Lumenfall.Spells
             public float delay;
             public float duration;
             public Action<Effect, float> animate;
+            // Keep binding identity after Unity makes a destroyed target compare equal to null.
+            public bool boundToTarget;
+            public Transform boundTarget;
             public readonly List<Material> materials = new List<Material>();
             public readonly List<Transform> parts = new List<Transform>();
             public readonly List<Vector3> origins = new List<Vector3>();
@@ -153,19 +156,20 @@ namespace Lumenfall.Spells
         private void PlayerFlare(GridWorld world)
         {
             Transform player = caster.transform;
+            float cellSize = world.CellSize;
             // A brief point light around the player.
             GameObject flare = new GameObject("Lost Echoes Cast Light");
             flare.transform.SetParent(transform, false);
             Light light = flare.AddComponent<Light>();
             light.type = LightType.Point;
             light.color = EchoColor;
-            light.range = world.CellSize * 3.5f;
+            light.range = cellSize * 3.5f;
             light.intensity = 0f;
             AddEffect(flare, 0f, 0.7f, (effect, t) =>
             {
                 effect.root.transform.position = player.position + Vector3.up * 1f;
                 light.intensity = 2.5f * Mathf.Sin(t * Mathf.PI);
-            });
+            }, player);
 
             // A glow at hand height in front of the player.
             GameObject hand = Billboard("Lost Echoes Hand Glow", EchoColor, out Material handMaterial);
@@ -173,9 +177,9 @@ namespace Lumenfall.Spells
             {
                 effect.root.transform.position = player.position + Vector3.up * 0.9f + player.forward * 0.35f;
                 FaceCamera(effect.root.transform);
-                effect.root.transform.localScale = Vector3.one * world.CellSize * (0.25f + 0.45f * Mathf.Sin(t * Mathf.PI));
+                effect.root.transform.localScale = Vector3.one * cellSize * (0.25f + 0.45f * Mathf.Sin(t * Mathf.PI));
                 SetAlpha(handMaterial, Mathf.Sin(t * Mathf.PI));
-            });
+            }, player);
             handEffect.materials.Add(handMaterial);
 
             // A short cast pose. A cast during an active pose only flares; it never restarts or extends the pose.
@@ -343,9 +347,13 @@ namespace Lumenfall.Spells
             Color colour = target.color; colour.a = Mathf.Clamp01(alpha); target.color = colour;
         }
 
-        private Effect AddEffect(GameObject root, float delay, float duration, Action<Effect, float> animate)
+        private Effect AddEffect(GameObject root, float delay, float duration, Action<Effect, float> animate, Transform boundTarget = null)
         {
-            Effect effect = new Effect { root = root, started = Time.unscaledTime, delay = delay, duration = duration, animate = animate };
+            Effect effect = new Effect
+            {
+                root = root, started = Time.unscaledTime, delay = delay, duration = duration, animate = animate,
+                boundToTarget = boundTarget != null, boundTarget = boundTarget
+            };
             if (delay > 0f) root.SetActive(false);
             else animate(effect, 0f);
             effects.Add(effect);
@@ -358,7 +366,7 @@ namespace Lumenfall.Spells
             {
                 Effect effect = effects[i];
                 float elapsed = Time.unscaledTime - effect.started - effect.delay;
-                if (effect.root == null || elapsed >= effect.duration)
+                if (effect.root == null || (effect.boundToTarget && effect.boundTarget == null) || elapsed >= effect.duration)
                 {
                     DestroyEffect(effect);
                     effects.RemoveAt(i);
