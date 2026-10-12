@@ -195,6 +195,26 @@ def _validate_case_collisions(project: Path, errors: list[str]) -> None:
             seen[key] = relative
 
 
+def _validate_lfs_assets(project: Path, errors: list[str]) -> None:
+    """Reject pointer placeholders before Unity imports build assets."""
+    assets = project / "Assets"
+    if not assets.is_dir():
+        return
+    signature = b"version https://git-lfs.github.com/spec/v1"
+    for path in sorted(item for item in assets.rglob("*") if item.is_file()):
+        try:
+            with path.open("rb") as source:
+                prefix = source.read(len(signature) + 2)
+        except OSError as exception:
+            errors.append(f"Cannot read build asset {_relative(path, project)}: {exception}")
+            continue
+        if prefix.startswith((signature + b"\n", signature + b"\r\n")):
+            errors.append(
+                f"Unresolved Git LFS pointer in {_relative(path, project)}; "
+                "download Git LFS assets before building (checkout lfs: true)."
+            )
+
+
 def _validate_tracked_generated_files(repository: Path, project: Path, errors: list[str]) -> None:
     try:
         result = subprocess.run(
@@ -228,7 +248,9 @@ def _validate_tracked_generated_files(repository: Path, project: Path, errors: l
             errors.append(f"Generated directory is tracked by Git: {raw_path} ({generated})")
 
 
-def validate_project(project: Path, repository: Path | None = None) -> list[str]:
+def validate_project(
+    project: Path, repository: Path | None = None, *, require_lfs_assets: bool = False,
+) -> list[str]:
     """Return all validation errors for *project*."""
     project = project.resolve()
     errors: list[str] = []
@@ -242,6 +264,8 @@ def validate_project(project: Path, repository: Path | None = None) -> list[str]
     _validate_build_scenes(project, errors)
     _validate_text_files(project, errors)
     _validate_case_collisions(project, errors)
+    if require_lfs_assets:
+        _validate_lfs_assets(project, errors)
     if repository is not None:
         _validate_tracked_generated_files(repository.resolve(), project, errors)
     return errors
@@ -250,10 +274,16 @@ def validate_project(project: Path, repository: Path | None = None) -> list[str]
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("project", type=Path, help="Path to the Unity project")
+    parser.add_argument(
+        "--require-lfs-assets", action="store_true",
+        help="Reject Git LFS pointer placeholders before building a player",
+    )
     arguments = parser.parse_args(argv)
 
     repository = Path(__file__).resolve().parent.parent
-    errors = validate_project(arguments.project, repository)
+    errors = validate_project(
+        arguments.project, repository, require_lfs_assets=arguments.require_lfs_assets,
+    )
     if errors:
         print(f"Unity repository validation failed with {len(errors)} error(s):", file=sys.stderr)
         for error in errors:
