@@ -45,7 +45,12 @@ if extraction runs out of space.
 
 The EditMode job reads and validates `m_EditorVersion` from `ProjectVersion.txt` and
 uses the matching GameCI Ubuntu base image, which omits build modules the tests do not
-need. Its Unity `Library` cache is keyed by OS, Unity version, packages, project
+need. All three PR/feature GameCI test steps pin the supported `cliVersion` input to
+[v0.1.72](https://github.com/game-ci/cli/releases/tag/v0.1.72), already used by this
+repository. This makes test setup reproducible and avoids resolving the latest CLI
+release separately on every runner.
+
+The EditMode Unity `Library` cache is keyed by OS, Unity version, packages, project
 settings, and asset content, so repeated runs with unchanged Unity inputs reuse an
 exact cache without uploading another copy. Changes to assets can restore an older
 cache with the same Unity/package/settings prefix for incremental import. A cold

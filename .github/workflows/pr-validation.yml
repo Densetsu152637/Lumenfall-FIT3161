@@ -126,6 +126,7 @@ jobs:
         with:
           projectPath: Lumenfall
           unityVersion: auto
+          cliVersion: v0.1.72
           customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-base-3
           testMode: editmode
           artifactsPath: artifacts/editmode

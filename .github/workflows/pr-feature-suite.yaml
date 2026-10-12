@@ -112,6 +112,7 @@ jobs:
         with:
           projectPath: ${{ steps.prepare.outputs.project }}
           unityVersion: auto
+          cliVersion: v0.1.72
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: editmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance
@@ -129,6 +130,7 @@ jobs:
         with:
           projectPath: ${{ steps.prepare.outputs.project }}
           unityVersion: auto
+          cliVersion: v0.1.72
           customImage: unityci/editor:ubuntu-${{ steps.prepare.outputs.unity-version }}-base-3
           testMode: playmode
           customParameters: -testFilter Lumenfall.FeatureAcceptance
