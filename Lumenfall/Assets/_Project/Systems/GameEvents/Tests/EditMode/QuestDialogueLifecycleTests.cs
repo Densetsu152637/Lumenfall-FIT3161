@@ -180,7 +180,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
+        public void FirstLightTerminalLessonAwardsAmpereThroughSpellCaster()
         {
             GameEventRuntime runtime = GameEventManager.Instance.Runtime;
             GameObject host = new GameObject("quest-scoped-spell-reward-test");

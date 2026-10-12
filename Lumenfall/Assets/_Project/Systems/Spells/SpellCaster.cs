@@ -45,11 +45,26 @@ namespace Lumenfall.Spells
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
+        private GameEventManager progressionManager;
         private void OnEnable()
-        { SubscribeProgression(); RefreshSelection(); }
-        // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
-        private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.RotaraGearMechanism.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
+        {
+            progressionManager = GameEventManager.Instance;
+            progressionManager.RuntimeChanged += BindProgression;
+            BindProgression(progressionManager.Runtime);
+        }
+        private void BindProgression(GameEventRuntime runtime)
+        {
+            UnsubscribeProgression();
+            subscribedRuntime = runtime;
+            if (runtime != null)
+            {
+                RotaraGearMechanism.RegisterQuestConditions(runtime);
+                runtime.QuestStatusChanged += OnQuestStatusChanged;
+                runtime.DialogueEnded += OnDialogueEnded;
+                runtime.StateRestored += OnProgressionRestored;
+            }
+            OnProgressionRestored();
+        }
         private void UnsubscribeProgression()
         { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
@@ -85,7 +100,6 @@ namespace Lumenfall.Spells
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
-            SubscribeProgression();
             // A held thread belongs to Weave on the current map; switching spells or maps drops it.
             if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
                 HeldThread = null;
@@ -194,12 +208,12 @@ namespace Lumenfall.Spells
             // The inventory may have taken ownership of the same movement lock earlier
             // in this frame. Release only the lock owned by the wheel in that case.
             if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
-                GameEventManager.Instance?.Runtime?.ActiveDialogue == null)
+                subscribedRuntime?.ActiveDialogue == null)
                 GetComponent<GridMover>()?.SetMovementLocked(false);
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
-        { UnsubscribeProgression(); CloseSpellWheel(); }
+        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
         private void OnDestroy() { wheelView.Dispose(); }
 
         private void OnGUI()
