@@ -37,6 +37,7 @@
         "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 6,
         "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
+        "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 1,
         "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
         "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2
       }

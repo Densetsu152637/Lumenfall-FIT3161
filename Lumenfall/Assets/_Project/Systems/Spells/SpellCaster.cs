@@ -280,7 +280,10 @@ namespace Lumenfall.Spells
         }
         /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
         public bool CastSelectedAt(string targetId)
-        { CloseSpellWheel(); return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+        {
+            try { return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+            finally { CloseSpellWheel(); }
+        }
         private void CloseSpellWheel(SpellId? picked = null)
         {
             if (!spellWheelOpen) return;
@@ -322,14 +325,17 @@ namespace Lumenfall.Spells
         /// </summary>
         public bool CastLostEchoes()
         {
-            CloseSpellWheel();
-            if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
-            WorldStateService state = WorldStateService.Instance;
-            if (state == null || !state.IsReady) return false;
-            List<string> revealed = new List<string>();
-            RevealHiddenAroundPlayer(state, revealed);
-            foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
-            return revealed.Count > 0;
+            try
+            {
+                if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
+                WorldStateService state = WorldStateService.Instance;
+                if (state == null || !state.IsReady) return false;
+                List<string> revealed = new List<string>();
+                RevealHiddenAroundPlayer(state, revealed);
+                foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
+                return revealed.Count > 0;
+            }
+            finally { CloseSpellWheel(); }
         }
         // Results are shown by LostEchoesPresentation (pulse, glow and sound), so the search reports no text.
         private int RevealHiddenAroundPlayer(WorldStateService state, List<string> revealed = null)

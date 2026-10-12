@@ -33,10 +33,10 @@ One job checks out the current event revision with depth one and runs `Lumenfall
 through one GameCI action, using `testMode: all` and
 `customParameters: -testCategory !RequiresGraphics`. Its checkout enables Git LFS
 so terrain and other binary assets are available to Unity. The integrated inventory
-contains 239 EditMode and fourteen batch-capable PlayMode cases. Two additional rendering
+contains 239 EditMode and fifteen batch-capable PlayMode cases. Two additional rendering
 cases are explicitly categorized `RequiresGraphics` and must run separately
 in a graphical Editor; it is never accepted as a skipped CI test. The
-[behavior inventory and graphical procedure](../tests/README.md) cover all 255 cases.
+[behavior inventory and graphical procedure](../tests/README.md) cover all 256 cases.
 There are no historical source fetches or snapshot matrices.
 
 The supported `cliVersion` input pins
