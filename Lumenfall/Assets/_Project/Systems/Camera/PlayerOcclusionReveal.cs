@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using Lumenfall.DataDriven;
 
 namespace Lumenfall.CameraEffects
 {
@@ -22,6 +24,9 @@ namespace Lumenfall.CameraEffects
         private const float OccluderScanInterval = 0.5f;
         private Camera view;
         private float nextGardenScanTime;
+        private bool hasScannedOccluders;
+        private GameObject scannedAreaRoot;
+        private int scannedRootCount;
         private Shader gardenRevealShader;
         private bool warnedMissingGardenShader;
         private readonly HashSet<string> warnedUnsupportedShaders = new HashSet<string>();
@@ -45,7 +50,23 @@ namespace Lumenfall.CameraEffects
         {
             if (Time.unscaledTime < nextGardenScanTime) return;
             nextGardenScanTime = Time.unscaledTime + OccluderScanInterval;
+            if (!OccluderLayoutChanged()) return;
             BindAuthoredOccluders();
+        }
+
+        // The full scan walks every Transform in the scene and allocates each name, which hitched every scan
+        // interval. Occluders only arrive with a loaded area or new scene content, so rescan only when those change.
+        private bool OccluderLayoutChanged()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            GameObject areaRoot = loader == null ? null : loader.CurrentAreaRoot;
+            int rootCount = 0;
+            for (int i = 0; i < SceneManager.sceneCount; i++) rootCount += SceneManager.GetSceneAt(i).rootCount;
+            if (hasScannedOccluders && areaRoot == scannedAreaRoot && rootCount == scannedRootCount) return false;
+            hasScannedOccluders = true;
+            scannedAreaRoot = areaRoot;
+            scannedRootCount = rootCount;
+            return true;
         }
 
         private void BindAuthoredOccluders()
@@ -277,6 +298,7 @@ namespace Lumenfall.CameraEffects
         private void OnDisable()
         {
             RestoreGardenMaterials();
+            hasScannedOccluders = false;
             RenderPipelineManager.beginCameraRendering -= BeginCamera;
             RenderPipelineManager.endCameraRendering -= EndCamera;
             Shader.SetGlobalFloat(Enabled, 0f);

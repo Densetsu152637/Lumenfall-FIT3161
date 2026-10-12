@@ -26,21 +26,14 @@
       ]
     },
     {
-      "id": "cinna_out_of_alignment_monitor",
-      "questId": "cinna_out_of_alignment",
-      "completionEventId": "complete_cinna_out_of_alignment",
-      "mapId": "campus",
-      "targets": [
-        { "id": "vis_marker", "objectIds": ["orientation.cinna.align"], "requiredAligned": true }
-      ]
-    },
-    {
       "id": "cinna_cold_feet_warm_idea_monitor",
       "questId": "cinna_cold_feet_warm_idea",
       "completionEventId": "complete_cinna_cold_feet_warm_idea",
-      "mapId": "campus",
+      "successDialogueId": "cinna_ice_trial_solved",
+      "mapId": "C03.IceTrial",
       "targets": [
-        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 34, "requiredPositionY": 67 }
+        { "id": "lit_switches", "objectIds": ["switch.cinna.ice.01", "switch.cinna.ice.02", "switch.cinna.ice.03", "switch.cinna.ice.04", "switch.cinna.ice.05", "switch.cinna.ice.06", "switch.cinna.ice.07", "switch.cinna.ice.08", "switch.cinna.ice.09", "switch.cinna.ice.10", "switch.cinna.ice.11", "switch.cinna.ice.12"], "requiredPowered": true },
+        { "id": "open_seal", "objectIds": ["switch.cinna.ice.final"], "requiredPowered": true }
       ]
     },
     {

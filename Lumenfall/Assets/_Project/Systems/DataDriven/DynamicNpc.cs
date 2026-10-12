@@ -21,8 +21,17 @@ namespace Lumenfall.DataDriven
         [SerializeField] private NpcDefinition definition;
         [SerializeField] private string initialDialogueId;
         private static Texture2D interactionKeyTexture;
-        private void Awake() { ApplyDefinition(); }
-        private void OnEnable() { ApplyDefinition(); }
+        private static readonly List<DynamicNpc> active = new List<DynamicNpc>();
+        /// NPCs on active GameObjects; per-frame callers read this instead of searching the scene.
+        public static IReadOnlyList<DynamicNpc> Active => active;
+        private void Awake()
+        {
+            // Every NPC idles with some variety and turns to face the player; see NpcAmbientBehaviour.
+            if (GetComponent<NpcAmbientBehaviour>() == null) gameObject.AddComponent<NpcAmbientBehaviour>();
+            ApplyDefinition();
+        }
+        private void OnEnable() { if (!active.Contains(this)) active.Add(this); ApplyDefinition(); }
+        private void OnDisable() { active.Remove(this); }
         private void ApplyDefinition()
         {
             if (definition == null) return;
@@ -49,11 +58,11 @@ namespace Lumenfall.DataDriven
                 !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
                 GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
 
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (player == null) return;
             DynamicNpc nearest = null;
             float best = 2.01f;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (DynamicNpc npc in Active)
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }
@@ -65,11 +74,11 @@ namespace Lumenfall.DataDriven
         {
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;
             float best = 2.01f;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+            foreach (DynamicNpc npc in Active)
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }

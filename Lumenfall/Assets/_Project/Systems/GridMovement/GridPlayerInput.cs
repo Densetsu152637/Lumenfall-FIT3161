@@ -36,6 +36,8 @@ namespace Lumenfall.GridMovement
         private bool enabledSprintActionHere;
         private Vector2Int heldDirection;
         private float nextRepeatTime;
+        // A finished slide needs a fresh press, so a held key cannot launch an unintended second slide.
+        private bool waitForRelease;
 
         private void Reset()
         {
@@ -51,6 +53,7 @@ namespace Lumenfall.GridMovement
         private void OnEnable()
         {
             mover.MoveCompleted += HandleMoveCompleted;
+            mover.SlideEnded += HandleSlideEnded;
             ResolveActions();
             if (activeMoveAction == null)
             {
@@ -75,6 +78,8 @@ namespace Lumenfall.GridMovement
         private void OnDisable()
         {
             mover.MoveCompleted -= HandleMoveCompleted;
+            mover.SlideEnded -= HandleSlideEnded;
+            waitForRelease = false;
 
             if (enabledMoveActionHere && activeMoveAction != null)
             {
@@ -121,17 +126,19 @@ namespace Lumenfall.GridMovement
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
+                waitForRelease = false;
                 return;
             }
 
             if (direction != heldDirection)
             {
                 heldDirection = direction;
+                waitForRelease = false;
                 TryMoveHeldDirection();
                 return;
             }
 
-            if (!repeatWhileHeld || Time.unscaledTime < nextRepeatTime || mover.IsMoving ||
+            if (waitForRelease || !repeatWhileHeld || Time.unscaledTime < nextRepeatTime || mover.IsMoving ||
                 mover.IsMovementLocked)
             {
                 return;
@@ -140,9 +147,14 @@ namespace Lumenfall.GridMovement
             TryMoveHeldDirection();
         }
 
+        private void HandleSlideEnded(GridMover movingActor, Vector2Int cell)
+        {
+            waitForRelease = true;
+        }
+
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            if (!repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked)
+            if (waitForRelease || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked)
             {
                 return;
             }

@@ -50,6 +50,8 @@ namespace Lumenfall.Quests
         private Quaternion[] relayRotations;
         private Vector3 magicItemPosition;
         private Quaternion magicItemRotation;
+        private int appliedStateVersion = -1;
+        private int appliedQuestSignature = -2;
 
         /// <summary>Called by the area loader before EndMapRebuild so saved relic state is applied.</summary>
         public static void RegisterForMap(string mapId, GridWorld world)
@@ -370,22 +372,59 @@ namespace Lumenfall.Quests
             state = WorldStateService.Instance;
             if (state == null || !state.IsReady || !string.Equals(state.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return;
             if (relicViews == null) return;
-            SyncCircuitMode();
-            RefreshViews();
-            RefreshMagicItem();
-            TryCompleteIfSolved();
+            // The board logic snapshots and searches the circuit, so it only reruns when world state or either
+            // Stella quest has changed. The version is read first so changes made by this pass get one more look.
+            int version = state.Version;
+            int questSignature = QuestSignature();
+            if (version != appliedStateVersion || questSignature != appliedQuestSignature)
+            {
+                appliedStateVersion = version;
+                appliedQuestSignature = questSignature;
+                SyncCircuitMode();
+                RefreshViews();
+                RefreshMagicItem();
+                TryCompleteIfSolved();
+            }
+            KeepAuthoredPresentation();
         }
 
-        /// The quest can start while the player is in the room, so convert the board as soon as it does.
-        private void SyncCircuitMode()
+        private static int QuestSignature()
         {
-            bool circuit = CircuitMode();
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            return runtime == null ? -1 : (int)runtime.GetQuestStatus(QuestId) * 64 + (int)runtime.GetQuestStatus(CircuitQuestId);
+        }
+
+        /// Cheap every-frame upkeep: relay stones stay visible, authored transforms and the gyroscope stay pinned
+        /// against state transform syncs, and the number labels face the camera.
+        private void KeepAuthoredPresentation()
+        {
             // Relay stones are part of the authored room and stay visible before the Weave stage.
             // Circuit mode only changes whether they can be targeted and powered.
             if (relayRoot != null && !relayRoot.gameObject.activeSelf) relayRoot.gameObject.SetActive(true);
             if (relayViews != null)
                 for (int i = 0; i < relayViews.Length; i++)
                     if (relayViews[i] != null && !relayViews[i].activeSelf) relayViews[i].SetActive(true);
+            RestoreAuthoredTransforms();
+            if (magicItem != null) magicItem.transform.SetPositionAndRotation(magicItemPosition, magicItemRotation);
+            FaceLabelsToCamera();
+        }
+
+        private void FaceLabelsToCamera()
+        {
+            if (viewCamera == null) viewCamera = Camera.main;
+            if (viewCamera == null) return;
+            for (int i = 0; i < relicViews.Length; i++)
+            {
+                if (relicViews[i] == null) continue;
+                Transform label = relicViews[i].transform.Find("Number");
+                if (label != null) label.rotation = viewCamera.transform.rotation;
+            }
+        }
+
+        /// The quest can start while the player is in the room, so convert the board as soon as it does.
+        private void SyncCircuitMode()
+        {
+            bool circuit = CircuitMode();
             for (int i = 0; i < RelicCount; i++)
             {
                 int index = i;
@@ -436,10 +475,8 @@ namespace Lumenfall.Quests
                 if (relicViews[i] == null || !state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot)) continue;
                 if (!SetPoweredVisual(relicViews[i], snapshot.powered))
                     SetColor(relicViews[i], snapshot.powered ? OnColor : OffColor);
-                if (viewCamera == null) viewCamera = Camera.main;
-                Transform label = relicViews[i].transform.Find("Number");
-                if (label != null && viewCamera != null) label.rotation = viewCamera.transform.rotation;
             }
+            FaceLabelsToCamera();
             for (int i = 0; relayViews != null && i < relayViews.Length; i++)
                 if (relayViews[i] != null && state.TryGetObject(RelayId(i), out WorldObjectSnapshot relay))
                     if (!SetPoweredVisual(relayViews[i], relay.powered))

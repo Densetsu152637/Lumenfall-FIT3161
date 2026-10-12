@@ -2,32 +2,24 @@
 
 **Quest ID:** `cinna_cold_feet_warm_idea`
 **Prerequisite:** `cinna_out_of_alignment:Completed`
-**Monitor:** `cinna_cold_feet_warm_idea_monitor` → `complete_cinna_cold_feet_warm_idea`
-**Assessment:** **Partial.** The active quest gate, Glaciate spell behavior, target coordinates, persistence, and completion event are data/runtime-backed. The documented trap sequence has no represented runtime conditions, and Glaciate unlocks only when this quest completes.
+**Monitor:** `cinna_cold_feet_warm_idea_monitor` → `complete_cinna_cold_feet_warm_idea` (success line `cinna_ice_trial_solved`)
+**Assessment:** **Partial.** The ice trial room, lesson, slide rules, toggle switches, seal, reset, persistence and completion are implemented in data and runtime code. Unity Play Mode acceptance and production art are outstanding.
 
 ## Player flow and authored contract
 
-Cinna Cirra is registered in `campus`; dialogue metadata places this quest at C03. The accept choice is shown only after Out of Alignment is completed and this quest is NotStarted. It starts the quest. The accept/active dialogue describes an ordered trap trial, freezing the surface, starting from a safe edge, sliding toward a marked stopping point, and leaving a clear route back. Glaciate is listed as the quest's spell reward, which runtime grants when the quest completes. The dialogue does not unlock Glaciate at acceptance, so the objective is unavailable from a fresh game unless another route grants it first.
+The trial lives in its own area, `C03.IceTrial`, reached through the portal on the campus path at `(47,45)`. During Out of Alignment the player carries the orientation relic in and sets it on the pedestal at `(3,1)`. Reporting back to Cinna on the terrace sends Cinna ahead behind a fade; Cinna Cirra (`cinna_cirra_trial`) then waits in the trial lobby at `(8,1)`, and the player walks over through the portal. The trial Cinna appears once Out of Alignment is completed. Their accept choice starts the quest. Finishing the lesson while the quest is Active lends Glaciate through `spellLesson` metadata.
 
-## Runtime completion and state
+Casting Glaciate on the delivered relic (`relic.cinna.frost`, anchored, spell-compatible only once delivered) freezes the pool, and a second Glaciate thaws it again (moving the player out of the pool first). The player slides Snowpoint Gym style: no steering mid-slide, stopping on a switch, at the entrance or in front of a wall. Each landing toggles the switch underneath. With all twelve lit, landing on the seal in the east wall opens it and completes the quest, which teaches Glaciate permanently. R resets the switches and returns the player to the entrance.
 
-The quest puzzle database, campus object tag, and map-level target now agree that `trial.cinna.ice` must be frozen at `(34,67)`. The object starts at `(34,71)` and carries tag `slide-goal:34,67`. `SpellCaster.Glaciate` freezes the target and moves it repeatedly in one chosen direction, stopping at a `slide-goal:x,y` tag if present, otherwise when movement is blocked or reaches map boundary. The monitor does not check trap IDs, order, player path, safe-edge start, or route back; only frozen state and the exact database position determine success.
-
-The completion event is non-repeatable and requires Active status. `WorldStateService` persists cell and frozen state. Because the spell action can freeze and slide directly when cast, confirm the intended command direction and goal tag make the target settle at the required monitor coordinate.
-
-The objective hint uses the active C03 target and points to the object; after it is frozen it gives the required destination cell `(34,67)`. It is guidance for the current target condition, not a trap-order evaluator.
-
-## Scene and data readiness
-
-The relevant region is C03, “Orientation trial strip,” on campus. The resolved map object starts at `(34,71)`, while its `slide-goal` tag and map-level target agree on `(34,67)`; `quest_puzzle_definitions.json` has been aligned to `(34,67)`. Verify blockers, collision footprint, target compatibility, and safe exit in the playable scene. Reset behavior remains unresolved.
+The layout, rules, runtime pieces and verification are in [the implementation notes](../implementation/quest-cold-feet-warm-idea.md).
 
 ## Open gaps and acceptance checklist
 
-- [ ] Verify the resolved `(34,67)` target with a valid slide direction and route clearance in Unity.
-- [ ] Add a Glaciate teaching/unlock path before the slide objective; the current reward occurs only after quest completion.
-- [ ] Implement/confirm trap order and decide whether traps are actual puzzle conditions or dialogue-only framing.
-- [ ] Verify slide stops at the intended point from a defined starting direction; test blocked path and safe exit.
-- [ ] Define reset/retry behavior after wrong movement or save/load and ensure quest completion is Active-only.
-- [ ] Verify C03 runtime wiring, feedback, collision and save restoration in Unity.
+- [x] Run `CinnaIceTrialTests` (5/5), the Cold Feet hint test and the PlayMode slide-route test (passes when run on its own, after closing the startup menu) in Unity.
+- [ ] Check slide speed, camera follow and the idle slide pose in Play Mode.
+- [ ] Check Cinna's model, animation and facing in the lobby.
+- [ ] Check save and load mid-trial, and leaving and re-entering the room, for frozen and switch state.
+- [ ] Replace placeholder primitives with production art and an ice/water material.
+- [x] The portal stays open before Out of Alignment completes, because the relic is carried in through it.
 
-Evidence: `quest_npc_dialogue.json`; `npcs.json`; `quest_puzzle_definitions.json`; `Maps/campus.json`; `SpellCaster.cs`; `WorldStateService.cs`; `QuestPuzzleMonitor.cs`; `docs/quests.md`; `docs/spells.md`; `docs/implementation-status.md`.
+Evidence: `CinnaIceTrialRoom.cs`; `CinnaIceTrialEntrance.cs`; `GridMover.cs`; `GridWorld.cs`; `C03.IceTrial.asset`; `quest_npc_dialogue.json`; `quest_puzzle_definitions.json`; `NpcCatalog.asset`; `CinnaIceTrialTests.cs`; `AuthoredWorldPlayModeTests.cs`.

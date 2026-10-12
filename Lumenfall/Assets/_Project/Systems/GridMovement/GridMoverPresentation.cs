@@ -131,6 +131,12 @@ namespace Lumenfall.GridMovement
 
         private float GetMovementAnimationSpeed()
         {
+            // A slide holds the idle pose; the character glides rather than walks across ice.
+            if (mover.IsSliding)
+            {
+                return 0f;
+            }
+
             return mover.MovementMode == GridMovementMode.Sprint
                 ? sprintAnimationSpeed
                 : walkAnimationSpeed;

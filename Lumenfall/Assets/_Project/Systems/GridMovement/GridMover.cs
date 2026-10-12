@@ -31,6 +31,10 @@ namespace Lumenfall.GridMovement
         [SerializeField, Min(0f)] private float walkMoveDuration = 0.15f;
         [SerializeField, Min(0f)] private float sprintMoveDuration = 0.1f;
 
+        [Header("Ice Slide")]
+        [Tooltip("Seconds per cell while sliding across GridWorld ice cells.")]
+        [SerializeField, Min(0f)] private float slideStepDuration = 0.07f;
+
         [Header("Step Animation")]
         [SerializeField] private AnimationCurve movementCurve = null;
 
@@ -39,13 +43,28 @@ namespace Lumenfall.GridMovement
         private Vector2Int destinationCell;
         private float elevation;
         private bool isMoving;
+        private bool isSliding;
         private bool movementLocked;
         private GridPortal suppressedPortal;
+        private static GridMover cachedActive;
+
+        /// <summary>
+        /// Cached <c>FindAnyObjectByType&lt;GridMover&gt;()</c> for per-frame and OnGUI callers; the scene
+        /// is only searched again once the cached mover is destroyed or deactivated.
+        /// </summary>
+        public static GridMover FindActive()
+        {
+            if (cachedActive == null || !cachedActive.gameObject.activeInHierarchy)
+                cachedActive = FindAnyObjectByType<GridMover>();
+            return cachedActive;
+        }
 
         public GridWorld World => world;
         public Vector2Int CurrentCell => currentCell;
         public Vector2Int DestinationCell => isMoving ? destinationCell : currentCell;
         public bool IsMoving => isMoving;
+        /// <summary>True while the current step starts or ends on ice; input is ignored until the slide stops.</summary>
+        public bool IsSliding => isSliding;
         public bool IsMovementLocked => movementLocked;
         public GridMovementMode MovementMode => movementMode;
         public float CurrentStepDuration => movementMode == GridMovementMode.Sprint
@@ -56,6 +75,8 @@ namespace Lumenfall.GridMovement
         public event Action<GridMover, Vector2Int> MoveCompleted;
         public event Action<GridMover, Vector2Int> MoveBlocked;
         public event Action<GridMover, Vector2Int> Teleported;
+        /// <summary>Raised on the cell where a slide stops, before that step's MoveCompleted.</summary>
+        public event Action<GridMover, Vector2Int> SlideEnded;
 
         private void Reset()
         {
@@ -116,6 +137,7 @@ namespace Lumenfall.GridMovement
 
             moveRoutine = null;
             isMoving = false;
+            isSliding = false;
             movementLocked = false;
         }
 
@@ -129,6 +151,13 @@ namespace Lumenfall.GridMovement
                 return false;
             }
 
+            // Ice only allows the four cardinal directions, so a slide always follows a grid line.
+            bool diagonal = direction.x != 0 && direction.y != 0;
+            if (diagonal && (world.IsIce(currentCell) || world.IsIce(currentCell + direction)))
+            {
+                return false;
+            }
+
             if (!world.TryReserveStep(this, direction, out Vector2Int destination))
             {
                 MoveBlocked?.Invoke(this, currentCell + direction);
@@ -137,6 +166,7 @@ namespace Lumenfall.GridMovement
 
             destinationCell = destination;
             isMoving = true;
+            isSliding = world.IsIce(currentCell) || world.IsIce(destination);
             MoveStarted?.Invoke(this, destinationCell);
             moveRoutine = StartCoroutine(AnimateStep(currentCell, destinationCell));
             return true;
@@ -219,7 +249,7 @@ namespace Lumenfall.GridMovement
         {
             Vector3 from = world.CellToWorld(origin, elevation);
             Vector3 to = world.CellToWorld(destination, elevation);
-            float stepDuration = CurrentStepDuration;
+            float stepDuration = isSliding ? slideStepDuration : CurrentStepDuration;
 
             // A diagonal crosses sqrt(2) times the distance of a cardinal step.
             // Scale its duration by the same amount so both directions have the
@@ -249,6 +279,7 @@ namespace Lumenfall.GridMovement
                 transform.position = from;
                 world.CancelMove(this);
                 isMoving = false;
+                isSliding = false;
                 moveRoutine = null;
                 yield break;
             }
@@ -263,13 +294,38 @@ namespace Lumenfall.GridMovement
                 suppressedPortal = null;
             }
 
-            MoveCompleted?.Invoke(this, currentCell);
+            // A slide continues while the mover stands on ice. The next step starts before MoveCompleted so
+            // held input cannot steer mid-slide; it stops on a normal cell or in front of a blocked cell.
+            // A zero-duration slide runs its remaining steps inside TryContinueSlide, so report this step's cell.
+            Vector2Int arrivedCell = currentCell;
+            if (isSliding && !(world.IsIce(currentCell) && TryContinueSlide(destination - origin)))
+            {
+                isSliding = false;
+                SlideEnded?.Invoke(this, arrivedCell);
+            }
+
+            MoveCompleted?.Invoke(this, arrivedCell);
+        }
+
+        private bool TryContinueSlide(Vector2Int direction)
+        {
+            if (movementLocked || !world.TryReserveStep(this, direction, out Vector2Int next))
+            {
+                return false;
+            }
+
+            destinationCell = next;
+            isMoving = true;
+            MoveStarted?.Invoke(this, destinationCell);
+            moveRoutine = StartCoroutine(AnimateStep(currentCell, destinationCell));
+            return true;
         }
 
         private void OnValidate()
         {
             walkMoveDuration = Mathf.Max(0f, walkMoveDuration);
             sprintMoveDuration = Mathf.Max(0f, sprintMoveDuration);
+            slideStepDuration = Mathf.Max(0f, slideStepDuration);
         }
     }
 }
