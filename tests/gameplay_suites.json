@@ -35,6 +35,7 @@
       "name": "World integration",
       "fixtures": {
         "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 6,
+        "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
         "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
         "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2
@@ -45,6 +46,7 @@
     "name": "Graphical settings interaction",
     "category": "RequiresGraphics",
     "fixtures": {
+      "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
       "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1
     }
   }

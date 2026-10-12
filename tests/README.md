@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 239 EditMode, thirteen batch PlayMode and one graphical PlayMode case:
+The integrated suite contains 239 EditMode, fourteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -46,14 +46,16 @@ The integrated suite contains 239 EditMode, thirteen batch PlayMode and one grap
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
 | Settings keyboard navigation and preset isolation | OptionsPanelPlayModeTests | 2 |
-| **Batch PlayMode** | | **13** |
+| Dialogue pointer gating, runtime replacement and owned cleanup | DialogueSettingsUiPlayModeTests | 1 |
+| **Batch PlayMode** | | **14** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
+| Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
 
 Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tests`,
 `Lumenfall.Startup.Tests`, `Lumenfall.World.PlayModeTests` and
 `Lumenfall.Startup.PlayModeTests`. The source inventory discovers all C# files owned
 by test assembly definitions, including nested helpers and files with other names.
-No test uses Ignore or Explicit. The single pointer test has the explicit
+No test uses Ignore or Explicit. Both rendering tests have the explicit
 `RequiresGraphics` category and fails if accidentally selected in batch mode.
 
 ## Running and verifying
@@ -104,7 +106,7 @@ python scripts/validate_unity_project.py Lumenfall
 
 ## Graphical settings acceptance and local isolation
 
-Run the pointer case separately in a graphical Editor, without `-batchmode`, using
+Run both rendering cases separately in a graphical Editor, without `-batchmode`, using
 `-runTests -testPlatform PlayMode -testCategory RequiresGraphics` and
 `-testResults <fresh-graphical-directory>/playmode-results.xml`. After the Editor
 exits successfully, verify the separate manifest and exact current revision:
@@ -113,9 +115,9 @@ exits successfully, verify the separate manifest and exact current revision:
 python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical-directory> --outcome success --revision <full-current-checkout-sha>
 ```
 
-The graphical inventory has exactly one case; the batch inventory contains the
-other ten PlayMode cases. Both verifications reject any failed or skipped case.
-Graphical acceptance also requires inspecting the generated settings screenshots
+The graphical inventory has exactly two cases; the batch inventory contains the
+other fourteen PlayMode cases. Both verifications reject any failed or skipped case.
+Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.
 
