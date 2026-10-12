@@ -2,9 +2,6 @@ name: Pull Request Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -141,7 +138,7 @@ jobs:
           customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-base-3
           testMode: all
           artifactsPath: artifacts/gameplay
-          githubToken: ''
+          githubToken: ""
 
       - name: Verify both gameplay suites
         id: verify-gameplay
