@@ -35,6 +35,9 @@ The shared workflow restores/saves `Temp/pr-feature-unity-cache/Library` for eve
 suite. `pr_feature_ci.py cache-restore --pr <number>` moves the seed into its owned
 prepared project; a cold cache is a normal no-op. Only a cache miss followed by
 complete successful verification stages a seed with `cache-save` for upload.
+Restore clears only `Library/Bee` and `Library/ScriptAssemblies` to rebuild
+path/suite-specific compiler state; imported assets, packages and shader caches
+remain. Linked cleanup roots or descendants fail the restore before deletion.
 Existing seeds are reused without replacement. Moves reject occupied destinations,
 linked paths and ownership escapes. Cache failures fail the job; latest hosted
 cache-hit execution remains necessary to verify cross-suite import behavior.

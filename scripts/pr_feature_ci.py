@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -86,7 +87,31 @@ def cache_restore(entry: dict, output: Path) -> bool:
     if not seed.exists():
         return False  # A cold cache is normal; Unity imports from the pinned source.
     move_library(seed, library)
+    clear_compilation_cache(library)
     return True
+
+
+def clear_compilation_cache(library: Path) -> None:
+    """Rebuild project-specific compiler state while retaining imported asset data."""
+    def fail_walk(error: OSError) -> None:
+        raise error
+
+    directories = []
+    for name in ("Bee", "ScriptAssemblies"):
+        directory = owned_cache_path(library / name)
+        if not directory.exists():
+            continue
+        if not directory.is_dir():
+            raise ValueError(f"Unity compilation cache is not a directory: {directory}")
+        # Validate only these two generated trees, never the rest of Library.
+        # Check child directories before os.walk descends into them (including junctions).
+        for current, children, files in os.walk(directory, followlinks=False, onerror=fail_walk):
+            for child in children + files:
+                owned_cache_path(Path(current) / child)
+        directories.append(directory)
+    # Validate both trees before deleting either; never follow cached links outside them.
+    for directory in directories:
+        shutil.rmtree(directory)
 
 
 def cache_save(entry: dict, output: Path) -> None:

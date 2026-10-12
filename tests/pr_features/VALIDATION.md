@@ -221,3 +221,19 @@ input. Cache guards, strict verification, pinned sources and expected counts are
 unchanged. The permission regression executes under Linux root with an
 unprivileged child and is skipped on Windows; hosted seed upload/reuse still
 requires successful evidence on the repaired head.
+
+The ownership repair subsequently saved seeds after strict verification passed.
+A hosted PR 15 warm restore from PR 19 then failed with
+`DirectoryNotFoundException` referring to PR 19's previous absolute
+`Library/Bee/artifacts/.../Lumenfall.GameEvents.dll.mvfrm` path (run 38239852946,
+job 114782006746). Restore now clears only `Library/Bee` and
+`Library/ScriptAssemblies`, the same compiler-state pair cleared by
+[GameCI's fallback-cache handling](https://game.ci/docs/github-orchestrator/advanced-topics/build-services/#fallback-keys).
+Imported artifacts, package/shader caches and existing v1 seed keys are retained.
+Regressions demonstrate that stale absolute compiler markers survive the old
+restore and are removed by the repair while imported data and snapshot evidence
+remain unchanged. Cleanup rejects linked roots/descendants and malformed compiler
+directories before deleting either tree; a Linux regression protects real outside
+link targets. Strict source/fixture/count checks and runner ownership repair remain
+unchanged. Successful hosted cross-suite verification on the repaired head remains
+the acceptance gate; local filesystem tests do not prove Unity's warm runtime.

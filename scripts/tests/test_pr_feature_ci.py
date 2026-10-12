@@ -219,6 +219,83 @@ class FeatureCacheTests(unittest.TestCase):
         self.assertFalse(self.library.exists())
         self.assertFalse(self.seed.exists())
 
+    def test_restore_discards_previous_project_compilation_but_retains_imports(self):
+        self.seed_content(self.seed)
+        for relative in ("Bee/artifacts/2400b0aEDbg.dag/Lumenfall.GameEvents.dll.mvfrm",
+                         "ScriptAssemblies/PreviousSuite.dll"):
+            path = self.seed / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("/github/workspace/Temp/pr-tests/pr_19/snapshot/Lumenfall/Library")
+        for name in ("Artifacts", "PackageCache", "ShaderCache"):
+            (self.seed / name).mkdir()
+            (self.seed / name / "retained.bin").write_bytes(b"imported data")
+        self.assertTrue(ci.cache_restore(self.entry, self.output))
+        for name in ("Bee", "ScriptAssemblies"):
+            self.assertFalse((self.library / name).exists())
+        for name in ("Artifacts", "PackageCache", "ShaderCache"):
+            self.assertEqual((self.library / name / "retained.bin").read_bytes(), b"imported data")
+        self.assertEqual((self.library / "imported.bin").read_bytes(), b"imported data")
+        self.assertEqual(json.loads((self.location / "snapshot.json").read_text()), self.marker)
+
+    def test_restore_rejects_linked_compiler_cache_roots_and_descendants(self):
+        self.seed_content(self.seed)
+        for name in ("Bee", "ScriptAssemblies"):
+            (self.seed / name / "nested").mkdir(parents=True)
+            (self.seed / name / "nested/file.bin").write_bytes(b"compiler data")
+        # Exercise both link types on Windows without requiring symlink privileges.
+        for method in ("is_symlink", "is_junction"):
+            original = getattr(Path, method)
+            for relative in ("Bee", "Bee/nested", "Bee/nested/file.bin",
+                             "ScriptAssemblies", "ScriptAssemblies/nested"):
+                with self.subTest(method=method, relative=relative):
+                    if self.library.exists():
+                        self.library.rename(self.seed)
+                    linked = self.library / relative
+                    with patch.object(Path, method, lambda path: path == linked or original(path)):
+                        with self.assertRaisesRegex(ValueError, "contains a link"):
+                            ci.cache_restore(self.entry, self.output)
+                    self.assertTrue((self.library / "Bee/nested/file.bin").exists())
+                    self.assertTrue((self.library / "ScriptAssemblies/nested/file.bin").exists())
+                    self.assertTrue((self.library / "imported.bin").exists())
+
+    def test_restore_rejects_non_directory_compiler_cache(self):
+        self.seed_content(self.seed)
+        (self.seed / "Bee").mkdir()
+        (self.seed / "Bee/retained.bin").write_bytes(b"compiler data")
+        (self.seed / "ScriptAssemblies").write_bytes(b"not a directory")
+        with self.assertRaisesRegex(ValueError, "not a directory"):
+            ci.cache_restore(self.entry, self.output)
+        self.assertTrue((self.library / "Bee/retained.bin").exists())
+        self.assertTrue((self.library / "imported.bin").exists())
+
+    def test_restore_propagates_compiler_tree_scan_errors_before_deletion(self):
+        self.seed_content(self.seed)
+        for name in ("Bee", "ScriptAssemblies"):
+            (self.seed / name).mkdir()
+            (self.seed / name / "retained.bin").write_bytes(b"compiler data")
+
+        def unreadable_tree(*args, **kwargs):
+            kwargs["onerror"](PermissionError("unreadable compiler cache"))
+
+        with patch.object(ci.os, "walk", side_effect=unreadable_tree):
+            with self.assertRaisesRegex(PermissionError, "unreadable compiler cache"):
+                ci.cache_restore(self.entry, self.output)
+        for name in ("Bee", "ScriptAssemblies"):
+            self.assertTrue((self.library / name / "retained.bin").exists())
+
+    @unittest.skipUnless(sys.platform == "linux", "requires Linux filesystem symlinks")
+    def test_restore_never_deletes_real_link_targets(self):
+        self.seed_content(self.seed)
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "retained.bin").write_bytes(b"outside data")
+        (self.seed / "Bee").mkdir()
+        (self.seed / "Bee/escape").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "contains a link"):
+            ci.cache_restore(self.entry, self.output)
+        self.assertEqual((outside / "retained.bin").read_bytes(), b"outside data")
+        self.assertTrue((self.library / "imported.bin").exists())
+
     def test_both_unity_modes_return_files_to_the_runner_owner(self):
         workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/pr-feature-suite.yaml").read_text()
         self.assertIn('echo "runner-owner=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"', workflow)

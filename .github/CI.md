@@ -235,6 +235,13 @@ runs on a separate hosted runner with its own source and preferences. A shared
 seed can require incremental reimport; compare latest hosted cache/import timings
 and strict suite results before claiming a speedup.
 
+After restoring a seed, the adapter removes only `Library/Bee` and
+`Library/ScriptAssemblies` so Unity rebuilds compiler graphs and assemblies for
+the current snapshot path and suite. Imported asset artifacts, package and shader
+caches remain available. Existing v1 seeds remain usable. Both removal trees are
+checked for linked roots/descendants before either is deleted; cleanup errors fail
+the restore. This follows [GameCI's fallback-cache compiler invalidation](https://game.ci/docs/github-orchestrator/advanced-topics/build-services/#fallback-keys).
+
 Preparation also captures the hosted runner's numeric UID:GID. Both GameCI modes
 pass it through the supported `chownFilesTo` input, which the pinned CLI uses to
 return ownership of the extracted project (including Library), test artifacts and
