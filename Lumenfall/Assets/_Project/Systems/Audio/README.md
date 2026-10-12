@@ -5,6 +5,8 @@ object. Each `WorldAreaAsset.audioProfile` selects an `AreaAudioProfile` contain
 music and ambience loops, independent gains, optional mixer groups, and a fade duration.
 The shipped forest, campus, and four interiors have ambience assigned; music is optional
 and can be added to these same profiles in the Inspector.
+The forest (`eastForest`) uses the supplied `lumenForest.wav` on its ambience channel,
+with the existing 0.45 gain and 1.5-second crossfade. Campus and interior loops are unchanged.
 
 The loader publishes `AreaChanged` after an authored area is activated and its spawn is
 applied, and publishes null when cleared. Portal travel, new-game reset, direct loads,
@@ -39,8 +41,9 @@ also checks profiles after actual portal transitions and save restoration.
 Manual listening check: open SampleScene, start a slot, travel campus -> east forest ->
 campus -> an interior, and listen for a smooth change between loops. Load a forest save
 from another area, test master-volume mute/unmute in Settings, and revisit an interior.
-The four interiors intentionally share a quiet room-tone profile. Starter loops are
-synthetic placeholders; final music and environmental recording choices remain an art task.
+The four interiors intentionally share a quiet room-tone profile. Campus and interior
+starter loops are synthetic placeholders. The supplied forest track loops through the
+same controller; listening quality and its loop seam still need the manual check above.
 
 Validation on 2026-10-05 with Unity 6000.4.10f1: all six audio EditMode cases and all nine
 PlayMode tests passed, including actual playback start, controller destruction, all ten

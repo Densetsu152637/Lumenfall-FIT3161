@@ -15,7 +15,7 @@ MonoBehaviour:
   music: {fileID: 0}
   musicVolume: 0.5
   musicMixerGroup: {fileID: 0}
-  ambience: {fileID: 8300000, guid: cf1e0ca3b14a4ea4b890cadf9f6f5a75, type: 3}
+  ambience: {fileID: 8300000, guid: 7e088df5d9aa54a42a7ea4f176d0fc5a, type: 3}
   ambienceVolume: 0.45
   ambienceMixerGroup: {fileID: 0}
   fadeDuration: 1.5

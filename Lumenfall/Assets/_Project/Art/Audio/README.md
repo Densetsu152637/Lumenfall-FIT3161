@@ -19,3 +19,12 @@ python scripts/generate_area_ambience.py
 Keep the existing `.meta` files when replacing loops so profile references remain valid.
 Unity imports these short mono clips as preloaded PCM; the audio controller sets looping
 and 2D playback at runtime. Per-area gains live in the three AreaAudioProfile assets.
+
+## Supplied forest track
+
+`lumenForest.wav` is the user-supplied forest audio, preserved byte-for-byte from the
+provided file. It is a 74.76925-second, stereo, 24-bit PCM WAV at 48,000 Hz. Its existing
+Unity import settings use streaming Vorbis (quality 0.7), background loading, and no
+preloading. The Forest profile assigns it to the ambience channel in `eastForest`.
+`ForestAmbience.wav` remains available as the generated placeholder, but is no longer
+assigned to that profile. The generator only regenerates the three starter loops above.
