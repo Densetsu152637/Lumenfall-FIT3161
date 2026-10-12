@@ -5,31 +5,58 @@ marked ready for review. With no pull-request branch filter, it applies to PRs i
 `main` and every other branch. It also runs after changes are pushed to `main`, and
 can be started manually from the Actions tab.
 
-The workflow contains two checks:
+The workflow always reports the same two required checks on Ubuntu 24.04:
 
 1. `Repository integrity` runs the Python harness tests and validates Unity metadata,
    JSON files, build scenes, case-safe paths, merge markers, and generated-file hygiene.
-   It requires no third-party packages or secrets.
-2. `Unity EditMode tests` runs the NUnit tests colocated with their systems under
-   `Lumenfall/Assets/_Project/Systems/*/Tests` with GameCI and uploads the XML test
-   results for 14 days.
+   It also selects the needed checks and validates this PR workflow with actionlint
+   1.7.12, downloaded from its official release and verified with a pinned SHA256.
+   The Python checks require no third-party packages or secrets.
+2. `Unity EditMode tests` is an always-run gate. It requires repository integrity to
+   succeed and the separate `Run Unity EditMode tests` job to pass whenever Unity is
+   required. Failed, cancelled, missing, or unexpected results fail the gate.
 
-Both Unity jobs first print the runner's available disk space, then reclaim space on
-the disposable GitHub-hosted Ubuntu runner by removing unrelated preinstalled .NET,
-Android, GHC, ghcup, and CodeQL SDKs and unused Docker images. They fail closed on
-self-hosted runners. The step leaves the workspace and cached Unity `Library` intact;
-the Unity toolchain is provided by GameCI. If extraction runs out of space again,
-compare the before and after `df -h /` diagnostics in the job log. Unity tests still
-run and continue to fail when the required license secrets are missing.
+Unity runs for every manual and `main` push, and for draft PRs with relevant changes.
+Only PRs changing exclusively `README.md`, `LICENSE`, `.github/CI.md`,
+`.github/PULL_REQUEST_TEMPLATE.md`, or Markdown files under `docs/` skip the expensive
+job. `scripts/select_pr_checks.py` compares the event's exact base and head commits
+from the depth-two merge checkout. Renames are treated as deletion plus addition.
+Source, assets (including their documentation), tests, packages, project settings,
+workflows, shared scripts, and unknown paths all require Unity. Missing commits,
+malformed event data, empty diffs, and other detection failures also require Unity.
+Comparing commit endpoints may conservatively include changes made on the base since
+a PR forked; this can run extra tests but cannot hide source changes. The required
+workflow itself has no path filter, so documentation-only PRs still report both checks.
+
+The Unity job checks for license secrets before cleanup, checkout, or cache downloads.
+Fork PRs with relevant changes therefore fail quickly when secrets are unavailable;
+they do not execute untrusted code with a privileged token. Checkout credentials are
+not persisted, and the workflow token has only `contents: read` access.
+
+The EditMode job prints disk space and, only when less than 30 GiB is available,
+removes unrelated preinstalled .NET, Android, GHC, ghcup, and CodeQL SDKs one at a time,
+stopping when enough space is free. It does not prune Docker images. Cleanup is limited
+to disposable GitHub-hosted runners and six minutes; the whole Unity job is limited
+to 30 minutes. The workspace and cached Unity `Library` remain intact. Release-build
+cleanup is configured independently. Compare the before/after `df -h /` diagnostics
+if extraction runs out of space.
 
 The EditMode job reads and validates `m_EditorVersion` from `ProjectVersion.txt` and
 uses the matching GameCI Ubuntu base image, which omits build modules the tests do not
-need. Its Unity `Library` cache is keyed by Unity version, packages, and commit; it
-restores only caches for the same Unity/package set and saves a new cache after an
-EditMode XML result exists. The test runner's GitHub Checks reporter is disabled
+need. Its Unity `Library` cache is keyed by OS, Unity version, packages, project
+settings, and asset content, so repeated runs with unchanged Unity inputs reuse an
+exact cache without uploading another copy. Changes to assets can restore an older
+cache with the same Unity/package/settings prefix for incremental import. A cold
+cache imports normally. A new cache is saved only after an EditMode XML result exists;
+test failures still fail the job. Cache scope follows GitHub's branch isolation and
+does not contain license secrets. The test runner's GitHub Checks reporter is disabled
 because the artifact upload is the supported result record and the reporter requires
 Checks API write access. Test failures still fail the job, and XML results remain
 available as artifacts.
+
+Concurrency includes the workflow, event, and PR number or ref. New PR commits cancel
+obsolete runs for that PR; independent PRs, main pushes, and manual runs do not cancel
+one another. No deployment or release behavior is changed by PR validation.
 
 ## One-time Unity license setup
 
@@ -82,7 +109,16 @@ From the repository root:
 ```sh
 python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
+actionlint .github/workflows/pr-validation.yml
 ```
+
+Use actionlint 1.7.12 to match CI. The harness covers the selector's documentation,
+source, workflow, lockfile, draft, rename/deletion, missing-history, malformed-event,
+and fail-closed cases. `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, and `GITHUB_OUTPUT`
+are the selector's standard Actions inputs/output; it can be rehearsed with sanitized
+event JSON and existing local commit SHAs. The release workflow currently uses
+`concurrency.queue`, which actionlint 1.7.12 does not recognize; the syntax check above
+intentionally targets the PR workflow maintained here.
 
 Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
 Synchronous EditMode fixtures must explicitly provide the world-service singleton and
