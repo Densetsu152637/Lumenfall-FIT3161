@@ -1,35 +1,84 @@
 # Pull request validation
 
-`Pull Request Validation` runs when a pull request is opened, updated, reopened, or
-marked ready for review. With no pull-request branch filter, it applies to PRs into
-`main` and every other branch. It also runs after changes are pushed to `main`, and
-can be started manually from the Actions tab.
+`Pull Request Validation` runs when a pull request is opened, updated, or reopened.
+Drafts execute the same checks; marking an unchanged PR ready for review does not
+repeat them. It applies to PRs into every branch, pushes to `main`, and manual runs.
 
-The workflow contains two checks:
+The workflow always reports two stable required checks on Ubuntu 24.04:
 
-1. `Repository integrity` runs the Python harness tests and validates Unity metadata,
-   JSON files, build scenes, case-safe paths, merge markers, and generated-file hygiene.
-   It requires no third-party packages or secrets.
-2. `Unity EditMode tests` runs the NUnit tests colocated with their systems under
-   `Lumenfall/Assets/_Project/Systems/*/Tests` with GameCI and uploads the XML test
-   results for 14 days.
+1. `Repository integrity` runs the Python harness and validates Unity metadata,
+   JSON, build scenes, case-safe paths, merge markers and generated-file hygiene.
+   It also selects the needed checks and validates the PR workflow with actionlint
+   1.7.12, downloaded from its official release with a pinned SHA256. These checks
+   require no third-party Python packages or secrets.
+2. `Unity EditMode tests` is the compatibility gate for branch protection. It
+   requires repository integrity and, whenever Unity is required, the separate
+   `Gameplay regression tests` job to succeed. That job verifies both EditMode and
+   PlayMode. Failed, cancelled, missing or unexpected results fail the gate.
 
-Both Unity jobs first print the runner's available disk space, then reclaim space on
-the disposable GitHub-hosted Ubuntu runner by removing unrelated preinstalled .NET,
-Android, GHC, ghcup, and CodeQL SDKs and unused Docker images. They fail closed on
-self-hosted runners. The step leaves the workspace and cached Unity `Library` intact;
-the Unity toolchain is provided by GameCI. If extraction runs out of space again,
-compare the before and after `df -h /` diagnostics in the job log. Unity tests still
-run and continue to fail when the required license secrets are missing.
+Unity runs for every manual and `main` push and for relevant PR changes. Only PRs
+changing exclusively `README.md`, `LICENSE`, `.github/CI.md`,
+`.github/PULL_REQUEST_TEMPLATE.md`, `tests/README.md` or Markdown under `docs/` skip
+Unity. `scripts/select_pr_checks.py` compares the event's exact base and head
+commits from the depth-two merge checkout. Renames are deletion plus addition.
+Source, assets (including their documentation), tests, packages, project settings,
+workflows, shared scripts and unknown paths require Unity. Missing commits,
+malformed events, empty diffs and detection failures also require Unity. Comparing
+commit endpoints may conservatively include base changes since a PR forked. The
+workflow has no path filter, so documentation-only PRs still report both checks.
 
-The EditMode job reads and validates `m_EditorVersion` from `ProjectVersion.txt` and
-uses the matching GameCI Ubuntu base image, which omits build modules the tests do not
-need. Its Unity `Library` cache is keyed by Unity version, packages, and commit; it
-restores only caches for the same Unity/package set and saves a new cache after an
-EditMode XML result exists. The test runner's GitHub Checks reporter is disabled
-because the artifact upload is the supported result record and the reporter requires
-Checks API write access. Test failures still fail the job, and XML results remain
-available as artifacts.
+## Current-project gameplay regression
+
+One job checks out the current event revision with depth one and runs `Lumenfall`
+through one GameCI action, using `testMode: all`. All 78 existing EditMode cases
+remain, with three focused effect-queue and cable regressions added. The job also
+runs the three existing PlayMode scene/world integration cases. The
+[behavior inventory and coverage limits](../tests/README.md) describe all 81/3 cases.
+There are no historical source fetches or snapshot matrices.
+
+The supported `cliVersion` input pins
+[GameCI CLI v0.1.72](https://github.com/game-ci/cli/releases/tag/v0.1.72).
+The [action's all-mode mapping](https://github.com/game-ci/unity-test-runner/blob/32e57712352b500e17974b245a6dce9e11a73213/src/test-args.ts#L49)
+selects PlayMode, EditMode and result combination. The
+[CLI platform loop](https://github.com/game-ci/cli/blob/v0.1.72/dist/platforms/ubuntu/steps/test.sh#L172)
+uses the same project/Library while launching Unity for each phase; one action does
+not mean one Editor process. The image matches `m_EditorVersion` in
+`ProjectVersion.txt` and uses the Ubuntu base image without unnecessary build modules.
+
+`scripts/verify_gameplay_tests.py` requires the exact `editmode-results.xml` and
+`playmode-results.xml` files and their expected fixture counts. Combined output is
+never accepted as platform evidence. Nonzero complete discovery, successful action
+outcome, unique case identities, no failed/skipped cases and the actual checked-out
+revision matching `GITHUB_SHA` are required. A source-inventory harness keeps the
+manifest aligned with current fixtures. The job refuses an existing results
+directory before Unity, writes a current-revision/per-mode summary and
+`ci-report.json`, and uploads `gameplay-test-results` for 14 days after execution,
+including failures. The GitHub Checks reporter is disabled; the token needs only
+`contents: read`.
+
+The job checks license secrets before cleanup, checkout or cache downloads. Relevant
+fork PRs fail quickly if secrets are unavailable. Checkout credentials are not
+persisted. GameCI's supported `chownFilesTo` input receives the runner's numeric
+UID:GID, returning ownership of the project and result paths after the container
+runs. See the [CLI permissions block](https://github.com/game-ci/cli/blob/v0.1.72/dist/platforms/ubuntu/steps/test.sh#L303).
+
+The existing `unity-editmode-v2` cache namespace and `Lumenfall/Library` path are
+retained. Keys include OS, Unity version, packages, project settings and asset
+content. Asset changes can restore a compatible prefix for incremental import; a
+cold cache imports normally. Both modes share this Library. A missing exact key is
+saved only after strict verification of both suites succeeds. Cache branch scope
+follows GitHub isolation, and the Library contains no license secrets. Hosted
+cache/import timings are needed to measure the improvement.
+
+The job prints disk space and, only below 30 GiB available, removes unrelated
+preinstalled .NET, Android, GHC, ghcup and CodeQL SDKs one at a time, stopping at
+sufficient space. Cleanup is limited to disposable GitHub-hosted runners and six
+minutes; the Unity job has a 30-minute limit. It does not prune Docker images.
+Workspace and Library remain intact. Release cleanup is configured independently.
+
+Concurrency includes workflow, event and PR number or ref. New commits cancel
+obsolete runs for that PR; independent PRs, main pushes and manual runs do not
+cancel each other. Release behavior is unchanged.
 
 ## One-time Unity license setup
 
@@ -82,16 +131,23 @@ From the repository root:
 ```sh
 python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
+actionlint .github/workflows/pr-validation.yml
 ```
 
-Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
-Synchronous EditMode fixtures must explicitly provide the world-service singleton and
-invoke the lifecycle callbacks they exercise: ordinary MonoBehaviours do not receive
-play-mode startup callbacks here. Use the existing `EditModeLifecycle` helper, restore
-any previous world instance, and unsubscribe fixture-owned spell casters during cleanup.
-Load a quest monitor's definitions through its `Awake` callback before calling
-`EvaluatePuzzles`; tests should not depend on `Update` timing. Preserve the production
-lesson, puzzle and report requirements rather than bypassing them to grant rewards.
+Use actionlint 1.7.12 with ShellCheck 0.11 to match the local validation tools.
+The harness covers conservative selection, renamed/deleted inputs, missing history,
+malformed events, complete gameplay discovery and strict XML verification.
+`GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH` and `GITHUB_OUTPUT` are the selector's
+standard Actions inputs/output; rehearse with sanitized event JSON and existing
+commit SHAs. The release workflow uses `concurrency.queue`, which actionlint 1.7.12
+does not recognize; the syntax command targets the maintained PR workflow.
+
+See [gameplay test instructions](../tests/README.md) for both Unity Test Runner modes,
+fixture lifecycle requirements and verification of fresh GameCI results. The retired
+snapshot catalog, its two workflows, three execution/selection adapters and three
+adapter harnesses have been replaced by the current-project fixture inventory and
+strict result verifier. Tests of APIs absent from this checkout are documented as
+coverage gaps rather than represented as validation of this revision.
 
 ## Downloadable game releases
 
@@ -131,7 +187,7 @@ archive, and run **Lumenfall.exe**. Keep the data directory, DLLs, Mono runtime,
 and all other included files beside the executable. Unity Editor is not required.
 GitHub's automatically generated **Source code** archives contain the project
 sources, not a runnable player. The repository's visibility also governs who can
-access releases; this repository is currently private.
+access releases; this repository is currently public.
 
 Every ZIP includes launch instructions, the repository license, and
 `build-info.json` with the source commit, triggering tag/ref, Unity version, and
