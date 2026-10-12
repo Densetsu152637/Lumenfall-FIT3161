@@ -78,8 +78,8 @@ See [UI integration sources and validation](../../../../../docs/implementation/g
 
 ## Integration validation
 
-The current test contract retains 164 EditMode cases, ten batch PlayMode cases and
-one graphical settings-pointer case. Batch CI explicitly excludes `RequiresGraphics`;
-run that category separately in a graphical Editor and inspect its screenshots.
-See [test procedures](../../../../../tests/README.md) for exact verification and
-local preference/save isolation. Validation of the newly merged revision is pending.
+The current test contract is defined by the [fixture inventory](../../../../../tests/gameplay_suites.json)
+and [test procedures](../../../../../tests/README.md). Batch CI explicitly excludes
+`RequiresGraphics`; run that category separately in a graphical Editor and inspect
+its screenshots. Follow the test procedures for exact verification and local
+preference/save isolation.
