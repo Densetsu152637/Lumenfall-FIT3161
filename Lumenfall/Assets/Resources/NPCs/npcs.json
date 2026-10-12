@@ -3,14 +3,14 @@
     {
       "mapId": "campus",
       "tileFile": "campus.npcs.txt",
-      "width": 92,
-      "height": 54
+      "width": 54,
+      "height": 92
     },
     {
-      "mapId": "eastForest",
-      "tileFile": "eastForest.npcs.txt",
-      "width": 50,
-      "height": 38
+      "mapId": "westForest",
+      "tileFile": "westForest.npcs.txt",
+      "width": 38,
+      "height": 50
     },
     {
       "mapId": "B02.Ground",
@@ -25,8 +25,8 @@
       "displayName": "Stella",
       "mapId": "B02.Ground",
       "asset": "NPCs/Elara.prefab",
-      "x": 19,
-      "y": 14,
+      "x": 12,
+      "y": 4,
       "layerSymbol": "s",
       "dialogue": [
         {
@@ -78,8 +78,8 @@
       "displayName": "Cinna Cirra",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
-      "x": 40,
-      "y": 22,
+      "x": 22,
+      "y": 51,
       "layerSymbol": "c",
       "dialogue": [
         {
@@ -132,8 +132,8 @@
       "displayName": "Cinna Cirra",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
-      "x": 20,
-      "y": 34,
+      "x": 34,
+      "y": 71,
       "layerSymbol": "c",
       "dialogue": [
         {
@@ -184,10 +184,10 @@
     {
       "id": "orio",
       "displayName": "Orio",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
-      "x": 26,
-      "y": 8,
+      "x": 8,
+      "y": 23,
       "layerSymbol": "o",
       "dialogue": [
         {
@@ -215,8 +215,8 @@
       "displayName": "Campus student",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
-      "x": 70,
-      "y": 32,
+      "x": 32,
+      "y": 21,
       "layerSymbol": "a",
       "dialogue": [
         {
@@ -236,10 +236,10 @@
     {
       "id": "forest_student",
       "displayName": "Forest student",
-      "mapId": "eastForest",
+      "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
-      "x": 12,
-      "y": 16,
+      "x": 15,
+      "y": 39,
       "layerSymbol": "f",
       "dialogue": [
         {
@@ -261,13 +261,28 @@
       "displayName": "Katrina",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
-      "x": 23,
-      "y": 40,
+      "x": 29,
+      "y": 70,
       "layerSymbol": "k",
       "dialogue": [
-        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "NotStarted", "weight": 5 },
-        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "Active", "weight": 5 },
-        { "dialogueId": "katrina_something_borrowed_dialogue", "questId": "katrina_something_borrowed", "requiredQuestStatus": "Completed", "weight": 5 }
+        {
+          "dialogueId": "katrina_something_borrowed_dialogue",
+          "questId": "katrina_something_borrowed",
+          "requiredQuestStatus": "NotStarted",
+          "weight": 5
+        },
+        {
+          "dialogueId": "katrina_something_borrowed_dialogue",
+          "questId": "katrina_something_borrowed",
+          "requiredQuestStatus": "Active",
+          "weight": 5
+        },
+        {
+          "dialogueId": "katrina_something_borrowed_dialogue",
+          "questId": "katrina_something_borrowed",
+          "requiredQuestStatus": "Completed",
+          "weight": 5
+        }
       ]
     }
   ]

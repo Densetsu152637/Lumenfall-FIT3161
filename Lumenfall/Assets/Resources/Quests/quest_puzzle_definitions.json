@@ -7,7 +7,13 @@
       "completionEventId": "complete_stella_first_light",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "repaired_relic", "objectIds": ["relic.stella.power"], "requiredPowered": true }
+        { "id": "all_generated_relics_lit", "objectIds": [
+          "stella.string-together.relic.1",
+          "stella.string-together.relic.2",
+          "stella.string-together.relic.3",
+          "stella.string-together.relic.4",
+          "stella.string-together.relic.5"
+        ], "requiredPowered": true }
       ]
     },
     {
@@ -16,8 +22,7 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "source_cable", "objectIds": ["relic.stella.power"], "requiredConnected": true },
-        { "id": "receiver_cable", "objectIds": ["circuit.stella.link"], "requiredConnected": true }
+        { "id": "board_relics_lit", "objectIds": ["stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5"], "requiredPowered": true }
       ]
     },
     {
@@ -35,25 +40,17 @@
       "completionEventId": "complete_cinna_cold_feet_warm_idea",
       "mapId": "campus",
       "targets": [
-        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 24, "requiredPositionY": 34 }
-      ]
-    },
-    {
-      "id": "orio_patch_notes_monitor",
-      "questId": "orio_patch_notes",
-      "completionEventId": "complete_orio_patch_notes",
-      "mapId": "eastForest",
-      "targets": [
-        { "id": "rotara_mechanism", "objectIds": ["mechanism.orio.rotate"], "requiredRotation": 90 }
+        { "id": "glaciate_trial", "objectIds": ["trial.cinna.ice"], "requiredFrozen": true, "requiredPositionX": 34, "requiredPositionY": 67 }
       ]
     },
     {
       "id": "katrina_something_borrowed_monitor",
       "questId": "katrina_something_borrowed",
-      "completionEventId": "complete_katrina_something_borrowed",
-      "mapId": "campus",
+      "completionEventId": "found_katrina_keepsake",
+      "successDialogueId": "katrina_keepsake_recovered",
+      "mapId": "C04.Recess",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 31, "requiredPositionY": 42 }
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 12, "requiredPositionY": 9 }
       ]
     }
   ]

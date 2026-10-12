@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lumenfall.GameEvents;
+using Lumenfall.DataDriven;
 using Lumenfall.Spells;
 using Lumenfall.Inventory;
 using NUnit.Framework;
@@ -67,6 +68,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(ChoiceIds(active), Does.Contain("active"), questId);
                 Assert.That(ChoiceIds(active), Does.Not.Contain("accept"), questId);
 
+                if (questId == "orio_patch_notes") runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
                 Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
                 DialogueSession completed = runtime.StartDialogue(questId + "_dialogue");
                 Assert.That(ChoiceIds(completed), Does.Contain("done"), questId);
@@ -95,6 +97,85 @@ namespace Lumenfall.Tests.GameEvents
             StartAndComplete(cinnaRuntime, "cinna_out_of_alignment");
             cinnaSecond = cinnaRuntime.StartDialogue("cinna_cold_feet_warm_idea_dialogue");
             Assert.That(cinnaSecond.SelectChoice("accept"), Is.True);
+        }
+
+        [Test]
+        public void StellaFollowUpDialogueAlwaysWinsOverCompletedFirstQuest()
+        {
+            GameEventManager manager = GameEventManager.Instance;
+            GameEventRuntime runtime = manager.Runtime;
+            runtime.ResetState();
+            GameObject host = new GameObject("stella-follow-up-selection-test");
+            try
+            {
+                StartAndComplete(runtime, "stella_first_light");
+                DynamicNpc stella = host.AddComponent<DynamicNpc>();
+                stella.Configure(new NpcDefinition
+                {
+                    id = "stella",
+                    dialogue = new[]
+                    {
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_first_light_dialogue",
+                            questId = "stella_first_light",
+                            requiredQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "NotStarted",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Active",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        },
+                        new NpcDialogueDefinition
+                        {
+                            dialogueId = "stella_string_them_together_dialogue",
+                            questId = "stella_string_them_together",
+                            requiredQuestStatus = "Completed",
+                            prerequisiteQuestId = "stella_first_light",
+                            prerequisiteQuestStatus = "Completed",
+                            weight = 5
+                        }
+                    }
+                }, null);
+
+                DialogueSession session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("accept"));
+                Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
+                session.End();
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("active"));
+                session.End();
+                Assert.That(runtime.TriggerEvent("complete_stella_string_them_together").Succeeded, Is.True);
+
+                session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+                Assert.That(ChoiceIds(session), Does.Contain("done"));
+            }
+            finally
+            {
+                if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
+                runtime.ResetState();
+                foreach (SpellCaster component in host.GetComponents<SpellCaster>()) EditModeLifecycle.Call(component, "OnDisable");
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]
@@ -246,7 +327,10 @@ namespace Lumenfall.Tests.GameEvents
                 out GameEventDatabaseDefinition database, out string error), Is.True, error);
             GameEventCatalog catalog = new GameEventCatalog(new[] { database });
             Assert.That(catalog.IsValid, Is.True, string.Join("\n", catalog.ValidationMessages));
-            return new GameEventRuntime(catalog);
+            GameEventRuntime runtime = new GameEventRuntime(catalog);
+            // Catalogue-only traversal; the real map/object/angle condition has separate behavior coverage.
+            runtime.RegisterConditionHandler("OrioMechanismAligned", (condition, current) => current.GetFlag("orio.patch_notes.mechanism_aligned"));
+            return runtime;
         }
 
         private static void StartAndComplete(GameEventRuntime runtime, string questId)

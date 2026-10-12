@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: westForest
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: westForest
+    width: 38
+    height: 50
+    tileFile: westForest.txt
+    portalGlyph: X
+    spawn:
+      x: 21
+      y: 5
+    regions:
+    - id: F01
+      name: Forest arrival clearing
+      rect:
+        x: 12
+        y: 40
+        width: 6
+        height: 8
+      walkable: 1
+    - id: F02
+      name: Lantern trail
+      rect:
+        x: 12
+        y: 18
+        width: 6
+        height: 24
+      walkable: 1
+    - id: F03
+      name: Forest threshold
+      rect:
+        x: 12
+        y: 8
+        width: 6
+        height: 12
+      walkable: 1
+    - id: F04
+      name: Orio's mechanism glade
+      rect:
+        x: 5
+        y: 18
+        width: 7
+        height: 10
+      walkable: 1
+    - id: F05
+      name: Brook overlook
+      rect:
+        x: 18
+        y: 24
+        width: 7
+        height: 12
+      walkable: 1
+    - id: F06
+      name: Deep forest boundary
+      rect:
+        x: 2
+        y: 20
+        width: 4
+        height: 8
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 7077579204381133489, guid: 09d07ef4d15a411f9cf62a1a32624450, type: 3}
+    B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
+    B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
+    B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
+    objects:
+    - id: mechanism.orio.rotate
+      prefab: {fileID: 0}
+      type: mechanism
+      x: 8
+      y: 21
+      width: 1
+      height: 1
+      elevation: 0
+      rotation: 180
+      blocks: 0
+      tags:
+      - rotara
+      compatibleWithSpells: 1
+    puzzleTargets:
+    - id: quest.orio.patch-notes
+      objectIds:
+      - mechanism.orio.rotate
+      requiredConnections: []
+      conditionMode: All
+      requiredPowered: 0
+      requiredConnected: 0
+      requiredRevealed: 0
+      requiredFrozen: 0
+      requiredAligned: 0
+      requiredRotation: 90
+      requiredPositionX: -2147483648
+      requiredPositionY: -2147483648
+    portals: []
+  areaPrefab: {fileID: 5632919234203233261, guid: f54d29105f80c8242b39536dc4282947, type: 3}
+  portals:
+  - {fileID: 11400000, guid: 10000000000000000000000000000000, type: 2}

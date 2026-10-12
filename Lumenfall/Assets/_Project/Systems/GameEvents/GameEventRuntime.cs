@@ -196,6 +196,9 @@ namespace Lumenfall.GameEvents
             }
 
             questStatuses[questId] = QuestStatus.Completed;
+            GrantSpellRewards(quest.metadata);
+            string item = MetadataValue(quest.metadata, "keyItemReward");
+            if (!string.IsNullOrWhiteSpace(item)) SetFlag("inventory.keyitem." + item.Trim(), true);
             QuestStatusChanged?.Invoke(quest, previous, QuestStatus.Completed);
             TriggerQuestLifecycleEvent(quest.onCompletedEventId, quest.id, "completed");
             return true;
@@ -360,6 +363,14 @@ namespace Lumenfall.GameEvents
                 }
             }
 
+            // Older saves could complete quests while the inventory UI observer was absent.
+            // Reconcile only durable completed-quest items; never teach Active quests on restore.
+            foreach (KeyValuePair<string, QuestStatus> entry in questStatuses)
+                if (entry.Value == QuestStatus.Completed && Catalog.TryGetQuest(entry.Key, out QuestDefinition quest))
+                {
+                    string item = MetadataValue(quest.metadata, "keyItemReward");
+                    if (!string.IsNullOrWhiteSpace(item)) SetFlag("inventory.keyitem." + item.Trim(), true);
+                }
             StateRestored?.Invoke();
             return true;
         }
@@ -399,7 +410,59 @@ namespace Lumenfall.GameEvents
             }
 
             ActiveDialogue = null;
+            if (session.IsCompleted && LessonRequirementsMet(session.Definition.metadata))
+            {
+                GrantSpellRewards(session.Definition.metadata);
+                // A lesson-only spell can be cast during its quest but is not learned until the quest completes.
+                GrantSpellFlags(session.Definition.metadata, "spellLesson", "spell.lesson.");
+            }
             DialogueEnded?.Invoke(session);
+        }
+
+        private bool LessonRequirementsMet(GameMetadataEntry[] metadata)
+        {
+            string questId = MetadataValue(metadata, "spellRewardQuestId");
+            if (!Catalog.TryGetQuest(questId ?? string.Empty, out QuestDefinition quest) ||
+                GetQuestStatus(questId) != QuestStatus.Active) return false;
+            string requirements = MetadataValue(quest.metadata, "requiresQuest");
+            if (!string.IsNullOrWhiteSpace(requirements))
+                foreach (string requirement in requirements.Split(',', ';'))
+                {
+                    string[] parts = requirement.Trim().Split(':');
+                    if (parts.Length != 2 || !Catalog.TryGetQuest(parts[0].Trim(), out _) ||
+                        !Enum.TryParse(parts[1].Trim(), true, out QuestStatus status) ||
+                        !Enum.IsDefined(typeof(QuestStatus), status) || GetQuestStatus(parts[0].Trim()) != status)
+                        return false;
+                }
+            string prerequisites = MetadataValue(metadata, "spellRewardPrerequisiteQuestIds");
+            if (!string.IsNullOrWhiteSpace(prerequisites))
+                foreach (string prerequisite in prerequisites.Split(',', ';'))
+                    if (!Catalog.TryGetQuest(prerequisite.Trim(), out _) ||
+                        GetQuestStatus(prerequisite.Trim()) != QuestStatus.Completed) return false;
+            return true;
+        }
+
+        private void GrantSpellRewards(GameMetadataEntry[] metadata)
+        {
+            GrantSpellFlags(metadata, "spellReward", "spell.unlocked.");
+        }
+
+        private void GrantSpellFlags(GameMetadataEntry[] metadata, string metadataKey, string flagPrefix)
+        {
+            // GameEvents stays independent of the runtime spell assembly; flags are the existing
+            // progression contract. Only canonical spell IDs are accepted, including case variants.
+            string[] spellIds = { "Ampere", "Weave", "Gravitate", "Rotara", "Glaciate", "Vis", "LostEchoes" };
+            foreach (string reward in (MetadataValue(metadata, metadataKey) ?? string.Empty).Split(',', ';'))
+                foreach (string spell in spellIds)
+                    if (string.Equals(reward.Trim(), spell, StringComparison.OrdinalIgnoreCase))
+                        SetFlag(flagPrefix + spell, true);
+        }
+
+        private static string MetadataValue(GameMetadataEntry[] metadata, string key)
+        {
+            foreach (GameMetadataEntry entry in metadata ?? Array.Empty<GameMetadataEntry>())
+                if (entry != null && string.Equals(entry.key, key, StringComparison.OrdinalIgnoreCase)) return entry.value;
+            return null;
         }
 
         private bool EvaluateCondition(GameConditionDefinition condition)

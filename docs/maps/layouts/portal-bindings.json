@@ -1,15 +1,15 @@
 {
   "coordinateSystem": "top-left, x right, y down",
-  "status": "resolved east gate; future gates reserved",
+  "status": "resolved west gate; future gates reserved",
   "maps": {
     "campus": [[45,19],[46,19],[68,23],[86,25],[86,26]],
-    "eastForest": [[0,34],[1,34],[0,35],[1,35]]
+    "westForest": [[0,34],[1,34],[0,35],[1,35]]
   },
   "bindings": {
     "campus_east_gate": {
       "source": [{"id":"P.A01.F03","x":86,"y":26},{"id":"P.A01.F03.86_27","x":86,"y":27}],
       "destination": [{"id":"P.F03.A01","x":0,"y":35},{"id":"P.F03.A01.1_36","x":1,"y":36}],
-      "arrival": {"campus":[85,26],"eastForest":[2,35]}
+      "arrival": {"campus":[85,26],"westForest":[2,35]}
     }
   },
   "reserved": [
