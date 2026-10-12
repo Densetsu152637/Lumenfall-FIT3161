@@ -12,6 +12,13 @@ import select_pr_feature_suites as selector
 
 
 class FeatureSelectionTests(unittest.TestCase):
+    def test_group_matrix_limits_unity_login_pressure(self):
+        root = Path(__file__).resolve().parents[2]
+        for group in selector.GROUPS:
+            workflow = (root / f".github/workflows/feature-{group}.yaml").read_text()
+            with self.subTest(group=group):
+                self.assertIn("      fail-fast: false\n      max-parallel: 1\n", workflow)
+
     def test_readiness_transition_does_not_repeat_draft_checks(self):
         root = Path(__file__).resolve().parents[2]
         workflows = [root / ".github/workflows/pr-validation.yml"]

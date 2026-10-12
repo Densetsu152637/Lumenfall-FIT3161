@@ -70,6 +70,7 @@ jobs:
     if: ${{ needs.select.outputs.has_suites == 'true' }}
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     uses: ./.github/workflows/pr-feature-suite.yaml
     with:

@@ -15,8 +15,10 @@ On PRs, each group selects only suites with changed inputs. Shared execution cha
 or uncertain change detection run the whole applicable group; catalog README/report
 edits skip suite execution. Main and manual runs select all suites in each triggered
 group. Drafts use the same rules; readiness transitions do not repeat unchanged
-checks. Jobs retain independent outcomes without an extra
-per-group parallelism cap, subject to GitHub's account scheduling limits.
+checks. Jobs retain independent outcomes, with one suite at a time per group to
+contain the observed Unity account login limit. The six groups can run concurrently;
+this does not serialize all logins globally. Single-suite changes retain precise
+selection; full-catalog runtime is constrained by account activation capacity.
 
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own

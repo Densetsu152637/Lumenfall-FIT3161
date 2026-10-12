@@ -159,9 +159,14 @@ Six `.yaml` workflows group the catalog by feature area in the Actions overview:
 Each workflow calls `pr-feature-suite.yaml` through a matrix with one named job
 per suite, such as **PR 18 - Camera**. Individual job status, rerun controls,
 summaries and artifacts still identify the precise failing suite. A suite failure
-does not cancel sibling jobs (`fail-fast: false`). Groups have no additional
-parallelism cap; GitHub's account limits schedule the independent hosted runners,
-avoiding extra serial waves within large groups. Within a job, EditMode and PlayMode have separate named steps; both
+does not cancel sibling jobs (`fail-fast: false`). Each group runs one suite at a
+time (`max-parallel: 1`) after concurrent runs repeatedly hit Unity's
+`143.002 maximumsameuser` account login limit. Six groups can still run concurrently
+alongside the basic EditMode job; this bounds login pressure but is not a global
+account queue. Single-suite selection still avoids unrelated work. Full-catalog
+wall time is constrained by Unity account activation capacity, so raising GitHub
+runner concurrency alone can cause failures instead of speeding execution.
+Within a job, EditMode and PlayMode have separate named steps; both
 are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
 pinned requirements from the extracted target and runs Python mutations without a
 Unity image or license.

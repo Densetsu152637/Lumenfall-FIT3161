@@ -150,8 +150,11 @@ The grouped workflow catalog covers all 22 manifest entries exactly once. The
 October 12 efficiency update adds precise PR matrix selection within each group,
 conservative full-group fallback, Ubuntu 24.04 runners, sparse catalog checkout,
 early license validation, conditional Python setup/pip caching, and shared bounded
-incremental disk cleanup. Independent outcomes and unique suite names remain;
-GitHub account scheduling now bounds concurrency without an extra group cap.
+incremental disk cleanup. Independent outcomes and unique suite names remain.
+The initial update removed the group cap; recurrent hosted Unity
+`143.002 maximumsameuser` login failures then required one suite at a time per
+group. This contains activation pressure while retaining six concurrent groups;
+it does not establish a global account-level queue.
 Acceptance assertions, pinned revisions, expected counts and strict result
 verification are unchanged. These workflow changes require their own latest-head
 hosted evidence; the 101-case local execution report above remains historical.
