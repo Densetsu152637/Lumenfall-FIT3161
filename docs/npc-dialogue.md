@@ -2,7 +2,34 @@
 
 `quest_npc_dialogue.json` is an independent schema-version 1 GameEvents package. The runtime merges JSON files beneath `Assets/**/Resources/GameEvents`; it does not replace `sample_events.json`.
 
-Dialogue presentation uses a warm, rounded IMGUI treatment with the node speaker at the top-left. Stella, Cinna Cirra, Orio, and Katrina receive distinct documented-cast accent colors and generated 3:1 textbox frames loaded from `Resources/Dialogue/{Stella,CinnaCirra,Orio,Katrina}`; anonymous students, the Narrator and any other unframed speaker use the neutral `Random NPC` parchment frame. The panel preserves the frame ratio and insets text away from the illustrated perimeter. Text reveals at a frame-rate-independent pace with a short punctuation pause, and choices/Continue remain unavailable until the line is fully visible. Space, Return, and `E` reveal or advance while the existing movement lock remains active; the opening interaction frame is ignored so `E` cannot skip the first line. Long text and choices remain reachable through the scroll region. Dialogue uses Nunito, a rounded sans serif font licensed under SIL Open Font License 1.1; the source metadata is the official [Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/nunito), with the license copied to `Resources/Dialogue/OFL.txt`. Asset generation provenance is recorded in [`dialogue-art-provenance.md`](dialogue-art-provenance.md).
+## Presentation
+
+`DialogueOverlay` presents dialogue through a UI Toolkit panel (`DialogueView`). It is laid out against a 1920x1080 reference and scales with screen height. Styling lives in `Resources/Dialogue/DialogueBox.uss`, with the panel theme in `Resources/Dialogue/DialogueTheme.tss`.
+
+- **Box and frames:** the box slides and fades in over a light dim of the world. Stella, Cinna Cirra, Orio and Katrina have their own accent colours and generated 3:1 frames from `Resources/Dialogue/{Stella,CinnaCirra,Orio,Katrina}`. Students, the Narrator and any other unframed speaker use the neutral `Random NPC` parchment frame. Text is inset from the illustrated border.
+- **Speaker:** the name sits on a ribbon in the speaker's colour on the frame's top edge.
+- **Portrait:** a live portrait of the speaking NPC sits over the frame's top-left corner. `DialoguePortrait` moves that NPC's renderers to layer 31 while it speaks and renders its face, located by its eye mesh, into a texture; the world cameras still draw it. The speaker is the nearby NPC whose display name matches the node speaker, otherwise the NPC being talked to. The Narrator has no portrait.
+- **Pages:** `DialoguePaging` splits a node's text into pages of at most about 130 visible characters, roughly three lines. Pages break after sentences, or between words inside a very long sentence. Tags open across a break are closed and reopened, so effects carry over. Continuing shows the next page; choices appear only after the last page.
+- **Box size:** the box keeps the frames' 3:1 shape and scales as a whole to 72%, 80%, 88% or 100%. It uses the smallest size whose text area fits the page and, on the last page, its choices, so short remarks get a smaller box. The text size never changes.
+- **Reveal:** text reveals at a frame-rate-independent pace with a short punctuation pause. Choices appear once the last page is fully visible; the continue arrow shows whenever another page or line follows.
+- **Voice blips:** `DialogueBlips` plays a soft generated tone every other letter, pitched per speaker. The Narrator is silent.
+- **Camera:** while a conversation is open, `CameraFollow2_5D.FrameConversation` eases the camera in to frame the player and the NPC, and releases it when the dialogue ends.
+
+**Input.** Talk (`E`, rebindable), Space, Return or the gamepad south button reveals the line, then continues. Clicking the box also reveals or continues. Choices are parchment rows: select them with up/down (`W`/`S`, the arrow keys or the D-pad) and confirm, or click a row. The number keys 1–9 also pick a choice directly, in list order. The opening interaction frame is ignored so `E` cannot skip the first line, and the movement lock stays active throughout.
+
+**Writer tags.** Standard rich-text tags (`<b>`, `<i>`, `<color>`) pass through, and `DialogueTextEffects` adds three more:
+
+| Tag | Effect |
+| --- | --- |
+| `<wave>…</wave>` | Letters bob gently |
+| `<shake>…</shake>` | Letters jitter |
+| `<spell>…</spell>` | Spell styling (bold purple) |
+
+The spell names Ampere, Weave, Vis, Glaciate, Rotara and Lost Echoes are styled automatically as whole words. The word before an exclamation mark gets a small wave.
+
+**Font.** The dialogue box uses Fredoka, a rounded sans serif licensed under SIL Open Font License 1.1. Body text and choices use `Fredoka-Medium`; speaker names use `Fredoka-SemiBold`. Both are static weight-500 and weight-600 instances, at width 100, cut with fontTools from the variable `Fredoka[wdth,wght].ttf` in the official [Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/fredoka). The variable font's default weight is Light. The licence is copied to `Resources/Dialogue/Fredoka-OFL.txt`. Nunito Regular, with its licence in `Resources/Dialogue/OFL.txt`, remains in use by the ice-trial and Lost Echoes guide overlays. Asset generation provenance is recorded in [`dialogue-art-provenance.md`](dialogue-art-provenance.md).
+
+## Content
 
 Principal dialogue IDs and placements are: `stella_first_light_dialogue` at W02, `stella_string_them_together_dialogue` at W02 (W03 remains optional), `cinna_out_of_alignment_dialogue` at C02, `cinna_cold_feet_warm_idea_dialogue` at C03, `orio_patch_notes_dialogue` at F04, and `katrina_something_borrowed_dialogue` at C04. Registry records should select each dialogue using its quest ID and `NotStarted`/`Active`/`Completed` status. Stella's second quest additionally requires `stella_first_light:Completed`; Cinna's second requires `cinna_out_of_alignment:Completed`.
 
