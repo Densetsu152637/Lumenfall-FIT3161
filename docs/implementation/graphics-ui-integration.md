@@ -59,8 +59,8 @@ See [test procedures and coverage](../../tests/README.md).
 - Repository checks: `python scripts/validate_unity_project.py Lumenfall` and
   `python -m unittest discover -s scripts/tests`.
 
-Validation of this newly integrated revision is pending. Earlier branch results do
-not establish that the merged checkout passes. Local runs must isolate preferences
+Validation results are recorded in PR #23 and its Actions runs; earlier branch results
+do not establish that this merged checkout passes. Local runs must isolate preferences
 and save paths with a temporary test company/product identity and restore original
 ProjectSettings bytes afterward. Hosted CI uses the committed identity in a fresh
 Linux profile. Never use developer save data as a test fixture.

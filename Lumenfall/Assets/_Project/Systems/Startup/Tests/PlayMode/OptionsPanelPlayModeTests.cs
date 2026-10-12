@@ -82,7 +82,8 @@ namespace Lumenfall.Startup.Tests
         private static IEnumerator CaptureScreenshot(string path)
         {
             if (File.Exists(path)) File.Delete(path);
-            // Allow the selected section to repaint, then wait for the asynchronous PNG write.
+            // Let the 0.2 second section fade finish before capturing a fresh repaint.
+            yield return new WaitForSecondsRealtime(0.25f);
             yield return null;
             ScreenCapture.CaptureScreenshot(path);
             float deadline = Time.realtimeSinceStartup + 10f;
