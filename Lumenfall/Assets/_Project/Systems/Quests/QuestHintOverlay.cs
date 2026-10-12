@@ -250,6 +250,7 @@ namespace Lumenfall.Quests
             return new QuestPuzzleTarget
             {
                 objectIds = questTarget.objectIds,
+                requiredConnections = MergeConnections(questTarget.requiredConnections, best.requiredConnections),
                 conditionMode = string.Equals(questTarget.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(best.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? "Any" : "All",
                 requiredPowered = questTarget.requiredPowered || best.requiredPowered,
@@ -261,6 +262,14 @@ namespace Lumenfall.Quests
                 requiredPositionX = questTarget.requiredPositionX != int.MinValue ? questTarget.requiredPositionX : best.requiredPositionX,
                 requiredPositionY = questTarget.requiredPositionY != int.MinValue ? questTarget.requiredPositionY : best.requiredPositionY
             };
+        }
+
+        private static string[] MergeConnections(string[] first, string[] second)
+        {
+            List<string> connections = new List<string>();
+            foreach (string item in first ?? Array.Empty<string>()) if (!string.IsNullOrWhiteSpace(item) && !connections.Contains(item)) connections.Add(item);
+            foreach (string item in second ?? Array.Empty<string>()) if (!string.IsNullOrWhiteSpace(item) && !connections.Contains(item)) connections.Add(item);
+            return connections.ToArray();
         }
 
         private QuestPuzzleDefinition FindPuzzle(string questId)
@@ -290,6 +299,11 @@ namespace Lumenfall.Quests
         private static bool TargetComplete(QuestPuzzleTarget target, WorldStateService world)
         {
             if (target == null || target.objectIds == null || target.objectIds.Length == 0) return false;
+            foreach (string connection in target.requiredConnections ?? Array.Empty<string>())
+            {
+                string[] ends = (connection ?? string.Empty).Split('|');
+                if (ends.Length != 2 || !world.IsConnected(ends[0], ends[1])) return false;
+            }
             bool any = false, all = true;
             foreach (string id in target.objectIds)
             {
@@ -321,6 +335,7 @@ namespace Lumenfall.Quests
                     }
             }
             if (target.requiredPowered) return "Power the relic with Ampere.";
+            if (target.requiredConnections != null && target.requiredConnections.Length > 0) return "Connect the relics with Weave.";
             if (target.requiredConnected) return "Connect the puzzle objects.";
             if (target.requiredAligned) return "Align the objects with Vis.";
             if (target.requiredFrozen) return "Freeze the trial object with Glaciate and move it to the marked cell.";

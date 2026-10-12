@@ -62,7 +62,7 @@ namespace Lumenfall.Inventory
         private Page page;
         private readonly UiNavigationInput navigation = new UiNavigationInput();
         private readonly MenuSkin skin = new MenuSkin();
-        private readonly OptionsPanel options = new OptionsPanel();
+        private readonly OptionsPanel options = new OptionsPanel { FlipPages = true };
         private readonly Rect[] tabRects = new Rect[PageLabels.Length];
         private GridMover lockedMover;
         private GameEventRuntime subscribedRuntime;

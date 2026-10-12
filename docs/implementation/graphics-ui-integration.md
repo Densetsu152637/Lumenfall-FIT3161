@@ -7,8 +7,8 @@ PR #23 combines the basic graphics settings with the UI work available on the re
 | Source branch / reviewed commit | Integrated content |
 | --- | --- |
 | `codex/feature-production-ui` / `29a175e` | Keyboard/controller navigation and owned overlay/movement locks. |
-| `codex/feature-accessibility-settings` / `401cd79` | Text scaling, dialogue reveal/contrast, sprint preference, reduced camera motion and localization resolver. The F10/controller shortcut opens the shared settings panel. |
-| `feat/options-menu` / `65e413c` (includes `feat/main-menu` / `a67baeb`, `2e7cc18`) | Shared theme, runtime menu art, journal restyle, pause/settings presentation and grouped key rebinding. Its five sections are consolidated into Main and Graphics. |
+| `codex/feature-accessibility-settings` / `401cd79` | Text scaling, dialogue reveal/contrast, sprint preference, reduced camera motion and localization resolver. The settings themselves live in the shared options panel; the F10/controller Start shortcut was later removed. |
+| `feat/options-menu` / `65e413c` (includes `feat/main-menu` / `a67baeb`, `2e7cc18`) | Shared theme, runtime menu art, journal restyle, pause/settings presentation and grouped key rebinding. Later merged in full; see below. |
 | `campus-updates` / `20ff50a` | Dedicated autosave, manual Save page, slot summaries/thumbnails and loading snapshots into autosave. The later garden/occlusion content is excluded. |
 | `feat/spell-wheel` / `aa70dae`, `176fae8` | Animated spell wheel, scroll feedback and selected-spell HUD chip. References to newer puzzle-specific panels are excluded. |
 | `codex/feature-audio-feedback-mix` / `7040692`, `dd4c078` | Four bus controls, feedback service/catalog and runtime-change notifications. No audio binaries or unrelated area-audio feature are imported. |
@@ -24,18 +24,18 @@ Other remote branches either inherit these UI changes or modify gameplay, levels
 
 `feat/options-menu` (`30df69c`, which contains all of `feat/main-menu`) was later merged into this branch in full, after both had been merged into `main` through PRs #26 and #27. The merge brings in the newer gameplay and quest content those branches carry, so the scoped exclusions above no longer apply to them. Conflicts were resolved as follows:
 
-- **Kept from this branch:** the consolidated Main/Graphics `OptionsPanel`, `MenuSkin`, `GameSettingsPanel`, graphics options, accessibility, audio buses, `OverlayInputGate` ownership, keyboard/controller navigation, transactional save recovery (`GameSaveManager`) and owner-scoped movement locks.
+- **Kept from this branch:** only the new settings (graphics options, the four volume buses, accessibility options and their effects, such as text scale and contrast in `MenuSkin`), `OverlayInputGate` ownership, keyboard/controller navigation, transactional save recovery with its Load-page prompt, and owner-scoped movement locks. The menus keep their original look: the consolidated Main/Graphics panel was replaced by the original ribbon `OptionsPanel` with a new Graphics ribbon, the startup Settings page is its original card with the volume buses and a Graphics page added, and the F10/controller Start shortcut was removed.
 - **Taken from the menu branches:** the New Game slot picker with linked manual slots (`ManualSaveSlot`), journal-footer Save/Main menu/Quit, deliberate autosaving (`GameAutosave.HasPlayedSinceLoad`, no save on load), the four-option main ring (the startup Save page is removed), quest hints for Stella and Orio, the `eastForest` save-id migration, NPC talk prompts and the dialogue text-colour fixes.
 - **Combined:** `SpellCaster` follows `main` (Weave threads, Lost Echoes area search, mechanism casts and the animated wheel) and adds gamepad/arrow wheel navigation and the input gate. `GridPlayerInput` keeps the hold/toggle sprint preference and ignores rebound keyboard keys in the input actions. `WorldStateService` and `DataDrivenWorldLoader` validate saves after normalising legacy map ids.
 
 ## Result
 
-One `OptionsPanel` is used in startup Settings, pause Settings and journal Settings:
+The pause Settings pop-out and the journal's Settings tab share the ribbon `OptionsPanel`: Gameplay (hints, sprint
+hold/toggle), Audio (four volume buses), Display (fullscreen, VSync), Graphics (AA, AO, shading, Use recommended),
+Controls (key rebinding) and Accessibility (menu and camera motion, contrast, dialogue reveal and speed, text size). The
+startup menu keeps its own Settings card with the volume buses and quest hints, plus Controls and Graphics pages.
 
-- **Main:** hints, audio buses, accessibility, reduced menu motion and key rebinding.
-- **Graphics:** fullscreen, VSync, AA, AO, shading and Use Recommended.
-
-Each opening selects Main. Keyboard/controller focus and pointer controls operate the same underlying preference services. Only graphics keys missing on first launch receive hardware recommendations; existing preferences survive. Preset thresholds and runtime rendering behavior are documented in the [startup README](../../Lumenfall/Assets/_Project/Systems/Startup/README.md).
+The startup menu and the in-game options use the original menu styles. Keyboard/controller focus and pointer controls operate the same underlying preference services. Only graphics keys missing on first launch receive hardware recommendations; existing preferences survive. Preset thresholds and runtime rendering behavior are documented in the [startup README](../../Lumenfall/Assets/_Project/Systems/Startup/README.md).
 
 Save/load controls use dedicated autosave and three manual slots. Invalid saves offer explicit recovery candidates. Transactional reset/restore protects current progress, retains unknown providers and prevents autosaving after a failed rollback. Audio controls use the imported bus owner rather than a second master-volume store. Accessibility shortcuts route to the same panel rather than opening a competing settings screen.
 

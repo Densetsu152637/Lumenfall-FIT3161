@@ -1,10 +1,9 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Lumenfall.Quests;
 
 namespace Lumenfall.Accessibility
 {
-    /// <summary>Accessibility shortcut into the same Main/Graphics settings used by the pause menu and journal.</summary>
+    /// <summary>Opens and closes the shared Settings pop-out, where the accessibility options live, and reports whether it blocks input.</summary>
     public sealed class AccessibilitySettingsOverlay : MonoBehaviour
     {
         public static bool IsOpen => QuestHintOverlay.IsSettingsOpen;
@@ -16,11 +15,6 @@ namespace Lumenfall.Accessibility
                 new GameObject("[AccessibilitySettingsOverlay]").AddComponent<AccessibilitySettingsOverlay>();
         }
         private void Awake() { DontDestroyOnLoad(gameObject); }
-        private void Update()
-        {
-            if (Keyboard.current?.f10Key.wasPressedThisFrame == true || Gamepad.current?.startButton.wasPressedThisFrame == true)
-            { if (IsOpen) Close(); else Open(); }
-        }
         public void Open() => QuestHintOverlay.OpenSettings();
         public void Close() => QuestHintOverlay.CloseSettings();
     }

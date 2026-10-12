@@ -173,7 +173,7 @@ namespace Lumenfall.DataDriven
             }
             else if (complete && GUILayout.Button(Localization.Resolve(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "dialogue.close" : "dialogue.continue",
                 string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue"), buttonStyle)) session.Continue();
-            else if (!complete) GUILayout.Label(Localization.Resolve("dialogue.reveal_hint", "Space / E / controller A: reveal. F10 / Start: settings."), hintStyle);
+            else if (!complete) GUILayout.Label(Localization.Resolve("dialogue.reveal_hint", "Press Space, E or controller A to reveal"), hintStyle);
             GUI.enabled = previousEnabled;
             GUILayout.EndScrollView();
             GUILayout.EndArea();

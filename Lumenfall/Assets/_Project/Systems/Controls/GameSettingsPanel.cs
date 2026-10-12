@@ -87,10 +87,17 @@ namespace Lumenfall.Controls
 
         public static void ApplySavedVolume() { AudioListener.volume = MasterVolume; }
 
-        /// <summary>GraphicsOptions owns startup display preferences and first-run recommendations.</summary>
+        /// <summary>
+        /// GraphicsOptions owns VSync and applies it at startup. VSync used to be saved on its own under
+        /// <c>lumenfall.vsync</c>; an earlier choice is carried into the graphics preferences once, then the old key is dropped.
+        /// </summary>
         public static void ApplySavedDisplay()
         {
-            // Retained for older menu callers; the graphics bootstrap applies the saved preferences.
+            const string LegacyVSyncKey = "lumenfall.vsync";
+            if (!PlayerPrefs.HasKey(LegacyVSyncKey)) return;
+            VSync = PlayerPrefs.GetInt(LegacyVSyncKey) != 0;
+            PlayerPrefs.DeleteKey(LegacyVSyncKey);
+            PlayerPrefs.Save();
         }
 
         public void DrawVolume(GUIStyle labelStyle)

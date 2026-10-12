@@ -4,16 +4,35 @@
 
 ## Settings
 
-The startup Settings page, in-game pause/settings panel (`QuestHintOverlay`) and journal Settings page (`InventoryEncyclopediaUI`) all draw the same `OptionsPanel`. Each opening starts on **Main**. Changing tabs cancels any pending rebind and resets scroll/focus.
+The menus keep their original look; the graphics, volume-bus and accessibility settings are added to them.
 
-| Tab | Options |
+**Startup menu.** Settings is the original card: master, music, sound effects and ambience volume sliders, then the
+Show quest hints switch. Below it, **Controls** opens the key-rebinding page and **Graphics** opens a page in the same
+card style with VSync (relic switch), antialiasing Off/FXAA/SMAA (lavender pills), ambient occlusion (switch), shading
+quality Low/Medium/High (pills), the recommended preset and **Use recommended**. Pages keep fixed sizes (Settings
+560×758, Graphics 600×610) and shrink through `FitScale` on small windows.
+
+**In-game options.** The Settings pop-out (`QuestHintOverlay`) and the journal's Settings tab (`InventoryEncyclopediaUI`)
+draw the same `OptionsPanel`: silk bookmark ribbons hanging from a spellbook spine, each with a rune, relic switches,
+lantern volume sliders, and page turns in the journal. The chosen section stays selected between openings. A section
+whose rows do not fit (for example with a large text size) scrolls with the gold scrollbar.
+
+| Section | Options |
 | --- | --- |
-| Main | Quest hints; master, music, sound effects and ambience volume; text size; dialogue reveal speed; instant reveal; reduced camera motion; high contrast; hold/toggle sprint; reduced menu motion; Controls/key rebinding. |
-| Graphics | Fullscreen; VSync; antialiasing (Off/FXAA/SMAA); ambient occlusion; shading quality (Low/Medium/High); Use Recommended. |
+| Gameplay | Show quest hints; sprint Hold/Toggle. |
+| Audio | Master, music, sound effects and ambience volume. |
+| Display | Fullscreen (player build only); VSync. |
+| Graphics | Antialiasing (Off/FXAA/SMAA); ambient occlusion; shading quality (Low/Medium/High); recommended preset and Use recommended. |
+| Controls | Grouped key rebinding. |
+| Accessibility | Reduce menu motion; reduce camera motion; high contrast; instant dialogue; dialogue speed; text size (100–175%). |
 
-Use the pointer, or Up/Down to focus a tab or setting, Left/Right to select a tab or adjust the focused value, and Enter/Space to activate it. A controller uses the d-pad/left stick and A/B. Fullscreen is available in a player build. Unsupported URP/AO controls display Unavailable and preserve their saved values.
+Keyboard and controller: on the startup Settings and Graphics pages, Up/Down move the focus, Left/Right adjust the
+focused slider, switch or choice, and Enter/A toggles or presses it. In the in-game options, Up/Down move between
+ribbons; Right or Enter steps into the section's rows, where Up/Down move between rows (Up from the first returns to the
+ribbons) and Left/Right/Enter adjust as above. The focus glow appears only once keys or a controller are used. Options
+the renderer cannot apply are dimmed, read `Not available with this renderer`, and keep their saved values.
 
-The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay, F10, controller Start or the Settings button opens the pause panel. The pause panel holds only the options and a `Game paused · Esc to resume` line; its top-right button reads Close. The journal footer provides **Main menu**, **Save · Slot N** and **Quit game**, with the linked slot's save time inked beside them. A failed save stays visible in the footer and prevents Quit from closing the game.
+The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay or the Settings button opens the pause panel. The pause panel holds only the options and a `Game paused · Esc to resume` line; its top-right button reads Close. The journal footer provides **Main menu**, **Save · Slot N** and **Quit game**, with the linked slot's save time inked beside them. A failed save stays visible in the footer and prevents Quit from closing the game.
 
 Controls groups movement, spell and interface actions. Selecting an action captures its next key; a conflicting assignment requires an explicit Swap or Cancel. Escape cancels the capture. Runtime movement, sprint, talk, spell selection/casting and journal input use these bindings.
 
@@ -53,6 +72,6 @@ The Load page shows location, quest, playtime, timestamp and thumbnail summaries
 
 The IMGUI menu uses Nunito, the existing button sheets and runtime-generated gold/cream/lavender art. `MenuArt`, `MenuProps`, `MenuSparks`, `MenuCameraDrift`, `MenuSkin` and `MenuSkinProps` contain reusable presentation. Hosts dispose their own generated textures. Animation uses unscaled time. Reduced menu motion suppresses camera drift, pointer parallax, motes and spark trails; it is separate from reduced gameplay camera motion.
 
-Panels scale to the available window. Settings use scrollable rows and honor text-size preferences. Input leases prevent the journal, spell wheel, dialogue and pause menu from controlling gameplay simultaneously; each closes only its own movement lock. Spell and inventory subscriptions rebind when New Game replaces the event runtime.
+Panels scale to the available window. In-game option sections scroll when needed and honor text-size preferences. Input leases prevent the journal, spell wheel, dialogue and pause menu from controlling gameplay simultaneously; each closes only its own movement lock. Spell and inventory subscriptions rebind when New Game replaces the event runtime.
 
 See [UI integration sources and validation](../../../../../docs/implementation/graphics-ui-integration.md) for branch provenance, scoped imports, verification and remaining graphical checks.

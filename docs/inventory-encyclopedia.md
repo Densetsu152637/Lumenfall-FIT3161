@@ -5,7 +5,7 @@
 closes it. The Inventory page lists owned key items and currently unlocked spells, including any
 available spell icon. The Character encyclopedia page lists each supported authored NPC record
 after the player starts one of their dialogues; duplicate Cinna Cirra placements share the same
-authored character description. The Settings page draws the shared `OptionsPanel` (Main and Graphics tabs), the same content as
+authored character description. The Settings page draws the shared `OptionsPanel` (Gameplay, Audio, Display, Graphics, Controls and Accessibility ribbons), the same content as
 the in-game Settings pop-out and the startup menu's Settings page.
 Unlike the pop-out, the journal does not pause the world. The
 footer has **Main menu** (reopens the startup menu through `StartupMenu.ReturnToMainMenu`, saving

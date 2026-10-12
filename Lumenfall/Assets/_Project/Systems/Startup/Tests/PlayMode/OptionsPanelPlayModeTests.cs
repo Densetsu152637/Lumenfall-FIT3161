@@ -23,36 +23,42 @@ namespace Lumenfall.Startup.Tests
             AudioMixSettings.SetVolume(AudioBus.Master, volume);
             if (host != null) Object.DestroyImmediate(host);
         }
-        [Test] public void KeyboardNavigationEditsOnlyTheSelectedTab()
+        [Test] public void KeyboardNavigationEditsOnlyTheFocusedSection()
         {
             var panel = new OptionsPanel(); panel.Reset();
+            panel.SelectSection(OptionsPanel.Section.Audio);
             AudioMixSettings.SetVolume(AudioBus.Master, 0.5f);
-            panel.HandleNavigation(1, 0, false); // Graphics tab focus, still viewing Main.
-            panel.HandleNavigation(1, 0, false); // Quest hints.
-            panel.HandleNavigation(1, -1, false); // Master volume.
+            panel.HandleNavigation(0, 1, false); // Into the Audio rows: Master volume.
+            panel.HandleNavigation(0, -1, false); // Master volume down a step.
             Assert.That(AudioMixSettings.Master, Is.EqualTo(0.45f).Within(0.001f));
             Assert.That(GraphicsOptions.Instance.Preferences.VSync, Is.EqualTo(graphics.VSync));
-            panel.SelectTab(OptionsPanel.Tab.Graphics);
-            panel.HandleNavigation(1, 0, false); // Fullscreen.
-            panel.HandleNavigation(1, 0, true); // VSync.
+            panel.HandleNavigation(-1, 0, false); // Back to the ribbons.
+            Assert.That(panel.FocusedRow, Is.EqualTo(-1));
+            panel.HandleNavigation(1, 0, false); // Down a ribbon to Display.
+            Assert.That(panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Display));
+            panel.HandleNavigation(0, 0, true); // Into the Display rows: Fullscreen.
+            panel.HandleNavigation(1, 0, false); // VSync.
+            panel.HandleNavigation(0, 0, true); // Toggle VSync.
             Assert.That(GraphicsOptions.Instance.Preferences.VSync, Is.EqualTo(!graphics.VSync));
             Assert.That(QualitySettings.vSyncCount, Is.EqualTo(graphics.VSync ? 0 : 1));
             Assert.That(GraphicsPreferences.Load().VSync, Is.EqualTo(!graphics.VSync));
             Assert.That(AudioMixSettings.Master, Is.EqualTo(0.45f).Within(0.001f));
         }
-        [Test] public void RecommendedPresetPreservesMainSettingsAndResetReopensMain()
+        [Test] public void RecommendedPresetPreservesOtherSettingsAndResetReturnsFocusToTheRibbons()
         {
             var panel = new OptionsPanel(); panel.Reset();
-            panel.SelectTab(OptionsPanel.Tab.Graphics);
-            for (int i = 0; i < 6; i++) panel.HandleNavigation(1, 0, false);
+            panel.SelectSection(OptionsPanel.Section.Graphics);
+            panel.HandleNavigation(0, 0, true); // Into the Graphics rows.
+            for (int i = 0; i < 3; i++) panel.HandleNavigation(1, 0, false); // Down to Use recommended.
             panel.HandleNavigation(0, 0, true);
             Assert.That(GraphicsOptions.Instance.Preferences.Shading, Is.EqualTo(GraphicsOptions.Instance.RecommendedPreferences.Shading));
             Assert.That(AudioMixSettings.Master, Is.EqualTo(volume));
             panel.Reset();
-            Assert.That(panel.SelectedTab, Is.EqualTo(OptionsPanel.Tab.Main));
-            Assert.That(panel.FocusedControl, Is.Zero);
+            // The chosen section stays selected between openings; focus returns to its ribbon.
+            Assert.That(panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Graphics));
+            Assert.That(panel.FocusedRow, Is.EqualTo(-1));
         }
-        [UnityTest] public IEnumerator MouseTabsRenderAndSwitchInACompactPanel()
+        [UnityTest] public IEnumerator MouseRibbonsRenderAndSwitchSections()
         {
             if (Application.isBatchMode) Assert.Ignore("IMGUI painting and screenshots require a graphical Editor test run.");
             host = new GameObject("Settings UI event test");
@@ -60,17 +66,18 @@ namespace Lumenfall.Startup.Tests
             float deadline = Time.realtimeSinceStartup + 10f;
             while (view.Paints == 0 && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(view.Paints, Is.GreaterThan(0));
-            view.Click(new Vector2(600f, 44f));
+            // Ribbons are 36 tall with 8 between them, starting at the panel top (y = 24).
+            view.Click(new Vector2(100f, 24f + 3 * 44f + 18f));
             while (view.HasPendingEvents && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(view.Panel.SelectedTab, Is.EqualTo(OptionsPanel.Tab.Graphics), "The visible Graphics tab must respond to pointer events.");
+            Assert.That(view.Panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Graphics), "The Graphics ribbon must respond to pointer events.");
             string directory = Path.Combine(Application.dataPath, "../Logs/graphics-validation");
             Directory.CreateDirectory(directory);
             ScreenCapture.CaptureScreenshot(Path.Combine(directory, "settings-graphics.png"));
             yield return null;
-            view.Click(new Vector2(180f, 44f));
+            view.Click(new Vector2(100f, 24f + 18f));
             while (view.HasPendingEvents && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(view.Panel.SelectedTab, Is.EqualTo(OptionsPanel.Tab.Main));
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory, "settings-main.png"));
+            Assert.That(view.Panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Gameplay));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory, "settings-gameplay.png"));
             yield return null;
         }
     }
