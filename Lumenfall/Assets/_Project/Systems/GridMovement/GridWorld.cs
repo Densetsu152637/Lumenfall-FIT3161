@@ -34,6 +34,7 @@ namespace Lumenfall.GridMovement
         private readonly Dictionary<Vector2Int, GridPortal> portals = new Dictionary<Vector2Int, GridPortal>();
         private readonly Dictionary<GridPortal, List<Vector2Int>> portalCells =
             new Dictionary<GridPortal, List<Vector2Int>>();
+        private readonly HashSet<Vector2Int> iceCells = new HashSet<Vector2Int>();
 
         public float CellSize => cellSize;
         public bool RestrictToBounds => restrictToBounds;
@@ -94,6 +95,27 @@ namespace Lumenfall.GridMovement
         {
             portals.TryGetValue(cell, out GridPortal portal);
             return portal;
+        }
+
+        /// <summary>
+        /// Ice cells keep a mover sliding in its step direction until it reaches a non-ice cell or is blocked.
+        /// The world is shared by every area, so whoever adds ice must remove it when its area deactivates.
+        /// </summary>
+        public bool IsIce(Vector2Int cell)
+        {
+            return iceCells.Contains(cell);
+        }
+
+        public void SetIce(Vector2Int cell, bool ice)
+        {
+            if (ice)
+            {
+                iceCells.Add(cell);
+            }
+            else
+            {
+                iceCells.Remove(cell);
+            }
         }
 
         /// <summary>

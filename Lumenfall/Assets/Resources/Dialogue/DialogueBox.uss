@@ -1,0 +1,162 @@
+/* Dialogue box, laid out against a 1920x1080 reference and scaled with screen height. */
+
+.dialogue-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.dialogue-dim {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(12, 14, 24, 0.3);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+}
+
+.dialogue-root--shown .dialogue-dim {
+    opacity: 1;
+}
+
+.dialogue-box {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    width: 1260px;
+    height: 420px;
+    max-width: 96%;
+    translate: -50% 48px;
+    opacity: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+    transition-property: opacity, translate, width, height;
+    transition-duration: 0.22s, 0.32s, 0.2s, 0.2s;
+    transition-timing-function: ease-out, ease-out-back, ease-out, ease-out;
+}
+
+.dialogue-root--shown .dialogue-box {
+    translate: -50% 0;
+    opacity: 1;
+}
+
+/* Live portrait, sitting over the frame's top-left corner. */
+.dialogue-portrait {
+    position: absolute;
+    left: 54px;
+    top: -146px;
+    width: 216px;
+    height: 216px;
+    border-radius: 108px;
+    border-width: 7px;
+    border-color: rgb(120, 90, 60);
+    background-color: rgb(244, 233, 210);
+    -unity-background-scale-mode: scale-and-crop;
+    display: none;
+}
+
+.dialogue-box--portrait .dialogue-portrait {
+    display: flex;
+}
+
+/* Name ribbon on the frame's top edge, coloured per speaker. */
+.dialogue-ribbon {
+    position: absolute;
+    left: 150px;
+    top: -26px;
+    padding: 8px 34px 10px 30px;
+    border-radius: 8px;
+    border-bottom-width: 4px;
+    border-color: rgba(0, 0, 0, 0.25);
+    background-color: rgb(80, 72, 90);
+}
+
+.dialogue-box--portrait .dialogue-ribbon {
+    left: 286px;
+}
+
+.dialogue-name {
+    font-size: 30px;
+    color: rgb(255, 250, 240);
+    -unity-text-outline-width: 0.15px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.35);
+}
+
+/* The parchment area inside the painted frame. */
+.dialogue-content {
+    position: absolute;
+    left: 17%;
+    top: 21%;
+    width: 66%;
+    height: 57%;
+    overflow: hidden;
+}
+
+.dialogue-text {
+    font-size: 30px;
+    white-space: normal;
+    color: rgb(28, 24, 38);
+    -unity-text-align: upper-left;
+    margin: 0;
+    padding: 0;
+}
+
+.dialogue-choices {
+    margin-top: 10px;
+}
+
+.dialogue-choice {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 6px;
+    padding: 5px 14px 5px 8px;
+    border-radius: 10px;
+    border-width: 2px;
+    border-color: rgba(120, 90, 50, 0.3);
+    background-color: rgba(255, 249, 234, 0.7);
+    transition-property: translate, background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.dialogue-choice--selected {
+    translate: 8px 0;
+    background-color: rgba(255, 238, 196, 0.98);
+}
+
+.dialogue-choice__arrow {
+    width: 18px;
+    height: 20px;
+    margin-right: 8px;
+    opacity: 0;
+}
+
+.dialogue-choice--selected .dialogue-choice__arrow {
+    opacity: 1;
+}
+
+.dialogue-choice__text {
+    font-size: 27px;
+    color: rgb(28, 24, 38);
+    white-space: normal;
+    flex-shrink: 1;
+    padding: 0;
+    margin: 0;
+}
+
+/* "Press to continue" arrow in the frame's lower-right. */
+.dialogue-continue {
+    position: absolute;
+    right: 16%;
+    bottom: 22%;
+    width: 32px;
+    height: 24px;
+    display: none;
+}
+
+.dialogue-box--waiting .dialogue-continue {
+    display: flex;
+}

@@ -44,6 +44,7 @@ namespace Lumenfall.Tests.GameEvents
             ResetSharedState();
         }
 
+        // A stuck-open inventory blocks every cast, so clear it alongside quest state.
         private static void ResetSharedState()
         {
             GameEventManager.Instance.Runtime.ResetState();

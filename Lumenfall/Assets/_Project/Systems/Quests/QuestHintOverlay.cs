@@ -190,6 +190,20 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, CinnaTrialDeparture.QuestId, StringComparison.Ordinal))
+            {
+                hint = CinnaAlignmentRelic.DescribeStep(world, FindAnyObjectByType<SpellCaster>());
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, CinnaIceTrialRoom.QuestId, StringComparison.Ordinal))
+            {
+                hint = IsOnMap(selectedPuzzle, world.CurrentMapId)
+                    ? CinnaIceTrialRoom.DescribeStep(world)
+                    : $"Enter Cinna's ice trial through the portal on the campus path at ({CinnaIceTrialEntrance.EntranceCell.x}, {CinnaIceTrialEntrance.EntranceCell.y}).";
+                return;
+            }
+
             if (selectedPuzzle == null || selectedPuzzle.targets == null)
             {
                 hint = string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal)
@@ -397,6 +411,7 @@ namespace Lumenfall.Quests
         private static string MapName(string mapId) => mapId == "B01.Ground" ? "Training Centre" :
             mapId == "B02.Ground" ? "Arcane Workshop" : mapId == "B03.Ground" ? "Main Academy Building" :
             mapId == "B04.Ground" ? "Library" :
+            mapId == CinnaIceTrialRoom.MapId ? "Cinna's ice trial (portal at campus 47, 45)" :
             mapId == "campus" ? "campus" : mapId == "westForest" ? "west forest" : mapId;
 
         private void OnGUI()

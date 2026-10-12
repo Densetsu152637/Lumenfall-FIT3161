@@ -97,6 +97,7 @@ namespace Lumenfall.DataDriven
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
+            CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
