@@ -30,10 +30,9 @@ workflow has no path filter, so documentation-only PRs still report both checks.
 ## Current-project gameplay regression
 
 One job checks out the current event revision with depth one and runs `Lumenfall`
-through one GameCI action, using `testMode: all`. All 78 existing EditMode cases
-remain, with three focused effect-queue and cable regressions added. The job also
-runs the three existing PlayMode scene/world integration cases. The
-[behavior inventory and coverage limits](../tests/README.md) describe all 81/3 cases.
+through one GameCI action, using `testMode: all`. The integrated suite contains 156 EditMode cases. The job also
+runs the 5 PlayMode scene/world integration cases. The
+[behavior inventory and coverage limits](../tests/README.md) describe all 156/5 cases.
 There are no historical source fetches or snapshot matrices.
 
 The supported `cliVersion` input pins
