@@ -44,7 +44,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ResetState();
         }
 
-        [Test] public void AcceptanceRequiresPrerequisiteAndTeachesWeaveWithoutCompletingQuest()
+        [Test] public void AcceptanceRequiresPrerequisiteAndTerminalLessonTeachesWeaveWithoutCompletingQuest()
         {
             DialogueSession blocked = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(blocked.SelectChoice("accept"), Is.False); blocked.End();
@@ -52,12 +52,12 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession session = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
             Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True, "The authored acceptance teaches Weave immediately.");
+            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False, "Accepting without finishing the lesson does not teach Weave.");
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             Assert.That(runtime.HasEventTriggered("complete_stella_string_them_together"), Is.False);
             session.End();
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("leave");
-            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("active"); session.Continue();
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
@@ -172,15 +172,15 @@ namespace Lumenfall.Tests.GameEvents
             state.AddConnection(Source, Link);
             string previous = Link;
             for (int i = 0; i < board.Length - 1; i++) { state.AddConnection(previous, board[i]); previous = board[i]; }
-            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active), "Four lit relics are not enough.");
-            Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            EditModeLifecycle.Call(monitor, "OnDestroy"); EditModeLifecycle.Call(monitor, "OnDisable"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
             state.AddConnection(previous, board[board.Length - 1]);
-            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             state.SetProperty(Source, x => x.powered = false);
-            Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
-            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            EditModeLifecycle.Call(monitor, "OnDisable"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed), "Completion remains durable after the source goes dark.");
         }
         private bool Powered(string id) => state.TryGetObject(id, out WorldObjectSnapshot item) && item.powered;

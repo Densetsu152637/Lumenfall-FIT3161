@@ -67,6 +67,7 @@ namespace Lumenfall.Tests.GameEvents
                     if (created[i] != null)
                     {
                         foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                        foreach (QuestPuzzleMonitor monitor in created[i].GetComponents<QuestPuzzleMonitor>()) EditModeLifecycle.Call(monitor, "OnDisable");
                         UnityEngine.Object.DestroyImmediate(created[i]);
                     }
                 created.Clear();
@@ -117,6 +118,7 @@ namespace Lumenfall.Tests.GameEvents
                 created.Add(monitorHost);
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
                 EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             }
             RunMonitor(monitor);
             Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active), "The legacy placeholder cannot complete First Light.");
@@ -159,12 +161,10 @@ namespace Lumenfall.Tests.GameEvents
         public void OrioHintTracksLessonAlignmentAndConfirmationWithoutCompletingTheQuest()
         {
             runtime.StartQuest("orio_patch_notes");
-            BeginMap(RotaraGearMechanism.PuzzleMapId);
-            world.RegisterObject(RotaraGearMechanism.PuzzleObjectId, null, new Vector2Int(8, 21),
-                Vector2Int.one, true, new[] { "rotara" });
+            BeginMap(OrioRuneDiscPuzzle.PuzzleMapId);
+            OrioRuneDiscPuzzle.RegisterPuzzleObjects(world, OrioDaisRoom.DaisCentre);
             stateEnd();
-            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 180);
-            RotaraGearMechanism.RegisterQuestConditions(runtime);
+            OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
             RefreshHint();
             Assert.That(ReadField<string>("hint"), Does.Contain("finish his Rotara lesson"));
 
@@ -173,7 +173,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(ReadField<string>("hint"), Does.Contain("clockwise by 90 degrees"));
             Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
 
-            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 90);
+            foreach (string disc in OrioRuneDiscPuzzle.DiscIds)
+                world.SetProperty(disc, item => item.rotation = 0);
             RefreshHint();
             Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio and confirm"));
             Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
@@ -216,28 +217,79 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing()
+        public void FoundKeepsakeHintPointsToKatrinaWhileReturnRemainsPending()
+        {
+            BeginMap("C04.Recess");
+            stateEnd();
+            runtime.StartQuest("katrina_something_borrowed");
+            Assert.That(runtime.TriggerEvent("found_katrina_keepsake").Succeeded, Is.True);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+            Assert.That(runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+
+            BeginMap("campus");
+            stateEnd();
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+        }
+
+        [Test]
+        public void OrioHintGuidesLessonRotationAndManualConfirmation()
+        {
+            BeginMap(OrioRuneDiscPuzzle.PuzzleMapId);
+            OrioRuneDiscPuzzle.RegisterPuzzleObjects(world, OrioDaisRoom.DaisCentre);
+            stateEnd();
+            runtime.StartQuest("orio_patch_notes");
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("finish his Rotara lesson"));
+            runtime.SetFlag("spell.unlocked.Rotara", true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("clockwise by 90 degrees"));
+            foreach (string disc in OrioRuneDiscPuzzle.DiscIds)
+                world.SetProperty(disc, state => state.rotation = 0);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio"));
+            Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
+        }
+
+        [Test]
+        public void ColdFeetPointsToTheTrialPortalThenFollowsTheIceTrial()
         {
             GridWorld grid = NewGrid();
             NewPlayer(grid, "cold-feet-player");
             BeginMap("campus");
-            Register("trial.cinna.ice", new Vector2Int(34, 71), false);
             stateEnd();
             runtime.StartQuest("cinna_cold_feet_warm_idea");
-
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Target:"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("cell 34, 71"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("portal on the campus path at (47, 45)"));
 
-            world.SetProperty("trial.cinna.ice", state => state.frozen = true);
+            BeginMap(CinnaIceTrialRoom.MapId);
+            RegisterTagged(CinnaIceTrialRoom.RelicId, new Vector2Int(3, 1), "glaciate", "anchored");
+            RegisterTagged("switch.cinna.ice.01", new Vector2Int(2, 12), CinnaIceTrialRoom.SwitchTag);
+            RegisterTagged(CinnaIceTrialRoom.FinalSwitchId, new Vector2Int(11, 8), CinnaIceTrialRoom.FinalTag);
+            stateEnd();
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Goal:"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("cell 34, 67"));
-            Assert.That(ReadField<string>("hint"), Does.Not.Contain("cell 34, 71"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Cast Glaciate on the relic on its stand"));
 
-            world.SetProperty("trial.cinna.ice", state => state.cell = new Vector2Int(34, 67));
+            world.SetProperty(CinnaIceTrialRoom.RelicId, state => state.frozen = true);
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("objective is complete"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("0 of 1 lit"));
+
+            world.SetProperty("switch.cinna.ice.01", state => state.powered = true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Slide into the seal"));
+
+            world.SetProperty(CinnaIceTrialRoom.FinalSwitchId, state => state.powered = true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Talk to Cinna Cirra"));
+        }
+
+        private void RegisterTagged(string id, Vector2Int cell, params string[] tags)
+        {
+            GameObject sceneObject = new GameObject(id);
+            created.Add(sceneObject);
+            world.RegisterObject(id, sceneObject, cell, Vector2Int.one, false, tags);
         }
 
         [Test]

@@ -86,12 +86,33 @@ For scene-to-scene travel, the moving GameObject is kept alive while the new sce
 moved into the new active scene. Destination scenes should therefore contain the destination
 world/portal and camera, but not another copy of the persistent player.
 
+## Ice
+
+`GridWorld.SetIce(cell, true)` marks a cell as ice; `IsIce(cell)` reads it. A step that starts or
+ends on ice is a slide, and it follows the Snowpoint Gym rules:
+
+- While the mover stands on ice, `GridMover` immediately starts the next step in the same
+  direction, before `MoveCompleted` is raised, so held input cannot steer mid-slide.
+- The slide stops on the first non-ice cell it enters, or on the last ice cell in front of a
+  blocked cell (a wall, obstacle, actor or the bounds edge).
+- Diagonal steps onto or off ice are refused, so slides always follow a grid line.
+- Slides use Slide Step Duration per cell instead of the walk or sprint duration, and
+  `GridMoverPresentation` holds the idle pose while `IsSliding` is true.
+- `SlideEnded` fires on the stopping cell before its `MoveCompleted`. `GridPlayerInput` then waits
+  for the direction to be released or changed, so a held key cannot start a second slide by
+  accident. `MoveCompleted` still fires once per cell during a slide.
+
+The world is shared by every area, so the code that adds ice must remove it when its area
+deactivates. `CinnaIceTrialRoom` is the current user: it turns its pool into ice while the frost
+relic is frozen and clears it in `OnDisable`.
+
 ## Useful runtime queries
 
 ```csharp
 Vector2Int cell = mover.CurrentCell;
 bool canEnter = world.IsCellAvailable(cell + Vector2Int.right);
 bool blocked = world.IsCellBlocked(cell);
+bool slippery = world.IsIce(cell);
 GridMover occupant = world.GetMoverAt(cell);
 GridPortal portal = world.GetPortalAt(cell);
 bool found = GridPathfinder.TryFindPath(world, cell, targetCell, path);

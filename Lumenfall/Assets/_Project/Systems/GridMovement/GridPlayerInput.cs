@@ -39,6 +39,8 @@ namespace Lumenfall.GridMovement
         private float nextRepeatTime;
         private readonly SprintPreferenceState sprintPreference = new SprintPreferenceState();
         private bool sprinting;
+        // A finished slide needs a fresh press, so a held key cannot launch an unintended second slide.
+        private bool waitForRelease;
 
         private void Reset()
         {
@@ -55,6 +57,7 @@ namespace Lumenfall.GridMovement
         {
             mover.MoveCompleted += HandleMoveCompleted;
             AccessibilitySettings.Changed += OnPreferencesChanged;
+            mover.SlideEnded += HandleSlideEnded;
             ResolveActions();
             if (activeMoveAction == null)
             {
@@ -82,6 +85,8 @@ namespace Lumenfall.GridMovement
             AccessibilitySettings.Changed -= OnPreferencesChanged;
             sprintPreference.Reset();
             sprinting = false;
+            mover.SlideEnded -= HandleSlideEnded;
+            waitForRelease = false;
 
             if (enabledMoveActionHere && activeMoveAction != null)
             {
@@ -131,17 +136,19 @@ namespace Lumenfall.GridMovement
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;
+                waitForRelease = false;
                 return;
             }
 
             if (direction != heldDirection)
             {
                 heldDirection = direction;
+                waitForRelease = false;
                 TryMoveHeldDirection();
                 return;
             }
 
-            if (!repeatWhileHeld || Time.unscaledTime < nextRepeatTime || mover.IsMoving ||
+            if (waitForRelease || !repeatWhileHeld || Time.unscaledTime < nextRepeatTime || mover.IsMoving ||
                 mover.IsMovementLocked)
             {
                 return;
@@ -150,9 +157,14 @@ namespace Lumenfall.GridMovement
             TryMoveHeldDirection();
         }
 
+        private void HandleSlideEnded(GridMover movingActor, Vector2Int cell)
+        {
+            waitForRelease = true;
+        }
+
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            if (AccessibilitySettingsOverlay.InputBlocked || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
+            if (waitForRelease || AccessibilitySettingsOverlay.InputBlocked || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 return;
             }

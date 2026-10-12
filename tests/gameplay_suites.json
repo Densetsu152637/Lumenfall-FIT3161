@@ -4,15 +4,21 @@
     "editmode": {
       "name": "Gameplay rules",
       "fixtures": {
+        "Lumenfall.GameEvents.Tests.DialoguePagingTests": 6,
+        "Lumenfall.GameEvents.Tests.DialogueTextEffectsTests": 8,
         "Lumenfall.GameEvents.Tests.DialogueTextRevealTests": 8,
+        "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
+        "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 7,
         "Lumenfall.Tests.GameEvents.GameEventRuntimeTests": 7,
         "Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests": 2,
         "Lumenfall.Tests.GameEvents.KatrinaBorrowedProgressionTests": 8,
         "Lumenfall.Tests.GameEvents.KatrinaBorrowedWorldTests": 8,
-        "Lumenfall.Tests.GameEvents.OrioPatchNotesTests": 19,
+        "Lumenfall.Tests.GameEvents.LostEchoesRevealEventTests": 8,
+        "Lumenfall.Tests.GameEvents.OrioPatchNotesTests": 25,
+        "Lumenfall.Tests.GameEvents.OutOfAlignmentTests": 33,
         "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 2,
         "Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests": 9,
-        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 6,
+        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 8,
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
         "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 5,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
@@ -28,7 +34,7 @@
     "playmode": {
       "name": "World integration",
       "fixtures": {
-        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 3,
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 6,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
         "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
         "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2

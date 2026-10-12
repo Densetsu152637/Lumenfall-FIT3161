@@ -12,19 +12,25 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The merged checkout retains the 81 gameplay cases and adds 83 settings, accessibility, audio, recovery and input-policy cases:
+The integrated suite contains 239 EditMode, thirteen batch PlayMode and one graphical PlayMode case:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
+| Dialogue page splitting and rich-text balancing | DialoguePagingTests | 6 |
+| Dialogue text effects and spell highlighting | DialogueTextEffectsTests | 8 |
+| Cinna ice switches and seal | CinnaIceTrialTests | 5 |
+| First Light completion and runtime replacement | FirstLightIntegrationTests | 7 |
+| Lost Echoes reveals, collection and progression events | LostEchoesRevealEventTests | 8 |
+| Vis carry, placement, reset and Cinna hand-off | OutOfAlignmentTests | 33 |
 | Dialogue reveal and rich text | DialogueTextRevealTests | 8 |
 | Event dispatch, dialogue and quest runtime | GameEventRuntimeTests | 7 |
 | Save slot selection policy | GameSaveSlotPolicyTests | 2 |
 | Borrowed Light progression and spell rewards | KatrinaBorrowedProgressionTests | 8 |
 | Borrowed Light world state and restoration | KatrinaBorrowedWorldTests | 8 |
-| Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 19 |
+| Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
 | Authored quest dialogue references | QuestDialogueContentTests | 2 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
-| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 6 |
+| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 8 |
 | Spell state and world save round trips | SpellWorldStateTests | 4 |
 | Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 5 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
@@ -35,12 +41,12 @@ The merged checkout retains the 81 gameplay cases and adds 83 settings, accessib
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
-| **Gameplay rules / EditMode** | | **164** |
-| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 3 |
+| **Gameplay rules / EditMode** | | **239** |
+| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 6 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
 | Settings keyboard navigation and preset isolation | OptionsPanelPlayModeTests | 2 |
-| **Batch PlayMode** | | **10** |
+| **Batch PlayMode** | | **13** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 
 Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tests`,

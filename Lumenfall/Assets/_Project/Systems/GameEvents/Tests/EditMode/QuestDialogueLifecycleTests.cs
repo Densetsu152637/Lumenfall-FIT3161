@@ -107,6 +107,8 @@ namespace Lumenfall.Tests.GameEvents
             GameEventRuntime runtime = manager.Runtime;
             runtime.ResetState();
             GameObject host = new GameObject("stella-follow-up-selection-test");
+            SpellCaster lessonCaster = host.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(lessonCaster, "OnEnable");
             try
             {
                 StartAndComplete(runtime, "stella_first_light");
@@ -157,8 +159,9 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
                 Assert.That(ChoiceIds(session), Does.Contain("accept"));
                 Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.False);
+                Assert.That(session.Continue(), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
-                session.End();
 
                 session = stella.Interact();
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
@@ -180,7 +183,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
+        public void FirstLightTerminalLessonAwardsAmpereThroughSpellCaster()
         {
             GameEventRuntime runtime = GameEventManager.Instance.Runtime;
             GameObject host = new GameObject("quest-scoped-spell-reward-test");
@@ -264,11 +267,9 @@ namespace Lumenfall.Tests.GameEvents
             {
                 WorldStateService world = worldHost.AddComponent<WorldStateService>();
                 EditModeLifecycle.SetWorldInstance(world);
-                world.BeginMapRebuild(RotaraGearMechanism.PuzzleMapId);
-                world.RegisterObject(RotaraGearMechanism.PuzzleObjectId, null, new Vector2Int(8, 21),
-                    Vector2Int.one, true, new[] { "rotara" });
+                world.BeginMapRebuild(OrioRuneDiscPuzzle.PuzzleMapId);
+                OrioRuneDiscPuzzle.RegisterPuzzleObjects(world, OrioDaisRoom.DaisCentre);
                 world.EndMapRebuild();
-                world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 180);
                 SpellCaster caster = host.AddComponent<SpellCaster>();
                 EnableForTest(caster);
                 DialogueSession dialogue = runtime.StartDialogue("orio_patch_notes_dialogue");
@@ -278,8 +279,9 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
                 Assert.That(dialogue.Continue(), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
-                foreach (int unused in new[] { 1, 2, 3 })
-                    Assert.That(caster.Cast(SpellId.Rotara, RotaraGearMechanism.PuzzleObjectId, Vector2Int.up), Is.True);
+                foreach (string socket in new[] { "mechanism.orio.socket.north", "mechanism.orio.socket.north", "mechanism.orio.socket.north",
+                    OrioRuneDiscPuzzle.AnchorId, OrioRuneDiscPuzzle.AnchorId, "mechanism.orio.socket.west", "mechanism.orio.socket.west", "mechanism.orio.socket.east" })
+                    Assert.That(caster.Cast(SpellId.Rotara, socket, Vector2Int.up), Is.True);
                 DialogueSession report = runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(report.SelectChoice("report"), Is.True);
                 Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Completed));

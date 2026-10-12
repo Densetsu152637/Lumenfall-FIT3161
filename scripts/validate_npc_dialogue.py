@@ -14,6 +14,15 @@ events = {e["id"]: e for e in doc["events"]}
 assert len(quests) == 6 and len(dialogues) >= 15 and len(events) == 10
 assert len(quests) == len(doc["quests"]) and len(dialogues) == len(doc["dialogues"])
 
+puzzles = json.loads((ROOT / "Lumenfall/Assets/Resources/Quests/quest_puzzle_definitions.json").read_text(encoding="utf-8"))["puzzles"]
+for puzzle in puzzles:
+    success_id = puzzle.get("successDialogueId")
+    if success_id:
+        assert success_id in dialogues, f"Missing puzzle success dialogue: {success_id}"
+        success = dialogues[success_id]
+        assert success["startNodeId"] in {node["id"] for node in success["nodes"]}
+        assert not any(node.get("onEnterActions") or any(choice.get("actions") for choice in node.get("choices", [])) for node in success["nodes"]), "Success feedback must not duplicate quest rewards"
+
 for qid in quests:
     d = dialogues.get(qid + "_dialogue")
     assert d and d["startNodeId"] in {n["id"] for n in d["nodes"]}
@@ -52,7 +61,7 @@ registry = {n["id"]: n for n in npcs}
 assert {"stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio", "campus_student", "forest_student"} <= registry.keys()
 for nid in ("stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio"):
     entries = registry[nid]["dialogue"]
-    assert len(entries) == (6 if nid != "orio" else 3)
+    assert len(entries) == (3 if nid in {"orio", "cinna_cirra_trial"} else 6)
     for entry in entries:
         assert entry["dialogueId"] in dialogues and entry["requiredQuestStatus"] in {"NotStarted", "Active", "Completed"}
 for nid, prefix in (("campus_student", "ambient_courtyard_student"), ("forest_student", "ambient_forest_student")):

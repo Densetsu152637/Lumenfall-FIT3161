@@ -7,6 +7,7 @@ using Lumenfall.Spells;
 using Lumenfall.GridMovement;
 using Lumenfall.GameEvents;
 using Lumenfall.Quests;
+using Lumenfall.Inventory;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -44,6 +45,7 @@ namespace Lumenfall.Tests.GameEvents
             ResetSharedState();
         }
 
+        // A stuck-open inventory blocks every cast, so clear it alongside quest state.
         private static void ResetSharedState()
         {
             GameEventManager.Instance.Runtime.ResetState();
@@ -81,6 +83,7 @@ namespace Lumenfall.Tests.GameEvents
                 monitorHost = new GameObject("stella-quest-puzzle-monitor-test");
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
                 EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             }
             try
             {
@@ -106,9 +109,10 @@ namespace Lumenfall.Tests.GameEvents
 
                 DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
                 Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
                 Assert.That(circuitQuest.Continue(), Is.True,
                     "Finish Stella's teaching dialogue before casting puzzle spells.");
+                Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
 
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
@@ -131,7 +135,11 @@ namespace Lumenfall.Tests.GameEvents
             {
                 if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
                 runtime.ResetState();
-                if (monitorHost != null) Object.DestroyImmediate(monitorHost);
+                if (monitorHost != null)
+                {
+                    EditModeLifecycle.Call(monitor, "OnDisable");
+                    Object.DestroyImmediate(monitorHost);
+                }
             }
         }
 

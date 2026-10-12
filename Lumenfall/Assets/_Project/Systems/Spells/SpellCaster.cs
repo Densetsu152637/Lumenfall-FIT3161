@@ -17,6 +17,8 @@ namespace Lumenfall.Spells
     {
         [SerializeField] private SpellId selectedSpell = SpellId.Ampere;
         [SerializeField, Min(1)] private int interactionRadius = 2;
+        [Tooltip("Manhattan search radius of a Lost Echoes cast, separate from the targeting radius of other spells.")]
+        [SerializeField, Min(1)] private int lostEchoesRadius = 4;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
         private Vector2Int lastDirection = Vector2Int.up;
@@ -26,6 +28,8 @@ namespace Lumenfall.Spells
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         private const string SpellFlagPrefix = "spell.unlocked.";
         private const string SpellLessonFlagPrefix = "spell.lesson.";
+        private const string AlignmentQuestId = "cinna_out_of_alignment";
+        private const string AlignmentObjectId = CinnaAlignmentRelic.RelicId;
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         private readonly SpellWheelView wheelView = new SpellWheelView();
         // Arrow keys and the gamepad stick move round the open wheel; submit casts and cancel closes it.
@@ -43,20 +47,58 @@ namespace Lumenfall.Spells
         private const float ScrollCooldown = 0.06f;
         private const float ChipClearanceOverRotaraPanel = 104f;
         private const string CircuitTag = "circuit";
+        private const string AnchoredTag = "anchored";
         public event Action<SpellId, string, bool> CastCompleted;
+        /// <summary>Raised for every Lost Echoes search with the caster's cell, the search radius and how many objects were found.</summary>
+        public event Action<Vector2Int, int, int> LostEchoesCast;
+        public int LostEchoesRadius => lostEchoesRadius;
+        private int lastLostEchoesFrame = -1;
+        private const string VisLiftTag = "vis-lift";
+        private const string VisDestinationPrefix = "vis-destination:";
+        private const string VisStandPrefix = "vis-stand:";
+        /// Progression flag prefix set once a carried relic is placed on its stand; the relic then leaves its home map.
+        public const string VisDeliveredFlagPrefix = "vis.delivered.";
+        /// The relic Vis is carrying, or null. Holding is not saved: the relic stays at its last safe placement.
+        public string HeldRelic { get; private set; }
+        private string heldRelicHomeMap;
+        private string heldRelicDestinationMap;
+        public event Action<string> VisLifted;
+        /// A held relic was set down: its id, the tile, and whether it was delivered to its stand.
+        public event Action<string, Vector2Int, bool> VisPlaced;
+        /// A placement was refused: the relic id, the tile, and whether a blocked tile (rather than the wrong place) refused it.
+        public event Action<string, Vector2Int, bool> VisPlaceRefused;
+        /// A held relic was let go without being placed (area change, reset); it stays at its last safe placement.
+        public event Action<string> VisHoldReleased;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
+        private GameEventManager progressionManager;
         private void OnEnable()
-        { SubscribeProgression(); RefreshSelection(); }
-        // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
-        private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.RotaraGearMechanism.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
+        {
+            progressionManager = GameEventManager.Instance;
+            progressionManager.RuntimeChanged += BindProgression;
+            BindProgression(progressionManager.Runtime);
+        }
+        private void BindProgression(GameEventRuntime runtime)
+        {
+            UnsubscribeProgression();
+            subscribedRuntime = runtime;
+            if (runtime != null)
+            {
+                OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
+                runtime.QuestStatusChanged += OnQuestStatusChanged;
+                runtime.DialogueEnded += OnDialogueEnded;
+                runtime.StateRestored += OnProgressionRestored;
+            }
+            OnProgressionRestored();
+        }
         private void UnsubscribeProgression()
         { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
         private void OnProgressionRestored()
         {
+            // A new game or a loaded save starts with empty hands; the relic is wherever world state has it.
+            if (HeldRelic != null) ReleaseHeldRelic(null);
             if (subscribedRuntime != null)
                 foreach (QuestDefinition quest in subscribedRuntime.Catalog.Quests.Values)
                     if (quest != null && subscribedRuntime.GetQuestStatus(quest.id) == QuestStatus.Completed) GrantSpellRewards(quest.metadata);
@@ -84,13 +126,29 @@ namespace Lumenfall.Spells
             }
             RefreshSelection();
         }
+        private static bool CanGrantLessonReward(GameMetadataEntry[] metadata)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            string questId = MetadataValue(metadata, "spellRewardQuestId");
+            if (string.IsNullOrWhiteSpace(questId))
+            {
+                // Preserve the original First Light terminal lesson contract.
+                if (!string.Equals(MetadataValue(metadata, "spellReward"), "Ampere", StringComparison.OrdinalIgnoreCase)) return false;
+                questId = "stella_first_light";
+            }
+            if (runtime.GetQuestStatus(questId) != QuestStatus.Active) return false;
+            string prerequisite = MetadataValue(metadata, "spellRewardPrerequisite");
+            if (string.IsNullOrWhiteSpace(prerequisite)) return true;
+            string[] parts = prerequisite.Split(':');
+            return parts.Length == 2 && Enum.TryParse(parts[1], true, out QuestStatus status) && runtime.GetQuestStatus(parts[0]) == status;
+        }
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
-            SubscribeProgression();
             // A held thread belongs to Weave on the current map; switching spells or maps drops it.
             if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
                 HeldThread = null;
+            ReleaseHeldRelicOutOfReach();
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
                 CloseSpellWheel();
@@ -130,7 +188,23 @@ namespace Lumenfall.Spells
                 CloseSpellWheel();
             }
 
+            // The interact key also casts Lost Echoes; picking up what it reveals is on the talk key (WorldPickupInteraction).
+            if (selectedSpell == SpellId.LostEchoes && KeyBindings.WasPressed(GameAction.Interact)) CastLostEchoes();
+            // F (interact) also uses Vis and Glaciate, but only on objects tagged for that spell, so it never acts on the
+            // board relics or gear that own F on their maps.
+            if (KeyBindings.WasPressed(GameAction.Interact) && (selectedSpell == SpellId.Vis || selectedSpell == SpellId.Glaciate))
+            {
+                if (selectedSpell == SpellId.Vis && HeldRelic != null) { if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell); }
+                else
+                {
+                    string target = FindNearestTarget(selectedSpell == SpellId.Vis ? "vis" : "glaciate");
+                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
+                }
+                CloseSpellWheel();
+            }
+
             if (keyboard == null) return;
+            if (keyboard.rKey.wasPressedThisFrame && IsNearAlignmentMarker()) ResetActiveAlignmentPuzzle();
             Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
             if (KeyBindings.WasPressed(GameAction.Spell1)) SelectSpell(SpellId.Ampere);
             if (KeyBindings.WasPressed(GameAction.Spell2)) SelectSpell(SpellId.Weave);
@@ -146,6 +220,11 @@ namespace Lumenfall.Spells
         private void CastSelected()
         {
             if (selectedSpell == SpellId.LostEchoes) { CastLostEchoes(); return; }
+            if (selectedSpell == SpellId.Vis && HeldRelic != null)
+            {
+                if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell);
+                return;
+            }
             string target = FindNearestTarget();
             if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
         }
@@ -188,7 +267,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen ||
+        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {
@@ -213,7 +292,7 @@ namespace Lumenfall.Spells
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
-        { UnsubscribeProgression(); CloseSpellWheel(); }
+        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
         private void OnDestroy() { wheelView.Dispose(); }
 
         private void OnGUI()
@@ -248,18 +327,19 @@ namespace Lumenfall.Spells
             WorldStateService state = WorldStateService.Instance;
             if (state == null || !state.IsReady) return false;
             List<string> revealed = new List<string>();
-            RevealHiddenAroundPlayer(state, false, revealed);
+            RevealHiddenAroundPlayer(state, revealed);
             foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
             return revealed.Count > 0;
         }
-        private int RevealHiddenAroundPlayer(WorldStateService state, bool targetAlreadyRevealed, List<string> revealed = null)
+        // Results are shown by LostEchoesPresentation (pulse, glow and sound), so the search reports no text.
+        private int RevealHiddenAroundPlayer(WorldStateService state, List<string> revealed = null)
         {
+            // Mechanism handlers may also cast the selected spell on the same key press; search only once per frame.
+            if (lastLostEchoesFrame == Time.frameCount) return 0;
+            lastLostEchoesFrame = Time.frameCount;
             GridMover player = GetComponent<GridMover>();
-            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, interactionRadius, revealed);
-            SearchFeedback(found == 1 ? "An echo reveals something hidden nearby." :
-                found > 1 ? $"Echoes reveal {found} hidden things nearby." :
-                targetAlreadyRevealed ? "This spot is already revealed. Search somewhere else." :
-                $"No hidden traces within {interactionRadius} cells. Move closer and try again.");
+            int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, lostEchoesRadius, revealed);
+            if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, lostEchoesRadius, found);
             return found;
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
@@ -284,12 +364,24 @@ namespace Lumenfall.Spells
                 case SpellId.Rotara:
                     if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
                         float.IsNaN(target.rotation) || float.IsInfinity(target.rotation)) break;
+                    // A linked socket turns every disc it touches; the socket turns too, which drives its press feedback.
+                    if (Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetLinkedDiscs(state.CurrentMapId, targetId, out string[] linkedDiscs))
+                        foreach (string disc in linkedDiscs)
+                            if (state.TryGetObject(disc, out WorldObjectSnapshot linked) && !float.IsNaN(linked.rotation) && !float.IsInfinity(linked.rotation))
+                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     break;
-                case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;
-                case SpellId.Vis: changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = Mathf.Round(x.rotation / 90f) * 90f; }); break;
+                case SpellId.Glaciate:
+                    changed = HasTag(target, AnchoredTag) && target.frozen ? ThawAnchored(state, targetId) : FreezeSlide(state, targetId, ClampDirection(direction));
+                    break;
+                case SpellId.Vis:
+                    if (HasTag(target, VisLiftTag)) { changed = LiftRelic(state, target); break; }
+                    if (TryGetVisRotation(target, out float visRotation) &&
+                        (!target.aligned || !Mathf.Approximately(NormalizeRotation(target.rotation), visRotation)))
+                        changed = state.SetProperty(targetId, x => { x.aligned = true; x.rotation = visRotation; });
+                    break;
                 case SpellId.LostEchoes:
-                    changed = RevealHiddenAroundPlayer(state, target.revealed) > 0;
+                    changed = RevealHiddenAroundPlayer(state) > 0;
                     break;
             }
             if (spell == SpellId.Weave && !HasTag(target, CircuitTag))
@@ -343,6 +435,145 @@ namespace Lumenfall.Spells
         }
         private static bool TryParseSpell(string value, out SpellId spell) { return Enum.TryParse((value ?? string.Empty).Trim(), true, out spell) && Enum.IsDefined(typeof(SpellId), spell); }
         private static string MetadataValue(GameMetadataEntry[] metadata, string key) { foreach (GameMetadataEntry item in metadata ?? Array.Empty<GameMetadataEntry>()) if (item != null && string.Equals(item.key, key, StringComparison.OrdinalIgnoreCase)) return item.value; return null; }
+        private static bool TryGetVisRotation(WorldObjectSnapshot target, out float rotation)
+        {
+            rotation = NormalizeRotation(Mathf.Round(target.rotation / 90f) * 90f);
+            if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "vis", StringComparison.OrdinalIgnoreCase))) return false;
+            bool authored = false;
+            foreach (string tag in target.tags ?? Array.Empty<string>())
+            {
+                if (tag == null || !tag.StartsWith("vis-target", StringComparison.OrdinalIgnoreCase)) continue;
+                if (authored || !tag.StartsWith("vis-target:", StringComparison.OrdinalIgnoreCase) ||
+                    !int.TryParse(tag.Substring("vis-target:".Length), System.Globalization.NumberStyles.Integer,
+                        System.Globalization.CultureInfo.InvariantCulture, out int angle) || angle % 90 != 0) return false;
+                rotation = ((angle % 360) + 360) % 360;
+                authored = true;
+            }
+            return true;
+        }
+        private static float NormalizeRotation(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
+        /// <summary>
+        /// Lifts a <c>vis-lift</c> relic. World state does not move while it is carried: the relic stays registered at
+        /// its last safe placement, so leaving its maps or loading a save simply leaves it there.
+        /// </summary>
+        private bool LiftRelic(WorldStateService state, WorldObjectSnapshot target)
+        {
+            if (HeldRelic != null) { ShowFeedback("Vis is already holding a relic. Set it down first."); return false; }
+            HeldRelic = target.id;
+            heldRelicHomeMap = state.CurrentMapId;
+            heldRelicDestinationMap = TagValue(target, VisDestinationPrefix);
+            VisLifted?.Invoke(target.id);
+            return true;
+        }
+        /// <summary>The tile a held relic would be set down on: the one the player is facing.</summary>
+        public bool TryGetPlacementCell(out Vector2Int cell)
+        {
+            GridMover player = GetComponent<GridMover>();
+            Vector2Int facing = DirectionFromPlayer();
+            // A diagonal facing keeps its horizontal part, so the relic always lands on a neighbouring tile.
+            facing = facing.x != 0 ? new Vector2Int(Math.Sign(facing.x), 0) : new Vector2Int(0, Math.Sign(facing.y));
+            cell = player == null ? default : player.CurrentCell + facing;
+            return player != null && HeldRelic != null && facing != Vector2Int.zero;
+        }
+        /// <summary>
+        /// Whether the held relic may be set down on <paramref name="cell"/>: its own stand on any map, or, on the map it
+        /// was lifted from, open walkable ground that is not a portal. Elsewhere it may only go onto its stand.
+        /// </summary>
+        public bool CanPlaceHeldRelicAt(Vector2Int cell)
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (HeldRelic == null || state == null || !state.IsReady) return false;
+            if (FindStand(state, HeldRelic, cell) != null) return true;
+            if (!SameMap(state.CurrentMapId, heldRelicHomeMap) || !state.TryGetObject(HeldRelic, out WorldObjectSnapshot current)) return false;
+            if (cell == current.cell) return true;
+            GridWorld world = FindAnyObjectByType<GridWorld>();
+            return world != null && world.GetPortalAt(cell) == null && world.IsCellAvailable(cell);
+        }
+        /// <summary>Sets the held relic down on <paramref name="cell"/>, or refuses with feedback.</summary>
+        public bool TryPlaceHeldRelic(Vector2Int cell)
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (HeldRelic == null || InputBlockedByOverlay || state == null || !state.IsReady) return false;
+            string relic = HeldRelic;
+            WorldObjectSnapshot stand = FindStand(state, relic, cell);
+            if (stand != null)
+            {
+                // Delivery is progression, not map state: the relic leaves its home map for good and the stand holds it.
+                GameEventManager.Instance?.Runtime?.SetFlag(VisDeliveredFlagPrefix + relic, true);
+                HeldRelic = null;
+                state.SetProperty(stand.id, x => x.aligned = true);
+                VisPlaced?.Invoke(relic, cell, true);
+                return true;
+            }
+            if (!SameMap(state.CurrentMapId, heldRelicHomeMap))
+            {
+                RefusePlacement(relic, cell, false, "The relic belongs on its stand here. Face the stand and cast Vis.");
+                return false;
+            }
+            if (!state.TryGetObject(relic, out WorldObjectSnapshot current)) { ReleaseHeldRelic(null); return false; }
+            if (cell != current.cell)
+            {
+                GridWorld world = FindAnyObjectByType<GridWorld>();
+                if (world == null || world.GetPortalAt(cell) != null) { RefusePlacement(relic, cell, true, "A relic cannot rest on a portal."); return false; }
+                if (!state.TryMoveObject(relic, cell - current.cell)) { RefusePlacement(relic, cell, true, "That tile is not open ground. Face a walkable tile."); return false; }
+            }
+            HeldRelic = null;
+            VisPlaced?.Invoke(relic, cell, false);
+            return true;
+        }
+        private void RefusePlacement(string relic, Vector2Int cell, bool blocked, string message)
+        { ShowFeedback(message); VisPlaceRefused?.Invoke(relic, cell, blocked); }
+        private void ReleaseHeldRelic(string message)
+        {
+            if (HeldRelic == null) return;
+            string relic = HeldRelic;
+            HeldRelic = null;
+            if (message != null) ShowFeedback(message);
+            VisHoldReleased?.Invoke(relic);
+        }
+        // A carried relic travels only between the map it was lifted on and its destination. Anywhere else it is
+        // released, and it is still at its last safe placement because world state never moved it.
+        private void ReleaseHeldRelicOutOfReach()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (HeldRelic == null || state == null || !state.IsReady) return;
+            bool home = SameMap(state.CurrentMapId, heldRelicHomeMap);
+            if (home ? state.TryGetObject(HeldRelic, out _) : SameMap(state.CurrentMapId, heldRelicDestinationMap)) return;
+            ReleaseHeldRelic("The relic slipped from Vis and settled back where you last set it down.");
+        }
+        private static WorldObjectSnapshot FindStand(WorldStateService state, string relic, Vector2Int cell)
+        {
+            foreach (WorldObjectSnapshot item in state.SnapshotObjects())
+                if (item.cell == cell && HasTag(item, VisStandPrefix + relic)) return item;
+            return null;
+        }
+        private static string TagValue(WorldObjectSnapshot item, string prefix)
+        {
+            foreach (string tag in item.tags ?? Array.Empty<string>())
+                if (tag != null && tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return tag.Substring(prefix.Length);
+            return null;
+        }
+        private static bool SameMap(string a, string b) => !string.IsNullOrEmpty(a) && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        /// <summary>Releases a held relic and returns it to its authored start while the quest is Active on campus.</summary>
+        public bool ResetActiveAlignmentPuzzle()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            if (Time.timeScale <= 0f || InputBlockedByOverlay ||
+                GameEventManager.Instance.Runtime.GetQuestStatus(AlignmentQuestId) != QuestStatus.Active ||
+                state == null || !state.IsReady || !string.Equals(state.CurrentMapId, "campus", StringComparison.OrdinalIgnoreCase)) return false;
+            bool wasHeld = HeldRelic == AlignmentObjectId;
+            if (wasHeld) ReleaseHeldRelic(null);
+            return state.ResetAlignmentObject(AlignmentObjectId) || wasHeld;
+        }
+        private bool IsNearAlignmentMarker()
+        {
+            WorldStateService state = WorldStateService.Instance;
+            GridMover player = GetComponent<GridMover>();
+            return state != null && state.IsReady && state.CurrentMapId == "campus" && player != null &&
+                state.TryGetObject(AlignmentObjectId, out WorldObjectSnapshot marker) &&
+                (HeldRelic == AlignmentObjectId ||
+                 Mathf.Abs(marker.cell.x - player.CurrentCell.x) + Mathf.Abs(marker.cell.y - player.CurrentCell.y) <= interactionRadius);
+        }
         private static bool WeaveToPowered(WorldStateService state, string targetId)
         {
             string intended = null;
@@ -367,11 +598,21 @@ namespace Lumenfall.Spells
             if (nearest == null) return false;
             return state.IsConnected(targetId, nearest.id) ? state.RemoveConnection(targetId, nearest.id) : state.AddConnection(targetId, nearest.id);
         }
+        // Anchored objects toggle: a second Glaciate thaws them and undoes their freeze. Never mid-step, so whatever the
+        // thaw changes underfoot (the ice trial puts its water back) can safely move the caster.
+        private bool ThawAnchored(WorldStateService state, string id)
+        {
+            GridMover player = GetComponent<GridMover>();
+            if (player != null && player.IsMoving) { ShowFeedback("Stop moving before you thaw it."); return false; }
+            return state.SetProperty(id, x => x.frozen = false);
+        }
         private static bool FreezeSlide(WorldStateService state, string id, Vector2Int direction)
         {
             bool changed = state.SetProperty(id, x => x.frozen = true);
             Vector2Int? goal = null;
-            if (state.TryGetObject(id, out WorldObjectSnapshot target))
+            // Anchored objects, such as the ice-trial relic that freezes its pool, freeze in place.
+            if (state.TryGetObject(id, out WorldObjectSnapshot target) && HasTag(target, AnchoredTag)) return changed;
+            if (target != null)
                 foreach (string tag in target.tags ?? Array.Empty<string>())
                     if (tag.StartsWith("slide-goal:", StringComparison.OrdinalIgnoreCase))
                     {
@@ -388,8 +629,15 @@ namespace Lumenfall.Spells
         }
         private void SearchFeedback(string message)
         { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
+        private string FindNearestTarget(string requiredTag)
+        {
+            string target = FindNearestTarget();
+            return target != null && WorldStateService.Instance.TryGetObject(target, out WorldObjectSnapshot item) && HasTag(item, requiredTag) ? target : null;
+        }
         private string FindNearestTarget()
         { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }
+        /// <summary>The cardinal or diagonal direction the player last moved or is moving.</summary>
+        public Vector2Int FacingDirection => DirectionFromPlayer();
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }
         private static Vector2Int ClampDirection(Vector2Int value) { if (value == Vector2Int.zero) return Vector2Int.up; return new Vector2Int(Mathf.Clamp(value.x, -1, 1), Mathf.Clamp(value.y, -1, 1)); }
     }

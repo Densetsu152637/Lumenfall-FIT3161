@@ -28,6 +28,10 @@ Other remote branches either inherit these UI changes or modify gameplay, levels
 - **Taken from the menu branches:** the New Game slot picker with linked manual slots (`ManualSaveSlot`), journal-footer Save/Main menu/Quit, deliberate autosaving (`GameAutosave.HasPlayedSinceLoad`, no save on load), the four-option main ring (the startup Save page is removed), quest hints for Stella and Orio, the `eastForest` save-id migration, NPC talk prompts and the dialogue text-colour fixes.
 - **Combined:** `SpellCaster` follows `main` (Weave threads, Lost Echoes area search, mechanism casts and the animated wheel) and adds gamepad/arrow wheel navigation and the input gate. `GridPlayerInput` keeps the hold/toggle sprint preference and ignores rebound keyboard keys in the input actions. `WorldStateService` and `DataDrivenWorldLoader` validate saves after normalising legacy map ids.
 
+### Current main integration
+
+Main `cf55a024` is also merged in full, including its quest/NPC/world additions, ice movement and UI Toolkit dialogue. Dialogue retains the shared accessibility/localization preferences and owner-scoped input/movement locks alongside the incoming paging, portraits and text effects. The earlier scoped-import exclusions describe the original branch work, not the content now inherited from main.
+
 ## Result
 
 The pause Settings pop-out and the journal's Settings tab share the ribbon `OptionsPanel`: Gameplay (hints, sprint
@@ -41,10 +45,10 @@ Save/load controls use dedicated autosave and three manual slots. Invalid saves 
 
 ## Verification
 
-Unity version: `6000.4.10f1`, URP `17.4`. Main `396c709` is merged into the
+Unity version: `6000.4.10f1`, URP `17.4`. Main `cf55a024` is merged into the
 graphics/settings branch, preserving owner-scoped wheel input and the animated
-wheel with Rotara-panel chip clearance. The current fixture inventory is 164
-EditMode, ten batch PlayMode and one separately selected graphical PlayMode case.
+wheel with Rotara-panel chip clearance. The current fixture inventory is 239
+EditMode, thirteen batch PlayMode and one separately selected graphical PlayMode case.
 See [test procedures and coverage](../../tests/README.md).
 
 - EditMode covers graphics recommendations/persistence, audio buses, accessibility,

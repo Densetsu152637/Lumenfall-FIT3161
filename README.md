@@ -17,6 +17,6 @@ Open [Lumenfall](Lumenfall) as the Unity project root with Unity `6000.4.10f1`. 
 - [Game events guide](Lumenfall/Assets/_Project/Systems/GameEvents/README.md) documents the implemented event, dialogue, and quest-state system.
 - [Startup menu guide](Lumenfall/Assets/_Project/Systems/Startup/README.md) documents save-slot selection, backdrop restoration, settings, and input gating.
 - Run `powershell -ExecutionPolicy Bypass -File scripts/compile_runtime.ps1` followed by `scripts/compile_editmode_tests.ps1` for licensed-editor-independent runtime and EditMode test assembly compilation.
-- [Gameplay test suites](tests/README.md) validate the current project with 81 EditMode regression cases and three PlayMode world integration cases in one Unity job.
+- [Gameplay test suites](tests/README.md) validate the current project with 156 EditMode regression cases and 6 PlayMode world integration cases in one Unity job.
 
 The files in `docs/` describe intended game content. System READMEs document repository conventions and behaviour present in the project; design notes should not be treated as an implementation status report.

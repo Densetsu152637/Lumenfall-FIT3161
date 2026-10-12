@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -158,6 +159,12 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
+                runtime.HasEventTriggered("found_katrina_keepsake"))
+            {
+                hint = "Return the keepsake to Katrina on campus.";
+                return;
+            }
             if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
             {
                 if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
@@ -190,17 +197,31 @@ namespace Lumenfall.Quests
                 return;
             }
 
-            // Orio deliberately has no automatic monitor: the player reports the live gear alignment.
+            // Orio confirms the live or archived rune dais through dialogue.
             if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
             {
-                if (!string.Equals(world.CurrentMapId, RotaraGearMechanism.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
-                    hint = "Travel to the west forest and speak with Orio at the mechanism glade.";
-                else if (!runtime.GetFlag("spell.unlocked.Rotara"))
-                    hint = "Speak with Orio and finish his Rotara lesson before turning the forest gear.";
-                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
-                    hint = "The forest gear is aligned. Return to Orio and confirm the patch.";
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
+                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                    hint = "The rune dais is aligned. Return to Orio and confirm the patch.";
+                else if (!string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Travel to the west forest and use the teleport pad beside Orio to enter the rune hall.";
                 else
-                    hint = "Select Rotara and cast at the forest gear. Each cast turns it clockwise by 90 degrees; reach the 90-degree notch, then report to Orio.";
+                    hint = "Cast Rotara at the sockets. Each turns its linked discs clockwise by 90 degrees; line up all three teal notches.";
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, CinnaTrialDeparture.QuestId, StringComparison.Ordinal))
+            {
+                hint = CinnaAlignmentRelic.DescribeStep(world, FindAnyObjectByType<SpellCaster>());
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, CinnaIceTrialRoom.QuestId, StringComparison.Ordinal))
+            {
+                hint = IsOnMap(selectedPuzzle, world.CurrentMapId)
+                    ? CinnaIceTrialRoom.DescribeStep(world)
+                    : $"Enter Cinna's ice trial through the portal on the campus path at ({CinnaIceTrialEntrance.EntranceCell.x}, {CinnaIceTrialEntrance.EntranceCell.y}).";
                 return;
             }
 
@@ -256,6 +277,7 @@ namespace Lumenfall.Quests
                 requiredPowered = questTarget.requiredPowered || best.requiredPowered,
                 requiredConnected = questTarget.requiredConnected || best.requiredConnected,
                 requiredRevealed = questTarget.requiredRevealed || best.requiredRevealed,
+                requiredCollected = questTarget.requiredCollected,
                 requiredFrozen = questTarget.requiredFrozen || best.requiredFrozen,
                 requiredAligned = questTarget.requiredAligned || best.requiredAligned,
                 requiredRotation = questTarget.requiredRotation >= 0 ? questTarget.requiredRotation : best.requiredRotation,
@@ -276,6 +298,9 @@ namespace Lumenfall.Quests
         {
             foreach (QuestPuzzleDefinition puzzle in puzzleDatabase?.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
                 if (puzzle != null && string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) return puzzle;
+            // Orio reports the live gear through dialogue rather than an automatic monitor.
+            if (string.Equals(questId, "orio_patch_notes", StringComparison.Ordinal))
+                return new QuestPuzzleDefinition { questId = questId, mapId = OrioRuneDiscPuzzle.PuzzleMapId };
             return null;
         }
 
@@ -312,7 +337,7 @@ namespace Lumenfall.Quests
                 foreach (string otherId in target.objectIds)
                     if (!string.Equals(id, otherId, StringComparison.Ordinal) && world.IsConnected(id, otherId)) connected = true;
                 bool valid = (!target.requiredPowered || state.powered) && (!target.requiredConnected || connected) &&
-                    (!target.requiredRevealed || state.revealed) && (!target.requiredFrozen || state.frozen) &&
+                    (!target.requiredRevealed || state.revealed) && (!target.requiredCollected || state.collected) && (!target.requiredFrozen || state.frozen) &&
                     (!target.requiredAligned || state.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(state.rotation) % 360 == target.requiredRotation % 360) &&
                     (target.requiredPositionX == int.MinValue || state.cell.x == target.requiredPositionX) &&
                     (target.requiredPositionY == int.MinValue || state.cell.y == target.requiredPositionY);
@@ -340,6 +365,11 @@ namespace Lumenfall.Quests
             if (target.requiredAligned) return "Align the objects with Vis.";
             if (target.requiredFrozen) return "Freeze the trial object with Glaciate and move it to the marked cell.";
             if (target.requiredRotation >= 0) return $"Rotate the mechanism to {target.requiredRotation} degrees.";
+            if (target.requiredCollected)
+                foreach (string id in target.objectIds ?? Array.Empty<string>())
+                    if (world.TryGetObject(id, out WorldObjectSnapshot found) && found.revealed && !found.collected)
+                        return $"Pick up the revealed keepsake with {KeyBindings.GetKeyLabel(GameAction.Talk)}.";
+            if (target.requiredCollected) return $"Find the hidden keepsake and pick it up with {KeyBindings.GetKeyLabel(GameAction.Talk)}; Lost Echoes helps locate it.";
             if (target.requiredRevealed) return "Reveal the hidden keepsake with Lost Echoes.";
             return "Work on the quest puzzle.";
         }
@@ -396,6 +426,7 @@ namespace Lumenfall.Quests
         }
 
         private static string MapName(string mapId) => mapId == "B02.Ground" ? "Stella's classroom" :
+            mapId == CinnaIceTrialRoom.MapId ? "Cinna's ice trial (portal at campus 47, 45)" :
             mapId == "campus" ? "campus" : mapId == "westForest" ? "west forest" : mapId;
 
         private void OnGUI()

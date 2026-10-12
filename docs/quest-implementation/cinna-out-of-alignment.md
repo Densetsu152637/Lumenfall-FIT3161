@@ -1,33 +1,36 @@
 # Cinna Cirra: Out of Alignment — implementation tracker
 
 **Quest ID:** `cinna_out_of_alignment`
-**Monitor:** `cinna_out_of_alignment_monitor` → `complete_cinna_out_of_alignment`
-**Assessment:** **Partial.** The Vis state flag and quest event threshold are implemented in data/runtime. The design description and player-facing rule are under-specified, while the map provides a single generic orientation target.
+**Completion:** Cinna's `report` choice → `CinnaTrialDeparture` → `complete_cinna_out_of_alignment` (no puzzle monitor)
+**Assessment:** **Partial.** The Vis lift and carry, delivery to the ice-trial pedestal, the report, Cinna's departure fade, reset and saves are implemented. They pass EditMode tests and a PlayMode route test. Hand-played acceptance and production art are outstanding.
 
 ## Player flow and authored contract
 
-Cinna Cirra's orientation NPC record is on `campus`, cell `(22,51)`, and uses the shared placeholder `NPCs/Elara.prefab`. Dialogue placement metadata says C02. The accept choice starts this quest; active and completed dialogue branches are provided. The accept line says to compare the object's face to the terrace mark, then use Vis. The active hint refers to the C02 terrace and suggests comparing alignment visually.
+Cinna Cirra's orientation NPC stands on `campus` at `(22,51)` (C02) and uses the shared placeholder `NPCs/Elara.prefab`. Accepting and finishing the lesson or reminder teaches Vis while the quest is Active.
 
-The quest description says “align the orientation objects and learn Vis.” Quest metadata offers Vis on completion. Runtime spell reward code grants spell rewards when a quest status becomes Completed. There is no acceptance-time Vis unlock action in this dialogue, so the authored instruction presumes access through another progression path. The runtime reward handler grants Vis only when this quest completes; without an external unlock, the quest cannot be solved from a fresh game. Provide a pre-puzzle teaching/unlock path.
+The orientation relic `relic.cinna.orientation` rests at `(23,53)`, tagged `vis`, `vis-lift` and `vis-destination:C03.IceTrial`. The player lifts it with Vis and carries it through the trial portal at campus `(47,45)`. They then face the pedestal at `(3,1)` in `C03.IceTrial` and cast Vis again to set the relic on it.
+
+On campus the relic can be set down only on open walkable ground that is not a portal. Entering any other area lets go of it, and it waits at its last safe placement. Delivery sets `vis.delivered.relic.cinna.orientation`; the relic leaves campus and becomes the frost relic for Cold Feet, Warm Idea.
+
+Reporting back to Cinna on the terrace fades the screen to black while Cinna leaves for the trial. The quest completes and the screen fades back in with the player where they stood. They walk through the portal and find Cinna in the trial lobby at `(8,1)`.
 
 ## Runtime completion and state
 
-The quest database targets `campus` and requires `orientation.cinna.align` to have `aligned=true`. The completion event is non-repeatable and Active-only. `SpellCaster.Vis` sets `aligned=true` and rounds the object's rotation to the nearest quarter-turn. It does not compare the object with a separately authored marker in the visible action implementation. Therefore, one successful Vis cast on the target satisfies the current registry rule regardless of its starting orientation.
+`SpellCaster` holds the relic (`HeldRelic`) without changing world state. Placement on campus moves the relic through `WorldStateService.TryMoveObject`; delivery is a progression flag plus the stand's `aligned` state. `CinnaAlignmentRelic` registers the campus relic and draws it on every map. `CinnaTrialDeparture` handles the fade and completion while Cinna leaves for the trial. R near the relic resets it while the quest is Active on campus.
 
-`WorldStateService` owns the target state and saves `aligned` and rotation. `QuestPuzzleMonitor` only invokes the event on the matching map when the quest is Active and targets are registered after map rebuild.
-
-The contextual hint describes alignment with Vis and points toward the authored campus target. It does not add a face-to-marker comparison or failure rule beyond the current `aligned` state condition.
+The hint overlay follows the steps: lift the relic beside Cinna; carry it to the portal; set it on the stand; return to Cinna.
 
 ## Scene and data readiness
 
-The resolved `campus.json` describes `orientation.cinna.align` at `(22,51)` with `vis` tag and rotation 90, matching the C02 placement of Cinna’s orientation NPC. A target ID in static map JSON does not establish a visible marker, mesh, readable mismatch state, or usable spell prompt. `docs/quests.md` originally left object type and exact rules open; the registry now supplies the generic aligned flag but does not settle an educational rule or success/failure feedback.
+`campus.json` and `campus.asset` agree on the relic, and the trial pedestal carries the stand tag. `scripts/validate_out_of_alignment.py` checks the relic, the stand, Cinna's report and the meet tile. The old inactive `orientation.cinna.align` marker GameObject remains in `campus.prefab`, but nothing registers or refers to it. The relic is a placeholder primitive.
 
 ## Open gaps and acceptance checklist
 
-- [ ] Add a Vis teaching/unlock path before the target requires casting it; the current reward occurs only after quest completion.
-- [ ] Define the alignment rule (including whether there is a distinct target marker), starting state, failure response, and whether multiple objects are required.
-- [ ] Verify final campus C02 object registration, visual marker, player reach, Vis cast and feedback.
-- [ ] Verify monitor waits until Active and completes only at the intended alignment state.
-- [ ] Verify completion unlocks Cold Feet, Warm Idea and Vis progression behaves as designed; verify save/load restoration.
+- [x] Teach Vis before it is needed.
+- [x] Define the rule: lift, carry, place on open ground or the stand, and return to the last placement outside campus and the trial.
+- [x] Complete only after the relic is on its stand and the player reports back.
+- [x] PlayMode route test: lift on campus, carry into the trial, deliver, report, Cinna leaves, walk back in. The departure version has not yet been re-run in Unity.
+- [ ] Hand-play the route and check the hover, the ghost tile against real props, the fade length and the camera during the cut.
+- [ ] Check the save-slot round trip mid-carry and after delivery in a live game.
 
-Evidence: `quest_npc_dialogue.json`; `npcs.json`; `quest_puzzle_definitions.json`; `Maps/campus.json`; `SpellCaster.cs`; `WorldStateService.cs`; `QuestPuzzleMonitor.cs`; `docs/quests.md`; `docs/spells.md`.
+Evidence: `quest_npc_dialogue.json`; `Maps/campus.json`; `World/Areas/campus.asset`; `World/Areas/C03.IceTrial.asset`; `CinnaAlignmentRelic.cs`; `CinnaTrialDeparture.cs`; `SpellCaster.cs`; `WorldStateService.cs`; `DataDrivenWorldLoader.cs`; `OutOfAlignmentTests.cs`; `AuthoredWorldPlayModeTests.cs`; `scripts/validate_out_of_alignment.py`.
