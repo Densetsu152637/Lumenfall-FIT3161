@@ -133,5 +133,162 @@ class FeatureCiTests(unittest.TestCase):
         self.assertTrue(report["errors"][0].startswith("Preparation:"))
 
 
+class FeatureCacheTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        self.output = self.root / "Temp/pr-tests"
+        self.location = self.output / "pr_03"
+        self.project = self.location / "snapshot/Lumenfall"
+        self.library = self.project / "Library"
+        self.seed = self.root / ci.CACHE_LIBRARY
+        self.catalog = self.root / "catalog"
+        suite = self.catalog / "pr_03"
+        suite.mkdir(parents=True)
+        (suite / "acceptance.cs").write_text("fixture source")
+        for name, value in (("ROOT", self.root), ("CATALOG", self.catalog)):
+            patcher = patch.object(ci.runner, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.entry = {"number": 3, "suite": "pr_03", "commit": "a" * 40,
+                      "expected_cases": {"EditMode": {"Feature.Edit": 2}}}
+        self.configuration(self.project)
+        self.prepared = {"status": "prepared", "commit": self.entry["commit"],
+                         "suite_sha256": ci.runner.suite_hash(suite)}
+        self.write_json("report-prepare.json", self.prepared)
+        self.marker = {"commit": self.entry["commit"], "pr": 3}
+        self.write_json("snapshot.json", self.marker)
+
+    def configuration(self, project):
+        for name in ("Packages", "ProjectSettings", "Assets"):
+            (project / name).mkdir(parents=True)
+        (project / "Packages/manifest.json").write_text('{"dependencies": {}}')
+        (project / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 6000.4.10f1\n")
+
+    def write_json(self, name, value):
+        (self.location / name).write_text(json.dumps(value))
+
+    def seed_content(self, path):
+        path.mkdir(parents=True)
+        (path / "imported.bin").write_bytes(b"imported data")
+
+    def successful_verification(self):
+        artifacts = self.root / "artifacts"
+        directory = artifacts / "editmode"
+        directory.mkdir(parents=True)
+        (directory / "results.xml").write_text(
+            '<test-run result="Passed">' + '<test-case classname="Feature.Edit" result="Passed" />' * 2
+            + '</test-run>')
+        report = ci.verify(self.entry, self.output, artifacts, {"EditMode": "success"})
+        self.assertEqual(report["status"], "passed")
+        self.write_json("ci-report.json", report)
+
+    def test_configuration_key_is_shared_across_assets_targets_and_suites(self):
+        other = self.root / "Temp/pr-tests/pr_09/snapshot/Lumenfall"
+        self.configuration(other)
+        (self.project / "Assets/first.cs").write_text("first target and suite")
+        (other / "Assets/second.cs").write_text("different target and suite")
+        self.assertEqual(ci.config_hash(self.project), ci.config_hash(other))
+
+    def test_configuration_key_tracks_package_settings_names_and_bytes(self):
+        original = ci.config_hash(self.project)
+        for relative in ("Packages/manifest.json", "ProjectSettings/ProjectVersion.txt"):
+            with self.subTest(relative=relative):
+                path = self.project / relative
+                content = path.read_bytes()
+                path.write_bytes(content + b"changed")
+                self.assertNotEqual(original, ci.config_hash(self.project))
+                path.write_bytes(content)
+                renamed = path.with_suffix(".renamed")
+                path.rename(renamed)
+                self.assertNotEqual(original, ci.config_hash(self.project))
+                renamed.rename(path)
+
+    def test_prepare_emits_extracted_configuration_hash(self):
+        with patch.object(ci.runner, "main", return_value=0):
+            outputs = ci.prepare(self.entry, self.output)
+        self.assertEqual(outputs["config-hash"], ci.config_hash(self.project))
+        self.assertEqual(outputs["unity-version"], "6000.4.10f1")
+        self.assertEqual(outputs["suite-hash"], self.prepared["suite_sha256"])
+
+    def test_cold_restore_is_a_noop(self):
+        self.assertFalse(ci.cache_restore(self.entry, self.output))
+        self.assertFalse(self.library.exists())
+        self.assertFalse(self.seed.exists())
+
+    def test_restore_and_validated_save_move_only_library(self):
+        self.seed_content(self.seed)
+        self.assertTrue(ci.cache_restore(self.entry, self.output))
+        self.assertFalse(self.seed.exists())
+        self.assertEqual((self.library / "imported.bin").read_bytes(), b"imported data")
+        self.successful_verification()
+        ci.cache_save(self.entry, self.output)
+        self.assertFalse(self.library.exists())
+        self.assertEqual((self.seed / "imported.bin").read_bytes(), b"imported data")
+        self.assertEqual(json.loads((self.location / "snapshot.json").read_text()), self.marker)
+        self.assertTrue((self.project / "Packages/manifest.json").is_file())
+
+    def test_restore_refuses_occupied_destination_even_when_cold(self):
+        self.seed_content(self.library)
+        with self.assertRaisesRegex(ValueError, "occupied"):
+            ci.cache_restore(self.entry, self.output)
+        self.seed_content(self.seed)
+        with self.assertRaisesRegex(ValueError, "occupied"):
+            ci.cache_restore(self.entry, self.output)
+        self.assertTrue((self.seed / "imported.bin").exists())
+        self.assertTrue((self.library / "imported.bin").exists())
+
+    def test_save_refuses_missing_failed_stale_and_occupied_evidence(self):
+        self.seed_content(self.library)
+        with self.assertRaises(OSError):
+            ci.cache_save(self.entry, self.output)
+        self.successful_verification()
+        report = json.loads((self.location / "ci-report.json").read_text())
+        for changes in ({"status": "failed"}, {"errors": ["missing tests"]}, {"commit": "b" * 40},
+                        {"pr": 9}, {"suite_sha256": "stale"}):
+            with self.subTest(changes=changes):
+                self.write_json("ci-report.json", dict(report, **changes))
+                with self.assertRaisesRegex(ValueError, "successful verification"):
+                    ci.cache_save(self.entry, self.output)
+                self.assertTrue(self.library.exists())
+        self.write_json("ci-report.json", report)
+        self.seed_content(self.seed)
+        with self.assertRaisesRegex(ValueError, "occupied"):
+            ci.cache_save(self.entry, self.output)
+
+    def test_cache_operations_require_owned_current_preparation(self):
+        for changes in ({"pr": 9}, {"commit": "b" * 40}):
+            with self.subTest(changes=changes):
+                self.write_json("snapshot.json", dict(self.marker, **changes))
+                with self.assertRaisesRegex(ValueError, "owned prepared"):
+                    ci.cache_restore(self.entry, self.output)
+        self.write_json("snapshot.json", self.marker)
+        self.write_json("report-prepare.json", dict(self.prepared, suite_sha256="stale"))
+        with self.assertRaisesRegex(ValueError, "owned prepared"):
+            ci.cache_restore(self.entry, self.output)
+        for output in (self.root / "outside", self.root / "Temp/../outside"):
+            with self.subTest(output=output), self.assertRaisesRegex(ValueError, "escapes owned"):
+                ci.cache_restore(self.entry, output)
+
+    def test_links_in_cache_paths_and_ancestors_are_rejected(self):
+        # Mock link detection so this guard is also exercised on Windows without symlink privilege.
+        original = Path.is_symlink
+        for linked in (self.seed, self.seed.parent, self.library, self.project,
+                       self.location / "snapshot.json"):
+            with self.subTest(linked=linked):
+                with patch.object(Path, "is_symlink", lambda path: path == linked or original(path)):
+                    with self.assertRaisesRegex(ValueError, "contains a link"):
+                        ci.cache_restore(self.entry, self.output)
+
+    def test_configuration_links_are_rejected(self):
+        original = Path.is_symlink
+        for linked in (self.project / "Packages", self.project / "Packages/manifest.json"):
+            with self.subTest(linked=linked):
+                with patch.object(Path, "is_symlink", lambda path: path == linked or original(path)):
+                    with self.assertRaisesRegex(ValueError, "[Ll]inked"):
+                        ci.config_hash(self.project)
+
+
 if __name__ == "__main__":
     unittest.main()

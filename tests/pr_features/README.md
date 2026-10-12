@@ -20,6 +20,23 @@ contain the observed Unity account login limit. The six groups can run concurren
 this does not serialize all logins globally. Single-suite changes retain precise
 selection; full-catalog runtime is constrained by account activation capacity.
 
+Hosted Unity jobs share immutable Library seeds when OS, Unity version and the
+SHA-256 of extracted `Packages/**` and `ProjectSettings/**` names/bytes match.
+Assets, target SHA and suite identity do not split the seed: Unity incrementally
+imports and compiles each pinned source and installed suite, and the same strict
+revision, suite-hash, fixture and result-count checks still decide success. The
+current 21 Unity suites have four configurations; at the observed roughly 1.27 GiB
+per Library, four seeds would occupy about 5.1 GiB before other caches and branch
+scopes. Actual sizes and reimport time vary.
+
+The shared workflow restores/saves `Temp/pr-feature-unity-cache/Library` for every
+suite. `pr_feature_ci.py cache-restore --pr <number>` moves the seed into its owned
+prepared project; a cold cache is a normal no-op. Only a cache miss followed by
+complete successful verification stages a seed with `cache-save` for upload.
+Existing seeds are reused without replacement. Moves reject occupied destinations,
+linked paths and ownership escapes. Cache failures fail the job; latest hosted
+cache-hit execution remains necessary to verify cross-suite import behavior.
+
 Tests live outside `Lumenfall/Assets` because main does not yet contain the APIs
 under test. The runner extracts the selected PR's tracked project into its own
 ignored snapshot, installs only that PR's acceptance suite with deterministic

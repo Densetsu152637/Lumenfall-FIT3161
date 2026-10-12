@@ -201,9 +201,32 @@ cleanup helper, with a six-minute step limit and no Docker image pruning.
 The workflows use `contents: read`; GameCI's optional Checks reporter is disabled.
 Feature execution retains read-only checkout authentication for private exact-target
 fetches and partial-clone archive reads; selection jobs do not persist credentials.
-Library caches are scoped to PR, OS, Unity version, target SHA and suite hash, and
-saved only after complete result verification. Concurrent suites run on separate
-hosted runners; their source, preferences and caches are isolated.
+Feature Library seeds use the versioned `feature-unity-seed-v1` namespace, keyed by
+OS, Unity version and a SHA-256 of every extracted `Packages/**` and
+`ProjectSettings/**` file's relative name and bytes. Target SHA, suite and Assets
+are deliberately excluded from this import seed key. Unity still imports changed
+assets and compiles the pinned target and installed suite; source-revision,
+suite-hash, fixture and case-count verification remain independent of the cache.
+There are four matching configurations among the current 21 Unity suites (15, 3,
+2 and 1 suites), so four seeds at the observed roughly 1.27 GiB each would use about
+5.1 GiB instead of 21 copies. This is a budget estimate, not a fixed size or runtime
+guarantee: other workflows, branch scopes and future configurations also consume
+the repository cache budget. No paid cache limit change is required.
+
+Every feature job restores and saves the identical path
+`Temp/pr-feature-unity-cache/Library`, which also keeps the Actions cache version
+compatible across suite paths. The adapter's `cache-restore` command moves a seed
+into the owned prepared snapshot before Unity; cold absence is normal. A restore
+or move failure prevents Unity execution and fails strict verification. After
+complete verification passes, `cache-save` moves the Library back to the fixed path
+only when the exact key was missing. Existing seeds remain immutable; the first
+successful writer wins if jobs race to save the same new configuration. The moves
+reject occupied destinations, linked directories/ancestors and paths outside the
+checkout's `Temp` tree, and require current preparation/verification evidence.
+The cached Library contains no license or checkout credentials. Each suite still
+runs on a separate hosted runner with its own source and preferences. A shared
+seed can require incremental reimport; compare latest hosted cache/import timings
+and strict suite results before claiming a speedup.
 
 `scripts/pr_feature_ci.py` verifies each action outcome, pinned revision, suite
 hash and every expected fixture/case count. Missing, duplicate, partial, failed or

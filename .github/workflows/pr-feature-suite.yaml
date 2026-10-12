@@ -91,19 +91,22 @@ jobs:
         timeout-minutes: 6
         run: python3 scripts/free_unity_disk_space.py
 
-      - name: Restore target Unity Library
+      - name: Restore compatible Unity Library seed
         id: unity-library
         if: ${{ steps.prepare.outputs.unity == 'true' }}
         uses: actions/cache/restore@v5
         with:
-          path: ${{ steps.prepare.outputs.project }}/Library
-          key: feature-pr-${{ inputs.pr-number }}-${{ runner.os }}-${{ steps.prepare.outputs.unity-version }}-${{ steps.prepare.outputs.commit }}-${{ steps.prepare.outputs.suite-hash }}
-          restore-keys: |
-            feature-pr-${{ inputs.pr-number }}-${{ runner.os }}-${{ steps.prepare.outputs.unity-version }}-${{ steps.prepare.outputs.commit }}-
+          path: Temp/pr-feature-unity-cache/Library
+          key: feature-unity-seed-v1-${{ runner.os }}-${{ steps.prepare.outputs.unity-version }}-${{ steps.prepare.outputs.config-hash }}
+
+      - name: Install Unity Library seed into prepared target
+        id: cache-restore
+        if: ${{ steps.prepare.outputs.unity == 'true' }}
+        run: python3 scripts/pr_feature_ci.py cache-restore --pr "$PR_NUMBER"
 
       - name: Run EditMode acceptance tests
         id: editmode
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.license.outcome == 'success' && steps.prepare.outputs.editmode == 'true' }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.license.outcome == 'success' && steps.unity-library.outcome == 'success' && steps.cache-restore.outcome == 'success' && steps.prepare.outputs.editmode == 'true' }}
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -121,7 +124,7 @@ jobs:
 
       - name: Run PlayMode acceptance tests
         id: playmode
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.license.outcome == 'success' && steps.prepare.outputs.playmode == 'true' }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.license.outcome == 'success' && steps.unity-library.outcome == 'success' && steps.cache-restore.outcome == 'success' && steps.prepare.outputs.playmode == 'true' }}
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -164,9 +167,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Save validated Unity Library
+      - name: Stage validated Unity Library seed
+        id: cache-save
         if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.prepare.outputs.unity == 'true' && steps.unity-library.outputs.cache-hit != 'true' }}
+        run: python3 scripts/pr_feature_ci.py cache-save --pr "$PR_NUMBER"
+
+      - name: Save validated Unity Library seed
+        if: ${{ !cancelled() && steps.cache-save.outcome == 'success' }}
         uses: actions/cache/save@v5
         with:
-          path: ${{ steps.prepare.outputs.project }}/Library
+          path: Temp/pr-feature-unity-cache/Library
           key: ${{ steps.unity-library.outputs.cache-primary-key }}

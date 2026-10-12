@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -11,6 +12,91 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import run_pr_feature_tests as runner
+
+
+CACHE_LIBRARY = Path("Temp/pr-feature-unity-cache/Library")
+
+
+def config_hash(project: Path) -> str:
+    """Fingerprint names and bytes of extracted Unity configuration, excluding Assets."""
+    digest = hashlib.sha256()
+    for name in ("Packages", "ProjectSettings"):
+        directory = project / name
+        if directory.is_symlink() or directory.is_junction() or not directory.is_dir():
+            raise ValueError(f"Missing or linked Unity configuration: {directory}")
+        for source in sorted(directory.rglob("*")):
+            if (source.is_symlink() or source.is_junction()
+                    or not source.resolve().is_relative_to(directory.resolve())):
+                raise ValueError(f"Linked Unity configuration: {source}")
+            if source.is_file():
+                logical = source.relative_to(project).as_posix().encode("utf-8")
+                content = source.read_bytes()
+                digest.update(len(logical).to_bytes(8, "big"))
+                digest.update(logical)
+                digest.update(len(content).to_bytes(8, "big"))
+                digest.update(content)
+    return digest.hexdigest()
+
+
+def owned_cache_path(path: Path) -> Path:
+    """Require a literal, link-free path inside this checkout's ignored Temp tree."""
+    root = runner.ROOT.resolve()
+    path = path.absolute()
+    if ".." in path.parts or not path.is_relative_to(root / "Temp"):
+        raise ValueError(f"Cache path escapes owned Temp directory: {path}")
+    current = root
+    for part in path.relative_to(root).parts:
+        current /= part
+        if current.is_symlink() or current.is_junction():
+            raise ValueError(f"Cache path contains a link: {current}")
+    if not path.resolve().is_relative_to(root / "Temp"):
+        raise ValueError(f"Cache path escapes owned Temp directory: {path}")
+    return path
+
+
+def cache_paths(entry: dict, output: Path) -> tuple[Path, Path]:
+    if not entry["expected_cases"]:
+        raise ValueError("Unity cache operations require a Unity suite")
+    location = owned_cache_path(output / entry["suite"])
+    project = owned_cache_path(location / "snapshot" / "Lumenfall")
+    prepared = json.loads(owned_cache_path(location / "report-prepare.json").read_text())
+    marker = json.loads(owned_cache_path(location / "snapshot.json").read_text())
+    if (not project.is_dir() or prepared.get("status") != "prepared"
+            or prepared.get("commit") != entry["commit"]
+            or prepared.get("suite_sha256") != runner.suite_hash(runner.CATALOG / entry["suite"])
+            or marker.get("commit") != entry["commit"] or marker.get("pr") != entry["number"]):
+        raise ValueError("Unity cache requires an owned prepared target and current suite")
+    return owned_cache_path(project / "Library"), owned_cache_path(runner.ROOT / CACHE_LIBRARY)
+
+
+def move_library(source: Path, destination: Path) -> None:
+    """Rename a guarded Library directory without overwriting, merging or copying."""
+    if destination.exists():
+        raise ValueError(f"Cache destination is occupied: {destination}")
+    if not source.is_dir():
+        raise ValueError(f"Unity Library is missing or not a directory: {source}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    source.rename(destination)
+
+
+def cache_restore(entry: dict, output: Path) -> bool:
+    library, seed = cache_paths(entry, output)
+    if library.exists():
+        raise ValueError(f"Cache destination is occupied: {library}")
+    if not seed.exists():
+        return False  # A cold cache is normal; Unity imports from the pinned source.
+    move_library(seed, library)
+    return True
+
+
+def cache_save(entry: dict, output: Path) -> None:
+    library, seed = cache_paths(entry, output)
+    report = json.loads(owned_cache_path(output / entry["suite"] / "ci-report.json").read_text())
+    if (report.get("status") != "passed" or report.get("errors") != []
+            or report.get("pr") != entry["number"] or report.get("commit") != entry["commit"]
+            or report.get("suite_sha256") != runner.suite_hash(runner.CATALOG / entry["suite"])):
+        raise ValueError("Unity cache save requires complete successful verification")
+    move_library(library, seed)
 
 
 def entry_for(number: int) -> dict:
@@ -52,6 +138,7 @@ def prepare(entry: dict, output: Path) -> dict[str, str]:
         if len(versions) != 1 or not re.fullmatch(r"\d+\.\d+\.\d+[abfp]\d+", versions[0]):
             raise ValueError("Snapshot must specify exactly one valid Unity Editor version")
         values["unity-version"] = versions[0]
+        values["config-hash"] = config_hash(project)
     return values
 
 
@@ -138,7 +225,7 @@ def write_report(report: dict, location: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=["describe", "prepare", "verify"])
+    parser.add_argument("operation", choices=["describe", "prepare", "verify", "cache-restore", "cache-save"])
     parser.add_argument("--pr", required=True, type=int)
     parser.add_argument("--output", type=Path, default=runner.ROOT / "Temp" / "pr-tests")
     parser.add_argument("--artifacts", type=Path)
@@ -148,11 +235,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         entry = entry_for(args.pr)
-        output = args.output.resolve()
+        output = args.output.absolute() if args.operation.startswith("cache-") else args.output.resolve()
         if args.operation == "describe":
             emit_outputs(describe(entry))
         elif args.operation == "prepare":
             emit_outputs(prepare(entry, output))
+        elif args.operation == "cache-restore":
+            print("Unity Library seed restored" if cache_restore(entry, output) else "Cold Unity Library cache")
+        elif args.operation == "cache-save":
+            cache_save(entry, output)
         else:
             artifacts = (args.artifacts or runner.ROOT / "artifacts" / f"pr-{args.pr}").resolve()
             report = verify(entry, output, artifacts, {"EditMode": args.editmode_outcome,

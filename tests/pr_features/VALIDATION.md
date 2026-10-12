@@ -162,3 +162,29 @@ Local checks for the efficiency update passed all 76 Python harness tests, the
 Unity repository validator, and actionlint 1.7.12 with ShellCheck 0.11.0 against
 all eight PR/feature workflows. The adapter's existing revision, suite-hash,
 platform-discovery and complete-result regressions remain in that harness.
+
+The shared-cache follow-up replaces per-PR/target/suite Library keys with immutable
+seeds keyed by OS, Unity version and SHA-256 of extracted Packages/ProjectSettings
+file names and bytes. All 21 Unity targets use Unity 6000.4.10f1 and the same package
+tree; their four settings configurations cover 15, 3, 2 and 1 suites. At the observed
+roughly 1.27 GiB per Library, four seeds would use about 5.1 GiB rather than 21
+copies, excluding other workflows and branch scopes. This is an estimate; changed
+assets/suites still require incremental import and compilation. The fixed Actions
+cache path is `Temp/pr-feature-unity-cache/Library` in every job. Guarded adapter
+commands move it into a prepared owned project and stage a new seed only after
+strict verification passes on an exact-key miss. Cache hits are not overwritten.
+No target pins, assertions, fixtures, expected counts or verification rules changed.
+
+Local cache regressions cover sharing across different assets/suites, package and
+settings name/content invalidation, prepare outputs, cold absence, safe moves,
+occupied destinations, linked paths, ownership/preparation rejection and failed or
+stale verification evidence. These checks do not establish hosted cross-suite
+cache reuse or faster Unity execution. The first hosted seed restore followed by
+complete strict verification must be checked on the latest PR head; the historical
+101-case local result above remains separate evidence.
+
+The follow-up passes all 88 local Python harness tests (including ten new cache
+regressions), the Unity repository validator, whitespace validation and actionlint
+1.7.12 with ShellCheck 0.11.0 on the changed shared workflow. Local tests use a
+checkout-local temporary directory because the Windows sandbox's default temporary
+directory denies nested writes; this does not change the hosted workflow.
