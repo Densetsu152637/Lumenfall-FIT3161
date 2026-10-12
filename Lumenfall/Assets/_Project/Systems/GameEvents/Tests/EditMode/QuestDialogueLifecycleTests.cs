@@ -4,6 +4,7 @@ using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.DataDriven;
 using Lumenfall.Spells;
+using Lumenfall.Quests;
 using Lumenfall.Inventory;
 using NUnit.Framework;
 using UnityEngine;
@@ -252,26 +253,47 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void GravitateArrivesThroughAuthoredLaterQuestCompletion()
+        public void OrioLessonTeachesRotaraAndConfirmationDoesNotGrantGravitate()
         {
-            GameEventManager manager = GameEventManager.Instance;
-            manager.Runtime.ResetState();
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            WorldStateService previousState = WorldStateService.Instance;
+            GameObject worldHost = new GameObject("later-spell-world-test");
             GameObject host = new GameObject("later-spell-progression-test");
             try
             {
+                WorldStateService world = worldHost.AddComponent<WorldStateService>();
+                EditModeLifecycle.SetWorldInstance(world);
+                world.BeginMapRebuild(RotaraGearMechanism.PuzzleMapId);
+                world.RegisterObject(RotaraGearMechanism.PuzzleObjectId, null, new Vector2Int(8, 21),
+                    Vector2Int.one, true, new[] { "rotara" });
+                world.EndMapRebuild();
+                world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 180);
                 SpellCaster caster = host.AddComponent<SpellCaster>();
                 EnableForTest(caster);
-                DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
+                DialogueSession dialogue = runtime.StartDialogue("orio_patch_notes_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
+                Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
-                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.True);
+                Assert.That(dialogue.Continue(), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                foreach (int unused in new[] { 1, 2, 3 })
+                    Assert.That(caster.Cast(SpellId.Rotara, RotaraGearMechanism.PuzzleObjectId, Vector2Int.up), Is.True);
+                DialogueSession report = runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(report.SelectChoice("report"), Is.True);
+                Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Completed));
+                Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Status, Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False, "Orio's authored reward is Rotara only.");
             }
             finally
             {
                 InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
+                runtime.ActiveDialogue?.End();
                 Object.DestroyImmediate(host);
+                Object.DestroyImmediate(worldHost);
+                EditModeLifecycle.SetWorldInstance(previousState);
             }
         }
 

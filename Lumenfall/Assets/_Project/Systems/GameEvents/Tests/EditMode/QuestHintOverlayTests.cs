@@ -156,19 +156,47 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void OrioHintTracksLessonAlignmentAndConfirmationWithoutCompletingTheQuest()
+        {
+            runtime.StartQuest("orio_patch_notes");
+            BeginMap(RotaraGearMechanism.PuzzleMapId);
+            world.RegisterObject(RotaraGearMechanism.PuzzleObjectId, null, new Vector2Int(8, 21),
+                Vector2Int.one, true, new[] { "rotara" });
+            stateEnd();
+            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 180);
+            RotaraGearMechanism.RegisterQuestConditions(runtime);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("finish his Rotara lesson"));
+
+            runtime.SetFlag("spell.unlocked.Rotara", true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("clockwise by 90 degrees"));
+            Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
+
+            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 90);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio and confirm"));
+            Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.HasEventTriggered("complete_orio_patch_notes"), Is.False);
+            DialogueSession report = runtime.StartDialogue("orio_patch_notes_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
+            Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Completed));
+        }
+
+        [Test]
         public void MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell()
         {
-            BeginMap("campus");
+            BeginMap("C04.Recess");
             world.RegisterPuzzleTargets(new[]
             {
                 new PuzzleTargetDefinition { objectIds = new[] { "keepsake.katrina.hidden" }, requiredRevealed = true }
             });
-            Register("keepsake.katrina.hidden", new Vector2Int(50, 60), true);
+            Register("keepsake.katrina.hidden", new Vector2Int(20, 9), true);
             stateEnd();
             runtime.StartQuest("katrina_something_borrowed");
 
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return the revealed keepsake to cell (42, 60)"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the revealed keepsake to cell (12, 9)"));
 
             QuestPuzzleDefinition databasePuzzle = LoadPuzzle("katrina_something_borrowed");
             QuestPuzzleTarget monitorTarget = databasePuzzle.targets[0];
@@ -176,15 +204,15 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(InvokeStatic("TargetComplete", merged, world), Is.False);
             object[] args = { merged, ReadObject("keepsake.katrina.hidden"), false };
             Vector2Int destination = (Vector2Int)InvokeStaticWithArgs("ResolveDestination", args);
-            Assert.That(destination, Is.EqualTo(new Vector2Int(42, 60)));
+            Assert.That(destination, Is.EqualTo(new Vector2Int(12, 9)));
             Assert.That(args[2], Is.True);
-            string direction = (string)InvokeStatic("DirectionBetweenCells", new Vector2Int(40, 60), destination, true);
+            string direction = (string)InvokeStatic("DirectionBetweenCells", new Vector2Int(10, 9), destination, true);
             Assert.That(direction, Does.Contain("2 tiles east"));
 
             BeginMap("B02.Ground");
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Travel to campus"));
-            Assert.That(ReadField<string>("hint"), Does.Not.Contain("42, 60"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Travel to C04.Recess"));
+            Assert.That(ReadField<string>("hint"), Does.Not.Contain("12, 9"));
         }
 
         [Test]
