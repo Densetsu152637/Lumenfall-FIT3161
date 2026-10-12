@@ -60,6 +60,14 @@ instances, and unsubscribe fixture-owned event handlers during cleanup. Quest
 monitors must load their definitions before evaluation. Preserve production reward
 and completion requirements.
 
+Authored-world PlayMode cases load their own `SampleScene` additively while
+retaining the runner and an empty fixture host. Teardown unloads only that owned
+world, checks loader/listener cleanup, then restores the runner and removes the
+host. Tests wait for any startup menu to finish before establishing a fresh
+authored world. Portal expectations use fixed current prefab geometry: all three
+campus forest-gate cells and all four vertical B02 entrance cells must transfer,
+and the B02 landing must reach Stella's actual prefab position and return portal.
+
 CI uses `testMode: all` with GameCI CLI `v0.1.72` and
 `customParameters: -testCategory !RequiresGraphics`. The Unity checkout enables
 Git LFS so terrain and other binary assets are materialized before import. The CLI runs both modes against
