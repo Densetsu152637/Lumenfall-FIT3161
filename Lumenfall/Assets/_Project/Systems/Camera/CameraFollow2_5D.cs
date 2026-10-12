@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
 /// The camera moves smoothly while continuously looking at the target.
+/// During a conversation it eases in to frame a requested focus point instead.
 /// </summary>
 public class CameraFollow2_5D : MonoBehaviour
 {
@@ -24,8 +25,38 @@ public class CameraFollow2_5D : MonoBehaviour
     [Min(0f)]
     [SerializeField] private float smoothTime = 0.15f;
 
+    [Tooltip("The approximate time taken to ease into and out of conversation framing.")]
+    [Min(0f)]
+    [SerializeField] private float conversationBlendTime = 0.45f;
+
+    // Conversation framing requested by the dialogue box; shared because there is one gameplay camera.
+    private static bool conversationActive;
+    private static Vector3 conversationFocus;
+    private static float conversationZoom = 1f;
+
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
+
+    // How far the camera has eased into conversation framing, from 0 to 1.
+    private float conversationBlend;
+    private float conversationBlendVelocity;
+
+    /// <summary>
+    /// Frames a conversation: the camera centres on <paramref name="focus"/> and moves closer by
+    /// <paramref name="zoom"/> (a fraction of the normal offset). Call every frame while it should hold.
+    /// </summary>
+    public static void FrameConversation(Vector3 focus, float zoom)
+    {
+        conversationActive = true;
+        conversationFocus = focus;
+        conversationZoom = Mathf.Clamp(zoom, 0.3f, 1f);
+    }
+
+    /// <summary>Returns the camera to following its target.</summary>
+    public static void ClearConversationFrame()
+    {
+        conversationActive = false;
+    }
 
     /// <summary>
     /// Updates the camera after the target has completed its movement for the
@@ -38,9 +69,20 @@ public class CameraFollow2_5D : MonoBehaviour
             return;
         }
 
+        conversationBlend = Mathf.SmoothDamp(
+            conversationBlend,
+            conversationActive ? 1f : 0f,
+            ref conversationBlendVelocity,
+            conversationBlendTime
+        );
+
+        // Blend the followed point and distance toward the conversation framing.
+        Vector3 anchor = Vector3.Lerp(target.position, conversationFocus, conversationBlend);
+        float distanceScale = Mathf.Lerp(1f, conversationZoom, conversationBlend);
+
         // Calculate the camera's desired position relative to the target.
         Vector3 desiredPosition =
-            target.position + offset;
+            anchor + offset * distanceScale;
 
         // Smoothly move the camera toward its desired position.
         transform.position = Vector3.SmoothDamp(
@@ -50,9 +92,9 @@ public class CameraFollow2_5D : MonoBehaviour
             smoothTime
         );
 
-        // Look slightly above the target's origin.
+        // Look slightly above the followed point, a little lower when framing faces up close.
         Vector3 focusPoint =
-            target.position + focusOffset;
+            anchor + focusOffset * Mathf.Lerp(1f, 0.8f, conversationBlend);
 
         transform.LookAt(focusPoint);
     }
