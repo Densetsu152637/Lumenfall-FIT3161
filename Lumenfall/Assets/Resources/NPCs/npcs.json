@@ -222,14 +222,6 @@
         {
           "dialogueId": "ambient_courtyard_student",
           "weight": 1
-        },
-        {
-          "dialogueId": "ambient_courtyard_student_2",
-          "weight": 1
-        },
-        {
-          "dialogueId": "ambient_courtyard_student_3",
-          "weight": 1
         }
       ]
     },

@@ -56,20 +56,6 @@ MonoBehaviour:
     B03Prefab: {fileID: 0}
     B04Prefab: {fileID: 0}
     objects:
-    - id: keepsake.katrina.hidden
-      prefab: {fileID: 0}
-      type: keepsake
-      x: 12
-      y: 9
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 0
-      blocks: 0
-      tags:
-      - hidden
-      - pickup
-      compatibleWithSpells: 1
     - id: recess.planter.1
       prefab: {fileID: 0}
       type: planter
@@ -118,20 +104,7 @@ MonoBehaviour:
       blocks: 1
       tags: []
       compatibleWithSpells: 0
-    puzzleTargets:
-    - id: quest.katrina.something-borrowed
-      objectIds:
-      - keepsake.katrina.hidden
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 1
-      requiredFrozen: 0
-      requiredAligned: 0
-      requiredRotation: -1
-      requiredPositionX: 12
-      requiredPositionY: 9
+    puzzleTargets: []
     portals: []
   areaPrefab: {fileID: 4252721467926123666, guid: 1147a7632c714765a99d9561ca68854b, type: 3}
   portals:

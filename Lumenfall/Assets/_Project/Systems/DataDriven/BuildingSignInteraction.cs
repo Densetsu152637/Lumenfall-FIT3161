@@ -34,7 +34,7 @@ namespace Lumenfall.DataDriven
             if (activeSign != null && activeSign != this) return;
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
                 DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
-                Keyboard.current == null) return;
+                GridPortal.IsPlayerAtInteractivePortal || Keyboard.current == null) return;
 
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null) return;
@@ -59,7 +59,7 @@ namespace Lumenfall.DataDriven
 
             if (activeSign != null || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f ||
                 InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
+                GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
 
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || !IsNearestInteractionTarget(player)) return;

@@ -7,14 +7,21 @@ namespace Lumenfall.Quests
 {
     /// <summary>
     /// On-screen Lost Echoes usage guide for Something Borrowed. It appears once Katrina's lesson lends the spell
-    /// (<c>spell.lesson.LostEchoes</c>) while the quest is Active, switches to a return reminder once the keepsake is
-    /// carried, and disappears when the quest completes.
+    /// (<c>spell.lesson.LostEchoes</c>) while the quest is Active, tracks the three memory anchors, switches to a
+    /// return reminder once all are carried, and disappears when the quest completes.
     /// </summary>
     public sealed class KatrinaLostEchoesGuide : MonoBehaviour
     {
         private const string QuestId = "katrina_something_borrowed";
         private const string LessonFlag = "spell.lesson.LostEchoes";
         private const string KeepsakeFlag = "inventory.keyitem.katrina-keepsake";
+        private static readonly string[] AnchorFlags =
+        {
+            "inventory.keyitem.katrina-library-anchor",
+            "inventory.keyitem.katrina-garden-anchor",
+            "inventory.keyitem.katrina-stream-anchor"
+        };
+        private static readonly string[] AnchorLocations = { "Library", "sakura garden", "forest stream" };
         private static KatrinaLostEchoesGuide instance;
 
         private GUIStyle titleStyle;
@@ -50,9 +57,17 @@ namespace Lumenfall.Quests
             if (runtime.GetQuestStatus(QuestId) != QuestStatus.Active || !runtime.GetFlag(LessonFlag)) return;
             EnsureStyles();
 
+            int recovered = 0;
+            string remaining = string.Empty;
+            for (int i = 0; i < AnchorFlags.Length; i++)
+            {
+                if (runtime.GetFlag(AnchorFlags[i])) recovered++;
+                else remaining += (remaining.Length == 0 ? string.Empty : ", ") + AnchorLocations[i];
+            }
             string body = runtime.GetFlag(KeepsakeFlag)
-                ? "You have the keepsake. Return it to Katrina on campus."
-                : $"1. Press {KeyBindings.GetKeyLabel(GameAction.Spell7)} to select Lost Echoes " +
+                ? "All three memory anchors recovered. Return them to Katrina on campus."
+                : $"Memory anchors: {recovered}/3\nRemaining: {remaining}\n\n" +
+                  $"1. Press {KeyBindings.GetKeyLabel(GameAction.Spell7)} to select Lost Echoes " +
                   $"(or {KeyBindings.GetKeyLabel(GameAction.SpellWheel)} for the spell wheel).\n" +
                   "2. Stand within four cells of a hidden spot.\n" +
                   $"3. Right-click or press {KeyBindings.GetKeyLabel(GameAction.Interact)} to cast. No trace? Move closer and try again.\n" +

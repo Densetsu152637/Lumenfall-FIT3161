@@ -14,10 +14,10 @@ The primary spatial reading is an open field inside a continuous perimeter wall:
                          NORTH WALL
               [NORTH GATE — FUTURE EXPANSION]
                 +-------------------------------------------+
-F01--F02--F03 <--- [B02 Teaching]     C03 C02   [B03 Shared] |
+F01--F02--F03 <--- [B02 Arcane Workshop] C03 C02 [B03 Main Academy] |
  West Forest   |                                           | EAST
-WEST GATE      |        C01 CAMPUS COMMONS      [B04 Sirius] | GATE
-                | [B01 Arrival]       C04 Garden            | FUTURE
+WEST GATE      |        C01 CAMPUS COMMONS      [B04 Library] | GATE
+                | [B01 Training Centre] C04 Garden           | FUTURE
                 +-------------------------------------------+
               [SOUTH GATE — FUTURE EXPANSION]
 ```
@@ -30,20 +30,20 @@ Buildings are freestanding and connected by traversable campus paths. The legacy
                                         |
   WEST FOREST
   F06 Deep forest boundary       +--------------------------------------+
-           |                     | B03 NORTH SHARED RANGE               |
-  F04 Orio's glade                | Dining / library / practice          |
+           |                     | B03 MAIN ACADEMY BUILDING            |
+  F04 Orio's glade                | Main portal / academy services       |
            |                     | N01 cross-hall facing the courtyard  |
            |                     +----------+----------------+----------+
            |                     | B02      | C03    C02     | B04      |
-           |                     | WEST     | Trial  Assembly| SIRIUS   |
+           |                     | ARCANE   | Trial  Assembly| LIBRARY  |
   F01 ---- F02 ---- F03 --------- W06        |                |          |
-  Arrival  Trail    Threshold    | Teaching | C01 Fountain   | D02      |
-           |          \          | rooms    |                | Common   |
+  Arrival  Trail    Threshold    | Workshop | C01 Fountain   | Reading  |
+           |          \          | rooms    |                | hall     |
   F05 Brook            \         |          |       C04      | area     |
                         \        | W01      |       Garden -- D01      |
                          \       +----------+--- C05 --------+----------+
-                          \      | B01 SOUTH ARRIVAL RANGE              |
-                           A01 -- S01 -- S02 Reception -- S03 to C05     |
+                          \      | B01 TRAINING CENTRE                  |
+                           A01 -- S01 -- S02 Training -- S03 to C05      |
                         Forecourt+--------------------------------------+
 
                              Main public entrance faces south.
@@ -73,13 +73,13 @@ The F03 west gate and campus grounds become available after the first reception 
 
 ## Single-storey interiors
 
-All four buildings are ground-floor maps. B01 is one open reception and student-services hall; B02 is one teaching hall with puzzle zones; B03 is one large dining, study, and practice hall; and B04 is one shared common/group-living hall. The player's sleeping area is a ground-floor private room whose door can use the residential key. All travel stays on the ground level.
+All four buildings are ground-floor maps. B01 is the Training Centre; B02 is Stella's Arcane Workshop; B03 is the Main Academy Building and houses the main portal; and B04 is the Library. All travel stays on the ground level.
 
 ## Creative explanation
 
 ### The commons makes the campus readable
 
-The fountain is the organising landmark. Players returning from the forest or leaving a classroom can locate themselves before choosing their next destination. Separate buildings establish a simple relationship: arrive near the west gate, learn in the northwest, use shared facilities in the north, and rest in the southeast.
+The fountain is the organising landmark. Players returning from the forest or leaving a classroom can locate themselves before choosing their next destination. Separate buildings establish a simple relationship: train in the southwest, visit Stella's workshop in the northwest, use the main portal in the north, and study in the eastern Library.
 
 The commons accommodates Cinna Cirra's public orientation responsibilities without inventing a separate assembly building. The trial strip sits near B02 so sliding and trap activity can be bounded against the perimeter, clear of the central walking paths.
 

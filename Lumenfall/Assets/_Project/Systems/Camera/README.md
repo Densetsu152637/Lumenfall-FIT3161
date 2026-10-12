@@ -5,11 +5,11 @@ includes following, framing, bounds, transitions, shake, and coordination with p
 scene state.
 
 `PlayerOcclusionReveal` applies the player-centered screen-space cutout to the patched Polytope
-vegetation shaders. In the campus `Garden Area`, it also makes runtime material copies for opaque
-URP Lit / Simple Lit / Standard materials on the `Pavilion`, `sakura+tree`, and `Old+Tree` models,
-using `Resources/PlayerOcclusionLit.shader`. The copies are restored when the camera component is
-disabled; imported model and shared material assets are not modified. Transparent pavilion materials
-are left alone.
+vegetation shaders. It also makes runtime material copies for opaque URP Lit / Simple Lit / Standard
+materials on the campus `Pavilion`, `sakura+tree`, and `Old+Tree` models and on the authored Library
+model, using `Resources/PlayerOcclusionLit.shader`. The copies are restored when the camera component
+is disabled or an area no longer contains a supported occluder; imported models and shared material
+assets are not modified. Transparent materials are left alone.
 
 `CameraFollow2_5D` exposes `TryGetFollowPose` (where the camera rests when caught up with its
 target) and `ResetSmoothing`. Overlays that move the camera themselves, such as the startup menu's

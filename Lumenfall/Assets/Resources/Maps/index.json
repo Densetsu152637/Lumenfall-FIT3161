@@ -58,7 +58,7 @@
     },
     {
       "id": "B01",
-      "name": "South arrival range",
+      "name": "Training Centre",
       "kind": "building",
       "floor": "Ground",
       "access": "Chapter 1",
@@ -86,7 +86,7 @@
     },
     {
       "id": "B02",
-      "name": "West teaching range",
+      "name": "Arcane Workshop",
       "kind": "building",
       "floor": "Ground",
       "access": "Chapter 1",
@@ -114,7 +114,7 @@
     },
     {
       "id": "B03",
-      "name": "North shared range",
+      "name": "Main Academy Building",
       "kind": "building",
       "floor": "Ground",
       "access": "Chapter 1",
@@ -142,7 +142,7 @@
     },
     {
       "id": "B04",
-      "name": "Sirius dormitory wing",
+      "name": "Library",
       "kind": "building",
       "floor": "Ground",
       "access": "Chapter 1",

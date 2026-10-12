@@ -13,23 +13,29 @@ namespace Lumenfall.EditorTools
             GameObject root = PrefabUtility.LoadPrefabContents(CampusPrefabPath);
             try
             {
-                string[] signNames = { "Sign-B01", "Sign-B02", "Sign-B03", "Sign-B04" };
-                foreach (string signName in signNames)
+                (string objectName, string displayName)[] signs =
                 {
-                    Transform sign = FindByName(root.transform, signName);
-                    if (sign == null) throw new System.InvalidOperationException("Could not find " + signName + " in campus prefab.");
+                    ("Sign-Training Centre", "Training Centre"),
+                    ("Sign-Arcane Workshop", "Arcane Workshop"),
+                    ("Sign-Main Academy Building", "Main Academy Building"),
+                    ("Sign-Library", "Library")
+                };
+                foreach ((string objectName, string displayName) signDefinition in signs)
+                {
+                    Transform sign = FindByName(root.transform, signDefinition.objectName);
+                    if (sign == null) throw new System.InvalidOperationException("Could not find " + signDefinition.objectName + " in campus prefab.");
 
                     BuildingSignInteraction interaction = sign.GetComponent<BuildingSignInteraction>();
                     if (interaction == null)
                         interaction = Undo.AddComponent<BuildingSignInteraction>(sign.gameObject);
 
                     SerializedObject serialized = new SerializedObject(interaction);
-                    serialized.FindProperty("buildingName").stringValue = "Building " + signName.Substring("Sign-".Length);
+                    serialized.FindProperty("buildingName").stringValue = signDefinition.displayName;
                     serialized.ApplyModifiedPropertiesWithoutUndo();
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(root, CampusPrefabPath);
-                Debug.Log("Added E-key building sign interactions to Sign-B01 through Sign-B04.");
+                Debug.Log("Updated the four named campus building signs.");
             }
             finally
             {

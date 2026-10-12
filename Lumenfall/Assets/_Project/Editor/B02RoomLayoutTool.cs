@@ -8,10 +8,10 @@ namespace Lumenfall.EditorTools
 {
     public static class B02RoomLayoutTool
     {
-        private const string AreaPath = "Assets/_Project/World/Areas/Prefabs/B02.Ground.prefab";
+        private const string AreaPath = "Assets/_Project/World/Areas/Prefabs/Arcane Workshop.prefab";
         private const string FurniturePath = "Assets/_Project/Art/Environment/Furnitures/";
         private const string PuzzlePath = "Assets/_Project/Art/Environment/Puzzle Elements";
-        private const string LayoutRootName = "[B02 Furnishings]";
+        private const string LayoutRootName = "[Arcane Workshop Furnishings]";
         private const string RequestFileName = "RunB02RoomLayout.once";
         private static readonly HashSet<string> ReportedModelBounds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ed74fda36d0e31a489e022400dddf8ff
+guid: de1e39c444ccc6f45b3837f0654cfc26
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,68 +7,13 @@ ModelImporter:
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
-      name: clay07XL
-    second: {fileID: 2800000, guid: 85d2938ce407ec540a3081dadb2be81a, type: 3}
+      name: SpeerHallBaked_Roughness
+    second: {fileID: 2800000, guid: 9229a186afd507b4fac9deaf87587bb3, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
-      name: clay07XLb
-    second: {fileID: 2800000, guid: 12726b5ddbbb4f5489463da0017c881e, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: egypt_011
-    second: {fileID: 2800000, guid: b25f0cf6d34b521459175fce280472a5, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: egypt_011b
-    second: {fileID: 2800000, guid: bc08567aeaddc0f4a8fe2ea63186764e, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: entr045M
-    second: {fileID: 2800000, guid: 1e7d9b5c49be1684a821e658a82d4518, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: entr045Mb
-    second: {fileID: 2800000, guid: 0f149d758b527cd44908369efddb0e57, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: germany010b
-    second: {fileID: 2800000, guid: 1ad92969b0532dc4591b22a818dcfbfa, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: germany0WHITE
-    second: {fileID: 2800000, guid: 440859bbef443b24a962ccb695414e2f, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: hungary009
-    second: {fileID: 2800000, guid: d7cf6ab17c01fc4439f96fc8cb94711f, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: hungary009b
-    second: {fileID: 2800000, guid: 41ca1c7e37144ac4fb9b40c11e2f54c3, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: oldgold copy
-    second: {fileID: 2800000, guid: fc4a8e9cabaf6644d83eea048472a8be, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: oldgoldespecular
-    second: {fileID: 2800000, guid: ee77782897ba2e144a39e1fba18acf8e, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: wndw038M
-    second: {fileID: 2800000, guid: eaef807fab97dd24197feb684a45da1b, type: 3}
+      name: SpeerHallTrim_Albedo
+    second: {fileID: 2800000, guid: 678def5f5f3d89342ba78968a8c6d3f6, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -98,7 +43,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 140
+    globalScale: 0.5
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -156,7 +101,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 1.4
+    globalScale: 0.005
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

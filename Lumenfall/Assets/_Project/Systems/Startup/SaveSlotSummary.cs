@@ -31,10 +31,10 @@ namespace Lumenfall.Startup
             { "westForest", "West Forest" },
             { "campus", "Academy Campus" },
             { "C04.Recess", "Garden Recess" },
-            { "B01.Ground", "Arrival Building" },
-            { "B02.Ground", "Teaching Building" },
-            { "B03.Ground", "Shared Facilities" },
-            { "B04.Ground", "Sirius Dormitory" }
+            { "B01.Ground", "Training Centre" },
+            { "B02.Ground", "Arcane Workshop" },
+            { "B03.Ground", "Main Academy Building" },
+            { "B04.Ground", "Library" }
         };
 
         private readonly HashSet<string> pendingThumbnails = new HashSet<string>(StringComparer.Ordinal);

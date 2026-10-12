@@ -95,7 +95,7 @@ namespace Lumenfall.Tests.GameEvents
                 while (current != 31 && steps++ < 32)
                 {
                     Assert.That(StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string instruction, out Vector2Int target), Is.True, $"board={current}");
-                    Assert.That(instruction, Does.Contain("Next: activate relic"));
+                    Assert.That(instruction, Does.Contain("Next: cast Ampere on relic"));
                     int switchIndex = Array.IndexOf(BoardCells, target);
                     Assert.That(switchIndex, Is.GreaterThanOrEqualTo(0), $"board={current} target={target}");
                     current ^= ToggleMasks[switchIndex];
@@ -156,53 +156,54 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void MovedRevealedKeepsakeRemainsPendingAndPointsBackToRequiredCell()
+        public void LibraryKeepsakeUsesItsAuthoredMarkerInsteadOfARequiredCodePosition()
         {
-            BeginMap("C04.Recess");
+            BeginMap("B04.Ground");
             world.RegisterPuzzleTargets(new[]
             {
-                new PuzzleTargetDefinition { objectIds = new[] { "keepsake.katrina.hidden" }, requiredRevealed = true }
+                new PuzzleTargetDefinition { objectIds = new[] { "katrina.item.library" }, requiredRevealed = true }
             });
-            Register("keepsake.katrina.hidden", new Vector2Int(15, 9), true);
+            Register("katrina.item.library", new Vector2Int(7, 24), true);
             stateEnd();
             runtime.StartQuest("katrina_something_borrowed");
 
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return the revealed keepsake to cell (12, 9)"));
+            Assert.That(ReadField<string>("hint"), Does.Not.Contain("Return the revealed keepsake to cell"));
 
             QuestPuzzleDefinition databasePuzzle = LoadPuzzle("katrina_something_borrowed");
             QuestPuzzleTarget monitorTarget = databasePuzzle.targets[0];
             QuestPuzzleTarget merged = (QuestPuzzleTarget)InvokeStatic("MergeCurrentMapTarget", monitorTarget, world);
-            Assert.That(InvokeStatic("TargetComplete", merged, world), Is.False);
-            object[] args = { merged, ReadObject("keepsake.katrina.hidden"), false };
+            Assert.That(monitorTarget.requiredPositionX, Is.EqualTo(int.MinValue));
+            Assert.That(monitorTarget.requiredPositionY, Is.EqualTo(int.MinValue));
+            object[] args = { merged, ReadObject("katrina.item.library"), false };
             Vector2Int destination = (Vector2Int)InvokeStaticWithArgs("ResolveDestination", args);
-            Assert.That(destination, Is.EqualTo(new Vector2Int(12, 9)));
-            Assert.That(args[2], Is.True);
-            string direction = (string)InvokeStatic("DirectionBetweenCells", new Vector2Int(10, 9), destination, true);
-            Assert.That(direction, Does.Contain("2 tiles east"));
+            Assert.That(destination, Is.EqualTo(new Vector2Int(7, 24)));
+            Assert.That(args[2], Is.False);
 
             BeginMap("B02.Ground");
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Travel to C04.Recess"));
-            Assert.That(ReadField<string>("hint"), Does.Not.Contain("12, 9"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Travel to Library"));
+            Assert.That(ReadField<string>("hint"), Does.Not.Contain("7, 24"));
         }
 
         [Test]
         public void FoundKeepsakeHintPointsToKatrinaWhileReturnRemainsPending()
         {
-            BeginMap("C04.Recess");
+            BeginMap("B04.Ground");
             stateEnd();
             runtime.StartQuest("katrina_something_borrowed");
-            Assert.That(runtime.TriggerEvent("found_katrina_keepsake").Succeeded, Is.True);
+            Assert.That(runtime.TriggerEvent("found_katrina_library_item").Succeeded, Is.True);
+            Assert.That(runtime.TriggerEvent("found_katrina_garden_item").Succeeded, Is.True);
+            Assert.That(runtime.TriggerEvent("found_katrina_stream_item").Succeeded, Is.True);
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return them to Katrina on campus"));
             Assert.That(runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active));
             Assert.That(runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
 
             BeginMap("campus");
             stateEnd();
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return them to Katrina on campus"));
         }
 
         [Test]

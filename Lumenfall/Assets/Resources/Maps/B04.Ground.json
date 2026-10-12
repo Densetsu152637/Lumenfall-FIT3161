@@ -1,10 +1,10 @@
 {
   "width": 36,
-  "height": 24,
+  "height": 26,
   "regions": [
     {
       "id": "B04",
-      "name": "B04",
+      "name": "Library",
       "rect": {
         "x": 1,
         "y": 1,
@@ -169,7 +169,7 @@
     }
   ],
   "spawn": {
-    "x": 2,
+    "x": 8,
     "y": 2
   },
   "tileFile": "B04.Ground.txt",

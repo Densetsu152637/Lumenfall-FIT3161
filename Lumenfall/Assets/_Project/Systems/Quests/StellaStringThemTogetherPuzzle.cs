@@ -11,10 +11,9 @@ using Lumenfall.Spells;
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Runtime presentation and interaction for Stella's five-relic board. During First Light the relics are
-    /// switches toggled with the interact key. Once String Them Together starts they become Weave conductors:
-    /// they go dark and light only while woven cables carry power to them from Stella's Ampere relic, through a
-    /// ring of relay pylons that bridges the four-tile cable limit.
+    /// Runtime presentation and interaction for Stella's five-relic board. The authored B02 prefab transforms
+    /// are authoritative: Ampere changes the five large relics through resonance, then Weave carries their power
+    /// through the small relay stones to the magical gyroscope.
     /// </summary>
     public sealed class StellaStringThemTogetherPuzzle : MonoBehaviour
     {
@@ -25,22 +24,11 @@ namespace Lumenfall.Quests
         private const string RelayPrefix = "stella.circuit.relay.";
         private const string SourceId = "relic.stella.power";
         private const string WorkbenchLinkId = "circuit.stella.link";
-        private static readonly Vector2Int[] Cells =
-        {
-            // Five widely separated vertices of a pentagon around the B02 hall.
-            new Vector2Int(19, 19), new Vector2Int(26, 14), new Vector2Int(23, 6),
-            new Vector2Int(15, 6), new Vector2Int(12, 14)
-        };
+        private const int RelicCount = 5;
 
         // Each switch toggles itself and the other indexed relics in its mask.
         // Switches 1, 2, 3, 4 (one-based) leave all five powered from an all-off board.
-        // Relays sit between neighbouring relics so every hop of the ring is under four tiles. The workbench link
-        // carries power from Stella's relic to relic 4; from there the player chooses how to wire the ring.
-        private static readonly Vector2Int[] RelayCells =
-        {
-            new Vector2Int(18, 7), new Vector2Int(21, 7), new Vector2Int(25, 9), new Vector2Int(26, 12), new Vector2Int(24, 17),
-            new Vector2Int(21, 19), new Vector2Int(16, 18), new Vector2Int(13, 16), new Vector2Int(12, 11), new Vector2Int(12, 8)
-        };
+        private const int RelayCount = 10;
         private static readonly int[] ToggleMasks = { 0b11101, 0b11010, 0b10100, 0b01100, 0b10010 };
         private static readonly Color OffColor = new Color(0.23f, 0.27f, 0.38f);
         private static readonly Color OnColor = new Color(0.25f, 0.92f, 0.75f);
@@ -53,6 +41,15 @@ namespace Lumenfall.Quests
         private GridWorld grid;
         private WorldStateService state;
         private Camera viewCamera;
+        private GameObject magicItem;
+        private bool magicItemRunning;
+        private bool magicItemStateApplied;
+        private Vector3[] relicPositions;
+        private Quaternion[] relicRotations;
+        private Vector3[] relayPositions;
+        private Quaternion[] relayRotations;
+        private Vector3 magicItemPosition;
+        private Quaternion magicItemRotation;
 
         /// <summary>Called by the area loader before EndMapRebuild so saved relic state is applied.</summary>
         public static void RegisterForMap(string mapId, GridWorld world)
@@ -83,12 +80,12 @@ namespace Lumenfall.Quests
                 !string.Equals(worldState.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return false;
 
             int board = 0;
-            for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
             {
                 if (!worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic)) return false;
                 if (relic.powered) board |= 1 << i;
             }
-            if (board == (1 << Cells.Length) - 1)
+            if (board == (1 << RelicCount) - 1)
             {
                 instruction = "All five relics are lit. Return to Stella.";
                 return true;
@@ -96,7 +93,7 @@ namespace Lumenfall.Quests
 
             int nextSwitch = FindNextSwitch(board);
             if (nextSwitch < 0 || !worldState.TryGetObject(ObjectId(nextSwitch), out WorldObjectSnapshot target)) return false;
-            instruction = $"Next: activate relic {nextSwitch + 1}. Press F when nearby.";
+            instruction = $"Next: cast Ampere on relic {nextSwitch + 1}.";
             targetCell = target.cell;
             return true;
         }
@@ -108,15 +105,8 @@ namespace Lumenfall.Quests
             targetCell = default;
             WorldStateService worldState = WorldStateService.Instance;
             if (worldState == null || !worldState.IsReady ||
-                !string.Equals(worldState.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase) ||
-                !worldState.TryGetObject(SourceId, out WorldObjectSnapshot source)) return false;
-            if (CountLitRelics(worldState) == Cells.Length) { instruction = "All five relics are lit. The circuit holds."; return true; }
-            if (!source.powered)
-            {
-                instruction = "Power Stella's relic at the workbench with Ampere.";
-                targetCell = source.cell;
-                return true;
-            }
+                !string.Equals(worldState.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return false;
+            if (CircuitNetworkComplete(worldState)) { instruction = "The whole circuit is live. Stella's magical item is moving again."; return true; }
 
             // Breadth-first search over every pair close enough to tie, starting from everything already lit.
             List<WorldObjectSnapshot> nodes = new List<WorldObjectSnapshot>();
@@ -127,7 +117,7 @@ namespace Lumenfall.Quests
             while (pending.Count > 0)
             {
                 WorldObjectSnapshot current = pending.Dequeue();
-                if (!current.powered && current.id.StartsWith(IdPrefix, StringComparison.Ordinal))
+                if (!current.powered)
                 {
                     // Walk back to the first dark node after the lit network: that is the next cable to tie.
                     string step = current.id;
@@ -147,16 +137,15 @@ namespace Lumenfall.Quests
 
         private static IEnumerable<string> CircuitNodeIds()
         {
-            yield return SourceId;
             yield return WorkbenchLinkId;
-            for (int i = 0; i < RelayCells.Length; i++) yield return RelayId(i);
-            for (int i = 0; i < Cells.Length; i++) yield return ObjectId(i);
+            for (int i = 0; i < RelayCount; i++) yield return RelayId(i);
+            for (int i = 0; i < RelicCount; i++) yield return ObjectId(i);
         }
 
         private static string NodeName(string id)
         {
             if (id == SourceId) return "Stella's power relic";
-            if (id == WorkbenchLinkId) return "the workbench link";
+            if (id == WorkbenchLinkId) return "the magical item";
             if (id != null && id.StartsWith(IdPrefix, StringComparison.Ordinal)) return "relic " + id.Substring(IdPrefix.Length);
             return "the next relay";
         }
@@ -164,8 +153,37 @@ namespace Lumenfall.Quests
         private static int CountLitRelics(WorldStateService worldState)
         {
             int lit = 0;
-            for (int i = 0; i < Cells.Length; i++) if (worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered) lit++;
+            for (int i = 0; i < RelicCount; i++) if (worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered) lit++;
             return lit;
+        }
+
+        private static bool CircuitNetworkComplete(WorldStateService worldState)
+        {
+            if (worldState == null || !worldState.TryGetObject(WorkbenchLinkId, out WorldObjectSnapshot item) || !item.powered) return false;
+            for (int i = 0; i < RelicCount; i++)
+                if (!worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) || !relic.powered) return false;
+            for (int i = 0; i < RelayCount; i++)
+                if (!worldState.TryGetObject(RelayId(i), out WorldObjectSnapshot relay) || !relay.powered) return false;
+            List<string> required = new List<string> { WorkbenchLinkId };
+            for (int i = 0; i < RelicCount; i++) required.Add(ObjectId(i));
+            for (int i = 0; i < RelayCount; i++) required.Add(RelayId(i));
+            HashSet<string> requiredSet = new HashSet<string>(required, StringComparer.Ordinal);
+            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal) { required[0] };
+            Queue<string> pending = new Queue<string>();
+            pending.Enqueue(required[0]);
+            string[] connections = worldState.SnapshotConnections();
+            while (pending.Count > 0)
+            {
+                string current = pending.Dequeue();
+                foreach (string connection in connections)
+                {
+                    string[] endpoints = connection.Split('|');
+                    if (endpoints.Length != 2) continue;
+                    string other = endpoints[0] == current ? endpoints[1] : endpoints[1] == current ? endpoints[0] : null;
+                    if (other != null && requiredSet.Contains(other) && reached.Add(other)) pending.Enqueue(other);
+                }
+            }
+            return reached.Count == required.Count;
         }
 
         private static bool CircuitMode()
@@ -175,19 +193,19 @@ namespace Lumenfall.Quests
         }
 
         private static string[] RelicTags(int index, bool circuit) => circuit
-            ? new[] { "stella-sequence", "switch:" + (index + 1), "weave", "circuit", WorldStateService.ConductorTag }
-            : new[] { "stella-sequence", "switch:" + (index + 1) };
+            ? new[] { "stella-sequence", "switch:" + (index + 1), "ampere", "weave", "circuit" }
+            : new[] { "stella-sequence", "switch:" + (index + 1), "ampere" };
 
         private static readonly string[] RelayTags = { "stella-relay", "weave", "circuit", WorldStateService.ConductorTag };
 
         private static int FindNextSwitch(int board)
         {
-            int[] firstSwitch = new int[1 << Cells.Length];
+            int[] firstSwitch = new int[1 << RelicCount];
             for (int i = 0; i < firstSwitch.Length; i++) firstSwitch[i] = -1;
             firstSwitch[board] = -2;
             Queue<int> pending = new Queue<int>();
             pending.Enqueue(board);
-            int goal = (1 << Cells.Length) - 1;
+            int goal = (1 << RelicCount) - 1;
             while (pending.Count > 0)
             {
                 int current = pending.Dequeue();
@@ -220,26 +238,44 @@ namespace Lumenfall.Quests
             if (state == null) return;
             grid = world;
             viewCamera = Camera.main;
+            magicItem = FindInactiveObject("magical_gyroscope");
+            if (magicItem != null)
+            {
+                if (state.TryGetSceneObject(WorkbenchLinkId, out GameObject placeholder) && placeholder != magicItem)
+                    placeholder.SetActive(false);
+                magicItemPosition = magicItem.transform.position;
+                magicItemRotation = magicItem.transform.rotation;
+                state.RegisterObject(WorkbenchLinkId, magicItem, grid.WorldToCell(magicItem.transform.position), Vector2Int.one, true, RelayTags);
+                magicItemStateApplied = false;
+            }
             if (ViewsMissing()) CreateViews();
+            relicPositions = new Vector3[RelicCount];
+            relicRotations = new Quaternion[RelicCount];
+            relayPositions = new Vector3[RelayCount];
+            relayRotations = new Quaternion[RelayCount];
             bool circuit = CircuitMode();
-            for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
             {
                 string id = ObjectId(i);
-                relicViews[i].transform.position = grid.CellToWorld(Cells[i], 0.08f);
-                state.RegisterObject(id, relicViews[i], Cells[i], Vector2Int.one, circuit, RelicTags(i, circuit));
+                relicPositions[i] = relicViews[i].transform.position;
+                relicRotations[i] = relicViews[i].transform.rotation;
+                state.RegisterObject(id, relicViews[i], grid.WorldToCell(relicPositions[i]), Vector2Int.one, true, RelicTags(i, circuit));
             }
-            for (int i = 0; i < RelayCells.Length; i++)
+            for (int i = 0; i < RelayCount; i++)
             {
-                relayViews[i].transform.position = grid.CellToWorld(RelayCells[i], 0.08f);
-                state.RegisterObject(RelayId(i), relayViews[i], RelayCells[i], Vector2Int.one, circuit, RelayTags);
+                relayPositions[i] = relayViews[i].transform.position;
+                relayRotations[i] = relayViews[i].transform.rotation;
+                state.RegisterObject(RelayId(i), relayViews[i], grid.WorldToCell(relayPositions[i]), Vector2Int.one, circuit, RelayTags);
             }
-            if (relayRoot != null) relayRoot.gameObject.SetActive(circuit);
+            if (relayRoot != null) relayRoot.gameObject.SetActive(true);
+            for (int i = 0; i < relayViews.Length; i++)
+                if (relayViews[i] != null) relayViews[i].SetActive(true);
             RefreshViews();
         }
 
         private bool ViewsMissing()
         {
-            if (relicViews == null || relicViews.Length != Cells.Length || relayViews == null || relayViews.Length != RelayCells.Length)
+            if (relicViews == null || relicViews.Length != RelicCount || relayViews == null || relayViews.Length != RelayCount)
                 return true;
             for (int i = 0; i < relicViews.Length; i++) if (relicViews[i] == null) return true;
             for (int i = 0; i < relayViews.Length; i++) if (relayViews[i] == null) return true;
@@ -248,13 +284,13 @@ namespace Lumenfall.Quests
 
         private void CreateViews()
         {
-            relicViews = new GameObject[Cells.Length];
+            relicViews = new GameObject[RelicCount];
             Transform previousRoot = transform.Find("Relics");
             if (previousRoot != null) Destroy(previousRoot.gameObject);
             GameObject root = new GameObject("Relics");
             root.transform.SetParent(transform, false);
             presentationRoot = root.transform;
-            for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
             {
                 GameObject authored = GameObject.Find(ObjectId(i));
                 if (authored != null)
@@ -277,8 +313,8 @@ namespace Lumenfall.Quests
             GameObject relays = new GameObject("Relays");
             relays.transform.SetParent(root.transform, false);
             relayRoot = relays.transform;
-            relayViews = new GameObject[RelayCells.Length];
-            for (int i = 0; i < RelayCells.Length; i++)
+            relayViews = new GameObject[RelayCount];
+            for (int i = 0; i < RelayCount; i++)
             {
                 GameObject authored = FindInactiveObject(RelayId(i));
                 if (authored != null)
@@ -336,63 +372,57 @@ namespace Lumenfall.Quests
             if (relicViews == null) return;
             SyncCircuitMode();
             RefreshViews();
+            RefreshMagicItem();
             TryCompleteIfSolved();
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !KeyBindings.WasPressed(GameAction.Interact)) return;
-            TryActivateNearest();
         }
 
         /// The quest can start while the player is in the room, so convert the board as soon as it does.
         private void SyncCircuitMode()
         {
             bool circuit = CircuitMode();
-            if (relayRoot != null && relayRoot.gameObject.activeSelf != circuit) relayRoot.gameObject.SetActive(circuit);
+            // Relay stones are part of the authored room and stay visible before the Weave stage.
+            // Circuit mode only changes whether they can be targeted and powered.
+            if (relayRoot != null && !relayRoot.gameObject.activeSelf) relayRoot.gameObject.SetActive(true);
             if (relayViews != null)
                 for (int i = 0; i < relayViews.Length; i++)
-                    if (relayViews[i] != null && relayViews[i].activeSelf != circuit) relayViews[i].SetActive(circuit);
-            for (int i = 0; i < Cells.Length; i++)
+                    if (relayViews[i] != null && !relayViews[i].activeSelf) relayViews[i].SetActive(true);
+            for (int i = 0; i < RelicCount; i++)
             {
                 int index = i;
                 if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) &&
-                    (relic.spellCompatible != circuit || WorldStateService.IsConductor(relic) != circuit))
-                    state.SetProperty(ObjectId(i), item => { item.spellCompatible = circuit; item.tags = RelicTags(index, circuit); });
+                    (!relic.spellCompatible || WorldStateService.IsConductor(relic) ||
+                     Array.IndexOf(relic.tags ?? Array.Empty<string>(), circuit ? "weave" : "ampere") < 0))
+                    state.SetProperty(ObjectId(i), item => { item.spellCompatible = true; item.tags = RelicTags(index, circuit); });
             }
-            for (int i = 0; i < RelayCells.Length; i++)
+            for (int i = 0; i < RelayCount; i++)
                 if (state.TryGetObject(RelayId(i), out WorldObjectSnapshot relay) && relay.spellCompatible != circuit)
                     state.SetProperty(RelayId(i), item => item.spellCompatible = circuit);
         }
 
-        private void TryActivateNearest()
+        public static bool TryApplyAmpereResonance(string targetId)
         {
-            GridMover player = FindAnyObjectByType<GridMover>();
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (player == null || runtime == null || runtime.GetQuestStatus(QuestId) == QuestStatus.Completed) return;
-            int nearest = -1;
-            int bestDistance = 3;
-            for (int i = 0; i < Cells.Length; i++)
+            WorldStateService world = WorldStateService.Instance;
+            if (runtime == null || world == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active ||
+                string.IsNullOrEmpty(targetId) || !targetId.StartsWith(IdPrefix, StringComparison.Ordinal) ||
+                !int.TryParse(targetId.Substring(IdPrefix.Length), out int number) || number < 1 || number > RelicCount) return false;
+            int mask = ToggleMasks[number - 1];
+            for (int i = 0; i < RelicCount; i++)
             {
-                int distance = Mathf.Abs(player.CurrentCell.x - Cells[i].x) + Mathf.Abs(player.CurrentCell.y - Cells[i].y);
-                if (distance <= bestDistance) { bestDistance = distance; nearest = i; }
-            }
-            if (nearest < 0 || !state.TryGetObject(ObjectId(nearest), out _)) return;
-
-            int mask = ToggleMasks[nearest];
-            for (int i = 0; i < Cells.Length; i++)
-            {
-                if ((mask & (1 << i)) == 0 || !state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot)) continue;
+                if ((mask & (1 << i)) == 0 || !world.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot)) continue;
                 bool next = !snapshot.powered;
-                state.SetProperty(ObjectId(i), item => item.powered = next);
-                state.QueueEffect("stella-relic:" + (i + 1) + ":" + (next ? "on" : "off"));
+                world.SetProperty(ObjectId(i), item => item.powered = next);
+                world.QueueEffect("stella-relic:" + (i + 1) + ":" + (next ? "on" : "off"));
             }
-            RefreshViews();
-            TryCompleteIfSolved();
+            instance?.RestoreAuthoredTransforms();
+            return true;
         }
 
         private void TryCompleteIfSolved()
         {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             if (runtime == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active) return;
-            for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
                 if (!state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) || !snapshot.powered) return;
             runtime.TriggerEvent("complete_stella_first_light");
         }
@@ -400,23 +430,64 @@ namespace Lumenfall.Quests
         private void RefreshViews()
         {
             if (state == null || relicViews == null) return;
+            RestoreAuthoredTransforms();
             for (int i = 0; i < relicViews.Length; i++)
             {
                 if (relicViews[i] == null || !state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot)) continue;
-                SetColor(relicViews[i], snapshot.powered ? OnColor : OffColor);
+                if (!SetPoweredVisual(relicViews[i], snapshot.powered))
+                    SetColor(relicViews[i], snapshot.powered ? OnColor : OffColor);
                 if (viewCamera == null) viewCamera = Camera.main;
                 Transform label = relicViews[i].transform.Find("Number");
                 if (label != null && viewCamera != null) label.rotation = viewCamera.transform.rotation;
             }
             for (int i = 0; relayViews != null && i < relayViews.Length; i++)
                 if (relayViews[i] != null && state.TryGetObject(RelayId(i), out WorldObjectSnapshot relay))
-                    SetColor(relayViews[i], relay.powered ? OnColor : OffColor * 0.8f);
+                    if (!SetPoweredVisual(relayViews[i], relay.powered))
+                        SetColor(relayViews[i], relay.powered ? OnColor : OffColor * 0.8f);
         }
 
         private void SetPresentationVisible(bool visible)
         {
             if (presentationRoot != null && presentationRoot.gameObject.activeSelf != visible)
                 presentationRoot.gameObject.SetActive(visible);
+        }
+
+        private void RefreshMagicItem()
+        {
+            if (magicItem == null) magicItem = FindInactiveObject("magical_gyroscope");
+            if (magicItem == null) return;
+            magicItem.transform.SetPositionAndRotation(magicItemPosition, magicItemRotation);
+            bool completed = GameEventManager.Instance?.Runtime?.GetQuestStatus(CircuitQuestId) == QuestStatus.Completed;
+            bool shouldRun = completed || (CircuitMode() && CircuitNetworkComplete(state));
+            if (magicItemStateApplied && magicItemRunning == shouldRun) return;
+            magicItemStateApplied = true;
+            magicItemRunning = shouldRun;
+            foreach (Animation animation in magicItem.GetComponentsInChildren<Animation>(true))
+            {
+                animation.enabled = true;
+                if (shouldRun)
+                {
+                    bool played = animation.Play();
+                    if (!played)
+                        foreach (AnimationState clip in animation) { animation.Play(clip.name); break; }
+                }
+                else { animation.Stop(); animation.Rewind(); animation.Sample(); }
+            }
+            foreach (Animator animator in magicItem.GetComponentsInChildren<Animator>(true))
+            {
+                animator.speed = shouldRun ? 1f : 0f;
+                if (!shouldRun && animator.runtimeAnimatorController != null) { animator.Play(0, 0, 0f); animator.Update(0f); }
+            }
+        }
+
+        private void RestoreAuthoredTransforms()
+        {
+            if (relicPositions != null)
+                for (int i = 0; i < relicViews.Length && i < relicPositions.Length; i++)
+                    if (relicViews[i] != null) relicViews[i].transform.SetPositionAndRotation(relicPositions[i], relicRotations[i]);
+            if (relayPositions != null)
+                for (int i = 0; i < relayViews.Length && i < relayPositions.Length; i++)
+                    if (relayViews[i] != null) relayViews[i].transform.SetPositionAndRotation(relayPositions[i], relayRotations[i]);
         }
 
         private void OnGUI()
@@ -426,7 +497,7 @@ namespace Lumenfall.Quests
             QuestStatus circuitStatus = progress == null ? QuestStatus.NotStarted : progress.GetQuestStatus(CircuitQuestId);
             if (circuitStatus == QuestStatus.Completed) return;
             if (circuitStatus == QuestStatus.Active) { DrawCircuitPanel(); return; }
-            bool[] powered = new bool[Cells.Length];
+            bool[] powered = new bool[RelicCount];
             int count = 0;
             for (int i = 0; i < powered.Length; i++)
                 if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) && (powered[i] = snapshot.powered)) count++;
@@ -434,18 +505,19 @@ namespace Lumenfall.Quests
             GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — First Light");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
-            string instruction = complete ? "Circuit restored. Return to Stella." : "Stand near a relic and press " + KeyBindings.GetKeyLabel(GameAction.Interact) + ". Light all five.";
+            string instruction = complete ? "All five relics are glowing. Return to Stella." : "Cast Ampere on the large relics until all five glow together.";
             GridMover player = FindAnyObjectByType<GridMover>();
             if (!complete && player != null)
             {
                 int nearest = -1;
                 int best = 3;
-                for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
                 {
-                    int distance = Mathf.Abs(player.CurrentCell.x - Cells[i].x) + Mathf.Abs(player.CurrentCell.y - Cells[i].y);
+                    if (!state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic)) continue;
+                    int distance = Mathf.Abs(player.CurrentCell.x - relic.cell.x) + Mathf.Abs(player.CurrentCell.y - relic.cell.y);
                     if (distance <= best) { best = distance; nearest = i; }
                 }
-                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Press " + KeyBindings.GetKeyLabel(GameAction.Interact) + " to activate";
+                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Select Ampere and cast to trigger its resonance";
             }
             if (showGuidance) GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             string status = "Power: ";
@@ -460,21 +532,30 @@ namespace Lumenfall.Quests
             if (showGuidance)
             {
                 SpellCaster caster = FindAnyObjectByType<SpellCaster>();
-                string instruction = state.TryGetObject(SourceId, out WorldObjectSnapshot source) && !source.powered
-                    ? "Power Stella's relic at the workbench with Ampere."
-                    : caster != null && caster.HeldThread != null
+                string instruction = caster != null && caster.HeldThread != null
                         ? "Holding a thread from " + NodeName(caster.HeldThread) + ". Weave the next relic."
-                        : "Cast Weave on a lit relic, then on the next one within four tiles.";
+                        : "Cast Weave on a glowing relic, then link nearby relays until the magical item is powered.";
                 GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             }
             string status = "Lit: ";
-            for (int i = 0; i < Cells.Length; i++)
+            for (int i = 0; i < RelicCount; i++)
                 status += (i == 0 ? "" : "   ") + (i + 1) + (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered ? " ●" : " ○");
             GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + CountLitRelics(state) + "/5");
         }
 
         private static string ObjectId(int index) => IdPrefix + (index + 1);
         private static string RelayId(int index) => RelayPrefix + (index + 1);
+        private static bool SetPoweredVisual(GameObject target, bool powered)
+        {
+            if (target == null) return false;
+            Transform stone = target.transform.Find("PF_Runestone_Stone") ?? target.transform.Find("PF_RunestoneSmall_Stone");
+            Transform glowing = target.transform.Find("PF_Runestone_Glowing") ?? target.transform.Find("PF_RunestoneSmall_Glowing");
+            if (stone == null || glowing == null) return false;
+            if (stone.gameObject.activeSelf == powered) stone.gameObject.SetActive(!powered);
+            if (glowing.gameObject.activeSelf != powered) glowing.gameObject.SetActive(powered);
+            return true;
+        }
+
         private static void SetColor(GameObject target, Color color)
         {
             Renderer renderer = target.GetComponent<Renderer>();

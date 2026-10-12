@@ -12,4 +12,5 @@ MonoBehaviour:
   id: P.C01
   area: {fileID: 11400000, guid: 53c679ec98be46b47bb4677a059d5bf3, type: 2}
   disabled: 0
+  blocked: 1
   destination: {fileID: 11400000, guid: 10000000000000000000000000000006, type: 2}

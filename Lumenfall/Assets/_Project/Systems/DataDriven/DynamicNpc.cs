@@ -45,6 +45,7 @@ namespace Lumenfall.DataDriven
         {
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
                 DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
+                GridPortal.IsPlayerAtInteractivePortal ||
                 !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
                 GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
 
@@ -63,7 +64,7 @@ namespace Lumenfall.DataDriven
         private void OnGUI()
         {
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+                GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;

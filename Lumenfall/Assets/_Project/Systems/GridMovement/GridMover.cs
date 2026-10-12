@@ -257,17 +257,10 @@ namespace Lumenfall.GridMovement
             isMoving = false;
             moveRoutine = null;
 
-            // Resolve portals before MoveCompleted: held input chains the next step from that event,
-            // and a mover that is already moving again is refused by GridPortal.TryEnter.
             GridPortal portal = world.GetPortalAt(currentCell);
             if (portal == null)
             {
                 suppressedPortal = null;
-            }
-            else if (portal != suppressedPortal && portal.TryEnter(this))
-            {
-                // The portal raised Teleported; the step's destination is no longer where the mover is.
-                yield break;
             }
 
             MoveCompleted?.Invoke(this, currentCell);

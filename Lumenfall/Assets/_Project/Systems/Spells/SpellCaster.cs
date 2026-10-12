@@ -11,7 +11,7 @@ using Lumenfall.Quests;
 namespace Lumenfall.Spells
 {
     /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default) or middle mouse opens the spell wheel,
-    /// the wheel selects a spell, and right mouse (or the interact key at a mechanism) casts at the nearest compatible object.
+    /// the wheel selects a spell, and right mouse or the interact key casts at the nearest compatible object.
     [DisallowMultipleComponent]
     public sealed class SpellCaster : MonoBehaviour
     {
@@ -21,6 +21,11 @@ namespace Lumenfall.Spells
         [SerializeField, Min(1)] private int lostEchoesRadius = 4;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
+        [Header("Cast Animation")]
+        [Tooltip("Optional. When empty, the first Animator below the player is used.")]
+        [SerializeField] private Animator castAnimator;
+        [Tooltip("Trigger parameter sent whenever the player attempts to cast an unlocked spell.")]
+        [SerializeField] private string castTrigger = "Cast";
         private Vector2Int lastDirection = Vector2Int.up;
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
@@ -36,6 +41,7 @@ namespace Lumenfall.Spells
         /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
+        private string previousThreadNode;
         private float feedbackUntil;
         private float nextScrollAt;
         private const float ScrollCooldown = 0.06f;
@@ -92,7 +98,7 @@ namespace Lumenfall.Spells
             SubscribeProgression();
             // A held thread belongs to Weave on the current map; switching spells or maps drops it.
             if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
-                HeldThread = null;
+                ClearHeldThread();
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
                 CloseSpellWheel();
@@ -117,20 +123,13 @@ namespace Lumenfall.Spells
                 }
             }
 
-            if (mouse != null && mouse.rightButton.wasPressedThisFrame)
+            bool castPressed = (mouse != null && mouse.rightButton.wasPressedThisFrame) ||
+                               KeyBindings.WasPressed(GameAction.Interact);
+            if (castPressed)
             {
-                // Lost Echoes searches the area around the player, so it needs no target.
-                if (selectedSpell == SpellId.LostEchoes) CastLostEchoes();
-                else
-                {
-                    string target = FindNearestTarget();
-                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
-                }
+                CastSelectedFromInput();
                 CloseSpellWheel();
             }
-
-            // The interact key also casts Lost Echoes; picking up what it reveals is on the talk key (WorldPickupInteraction).
-            if (selectedSpell == SpellId.LostEchoes && KeyBindings.WasPressed(GameAction.Interact)) CastLostEchoes();
 
             if (keyboard == null) return;
             Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
@@ -190,9 +189,64 @@ namespace Lumenfall.Spells
             wheelMovementLockOwned = true;
             GetComponent<GridMover>()?.SetMovementLocked(true);
         }
-        /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
+        private bool CastSelectedFromInput()
+        {
+            if (!IsSpellUnlocked(selectedSpell)) return false;
+            TriggerCastAnimation();
+            // Lost Echoes searches the area around the player, so it needs no target.
+            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes();
+            string target = FindNearestTarget();
+            if (!string.IsNullOrEmpty(target)) return Cast(selectedSpell, target, DirectionFromPlayer());
+            return selectedSpell == SpellId.Weave && CancelHeldThread();
+        }
+
+        /// Casts the selected spell at a specific object and plays the same animation as player input.
         public bool CastSelectedAt(string targetId)
-        { CloseSpellWheel(); return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+        {
+            CloseSpellWheel();
+            if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
+            TriggerCastAnimation();
+            return Cast(selectedSpell, targetId, DirectionFromPlayer());
+        }
+
+        /// <summary>Lets other player-control scripts request the configured cast animation.</summary>
+        public void TriggerCastAnimation()
+        {
+            if (castAnimator == null) castAnimator = GetComponentInChildren<Animator>(true);
+            if (castAnimator == null || string.IsNullOrWhiteSpace(castTrigger)) return;
+            int triggerHash = Animator.StringToHash(castTrigger);
+            foreach (AnimatorControllerParameter parameter in castAnimator.parameters)
+            {
+                if (parameter.nameHash != triggerHash || parameter.type != AnimatorControllerParameterType.Trigger) continue;
+                castAnimator.ResetTrigger(triggerHash);
+                castAnimator.SetTrigger(triggerHash);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Releases the active Weave thread. If it was advanced by the previous cast, the newest cable is removed too.
+        /// A later cast on any circuit node starts a fresh thread from that node.
+        /// </summary>
+        public bool CancelHeldThread()
+        {
+            if (HeldThread == null) return false;
+            WorldStateService state = WorldStateService.Instance;
+            bool removed = state != null && !string.IsNullOrEmpty(previousThreadNode) &&
+                           state.IsConnected(previousThreadNode, HeldThread) &&
+                           state.RemoveConnection(previousThreadNode, HeldThread);
+            ClearHeldThread();
+            ShowFeedback(removed
+                ? "Newest cable disconnected. Cast Weave on a relic to start again from it."
+                : "Thread released. Cast Weave on a relic to start again from it.");
+            return removed;
+        }
+
+        private void ClearHeldThread()
+        {
+            HeldThread = null;
+            previousThreadNode = null;
+        }
         private void CloseSpellWheel(SpellId? picked = null)
         {
             if (!spellWheelOpen) return;
@@ -224,7 +278,7 @@ namespace Lumenfall.Spells
             }
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
-            string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click: cast   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
+            string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click or " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": cast";
             SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon, hint);
             if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(picked); }
         }
@@ -267,6 +321,12 @@ namespace Lumenfall.Spells
             {
                 case SpellId.Ampere:
                     if (WorldStateService.IsConductor(target)) { ShowFeedback("This relic holds no charge of its own. Weave it to a powered relic."); break; }
+                    if (StellaStringThemTogetherPuzzle.TryApplyAmpereResonance(targetId))
+                    {
+                        changed = true;
+                        ShowFeedback("The relic resonates with the others.");
+                        break;
+                    }
                     bool nextPower = !target.powered;
                     changed = state.SetProperty(targetId, x => x.powered = nextPower);
                     if (changed) state.QueueEffect("lightning:" + targetId + ":" + (nextPower ? "on" : "off"));
@@ -300,14 +360,15 @@ namespace Lumenfall.Spells
             if (HeldThread == null || !state.TryGetObject(HeldThread, out _))
             {
                 HeldThread = targetId;
+                previousThreadNode = null;
                 ShowFeedback("Thread held. Cast Weave on another relic within four tiles to tie it.");
                 return false;
             }
             string from = HeldThread;
-            if (from == targetId) { HeldThread = null; ShowFeedback("Thread released."); return false; }
+            if (from == targetId) { ClearHeldThread(); ShowFeedback("Thread released."); return false; }
             if (state.IsConnected(from, targetId))
             {
-                HeldThread = null;
+                ClearHeldThread();
                 ShowFeedback("Cable cut. Cast Weave on a relic to hold a new thread.");
                 return state.RemoveConnection(from, targetId);
             }
@@ -317,6 +378,7 @@ namespace Lumenfall.Spells
                 return false;
             }
             HeldThread = targetId;
+            previousThreadNode = from;
             bool lit = state.TryGetObject(targetId, out WorldObjectSnapshot tied) && tied.powered;
             ShowFeedback(lit ? "Cable tied and carrying power. Keep weaving from here." : "Cable tied. It lights once the chain reaches a powered relic.");
             return true;

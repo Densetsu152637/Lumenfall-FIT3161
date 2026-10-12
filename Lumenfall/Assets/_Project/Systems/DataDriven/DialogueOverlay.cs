@@ -124,15 +124,11 @@ namespace Lumenfall.DataDriven
                     break;
                 }
             }
-            else if (complete && QuestHintOverlay.IsSettingsOpen)
+            else if (complete)
             {
-                GUILayout.Label(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle);
+                GUILayout.Label(QuestHintOverlay.IsSettingsOpen ? "Close Settings to continue" : "Press E to continue", hintStyle);
             }
-            else if (complete && GUILayout.Button(string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue", buttonStyle))
-            {
-                session.Continue();
-            }
-            else if (!complete) GUILayout.Label(QuestHintOverlay.IsSettingsOpen ? "Close Settings to continue" : "Press Space or E to reveal", hintStyle);
+            else GUILayout.Label(QuestHintOverlay.IsSettingsOpen ? "Close Settings to continue" : "Press Space or E to reveal", hintStyle);
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }

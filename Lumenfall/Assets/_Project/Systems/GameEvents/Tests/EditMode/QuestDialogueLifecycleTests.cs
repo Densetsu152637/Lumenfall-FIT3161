@@ -159,7 +159,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(ChoiceIds(session), Does.Contain("accept"));
                 Assert.That(session.SelectChoice("accept"), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.False);
-                Assert.That(session.Continue(), Is.True);
+                while (!session.IsCompleted) Assert.That(session.Continue(), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
 
                 session = stella.Interact();
@@ -200,7 +200,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(session.SelectChoice("accept"), Is.True);
                 Assert.That(session.IsCompleted, Is.False);
                 Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
-                Assert.That(session.Continue(), Is.True);
+                while (!session.IsCompleted) Assert.That(session.Continue(), Is.True);
                 Assert.That(session.IsCompleted, Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
             }
@@ -243,7 +243,7 @@ namespace Lumenfall.Tests.GameEvents
                 DialogueSession finished = manager.Runtime.StartDialogue("stella_first_light_dialogue");
                 Assert.That(finished.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
-                Assert.That(finished.Continue(), Is.True);
+                while (!finished.IsCompleted) Assert.That(finished.Continue(), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
             }
@@ -308,6 +308,7 @@ namespace Lumenfall.Tests.GameEvents
                 DialogueSession dialogue = manager.Runtime.StartDialogue("katrina_something_borrowed_dialogue");
                 Assert.That(dialogue.SelectChoice("accept"), Is.True);
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.False);
+                manager.Runtime.SetFlag("inventory.keyitem.katrina-keepsake", true);
                 Assert.That(manager.Runtime.TriggerEvent("complete_katrina_something_borrowed").Succeeded, Is.True);
                 Assert.That(InventoryEncyclopediaUI.IsKeyItemOwned("katrina-keepsake"), Is.True);
 

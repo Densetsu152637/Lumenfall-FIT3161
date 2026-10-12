@@ -70,7 +70,7 @@
     },
     {
       "id": "B01",
-      "name": "B01",
+      "name": "Training Centre",
       "rect": {
         "x": 56,
         "y": 60,
@@ -81,7 +81,7 @@
     },
     {
       "id": "B02",
-      "name": "B02",
+      "name": "Arcane Workshop",
       "rect": {
         "x": 12,
         "y": 56,
@@ -92,7 +92,7 @@
     },
     {
       "id": "B03",
-      "name": "B03",
+      "name": "Main Academy Building",
       "rect": {
         "x": 8,
         "y": 22,
@@ -103,7 +103,7 @@
     },
     {
       "id": "B04",
-      "name": "B04",
+      "name": "Library",
       "rect": {
         "x": 48,
         "y": 0,
@@ -264,13 +264,6 @@
         "mechanism.orio.rotate"
       ],
       "requiredRotation": 180
-    },
-    {
-      "id": "quest.katrina.something-borrowed",
-      "objectIds": [
-        "keepsake.katrina.hidden"
-      ],
-      "requiredRevealed": true
     }
   ],
   "portals": [

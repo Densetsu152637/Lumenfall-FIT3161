@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -74,21 +73,6 @@ namespace Lumenfall.Quests
 
         // Area switches and save restores reactivate the area, so the gear snaps to stored state instead of spinning.
         private void OnEnable() { hasDisplayedAngle = false; shownSolved = null; }
-
-        private void Update()
-        {
-            if (Time.timeScale <= 0f || InventoryUiState.IsOpen || Keyboard.current == null ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || !KeyBindings.WasPressed(GameAction.Interact)) return;
-            WorldStateService state = WorldStateService.Instance;
-            if (state == null || !state.IsReady || !state.TryGetObject(objectId, out WorldObjectSnapshot snapshot) || !PlayerInRange(snapshot) || IsAnimating(snapshot)) return;
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(objectId, PuzzleObjectId, StringComparison.Ordinal) &&
-                (runtime == null || runtime.GetQuestStatus(QuestId) == QuestStatus.NotStarted)) return;
-            // Acceptance alone never substitutes a hand turn for the completed Rotara lesson.
-            SpellCaster caster = player.GetComponent<SpellCaster>();
-            if (caster != null && caster.IsSpellUnlocked(SpellId.Rotara)) caster.CastSelectedAt(objectId);
-        }
 
         private void LateUpdate()
         {

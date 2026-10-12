@@ -79,6 +79,7 @@ namespace Lumenfall.Inventory
         private string inkText;
         private float inkedAt;
         private float sealedAt = float.NegativeInfinity;
+        private GUIStyle wrappedSaveStatusStyle;
 
         private enum FooterAction { None, MainMenu, Save, Quit }
 
@@ -268,7 +269,7 @@ namespace Lumenfall.Inventory
             x += 160f + Gap;
             if (skin.Button(new Rect(x, y, 130f, Height), "Quit game")) action = FooterAction.Quit;
             x += 130f + Gap;
-            DrawSaveStatus(new Rect(x + 8f, y, panel.xMax - 36f - x - 8f, Height));
+            DrawSaveStatus(new Rect(x + 8f, y - 2f, panel.xMax - 36f - x - 8f, Height + 4f));
             return action;
         }
 
@@ -281,10 +282,14 @@ namespace Lumenfall.Inventory
             return clicked;
         }
 
-        /// <summary>Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.</summary>
+        /// <summary>
+        /// Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.
+        /// On narrow screens the status uses the full remaining footer width and wraps onto a second line.
+        /// </summary>
         private void DrawSaveStatus(Rect area)
         {
             const float SealSize = 24f;
+            const float SealGap = 8f;
             string status = SaveStatus();
             if (status != inkText)
             {
@@ -294,14 +299,49 @@ namespace Lumenfall.Inventory
             GUIStyle style = skin.Status;
             float textWidth = style.CalcSize(new GUIContent(status)).x;
             bool stamped = !float.IsNegativeInfinity(sealedAt) && saveFeedback == null;
-            float x = Mathf.Max(area.x, area.xMax - textWidth - (stamped ? SealSize + 8f : 0f));
+            float sealWidth = stamped ? SealSize + SealGap : 0f;
+            float availableTextWidth = Mathf.Max(0f, area.width - sealWidth);
+            bool wrap = textWidth > availableTextWidth;
+            if (wrap)
+            {
+                wrappedSaveStatusStyle ??= new GUIStyle(style)
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    wordWrap = true,
+                    clipping = TextClipping.Clip
+                };
+                style = wrappedSaveStatusStyle;
+                status = FitToTwoLines(status, style, availableTextWidth);
+            }
+
+            float x = wrap ? area.x : Mathf.Max(area.x, area.xMax - textWidth - sealWidth);
             if (stamped)
             {
                 skin.DrawSeal(new Rect(x, area.center.y - SealSize * 0.5f, SealSize, SealSize), sealedAt);
-                x += SealSize + 8f;
+                x += sealWidth;
             }
             skin.InkLabel(new Rect(x, area.y, Mathf.Max(0f, area.xMax - x), area.height), status, style, inkedAt,
                 saveFeedback != null ? MenuArt.Ember : MenuArt.Muted);
+        }
+
+        private static string FitToTwoLines(string text, GUIStyle style, float width)
+        {
+            if (string.IsNullOrEmpty(text) || width <= 0f) return string.Empty;
+            GUIContent content = new GUIContent(text);
+            float twoLineHeight = style.CalcHeight(new GUIContent("Ag\nAg"), width);
+            if (style.CalcHeight(content, width) <= twoLineHeight + 0.5f) return text;
+
+            const string Ellipsis = "…";
+            int low = 0;
+            int high = text.Length;
+            while (low < high)
+            {
+                int length = (low + high + 1) / 2;
+                string candidate = text.Substring(0, length).TrimEnd() + Ellipsis;
+                if (style.CalcHeight(new GUIContent(candidate), width) <= twoLineHeight + 0.5f) low = length;
+                else high = length - 1;
+            }
+            return text.Substring(0, low).TrimEnd() + Ellipsis;
         }
 
         /// <summary>"Slot 1 saved 2 min ago", from the linked slot's file time. The file is checked at most once a second.</summary>

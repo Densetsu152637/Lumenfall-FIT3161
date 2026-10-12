@@ -130,7 +130,7 @@ changes what the card shows.
 
 | Field | Source |
 | --- | --- |
-| Location | The loaded map's name (`westForest` is `West Forest`, `B04.Ground` is `Sirius Dormitory`, and so on), refined by the smallest named map region containing the player. Code-like region names such as `S03` are ignored. |
+| Location | The loaded map's name (`westForest` is `West Forest`, `B04.Ground` is `Library`, and so on), refined by the smallest named map region containing the player. Code-like region names such as `S03` are ignored. |
 | Quest | `quest` holds the first active quest in `QuestHintOverlay.QuestOrder`, or `A new term begins`, `Between quests` or `Every quest complete`. `questsDone` and `questsTotal` hold the progress counts. Older summaries that stored the combined `title · n of m quests done` text are split when the Load page reads them. |
 | Playtime | Unscaled time while `Time.timeScale > 0` and the menu is hidden. It resets on New Game and is restored from the loaded slot's summary; loading a manual save carries that playtime into autosave. |
 | Thumbnail | A 320×180 render of `Camera.main` taken in `LateUpdate`. It uses a URP `StandardRequest` render request, falling back to `Camera.Render`. Autosaves refresh it at most every 10 seconds per slot. |

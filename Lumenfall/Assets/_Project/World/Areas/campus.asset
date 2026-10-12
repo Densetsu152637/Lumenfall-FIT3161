@@ -72,7 +72,7 @@ MonoBehaviour:
         height: 50
       walkable: 1
     - id: B01
-      name: B01
+      name: Training Centre
       rect:
         x: 56
         y: 60
@@ -80,7 +80,7 @@ MonoBehaviour:
         height: 20
       walkable: 1
     - id: B02
-      name: B02
+      name: Arcane Workshop
       rect:
         x: 12
         y: 56
@@ -88,7 +88,7 @@ MonoBehaviour:
         height: 26
       walkable: 1
     - id: B03
-      name: B03
+      name: Main Academy Building
       rect:
         x: 8
         y: 22
@@ -96,7 +96,7 @@ MonoBehaviour:
         height: 30
       walkable: 1
     - id: B04
-      name: B04
+      name: Library
       rect:
         x: 48
         y: 0

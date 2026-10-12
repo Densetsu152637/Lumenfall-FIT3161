@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Lumenfall.CameraEffects
 {
-    /// <summary>Camera-scoped circular reveal for vegetation and the tall blockers in the campus garden.</summary>
+    /// <summary>Camera-scoped circular reveal for vegetation and tall authored environment blockers.</summary>
     [RequireComponent(typeof(Camera))]
     public sealed class PlayerOcclusionReveal : MonoBehaviour
     {
@@ -19,7 +19,7 @@ namespace Lumenfall.CameraEffects
         [SerializeField, Range(0f, 1f)] private float centerOpacity = 0f;
         [Tooltip("Only vegetation this far in front of the focus plane is revealed.")]
         [SerializeField, Min(0f)] private float depthPadding = 0.15f;
-        private const float GardenScanInterval = 0.5f;
+        private const float OccluderScanInterval = 0.5f;
         private Camera view;
         private float nextGardenScanTime;
         private Shader gardenRevealShader;
@@ -44,29 +44,51 @@ namespace Lumenfall.CameraEffects
         private void LateUpdate()
         {
             if (Time.unscaledTime < nextGardenScanTime) return;
-            nextGardenScanTime = Time.unscaledTime + GardenScanInterval;
-            BindGardenOccluders();
+            nextGardenScanTime = Time.unscaledTime + OccluderScanInterval;
+            BindAuthoredOccluders();
         }
 
-        private void BindGardenOccluders()
+        private void BindAuthoredOccluders()
         {
             Transform[] transforms = FindObjectsByType<Transform>();
-            bool foundGarden = false;
+            bool foundOccluderRoot = false;
             foreach (Transform transform in transforms)
             {
-                if (transform == null || transform.name != "Garden Area") continue;
-                foundGarden = true;
-                foreach (Transform item in transform.GetComponentsInChildren<Transform>(true))
+                if (transform == null) continue;
+                if (transform.name == "Garden Area")
                 {
-                    if (item == transform) continue;
-                    if (!IsGardenOccluder(item.name)) continue;
-                    foreach (Renderer renderer in item.GetComponentsInChildren<Renderer>(true))
-                        BindGardenRenderer(renderer);
+                    foundOccluderRoot = true;
+                    foreach (Transform item in transform.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (item == transform || !IsGardenOccluder(item.name)) continue;
+                        BindRenderers(item);
+                    }
+                }
+                else if (IsLibraryOccluder(transform.name))
+                {
+                    foundOccluderRoot = true;
+                    BindLibraryOccluders(transform);
                 }
             }
 
-            if (!foundGarden) RestoreGardenMaterials();
+            if (!foundOccluderRoot) RestoreGardenMaterials();
             else RemoveDestroyedGardenRenderers();
+        }
+
+        private void BindRenderers(Transform root)
+        {
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+                BindGardenRenderer(renderer);
+        }
+
+        private void BindLibraryOccluders(Transform libraryRoot)
+        {
+            foreach (Transform item in libraryRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (!IsSelectedLibraryOccluder(item.name)) continue;
+                foreach (Renderer renderer in item.GetComponents<Renderer>())
+                    BindGardenRenderer(renderer);
+            }
         }
 
         private static bool IsGardenOccluder(string objectName)
@@ -74,6 +96,20 @@ namespace Lumenfall.CameraEffects
             return objectName.StartsWith("Pavilion", StringComparison.OrdinalIgnoreCase) ||
                 objectName.StartsWith("sakura+tree", StringComparison.OrdinalIgnoreCase) ||
                 objectName.StartsWith("Old+Tree", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsLibraryOccluder(string objectName)
+        {
+            return objectName.StartsWith("old_fantasy-style_library", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsSelectedLibraryOccluder(string objectName)
+        {
+            if (!objectName.StartsWith("Object_", StringComparison.Ordinal)) return false;
+            if (!int.TryParse(objectName.Substring("Object_".Length), out int objectNumber)) return false;
+            return objectNumber == 4 || objectNumber == 5 ||
+                (objectNumber >= 12 && objectNumber <= 26) ||
+                objectNumber == 33 || objectNumber == 39;
         }
 
         private void BindGardenRenderer(Renderer renderer)
@@ -108,6 +144,7 @@ namespace Lumenfall.CameraEffects
                     };
                     copy.CopyPropertiesFromMaterial(source);
                     CopyLegacyLitProperties(source, copy);
+                    CopyGltfLitProperties(source, copy);
                     gardenMaterialCopies.Add(source, copy);
                 }
 
@@ -128,13 +165,15 @@ namespace Lumenfall.CameraEffects
                 shaderName.IndexOf("Player Occlusion Lit", StringComparison.OrdinalIgnoreCase) >= 0)
                 return false;
             bool supportedLitShader = shaderName == "Universal Render Pipeline/Lit" ||
-                shaderName == "Universal Render Pipeline/Simple Lit" || shaderName == "Standard";
+                shaderName == "Universal Render Pipeline/Simple Lit" || shaderName == "Standard" ||
+                shaderName.IndexOf("glTF-pbrMetallicRoughness", StringComparison.OrdinalIgnoreCase) >= 0;
             if (!supportedLitShader)
             {
                 if (warnedUnsupportedShaders.Add(shaderName))
                     Debug.LogWarning($"Garden occlusion reveal does not support shader '{shaderName}'. The corresponding garden model will keep its original opaque material.");
                 return false;
             }
+            if (material.renderQueue >= (int)RenderQueue.Transparent) return false;
             return !material.HasProperty("_Surface") || material.GetFloat("_Surface") < 0.5f;
         }
 
@@ -150,6 +189,44 @@ namespace Lumenfall.CameraEffects
                 destination.SetColor("_BaseColor", source.GetColor("_Color"));
             if (source.HasProperty("_Glossiness") && destination.HasProperty("_Smoothness"))
                 destination.SetFloat("_Smoothness", source.GetFloat("_Glossiness"));
+        }
+
+        private static void CopyGltfLitProperties(Material source, Material destination)
+        {
+            if (!source.HasProperty("baseColorTexture")) return;
+
+            Texture baseMap = source.GetTexture("baseColorTexture");
+            destination.SetTexture("_BaseMap", baseMap);
+            destination.SetTextureScale("_BaseMap", source.GetTextureScale("baseColorTexture"));
+            destination.SetTextureOffset("_BaseMap", source.GetTextureOffset("baseColorTexture"));
+            if (source.HasProperty("baseColorFactor"))
+                destination.SetColor("_BaseColor", source.GetColor("baseColorFactor"));
+            if (source.HasProperty("metallicFactor"))
+                destination.SetFloat("_Metallic", source.GetFloat("metallicFactor"));
+            if (source.HasProperty("roughnessFactor"))
+                destination.SetFloat("_Smoothness", 1f - source.GetFloat("roughnessFactor"));
+
+            CopyGltfTexture(source, destination, "normalTexture", "_BumpMap", "_NORMALMAP");
+            if (source.HasProperty("normalTexture_scale"))
+                destination.SetFloat("_BumpScale", source.GetFloat("normalTexture_scale"));
+            CopyGltfTexture(source, destination, "occlusionTexture", "_OcclusionMap", "_OCCLUSIONMAP");
+            if (source.HasProperty("occlusionTexture_strength"))
+                destination.SetFloat("_OcclusionStrength", source.GetFloat("occlusionTexture_strength"));
+            CopyGltfTexture(source, destination, "emissiveTexture", "_EmissionMap", "_EMISSION");
+            if (source.HasProperty("emissiveFactor"))
+                destination.SetColor("_EmissionColor", source.GetColor("emissiveFactor"));
+        }
+
+        private static void CopyGltfTexture(
+            Material source, Material destination, string sourceProperty, string destinationProperty, string keyword)
+        {
+            if (!source.HasProperty(sourceProperty)) return;
+            Texture texture = source.GetTexture(sourceProperty);
+            if (texture == null) return;
+            destination.SetTexture(destinationProperty, texture);
+            destination.SetTextureScale(destinationProperty, source.GetTextureScale(sourceProperty));
+            destination.SetTextureOffset(destinationProperty, source.GetTextureOffset(sourceProperty));
+            destination.EnableKeyword(keyword);
         }
 
         private void RemoveDestroyedGardenRenderers()

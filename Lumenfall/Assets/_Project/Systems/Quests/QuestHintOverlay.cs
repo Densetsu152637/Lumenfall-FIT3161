@@ -110,7 +110,7 @@ namespace Lumenfall.Quests
             foreach (string id in QuestOrder)
             {
                 if (!runtime.Catalog.TryGetQuest(id, out QuestDefinition quest) || quest == null) continue;
-                QuestPuzzleDefinition puzzle = FindPuzzle(id);
+                QuestPuzzleDefinition puzzle = FindPuzzle(id, world.CurrentMapId, runtime);
                 QuestStatus status = runtime.GetQuestStatus(id);
                 if (status == QuestStatus.Active)
                 {
@@ -142,6 +142,13 @@ namespace Lumenfall.Quests
 
             if (activeQuest == null) return;
             title = activeQuest.title;
+            if (runtime.GetQuestStatus(activeQuest.id) == QuestStatus.Active &&
+                string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
+                runtime.GetFlag("inventory.keyitem.katrina-keepsake"))
+            {
+                hint = "All three memory anchors recovered. Return them to Katrina on campus.";
+                return;
+            }
             if (runtime.GetQuestStatus(activeQuest.id) == QuestStatus.NotStarted)
             {
                 hint = $"Talk to {CharacterFor(activeQuest.id)} to begin this quest.";
@@ -235,6 +242,7 @@ namespace Lumenfall.Quests
                 requiredPowered = questTarget.requiredPowered || best.requiredPowered,
                 requiredConnected = questTarget.requiredConnected || best.requiredConnected,
                 requiredRevealed = questTarget.requiredRevealed || best.requiredRevealed,
+                requiredCollected = questTarget.requiredCollected,
                 requiredFrozen = questTarget.requiredFrozen || best.requiredFrozen,
                 requiredAligned = questTarget.requiredAligned || best.requiredAligned,
                 requiredRotation = questTarget.requiredRotation >= 0 ? questTarget.requiredRotation : best.requiredRotation,
@@ -251,11 +259,18 @@ namespace Lumenfall.Quests
             return connections.ToArray();
         }
 
-        private QuestPuzzleDefinition FindPuzzle(string questId)
+        private QuestPuzzleDefinition FindPuzzle(string questId, string currentMapId, GameEventRuntime runtime)
         {
+            QuestPuzzleDefinition firstRemaining = null;
             foreach (QuestPuzzleDefinition puzzle in puzzleDatabase?.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
-                if (puzzle != null && string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) return puzzle;
-            return null;
+            {
+                if (puzzle == null || !string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) continue;
+                if (runtime != null && !string.IsNullOrWhiteSpace(puzzle.completionEventId) &&
+                    runtime.HasEventTriggered(puzzle.completionEventId)) continue;
+                if (firstRemaining == null) firstRemaining = puzzle;
+                if (string.Equals(puzzle.mapId, currentMapId, StringComparison.OrdinalIgnoreCase)) return puzzle;
+            }
+            return firstRemaining;
         }
 
         private static bool IsOnMap(QuestPuzzleDefinition puzzle, string mapId) => puzzle != null &&
@@ -291,7 +306,8 @@ namespace Lumenfall.Quests
                 foreach (string otherId in target.objectIds)
                     if (!string.Equals(id, otherId, StringComparison.Ordinal) && world.IsConnected(id, otherId)) connected = true;
                 bool valid = (!target.requiredPowered || state.powered) && (!target.requiredConnected || connected) &&
-                    (!target.requiredRevealed || state.revealed) && (!target.requiredFrozen || state.frozen) &&
+                    (!target.requiredRevealed || state.revealed) && (!target.requiredCollected || state.collected) &&
+                    (!target.requiredFrozen || state.frozen) &&
                     (!target.requiredAligned || state.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(state.rotation) % 360 == target.requiredRotation % 360) &&
                     (target.requiredPositionX == int.MinValue || state.cell.x == target.requiredPositionX) &&
                     (target.requiredPositionY == int.MinValue || state.cell.y == target.requiredPositionY);
@@ -302,6 +318,10 @@ namespace Lumenfall.Quests
 
         private static string Describe(QuestPuzzleTarget target, WorldStateService world)
         {
+            if (target.requiredCollected)
+                foreach (string id in target.objectIds ?? Array.Empty<string>())
+                    if (world.TryGetObject(id, out WorldObjectSnapshot item) && item.revealed && !item.collected)
+                        return "Approach the revealed memory anchor and pick it up.";
             if (target.requiredPositionX != int.MinValue && target.requiredPositionY != int.MinValue)
             {
                 foreach (string id in target.objectIds ?? Array.Empty<string>())
@@ -374,7 +394,9 @@ namespace Lumenfall.Quests
             return "the quest giver";
         }
 
-        private static string MapName(string mapId) => mapId == "B02.Ground" ? "Stella's classroom" :
+        private static string MapName(string mapId) => mapId == "B01.Ground" ? "Training Centre" :
+            mapId == "B02.Ground" ? "Arcane Workshop" : mapId == "B03.Ground" ? "Main Academy Building" :
+            mapId == "B04.Ground" ? "Library" :
             mapId == "campus" ? "campus" : mapId == "westForest" ? "west forest" : mapId;
 
         private void OnGUI()

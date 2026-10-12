@@ -22,7 +22,7 @@
       "completionEventId": "complete_stella_string_them_together",
       "mapId": "B02.Ground",
       "targets": [
-        { "id": "board_relics_lit", "objectIds": ["stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5"], "requiredPowered": true }
+        { "id": "complete_live_network", "objectIds": ["stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5", "stella.circuit.relay.1", "stella.circuit.relay.2", "stella.circuit.relay.3", "stella.circuit.relay.4", "stella.circuit.relay.5", "stella.circuit.relay.6", "stella.circuit.relay.7", "stella.circuit.relay.8", "stella.circuit.relay.9", "stella.circuit.relay.10", "circuit.stella.link"], "requiredPowered": true, "requiredConnected": true, "requiredSameNetwork": true }
       ]
     },
     {
@@ -44,13 +44,33 @@
       ]
     },
     {
-      "id": "katrina_something_borrowed_monitor",
+      "id": "katrina_library_item_monitor",
       "questId": "katrina_something_borrowed",
-      "completionEventId": "found_katrina_keepsake",
-      "successDialogueId": "katrina_keepsake_recovered",
-      "mapId": "C04.Recess",
+      "completionEventId": "found_katrina_library_item",
+      "successDialogueId": "katrina_library_item_recovered",
+      "mapId": "B04.Ground",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredCollected": true, "requiredPositionX": 12, "requiredPositionY": 9 }
+        { "id": "library_item", "objectIds": ["katrina.item.library"], "requiredRevealed": true, "requiredCollected": true }
+      ]
+    },
+    {
+      "id": "katrina_garden_item_monitor",
+      "questId": "katrina_something_borrowed",
+      "completionEventId": "found_katrina_garden_item",
+      "successDialogueId": "katrina_garden_item_recovered",
+      "mapId": "campus",
+      "targets": [
+        { "id": "garden_item", "objectIds": ["katrina.item.garden"], "requiredRevealed": true, "requiredCollected": true }
+      ]
+    },
+    {
+      "id": "katrina_stream_item_monitor",
+      "questId": "katrina_something_borrowed",
+      "completionEventId": "found_katrina_stream_item",
+      "successDialogueId": "katrina_stream_item_recovered",
+      "mapId": "westForest",
+      "targets": [
+        { "id": "stream_item", "objectIds": ["katrina.item.stream"], "requiredRevealed": true, "requiredCollected": true }
       ]
     }
   ]

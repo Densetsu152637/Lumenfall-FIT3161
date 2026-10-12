@@ -59,9 +59,38 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(runtime.ActiveDialogue.SelectChoice("accept"), Is.True);
             Assert.That(runtime.TriggerEvent("complete_cinna_cold_feet_warm_idea").Succeeded, Is.True);
             AcceptAndComplete(runtime, "orio_patch_notes");
+            runtime.SetFlag("inventory.keyitem.katrina-keepsake", true);
             AcceptAndComplete(runtime, "katrina_something_borrowed");
             Assert.That(runtime.TriggerEvent("complete_katrina_something_borrowed").Status,
                 Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
+        }
+
+        [Test]
+        public void CampusStudent_OffersAConciseCampusTourOrFriendlyFarewell()
+        {
+            TextAsset asset = Resources.Load<TextAsset>("GameEvents/quest_npc_dialogue");
+            Assert.That(GameEventCatalog.TryParseJson(asset.text, asset.name,
+                out GameEventDatabaseDefinition database, out string error), Is.True, error);
+            GameEventRuntime runtime = new GameEventRuntime(new GameEventCatalog(new[] { database }));
+
+            DialogueSession tour = runtime.StartDialogue("ambient_courtyard_student");
+            Assert.That(ChoiceIds(tour), Is.EquivalentTo(new[] { "new", "familiar" }));
+            Assert.That(tour.SelectChoice("new"), Is.True);
+            string tourText = string.Empty;
+            while (tour.IsActive && tour.CurrentNode != null)
+            {
+                tourText += " " + tour.CurrentNode.text;
+                tour.Continue();
+            }
+            Assert.That(tourText, Does.Contain("Training Centre"));
+            Assert.That(tourText, Does.Contain("Arcane Workshop"));
+            Assert.That(tourText, Does.Contain("Main Academy Building"));
+            Assert.That(tourText, Does.Contain("Library"));
+            Assert.That(tourText, Does.Contain("forest"));
+
+            DialogueSession farewell = runtime.StartDialogue("ambient_courtyard_student");
+            Assert.That(farewell.SelectChoice("familiar"), Is.True);
+            Assert.That(farewell.CurrentNode.text, Does.Contain("Enjoy your day"));
         }
 
         private static void AcceptAndComplete(GameEventRuntime runtime, string questId)

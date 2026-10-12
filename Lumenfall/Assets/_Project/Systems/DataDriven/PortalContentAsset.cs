@@ -11,11 +11,18 @@ namespace Lumenfall.DataDriven
         [FormerlySerializedAs("reserved")]
         [Tooltip("Prevents this portal from being used until gameplay or quest logic enables it.")]
         public bool disabled;
+        [Tooltip("Keeps the portal present, but refuses entry and tells the player that the door is locked.")]
+        public bool blocked;
         public PortalContentAsset destination;
 
         public void SetDisabled(bool value)
         {
             disabled = value;
+        }
+
+        public void SetBlocked(bool value)
+        {
+            blocked = value;
         }
     }
 }

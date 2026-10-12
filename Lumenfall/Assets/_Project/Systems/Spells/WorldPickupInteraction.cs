@@ -76,7 +76,8 @@ namespace Lumenfall.Spells
             UpdateMarkers(objects, state.CurrentMapId, world, player);
 
             bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || IsNpcInTalkRange(player.transform.position);
+                GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
+                IsNpcInTalkRange(player.transform.position);
             if (blocked) return;
             WorldObjectSnapshot nearest = NearestCollectable(objects, state.CurrentMapId, player.CurrentCell);
             promptTarget = nearest?.id;
