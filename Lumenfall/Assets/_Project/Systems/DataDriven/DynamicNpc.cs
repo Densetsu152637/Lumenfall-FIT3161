@@ -24,7 +24,12 @@ namespace Lumenfall.DataDriven
         private static readonly List<DynamicNpc> active = new List<DynamicNpc>();
         /// NPCs on active GameObjects; per-frame callers read this instead of searching the scene.
         public static IReadOnlyList<DynamicNpc> Active => active;
-        private void Awake() { ApplyDefinition(); }
+        private void Awake()
+        {
+            // Every NPC idles with some variety and turns to face the player; see NpcAmbientBehaviour.
+            if (GetComponent<NpcAmbientBehaviour>() == null) gameObject.AddComponent<NpcAmbientBehaviour>();
+            ApplyDefinition();
+        }
         private void OnEnable() { if (!active.Contains(this)) active.Add(this); ApplyDefinition(); }
         private void OnDisable() { active.Remove(this); }
         private void ApplyDefinition()
