@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Inventory;
 using Lumenfall.Spells;
 using Lumenfall.DataDriven;
 using Lumenfall.Startup;
@@ -30,7 +32,18 @@ namespace Lumenfall.Quests
         private string title;
         private float refreshAt;
         private bool settingsOpen;
+        private float settingsOpenedAt;
+        // The pop-out pauses the world; the previous time scale comes back when it closes.
+        private bool pausedTime;
+        private float pausedTimeScale = 1f;
+        // Glaciate frost creeps in while paused and thaws after closing, starting from however far it had grown.
+        private const float FrostSeconds = 1.2f;
+        private const float ThawSeconds = 0.8f;
+        private float frostAtClose;
+        private float closedAt = float.NegativeInfinity;
         private readonly List<GridPlayerInput> pausedInputs = new List<GridPlayerInput>();
+        private readonly MenuSkin skin = new MenuSkin();
+        private readonly OptionsPanel options = new OptionsPanel();
 
         public static bool HintsEnabled => PlayerPrefs.GetInt(EnabledKey, 1) != 0;
         public static bool IsSettingsOpen => instance != null && instance.settingsOpen;
@@ -63,13 +76,19 @@ namespace Lumenfall.Quests
             }
         }
 
-        private void OnDestroy() { if (instance == this) instance = null; }
+        private void OnDestroy()
+        {
+            if (instance == this) instance = null;
+            skin.Dispose();
+        }
 
-        private void OnDisable() { settingsOpen = false; RestoreGameplayInput(); }
+        private void OnDisable() { SetSettingsOpen(false); }
 
         private void Update()
         {
             if (StartupMenu.IsVisible && settingsOpen) SetSettingsOpen(false);
+            if (settingsOpen) UpdateSettings();
+            else if (CanOpenFromEscape()) SetSettingsOpen(true);
             if (Time.unscaledTime < refreshAt) return;
             refreshAt = Time.unscaledTime + 0.35f;
             RefreshHint();
@@ -376,6 +395,8 @@ namespace Lumenfall.Quests
         {
             EnsureStyles();
             if (StartupMenu.IsVisible) return;
+            // The pop-out draws above dialogue and other overlays; IMGUI puts lower depths in front.
+            GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))
             {
                 float width = Mathf.Min(360f, Screen.width - 32f);
@@ -388,26 +409,132 @@ namespace Lumenfall.Quests
                 GUI.Label(new Rect(card.x + 14f, card.y + 35f, card.width - 28f, 54f), hint, bodyStyle);
             }
 
-            if (GUI.Button(new Rect(Screen.width - 136f, 16f, 120f, 34f), settingsOpen ? "Close Settings" : "Settings"))
-                SetSettingsOpen(!settingsOpen);
-            if (!settingsOpen) return;
-            Rect panel = new Rect(Screen.width - 310f, 58f, 294f, 116f);
-            GUI.Box(panel, GUIContent.none, boxStyle);
-            GUI.Label(new Rect(panel.x + 14f, panel.y + 10f, panel.width - 28f, 25f), "SETTINGS", titleStyle);
-            bool enabled = GUI.Toggle(new Rect(panel.x + 14f, panel.y + 48f, panel.width - 28f, 30f), HintsEnabled, "Show quest hints");
-            if (enabled != HintsEnabled) SetHintsEnabled(enabled);
-            GUI.Label(new Rect(panel.x + 14f, panel.y + 82f, panel.width - 28f, 24f), "Changes apply immediately.", bodyStyle);
+            // The journal draws its own copy of these options, so the button steps aside while it is open.
+            if (InventoryUiState.IsOpen) return;
+            skin.Ensure();
+            Color previousColor = GUI.color;
+            if (settingsOpen) DrawSettingsPanel();
+            skin.Fade = 1f;
+            if (!settingsOpen) skin.DrawFrost(ThawAmount());
+            if (SettingsButton(new Rect(Screen.width - 156f, 16f, 140f, 36f))) SetSettingsOpen(!settingsOpen);
+            if (settingsOpen) skin.DrawSparks(1f);
+            GUI.color = previousColor;
+        }
+
+        private void UpdateSettings()
+        {
+            float deltaTime = Time.unscaledDeltaTime;
+            skin.Tick(deltaTime);
+            // While a key is being rebound or a swap is waiting for an answer, Escape only cancels that.
+            bool wasRebinding = options.IsRebinding;
+            options.Tick(deltaTime);
+            Keyboard keyboard = Keyboard.current;
+            if (!wasRebinding && keyboard != null && keyboard.escapeKey.wasPressedThisFrame) SetSettingsOpen(false);
+        }
+
+        /// <summary>
+        /// Escape opens the pop-out as a pause menu. The journal also closes on Escape and updates earlier in the frame, so
+        /// a journal that closed this frame must not hand the same key press to the pop-out.
+        /// </summary>
+        private static bool CanOpenFromEscape()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return false;
+            if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount) return false;
+            return FindAnyObjectByType<StartupMenu>() == null;
+        }
+
+        /// <summary>The Settings pop-out, styled like the startup menu: the options, then a short paused hint.</summary>
+        private void DrawSettingsPanel()
+        {
+            float now = Time.unscaledTime;
+            float open = MenuSkin.Smooth((now - settingsOpenedAt) / 0.35f);
+            skin.Fade = open;
+            skin.ShowWandCursor(true);
+            skin.DrawBackdrop(0.85f, now);
+            skin.DrawFrost(FrostAmount());
+
+            float width = Mathf.Min(Screen.width - 48f, 860f);
+            float height = Mathf.Min(Screen.height - 48f, 620f);
+            Rect panel = new Rect((Screen.width - width) * 0.5f - skin.Parallax.x * 4f,
+                (Screen.height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
+            skin.PanelFrame(panel, now);
+            skin.DrawTitle(new Rect(panel.x + 24f, panel.y + 22f, panel.width - 48f, 50f), "Settings", now);
+            skin.Divider(panel.center.x, panel.y + 84f, Mathf.Min(280f, panel.width - 120f), now);
+
+            float hintY = panel.yMax - 46f;
+            float top = panel.y + 106f;
+            options.Draw(new Rect(panel.x + 36f, top, panel.width - 72f, hintY - 14f - top), skin);
+            DrawPausedLine(new Rect(panel.x + 36f, hintY, panel.width - 72f, 22f));
+        }
+
+        private float FrostAmount() => skin.Motion > 0f ? MenuSkin.Smooth((Time.unscaledTime - settingsOpenedAt) / FrostSeconds) : 1f;
+
+        private float ThawAmount() => skin.Motion > 0f ? frostAtClose * (1f - MenuSkin.Smooth((Time.unscaledTime - closedAt) / ThawSeconds)) : 0f;
+
+        /// <summary>A frozen hourglass beside "Game paused", and how to resume.</summary>
+        private void DrawPausedLine(Rect line)
+        {
+            const string Paused = "Game paused";
+            const string next = "Esc to resume";
+            GUIStyle style = skin.Status;
+            float pausedWidth = style.CalcSize(new GUIContent(Paused)).x;
+            float nextWidth = style.CalcSize(new GUIContent(next)).x;
+            float x = line.center.x - (22f + pausedWidth + 26f + nextWidth) * 0.5f;
+
+            skin.DrawHourglass(new Rect(x, line.center.y - 10f, 14f, 20f));
+            x += 22f;
+            skin.Label(new Rect(x, line.y, pausedWidth + 4f, line.height), Paused, style, MenuArt.Muted);
+            x += pausedWidth;
+            if (Event.current.type == EventType.Repaint) skin.Draw(new Rect(x + 11f, line.center.y - 2f, 4f, 4f), skin.Glow, MenuArt.Gold, 0.8f);
+            x += 26f;
+            skin.Label(new Rect(x, line.y, nextWidth + 4f, line.height), next, style, MenuArt.Muted);
+        }
+
+        /// <summary>Top-right toggle with a small gold star; it reads Close while the pop-out is open.</summary>
+        private bool SettingsButton(Rect rect)
+        {
+            bool clicked = skin.Button(rect, settingsOpen ? "Close" : "Settings");
+            if (Event.current.type == EventType.Repaint)
+            {
+                float lift = rect.Contains(Event.current.mousePosition) ? 2f : 0f;
+                Rect star = new Rect(rect.x + 12f, rect.center.y - 8f - lift, 16f, 16f);
+                skin.Draw(MenuSkin.Expand(star, 6f, 6f), skin.Glow, MenuArt.Gold, 0.45f);
+                skin.Draw(star, skin.Sparkle, MenuArt.Gold, 1f);
+            }
+            return clicked;
         }
 
         private void SetSettingsOpen(bool open)
         {
+            if (open && settingsOpen) return;
+            bool wasOpen = settingsOpen;
             settingsOpen = open;
             if (open)
             {
+                settingsOpenedAt = Time.unscaledTime;
+                options.Reset();
+                skin.ResetAmbience();
+                pausedTimeScale = Time.timeScale;
+                Time.timeScale = 0f;
+                pausedTime = true;
                 foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>(FindObjectsSortMode.None))
                     if (input != null && input.enabled) { input.enabled = false; pausedInputs.Add(input); }
             }
-            else RestoreGameplayInput();
+            else
+            {
+                options.CancelRebind();
+                skin.ShowWandCursor(false);
+                if (wasOpen)
+                {
+                    frostAtClose = FrostAmount();
+                    closedAt = Time.unscaledTime;
+                }
+                // Leave the time scale alone if something else changed it while the pop-out was open.
+                if (pausedTime && Time.timeScale == 0f) Time.timeScale = pausedTimeScale;
+                pausedTime = false;
+                RestoreGameplayInput();
+            }
         }
 
         private void RestoreGameplayInput()

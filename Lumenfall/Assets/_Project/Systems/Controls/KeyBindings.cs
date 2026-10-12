@@ -92,6 +92,14 @@ namespace Lumenfall.Controls
             return true;
         }
 
+        /// <summary>The other action currently bound to <paramref name="key"/>, if any.</summary>
+        public static GameAction? ActionUsing(Key key, GameAction except)
+        {
+            foreach (GameAction other in AllActions)
+                if (other != except && GetKey(other) == key) return other;
+            return null;
+        }
+
         /// <summary>Binds a key, swapping it with any action that already used it. Returns the swapped action, if any.</summary>
         public static GameAction? SetKey(GameAction action, Key key)
         {
