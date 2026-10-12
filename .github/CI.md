@@ -129,6 +129,62 @@ Load a quest monitor's definitions through its `Awake` callback before calling
 `EvaluatePuzzles`; tests should not depend on `Update` timing. Preserve the production
 lesson, puzzle and report requirements rather than bypassing them to grant rewards.
 
+Branch-specific acceptance tests for the active PR snapshot are documented in
+[`tests/pr_features/README.md`](../tests/pr_features/README.md). Run
+`python scripts/run_pr_feature_tests.py --pr <number> --mode all` to materialize
+the pinned PR project and execute its added suite without changing a checkout.
+These catalog tests live outside `Assets` and therefore require this runner;
+the existing EditMode CI job does not automatically discover them on main.
+
+## Feature acceptance workflows
+
+Six `.yaml` workflows group the catalog by feature area in the Actions overview:
+
+| Workflow | Target PR suites |
+| --- | --- |
+| **Feature tests - Quests and spells** | 1, 3, 4, 5, 8, 14, 20 |
+| **Feature tests - World and story** | 6, 10, 12, 16 |
+| **Feature tests - Presentation and UI** | 11, 13, 15, 18, 23 |
+| **Feature tests - Audio** | 9, 22 |
+| **Feature tests - Persistence and recovery** | 7, 19 |
+| **Feature tests - Validation and diagnostics** | 2, 17 |
+
+Each workflow calls `pr-feature-suite.yaml` through a matrix with one named job
+per suite, such as **PR 18 - Camera**. Individual job status, rerun controls,
+summaries and artifacts still identify the precise failing suite. A suite failure
+does not cancel sibling jobs (`fail-fast: false`), and each group runs at most
+three suites concurrently. Within a job, EditMode and PlayMode have separate named steps; both
+are attempted when applicable, even if EditMode fails. PR 2 installs the validator's
+pinned requirements from the extracted target and runs Python mutations without a
+Unity image or license.
+
+They run on pull requests and pushes to `main` that change a suite in their area, its workflow,
+the shared workflow, manifest, runner or CI adapter. Updating shared execution code
+or the manifest starts all six groups covering all 22 suites. A suite-only change
+starts its feature group. Each
+workflow also supports **Run workflow** from Actions after it is on the default
+branch. These are catalog validation workflows: they fetch the exact manifest SHA,
+not the current feature-branch head. Refresh the pinned SHA and any expectations
+when adopting a later implementation; ordinary gameplay changes alone do not
+trigger these historical snapshots.
+
+Every job prepares its own extracted project, uses the snapshot's Unity version,
+and filters to `Lumenfall.FeatureAcceptance`. Unity jobs use the same three license
+secrets as the existing EditMode workflow and fail visibly if they are absent.
+The workflows use `contents: read`; GameCI's optional Checks reporter is disabled.
+Library caches are scoped to PR, OS, Unity version, target SHA and suite hash, and
+saved only after complete result verification. Concurrent suites run on separate
+hosted runners; their source, preferences and caches are isolated.
+
+`scripts/pr_feature_ci.py` verifies each action outcome, pinned revision, suite
+hash and every expected fixture/case count. Missing, duplicate, partial, failed or
+skipped test results fail the workflow. The job summary lists the target commit
+and results by platform; annotations identify the failing platform or preparation
+step. Download `pr-N-feature-acceptance` for the NUnit XML, Editor diagnostics,
+Python log, preparation metadata and `ci-report.json` (retained for 14 days).
+Artifacts are uploaded after failures as well. The original repository integrity
+and colocated EditMode checks continue unchanged.
+
 ## Downloadable game releases
 
 [`Release game bundle`](workflows/release-build.yml) builds a **Windows x64 Mono**

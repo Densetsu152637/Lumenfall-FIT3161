@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "repository": "Densetsu152637/Lumenfall-FIT3161",
+  "snapshot_date": "2026-10-09",
+  "pull_requests": [
+    {
+      "number": 1,
+      "title": "feat: extend quest hints with spell feedback and puzzle retry",
+      "head": "feat/hint-system",
+      "commit": "de7745631b7776d16ce1d7c66d0f6eb879448887",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/1",
+      "suite": "pr_01",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr01ResetAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 2,
+      "title": "ci: validate runtime authored content and portable offline compilation",
+      "head": "CI/workflows",
+      "commit": "1b9c39dd2f532a00fbd9db9b0bf0b316b8f9db95",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/2",
+      "suite": "pr_02",
+      "expected_cases": {},
+      "expected_python_cases": 3
+    },
+    {
+      "number": 3,
+      "title": "Complete Stella's First Light teaching and puzzle loop",
+      "head": "codex/quest-first-light",
+      "commit": "927f2184fd80c7900d553a3002f28529b34df36b",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/3",
+      "suite": "pr_03",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr03FirstLightAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 4,
+      "title": "Implement Stella's String Them Together quest loop",
+      "head": "codex/quest-string-them-together",
+      "commit": "446ae475d4621c3c54df3b2e549f77b23d02b3d8",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/4",
+      "suite": "pr_04",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr04WeaveNetworkAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 5,
+      "title": "Complete Cinna's Vis lesson and ninety-degree alignment puzzle",
+      "head": "codex/quest-out-of-alignment",
+      "commit": "c3fbad214b29a397257e66d94d10a1b7c5423f41",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/5",
+      "suite": "pr_05",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr05AlignmentResetAcceptanceTests": 4,
+          "Lumenfall.FeatureAcceptance.Pr05VisCastAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 6,
+      "title": "Implement guarded Chapter 1 key mystery and sleep/wake route",
+      "head": "codex/feature-chapter-one-story",
+      "commit": "174ec2e983b326a2a05e7a6ff2a2433fd6083460",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/6",
+      "suite": "pr_06",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr06StoryPermissionTests": 3
+        }
+      }
+    },
+    {
+      "number": 7,
+      "title": "Add validated save recovery and compatible migration",
+      "head": "codex/feature-save-recovery-migrations",
+      "commit": "03d775a18cef30ae2cef95ab7e4691f7474fd188",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/7",
+      "suite": "pr_07",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr07PayloadBoundaryTests": 7
+        }
+      }
+    },
+    {
+      "number": 8,
+      "title": "Complete Orio Rotara teaching and exact forest mechanism verification",
+      "head": "feat/rotara-puzzle",
+      "commit": "0a6df7af4eb0fe301c492e06f81f2938a72b4608",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/8",
+      "suite": "pr_08",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr08RotaraAngleAcceptanceTests": 13
+        }
+      }
+    },
+    {
+      "number": 9,
+      "title": "Add event-driven audio contexts, feedback and persisted mix controls",
+      "head": "codex/feature-audio-feedback-mix",
+      "commit": "dd4c0787612f68984a4e8c68604983f969d66189",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/9",
+      "suite": "pr_09",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr09AudioSignalEdgesTests": 3
+        }
+      }
+    },
+    {
+      "number": 10,
+      "title": "Optional dormitory grid power activity (disabled by default)",
+      "head": "codex/feature-optional-dormitory-power",
+      "commit": "42fc903761d17306fce2d463312b08ca0cd1a11a",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/10",
+      "suite": "pr_10",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr10OptionalPowerIsolationTests": 3
+        }
+      }
+    },
+    {
+      "number": 11,
+      "title": "feat: persist live accessibility settings and localization fallbacks",
+      "head": "codex/feature-accessibility-settings",
+      "commit": "401cd79ac51d23d3aead282eaffb41f7763fc3c2",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/11",
+      "suite": "pr_11",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr11AccessibilityIsolationTests": 3
+        }
+      }
+    },
+    {
+      "number": 12,
+      "title": "Playable production bootstrap and Chapter 1 world route",
+      "head": "feat/game-systems",
+      "commit": "732094f85573563507b667f89d101d06906be90a",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/12",
+      "suite": "pr_12",
+      "expected_cases": {
+        "PlayMode": {
+          "Lumenfall.FeatureAcceptance.Pr12ReservedRegionLifecycleTests": 3
+        }
+      }
+    },
+    {
+      "number": 13,
+      "title": "Character identity and environment presentation on existing assets branch",
+      "head": "assets",
+      "commit": "d9dc0b9184b459dad4f841c9862792d42e5d23f0",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/13",
+      "suite": "pr_13",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr13PresentationAcceptanceTests": 8
+        },
+        "PlayMode": {
+          "Lumenfall.FeatureAcceptance.Pr13BadgeLifecycleAcceptanceTests": 1
+        }
+      }
+    },
+    {
+      "number": 14,
+      "title": "Katrina: teach Lost Echoes and recover Something Borrowed locally",
+      "head": "codex/quest-katrina-something-borrowed",
+      "commit": "2ea5ab6b1e23b87ebea2905f64752b3e3cbbc73c",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/14",
+      "suite": "pr_14",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr14LostEchoesBoundaryAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 15,
+      "title": "Production UI navigation, objectives and owned overlay input",
+      "head": "codex/feature-production-ui",
+      "commit": "29a175e83e54736fbeeb7bf45b2883e7eb3addd7",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/15",
+      "suite": "pr_15",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr15UiAcceptanceTests": 3
+        }
+      }
+    },
+    {
+      "number": 16,
+      "title": "Add opt-in ambient NPC schedules and protected optional travel",
+      "head": "codex/feature-ambient-npc-travel",
+      "commit": "bccf69e725d22075ce0dd3b5a5c0b3dd7ee6867b",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/16",
+      "suite": "pr_16",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr16TravelAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 17,
+      "title": "Add bounded performance diagnostics and Chapter 1 release acceptance gate",
+      "head": "codex/feature-performance-release-readiness",
+      "commit": "cccc452bb64176be9e1e5391a45c2242ffa4cb95",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/17",
+      "suite": "pr_17",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr17DiagnosticsAcceptanceTests": 3
+        }
+      }
+    },
+    {
+      "number": 18,
+      "title": "feat: camera framing, interior transitions and optional occlusion",
+      "head": "codex/feature-camera-interiors",
+      "commit": "36dc7c3d523d1340e9b47a4a87842eb3574bb1f5",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/18",
+      "suite": "pr_18",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr18FramingAcceptanceTests": 3
+        },
+        "PlayMode": {
+          "Lumenfall.FeatureAcceptance.Pr18CameraLifecycleAcceptanceTests": 2
+        }
+      }
+    },
+    {
+      "number": 19,
+      "title": "Add opt-in local Lost Echoes recovery preview",
+      "head": "codex/feature-optional-recovery-activity",
+      "commit": "fcd8bf62adf50647beebb4e3cc56064536cbcf93",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/19",
+      "suite": "pr_19",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr19RecoveryAcceptanceTests": 3
+        }
+      }
+    },
+    {
+      "number": 20,
+      "title": "Cinna Cirra: teach Glaciate and require bounded trap visits",
+      "head": "codex/quest-cold-feet-warm-idea",
+      "commit": "1a395c93172058cd77610c0d186fec1325c8ee86",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/20",
+      "suite": "pr_20",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr20IceLaneAcceptanceTests": 5
+        }
+      }
+    },
+    {
+      "number": 22,
+      "title": "feat: integrate area music and ambience with world loading",
+      "head": "codex/area-audio",
+      "commit": "686ebe99dcab007ff0c7dad68edf2e6b81efc654",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/22",
+      "suite": "pr_22",
+      "expected_cases": {
+        "PlayMode": {
+          "Lumenfall.FeatureAcceptance.Pr22AudioAcceptanceTests": 4
+        }
+      }
+    },
+    {
+      "number": 23,
+      "title": "feat(graphics): add saved graphics settings and PC recommendations",
+      "head": "codex/basic-graphics-options",
+      "commit": "784c1074594927e27536921061e5732f0e6c6fa0",
+      "url": "https://github.com/Densetsu152637/Lumenfall-FIT3161/pull/23",
+      "suite": "pr_23",
+      "expected_cases": {
+        "EditMode": {
+          "Lumenfall.FeatureAcceptance.Pr23GraphicsAcceptanceTests": 3
+        }
+      }
+    }
+  ]
+}

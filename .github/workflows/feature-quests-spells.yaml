@@ -1,0 +1,73 @@
+name: Feature tests - Quests and spells
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/feature-quests-spells.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_01/**'
+      - 'tests/pr_features/pr_03/**'
+      - 'tests/pr_features/pr_04/**'
+      - 'tests/pr_features/pr_05/**'
+      - 'tests/pr_features/pr_08/**'
+      - 'tests/pr_features/pr_14/**'
+      - 'tests/pr_features/pr_20/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/feature-quests-spells.yaml'
+      - '.github/workflows/pr-feature-suite.yaml'
+      - 'tests/pr_features/pr_01/**'
+      - 'tests/pr_features/pr_03/**'
+      - 'tests/pr_features/pr_04/**'
+      - 'tests/pr_features/pr_05/**'
+      - 'tests/pr_features/pr_08/**'
+      - 'tests/pr_features/pr_14/**'
+      - 'tests/pr_features/pr_20/**'
+      - 'tests/pr_features/pr_manifest.json'
+      - 'scripts/run_pr_feature_tests.py'
+      - 'scripts/pr_feature_ci.py'
+      - 'scripts/tests/test_*pr_feature*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feature-quests-spells-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suites:
+    name: PR ${{ matrix.pr }} - ${{ matrix.feature }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - pr: 1
+            feature: Hint feedback and reset
+          - pr: 3
+            feature: First Light
+          - pr: 4
+            feature: Weave network
+          - pr: 5
+            feature: Vis alignment
+          - pr: 8
+            feature: Rotara rotation
+          - pr: 14
+            feature: Lost Echoes
+          - pr: 20
+            feature: Glaciate lanes
+    uses: ./.github/workflows/pr-feature-suite.yaml
+    with:
+      pr-number: ${{ matrix.pr }}
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
