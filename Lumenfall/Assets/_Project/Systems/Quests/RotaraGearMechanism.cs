@@ -20,6 +20,9 @@ namespace Lumenfall.Quests
     public sealed class RotaraGearMechanism : MonoBehaviour
     {
         private const string RotaraTag = "rotara";
+        private static float panelDrawnAt = -10f;
+        /// True while a mechanism's bottom-left status panel is on screen, so other HUD can move out of its way.
+        public static bool PanelVisible => Time.unscaledTime - panelDrawnAt < 0.2f;
         private const string QuestId = "orio_patch_notes";
         public const string PuzzleMapId = "westForest";
         public const string PuzzleObjectId = "mechanism.orio.rotate";
@@ -184,6 +187,7 @@ namespace Lumenfall.Quests
                 status = "Finish Orio's Rotara lesson before casting.";
             else if (GameEventManager.Instance.Runtime.GetQuestStatus(QuestId) == QuestStatus.Completed)
                 status = "Patch confirmed. Further turns are practice; completion is saved.";
+            panelDrawnAt = Time.unscaledTime;
             GUI.Box(new Rect(16f, Screen.height - 108f, 590f, 92f), "Rotara mechanism");
             GUI.Label(new Rect(28f, Screen.height - 84f, 566f, 24f),
                 $"Current: {NormalizeDegrees(snapshot.rotation):0} degrees | Target: {requiredRotation} degrees | " +
