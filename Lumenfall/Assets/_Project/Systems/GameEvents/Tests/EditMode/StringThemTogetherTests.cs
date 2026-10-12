@@ -172,15 +172,15 @@ namespace Lumenfall.Tests.GameEvents
             state.AddConnection(Source, Link);
             string previous = Link;
             for (int i = 0; i < board.Length - 1; i++) { state.AddConnection(previous, board[i]); previous = board[i]; }
-            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active), "Four lit relics are not enough.");
-            Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            EditModeLifecycle.Call(monitor, "OnDestroy"); EditModeLifecycle.Call(monitor, "OnDisable"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
             state.AddConnection(previous, board[board.Length - 1]);
-            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             state.SetProperty(Source, x => x.powered = false);
-            Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
-            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); monitor.EvaluatePuzzles();
+            EditModeLifecycle.Call(monitor, "OnDisable"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed), "Completion remains durable after the source goes dark.");
         }
         private bool Powered(string id) => state.TryGetObject(id, out WorldObjectSnapshot item) && item.powered;

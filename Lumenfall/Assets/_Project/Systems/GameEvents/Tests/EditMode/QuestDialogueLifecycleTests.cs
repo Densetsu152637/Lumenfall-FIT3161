@@ -107,6 +107,8 @@ namespace Lumenfall.Tests.GameEvents
             GameEventRuntime runtime = manager.Runtime;
             runtime.ResetState();
             GameObject host = new GameObject("stella-follow-up-selection-test");
+            SpellCaster lessonCaster = host.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(lessonCaster, "OnEnable");
             try
             {
                 StartAndComplete(runtime, "stella_first_light");
@@ -157,8 +159,9 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
                 Assert.That(ChoiceIds(session), Does.Contain("accept"));
                 Assert.That(session.SelectChoice("accept"), Is.True);
+                Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.False);
+                Assert.That(session.Continue(), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
-                session.End();
 
                 session = stella.Interact();
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));

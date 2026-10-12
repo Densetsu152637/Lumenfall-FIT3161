@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Lumenfall.GameEvents;
+using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using NUnit.Framework;
@@ -16,6 +17,7 @@ namespace Lumenfall.Tests.GameEvents
         private GameObject stateHost;
         private GameObject casterHost;
         private SpellCaster caster;
+        private WorldStateService previousState;
         private const string Quest = "orio_patch_notes";
         private const string Event = "complete_orio_patch_notes";
 
@@ -24,6 +26,7 @@ namespace Lumenfall.Tests.GameEvents
         {
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             previousState = WorldStateService.Instance;
             stateHost = new GameObject("orio-world-test");
             state = stateHost.AddComponent<WorldStateService>();
