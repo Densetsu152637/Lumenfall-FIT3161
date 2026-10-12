@@ -18,7 +18,7 @@ Chapter 1 designation expresses a recommendation for this layout, not an increas
 
 North is up on the map. A walled academy campus contains separate buildings, paths, gardens, and a freely traversable commons. B01 receives arrivals, B02 holds teaching spaces, B03 contains shared facilities and administration, and B04 is the Sirius dormitory. Outdoor paths suggest navigation between buildings but are not mandatory linear passages.
 
-The starting forest lies immediately beyond the east wall. Its trail reaches the east gate and forest threshold, making the forest a distinct neighbouring area rather than a route running through the campus. The north, south, and west gates are visible but reserved for future map expansion. There are no enclosed castle ranges or required corridors between buildings.
+The starting forest lies immediately beyond the west wall. Its trail reaches the west gate and forest threshold, making the forest a distinct neighbouring area rather than a route running through the campus. The north, south, and east gates are visible but reserved for future map expansion. There are no enclosed castle ranges or required corridors between buildings.
 
 Each building is single-storey. Interiors use open halls with activity zones; Sirius keeps the player's sleeping area as the only separated private space. No basement, additional dormitory tower, or separate service building is necessary for this map.
 
@@ -29,7 +29,7 @@ Each building is single-storey. Interiors use open halls with activity zones; Si
 | B01 | Arrival building      | Southwest campus; public entrance faces the campus commons             | Reception and student services. Its doors open to A01 and the campus paths.                                                             |
 | B02 | Teaching building    | Northwest campus; classrooms face the commons                          | First-year teaching and engineering assignments in one open hall with puzzle zones. A west door opens to campus paths.         |
 | B03 | Shared facilities    | North-central campus; public doors face the commons                     | Dining, library, practice, and administration. Rooms are reached through its own internal hall.                                           |
-| B04 | Sirius dormitory     | Southeast campus near the east gate; public entrance faces the commons  | Student accommodation and social space in one open common/group-living hall, with a ground-floor player sleeping room. Its lobby opens to campus paths.                    |
+| B04 | Sirius dormitory     | Southeast campus; public entrance faces the commons  | Student accommodation and social space in one open common/group-living hall, with a ground-floor player sleeping room. Its lobby opens to campus paths.                    |
 
 These are four separate buildings inside the same academy wall. Their entrances remain independently readable, and no building-to-building corridor is required.
 
@@ -39,11 +39,11 @@ These are four separate buildings inside the same academy wall. Their entrances 
 | --- | ----------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- |
 | F01 | Forest arrival clearing | Western forest edge; leads east to F02                           | Safe opening space with a visible trail marker and room for initial movement instructions.                               | Chapter 1 |
 | F02 | Lantern trail           | Runs east through the forest to F03; branches north to F04         | Main forest path. Lanterns and a glimpse of the academy wall establish the direction of travel.                           | Chapter 1 |
-| F03 | Forest threshold        | East wall outside the campus; east gate joins A01                  | Academy boundary and return-route junction. The east gate opens into the campus after reception introduces the grounds. | Chapter 1 |
+| F03 | Forest threshold        | West wall outside the campus; west gate joins A01                  | Academy boundary and return-route junction. The west gate opens into the campus after reception introduces the grounds. | Chapter 1 |
 | F04 | Orio's mechanism glade  | North of F02; entered and exited by the same short branch       | Rotating relics and a clear puzzle footprint for Patch Notes. Orio is encountered here after Cinna Cirra's introduction. | Chapter 1 |
 | F05 | Brook overlook          | South of F02; short optional spur                               | Quiet scenery and a possible minor NPC interaction; no mandatory collectible.                                            | Optional  |
 | F06 | Deep forest boundary    | North of F04                                                    | Dense trees and a visibly blocked trail suggest later exploration without implying an accessible Chapter 1 region.       | Reserved  |
-| A01 | East gate forecourt     | Just inside the east gate, west of B01 and south of C01             | Open approach, academy sign, and sightline to the campus commons. No separate gatehouse.                               | Chapter 1 |
+| A01 | West gate forecourt     | Just inside the west gate, west of B01 and south of C01             | Open approach, academy sign, and sightline to the campus commons. No separate gatehouse.                               | Chapter 1 |
 | C01 | Campus commons          | Centre of the walled campus                                    | Primary landmark and meeting point. Paths and lawns allow free traversal around the fountain.                           | Chapter 1 |
 | C02 | Orientation terrace     | North side of C01 near B03                                  | Cinna Cirra's assembly area and Vis alignment activity. The audience edge remains outside the active puzzle.            | Chapter 1 |
 | C03 | Orientation trial strip | Northwest edge of the commons near B02                         | A bounded surface for the Glaciate sequence task, with a visible end barrier and a walking return lane.                 | Chapter 1 |
@@ -74,7 +74,7 @@ Reception remains accessible throughout Chapter 1. The initial conversation open
 | W03 | Circuit project room          | Ground, central classroom bay, north of W02           | Door from W01. Houses String Them Together and a larger wire-routing board.                                  | Optional  |
 | W04 | Foundations classroom         | Ground, northern classroom bay                        | Door from W01. General first-year teaching, reusable desks, and a board; no mandatory new quest.             | Optional  |
 | W05 | Teaching equipment store      | Ground, between W03 and W04, on the outer wall        | Door from W01. Logical storage for movable relics and classroom supplies.                                    | Reserved  |
-| W06 | Campus-side vestibule         | Ground, west-facing exit to campus paths | Connects W01 to C01. The building has no direct forest entrance; the east gate is the forest route.            | Chapter 1 |
+| W06 | Campus-side vestibule         | Ground, west-facing exit to campus paths | Connects W01 to C01. The building has no direct forest entrance; the west gate is the forest route.            | Chapter 1 |
 | W07 | Classroom waypoint alcove     | Ground, recessed into W01 beside W02                  | Optional destination paired with D03. A recess keeps arriving players out of the gallery's main path.        | Optional  |
 | W08 | Teaching support zone                    | Ground-floor open hall, north end of W01               | Connects W01 to W09; reserved for later content.                                                 | Reserved  |
 | W09 | Seminar zone        | Ground-floor above north end of W01                         | Connects W08, W10, and W11.                                                                                  | Reserved  |
@@ -110,7 +110,7 @@ The reference describes both a room shared by five students and the player's pri
 | --- | ----------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
 | D01 | Sirius entrance lobby               | Ground, west-facing centre of building | Links C04, C05, and D02. House signage clearly distinguishes residence from classrooms.                                                     | Chapter 1 |
 | D02 | Sirius common area                  | Ground, centre and north of wing   | Connects D01, N01, D03, D04, D05, and D06. Comfortable seating for informal conversations and the group's reaction after receiving the key. | Chapter 1 |
-| D03 | Dormitory waypoint alcove           | Ground, east wall of D02           | Doorless recess from D02. Proposed travel link to W07; may appear dormant if teleportation is outside scope.                                | Optional  |
+| D03 | Dormitory waypoint alcove           | Ground, west wall of D02           | Doorless recess from D02. Proposed travel link to W07; may appear dormant if teleportation is outside scope.                                | Optional  |
 | D04 | Residential key door zone | Ground-floor, southeast of D02  | Links D02 to D07 and D14. The landing's suite door is locked until the key is received.                                                     | Chapter 1 |
 | D05 | Laundry and utility room            | Ground, northeast service corner   | Door from D02. Possible future setting for the optional dormitory power-restoration activity.                                               | Reserved  |
 | D06 | Common-area washroom                | Ground, beside D05                 | Door from D02.                                                                                                                              | Reserved  |
@@ -144,7 +144,7 @@ These stages control introductory conversations, not every doorway. Keep the gro
 - Maintain open walking space around C01 and clear approaches to each building. No movable puzzle object should be capable of blocking campus traversal permanently.
 - Place exits outside active spell targets and away from sliding lanes. C03 requires a stopping boundary and a way to walk back without casting Glaciate.
 - Keep each required puzzle's objects and objective readable within its local area. Exact tile dimensions should follow a gameplay blockout rather than being fixed by this document.
-- Give the east gate approach, each building entrance, and the Sirius entrance distinct signage and silhouettes. Reuse architectural assets inside each building while retaining these navigational distinctions.
+- Give the west gate approach, each building entrance, and the Sirius entrance distinct signage and silhouettes. Reuse architectural assets inside each building while retaining these navigational distinctions.
 - If waypoint travel is implemented, activate D03 and W07 only after both destinations have been visited. Travel must not bypass the suite key, introductory conversations, or puzzle completion. Walking remains available.
 - Treat locked reserve rooms as ordinary closed facilities. Do not imply a discoverable secret or reward unless later quest design supplies one.
 - Use the separate map as a connectivity guide, not a measured construction drawing. Confirm room proportions, camera framing, and transition positions during level blockout.

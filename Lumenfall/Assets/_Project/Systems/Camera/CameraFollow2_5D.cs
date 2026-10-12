@@ -28,6 +28,30 @@ public class CameraFollow2_5D : MonoBehaviour
     private Vector3 currentVelocity;
 
     /// <summary>
+    /// Reports where the camera would rest when fully caught up with its target. Overlays such as the
+    /// startup menu use this to move the camera themselves and hand it back without a jump.
+    /// </summary>
+    public bool TryGetFollowPose(out Vector3 position, out Vector3 focusPoint)
+    {
+        position = transform.position;
+        focusPoint = transform.position + transform.forward;
+        if (target == null)
+        {
+            return false;
+        }
+
+        position = target.position + offset;
+        focusPoint = target.position + focusOffset;
+        return true;
+    }
+
+    /// <summary>Clears smoothing velocity so following resumes cleanly after another script moved the camera.</summary>
+    public void ResetSmoothing()
+    {
+        currentVelocity = Vector3.zero;
+    }
+
+    /// <summary>
     /// Updates the camera after the target has completed its movement for the
     /// current frame. This helps reduce visible camera jitter.
     /// </summary>

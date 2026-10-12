@@ -147,8 +147,8 @@ MonoBehaviour:
     - id: relic.stella.power
       prefab: {fileID: 0}
       type: relic
-      x: 18
-      y: 14
+      x: 11
+      y: 3
       width: 1
       height: 1
       elevation: 0
@@ -157,13 +157,13 @@ MonoBehaviour:
       tags:
       - ampere
       - weave
-      - weave-with:circuit.stella.link
+      - circuit
       compatibleWithSpells: 1
     - id: circuit.stella.link
       prefab: {fileID: 0}
       type: relic
-      x: 20
-      y: 14
+      x: 14
+      y: 3
       width: 1
       height: 1
       elevation: 0
@@ -171,7 +171,8 @@ MonoBehaviour:
       blocks: 0
       tags:
       - weave
-      - weave-with:relic.stella.power
+      - circuit
+      - conductor
       compatibleWithSpells: 1
     puzzleTargets:
     - id: quest.stella.first-light
@@ -189,28 +190,23 @@ MonoBehaviour:
       requiredPositionY: -2147483648
     - id: quest.stella.string-them-together
       objectIds:
-      - relic.stella.power
-      - circuit.stella.link
-      requiredConnections:
-      - relic.stella.power|circuit.stella.link
+      - stella.string-together.relic.1
+      - stella.string-together.relic.2
+      - stella.string-together.relic.3
+      - stella.string-together.relic.4
+      - stella.string-together.relic.5
+      requiredConnections: []
+      minimumEffectivePower: 0
       conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 1
+      requiredPowered: 1
+      requiredConnected: 0
       requiredRevealed: 0
       requiredFrozen: 0
       requiredAligned: 0
       requiredRotation: -1
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
-    portals:
-    - id: P.B02.C05
-      x: 8
-      y: 2
-      width: 1
-      height: 1
-      destination: {fileID: 11400000, guid: f8336f6f0b9e3e1469ae25a0310dffea, type: 2}
-      arrivalOffset: {x: 23, y: 11}
-      reserved: 0
+    portals: []
   areaPrefab: {fileID: 4115630932725841253, guid: 239ec96ee2cc77d449e559606f5a6797, type: 3}
   portals:
-  - {fileID: 11400000, guid: de1180b4ea288b2498f14342f81e85ee, type: 2}
+  - {fileID: 11400000, guid: 10000000000000000000000000000007, type: 2}

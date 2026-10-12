@@ -13,12 +13,12 @@ The primary spatial reading is an open field inside a continuous perimeter wall:
 ```text
                          NORTH WALL
               [NORTH GATE — FUTURE EXPANSION]
-        +-------------------------------------------+
-        | [B02 Teaching]     C03 C02   [B03 Shared] |
-WEST    |                                           | EAST GATE
-GATE    |        C01 CAMPUS COMMONS      [B04 Sirius] ---> F03 Forest
-FUTURE  | [B01 Arrival]       C04 Garden            |       F02--F01
-        +-------------------------------------------+
+                +-------------------------------------------+
+F01--F02--F03 <--- [B02 Teaching]     C03 C02   [B03 Shared] |
+ West Forest   |                                           | EAST
+WEST GATE      |        C01 CAMPUS COMMONS      [B04 Sirius] | GATE
+                | [B01 Arrival]       C04 Garden            | FUTURE
+                +-------------------------------------------+
               [SOUTH GATE — FUTURE EXPANSION]
 ```
 
@@ -28,6 +28,7 @@ Buildings are freestanding and connected by traversable campus paths. The legacy
                                       NORTH
                                         ^
                                         |
+  WEST FOREST
   F06 Deep forest boundary       +--------------------------------------+
            |                     | B03 NORTH SHARED RANGE               |
   F04 Orio's glade                | Dining / library / practice          |
@@ -48,7 +49,7 @@ Buildings are freestanding and connected by traversable campus paths. The legacy
                              Main public entrance faces south.
 ```
 
-F03 reaches A01 through the east gate. The wall encloses open paths and independent buildings; north, south, and west gates are reserved expansion points. All commons fixtures are landscaping or activity areas.
+F03 reaches A01 through the west gate. The wall encloses open paths and independent buildings; north, south, and east gates are reserved expansion points. All commons fixtures are landscaping or activity areas.
 
 ## Ground-floor walking connections
 
@@ -68,7 +69,7 @@ Each row describes a continuous walking route; repeated identifiers refer to the
 | Dormitory ground floor | D03-D06 open from D02 |
 | Arrival services | S04-S05 open from S02; S06 opens from C05 |
 
-The F03 east gate and campus grounds become available after the first reception conversation. For the narrative order rather than all available connections, see the Chapter 1 route table in the inventory.
+The F03 west gate and campus grounds become available after the first reception conversation. For the narrative order rather than all available connections, see the Chapter 1 route table in the inventory.
 
 ## Single-storey interiors
 
@@ -78,13 +79,13 @@ All four buildings are ground-floor maps. B01 is one open reception and student-
 
 ### The commons makes the campus readable
 
-The fountain is the organising landmark. Players returning from the forest or leaving a classroom can locate themselves before choosing their next destination. Separate buildings establish a simple relationship: arrive near the east gate, learn in the northwest, use shared facilities in the north, and rest in the southeast.
+The fountain is the organising landmark. Players returning from the forest or leaving a classroom can locate themselves before choosing their next destination. Separate buildings establish a simple relationship: arrive near the west gate, learn in the northwest, use shared facilities in the north, and rest in the southeast.
 
 The commons accommodates Cinna Cirra's public orientation responsibilities without inventing a separate assembly building. The trial strip sits near B02 so sliding and trap activity can be bounded against the perimeter, clear of the central walking paths.
 
 ### The forest becomes familiar before it becomes a quest destination
 
-The opening walk introduces the forest trail before the player meets Orio. Returning through the east gate changes the purpose of a known place rather than asking the player to learn another region. Orio's glade is one short branch from the main trail: secluded enough for his improvised mechanism, but close enough to avoid a long compulsory detour.
+The opening walk introduces the forest trail before the player meets Orio. Returning through the west gate changes the purpose of a known place rather than asking the player to learn another region. Orio's glade is one short branch from the main trail: secluded enough for his improvised mechanism, but close enough to avoid a long compulsory detour.
 
 The brook provides an optional pause. The blocked northern path gives the forest visual depth without requiring a larger playable wilderness in the opening chapter.
 
@@ -110,7 +111,7 @@ The suite interpretation accommodates both the five-person shared room and the p
 
 ## Suggested blockout order
 
-1. Build F01-F04, A01, reception, and the commons with simple open campus paths. Confirm the east gate, perimeter wall, and fountain are easy to recognise.
+1. Build F01-F04, A01, reception, and the commons with simple open campus paths. Confirm the west gate, perimeter wall, and fountain are easy to recognise.
 2. Add W01, W02, and W06. Walk the Stella-to-Cinna-to-Orio route and ensure the forest return gate is readable from both sides.
 3. Add C03 and C04 with contained puzzle footprints. Confirm mandatory circulation remains passable during every puzzle state.
 4. Add D01, D02, D04, D07, and D08. Test the locked suite door, friend-guided arrival, reception return, and final sleep route.

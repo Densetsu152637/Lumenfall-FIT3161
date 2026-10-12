@@ -85,6 +85,13 @@ python scripts/validate_unity_project.py Lumenfall
 ```
 
 Run the game tests from **Window > General > Test Runner > EditMode** in Unity.
+Synchronous EditMode fixtures must explicitly provide the world-service singleton and
+invoke the lifecycle callbacks they exercise: ordinary MonoBehaviours do not receive
+play-mode startup callbacks here. Use the existing `EditModeLifecycle` helper, restore
+any previous world instance, and unsubscribe fixture-owned spell casters during cleanup.
+Load a quest monitor's definitions through its `Awake` callback before calling
+`EvaluatePuzzles`; tests should not depend on `Update` timing. Preserve the production
+lesson, puzzle and report requirements rather than bypassing them to grant rewards.
 
 ## Downloadable game releases
 

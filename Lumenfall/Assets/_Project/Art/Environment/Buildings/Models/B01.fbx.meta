@@ -1,0 +1,245 @@
+fileFormatVersion: 2
+guid: 92cc7e60a98188842826759c6c21152d
+ModelImporter:
+  serializedVersion: 24200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_bricks_diffuse
+    second: {fileID: 2800000, guid: a51985660a94381439a0c55b99a0dd0f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_bricks_normal
+    second: {fileID: 2800000, guid: 8a04bdf768491fe4c9834db2dbe4d9b8, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_bricks_roughness
+    second: {fileID: 2800000, guid: 8920a7942ce7f99429fb4b27b97d07a6, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless wood doski__brown
+    second: {fileID: 2800000, guid: 6b7b782abc8952e45a997c840276b2a4, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless wood doski__color
+    second: {fileID: 2800000, guid: cd6a47d41a63d6a4eadbe93078dd9c8c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless wood doski__normal
+    second: {fileID: 2800000, guid: 36620772697a9ea4cb37a28099ddd944, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless wood doski__roughness
+    second: {fileID: 2800000, guid: dffd1eb2eaf74324a98155e07bd492f1, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless wood doski__specular
+    second: {fileID: 2800000, guid: 2e0d9be7286b7a743bb4f3a7aa2bcf54, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_blue_wood_diffuse
+    second: {fileID: 2800000, guid: a59e9f29b1602cf43aa1441f6d7cd417, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_brown_wood_diffuse
+    second: {fileID: 2800000, guid: 724db1ae1596c5c4da6d3ac2a769f5a4, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_brown_wood_diffuse_no_dirt
+    second: {fileID: 2800000, guid: 66c89582b7b1c8a4aa4b056c2aeca5f7, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_wood_diffuse
+    second: {fileID: 2800000, guid: 281dd918f33d8fd4a9d37215a4c35311, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_wood_normal
+    second: {fileID: 2800000, guid: 3808a4d0e2681414c8c2de07e73d863d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_wood_normal_no_dirt
+    second: {fileID: 2800000, guid: f81a339472ee6cf4cb96c85bac57b4e0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: 2048_seamless_wood_roughness
+    second: {fileID: 2800000, guid: a16ed89c2db14f3408a1e38e6bdeb797, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: glass diffuse
+    second: {fileID: 2800000, guid: 5b2a4fd5cdb1a63408d57acfb52d4725, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: glass roughness
+    second: {fileID: 2800000, guid: 638c7a2c8f21be641a77c24171db5ecf, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: metal tubes_color
+    second: {fileID: 2800000, guid: 79e485b0af839064fba3a2a08c134fb2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: metal tubes_normal
+    second: {fileID: 2800000, guid: f2e73ef3d5500104f966c9e1d53c15a0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: metal tubes_roughness
+    second: {fileID: 2800000, guid: 2be44cb6dd0f1b845b6ed2858bf0a723, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plaster_color white
+    second: {fileID: 2800000, guid: 227395e8849244249b733318a4a91511, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plaster_normal
+    second: {fileID: 2800000, guid: 4b77712926b20cd46aa4712a4b2d6486, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: plaster_roughness
+    second: {fileID: 2800000, guid: bcc238323b3e5a243bfd59722fee1a18, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: red roof_diffuse
+    second: {fileID: 2800000, guid: dd98b7d61d7a09e41a4b30c85bf60e4c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: roof_normal
+    second: {fileID: 2800000, guid: 2f1209d815083a84a8b3d7bf601f9300, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: roof_roughness
+    second: {fileID: 2800000, guid: aa7a5e98cbb890442b5b17e713a42c2c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: seamless_wood_roughness_no_dirt.
+    second: {fileID: 2800000, guid: a7c961d0c0e9c1f4abb7a5015808556f, type: 3}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
