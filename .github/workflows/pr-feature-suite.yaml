@@ -73,7 +73,7 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-          cache-dependency-path: ${{ steps.prepare.outputs.project }}/../scripts/requirements-validation.txt
+          cache-dependency-path: Temp/pr-tests/${{ steps.suite.outputs.suite }}/snapshot/scripts/requirements-validation.txt
 
       - name: Install pinned validator dependencies
         if: ${{ steps.prepare.outputs.python == 'true' }}
