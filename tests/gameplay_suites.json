@@ -16,14 +16,30 @@
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
         "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 5,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
-        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
+        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1,
+        "Lumenfall.GameEvents.Tests.AccessibilityPreferencesTests": 16,
+        "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 15,
+        "Lumenfall.Tests.GameEvents.GameSaveRecoveryTests": 18,
+        "Lumenfall.Tests.GameEvents.ProductionUiPolicyTests": 4,
+        "Lumenfall.Startup.Tests.GraphicsPreferencesTests": 13,
+        "Lumenfall.Startup.Tests.GraphicsRecommendationsTests": 17
       }
     },
     "playmode": {
       "name": "World integration",
       "fixtures": {
-        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 3
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 3,
+        "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
+        "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
+        "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2
       }
+    }
+  },
+  "graphical": {
+    "name": "Graphical settings interaction",
+    "category": "RequiresGraphics",
+    "fixtures": {
+      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1
     }
   }
 }

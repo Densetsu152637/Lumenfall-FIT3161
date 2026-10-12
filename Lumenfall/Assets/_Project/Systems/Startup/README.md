@@ -75,3 +75,11 @@ The IMGUI menu uses Nunito, the existing button sheets and runtime-generated gol
 Panels scale to the available window. In-game option sections scroll when needed and honor text-size preferences. Input leases prevent the journal, spell wheel, dialogue and pause menu from controlling gameplay simultaneously; each closes only its own movement lock. Spell and inventory subscriptions rebind when New Game replaces the event runtime.
 
 See [UI integration sources and validation](../../../../../docs/implementation/graphics-ui-integration.md) for branch provenance, scoped imports, verification and remaining graphical checks.
+
+## Integration validation
+
+The current test contract retains 164 EditMode cases, ten batch PlayMode cases and
+one graphical settings-pointer case. Batch CI explicitly excludes `RequiresGraphics`;
+run that category separately in a graphical Editor and inspect its screenshots.
+See [test procedures](../../../../../tests/README.md) for exact verification and
+local preference/save isolation. Validation of the newly merged revision is pending.

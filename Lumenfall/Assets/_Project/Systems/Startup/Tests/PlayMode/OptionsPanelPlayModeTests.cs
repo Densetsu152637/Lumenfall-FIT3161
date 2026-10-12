@@ -58,9 +58,9 @@ namespace Lumenfall.Startup.Tests
             Assert.That(panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Graphics));
             Assert.That(panel.FocusedRow, Is.EqualTo(-1));
         }
-        [UnityTest] public IEnumerator MouseRibbonsRenderAndSwitchSections()
+        [UnityTest, Category("RequiresGraphics")] public IEnumerator MouseRibbonsRenderAndSwitchSections()
         {
-            if (Application.isBatchMode) Assert.Ignore("IMGUI painting and screenshots require a graphical Editor test run.");
+            Assert.That(Application.isBatchMode, Is.False, "Run RequiresGraphics tests in a graphical Editor, and exclude the category from batch runs.");
             host = new GameObject("Settings UI event test");
             var view = host.AddComponent<OptionsPanelGuiProbe>();
             float deadline = Time.realtimeSinceStartup + 10f;
@@ -72,12 +72,27 @@ namespace Lumenfall.Startup.Tests
             Assert.That(view.Panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Graphics), "The Graphics ribbon must respond to pointer events.");
             string directory = Path.Combine(Application.dataPath, "../Logs/graphics-validation");
             Directory.CreateDirectory(directory);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory, "settings-graphics.png"));
-            yield return null;
+            yield return CaptureScreenshot(Path.Combine(directory, "settings-graphics.png"));
             view.Click(new Vector2(100f, 24f + 18f));
+            deadline = Time.realtimeSinceStartup + 10f;
             while (view.HasPendingEvents && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(view.Panel.SelectedSection, Is.EqualTo(OptionsPanel.Section.Gameplay));
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory, "settings-gameplay.png"));
+            yield return CaptureScreenshot(Path.Combine(directory, "settings-gameplay.png"));
+        }
+        private static IEnumerator CaptureScreenshot(string path)
+        {
+            if (File.Exists(path)) File.Delete(path);
+            // Allow the selected section to repaint, then wait for the asynchronous PNG write.
+            yield return null;
+            ScreenCapture.CaptureScreenshot(path);
+            float deadline = Time.realtimeSinceStartup + 10f;
+            while ((!File.Exists(path) || new FileInfo(path).Length < 8) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(File.Exists(path), Is.True, "The graphical run must produce a fresh screenshot.");
+            byte[] png = File.ReadAllBytes(path);
+            Assert.That(png.Length, Is.GreaterThan(8));
+            CollectionAssert.AreEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 },
+                new System.ArraySegment<byte>(png, 0, 8));
             yield return null;
         }
     }

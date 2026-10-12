@@ -41,15 +41,34 @@ Save/load controls use dedicated autosave and three manual slots. Invalid saves 
 
 ## Verification
 
-Unity version: `6000.4.10f1`, URP `17.4`. Local results are retained in `Lumenfall/Logs/graphics-validation` (ignored build artifacts).
+Unity version: `6000.4.10f1`, URP `17.4`. Main `396c709` is merged into the
+graphics/settings branch, preserving owner-scoped wheel input and the animated
+wheel with Rotara-panel chip clearance. The current fixture inventory is 164
+EditMode, ten batch PlayMode and one separately selected graphical PlayMode case.
+See [test procedures and coverage](../../tests/README.md).
 
-- EditMode covers graphics recommendations/persistence, audio buses, accessibility, save recovery and existing quest/world behavior.
-- PlayMode covers live URP settings, tab navigation, recommended preset isolation, overlay ownership and authored-world routes/quest refresh.
-- The graphical-only UI test paints the compact shared panel, sends pointer events to both tabs and captures screenshots. Batch-mode CI explicitly skips this test because IMGUI does not repaint there; keyboard/controller state tests continue in batch mode.
-- The authored-world fixture loads additively, resets quest definitions after the menu backdrop loads, and unloads its scene afterward, avoiding test-runner destruction and dependence on a developer's saved quest progress.
-- Repository checks: `python scripts/validate_unity_project.py Lumenfall` and `python -m unittest discover -s scripts/tests`.
+- EditMode covers graphics recommendations/persistence, audio buses, accessibility,
+  transactional save recovery, input ownership and existing quest/world behavior.
+- Batch PlayMode covers live URP settings, keyboard navigation, preset isolation,
+  movement ownership and authored-world routes/quest refresh.
+- The pointer test retains IMGUI repaint and screenshot checks under
+  `RequiresGraphics`; batch runs explicitly exclude that category. Both result
+  verifiers reject failures and skips. Graphical acceptance needs a separate Editor
+  run and screenshot inspection.
+- Unity CI and Windows build checkouts materialize Git LFS terrain/binary assets.
+- Repository checks: `python scripts/validate_unity_project.py Lumenfall` and
+  `python -m unittest discover -s scripts/tests`.
 
-Physical controller testing, the full animated title/menu flow and a standalone player build require reviewer checks. Hardware presets are heuristics and have not been benchmarked across machines. The audio manifest may reference clips absent from the base branch; missing clips are tolerated and the volume preferences remain functional. Broad branch integrations intentionally exclude their unrelated content.
+Validation of this newly integrated revision is pending. Earlier branch results do
+not establish that the merged checkout passes. Local runs must isolate preferences
+and save paths with a temporary test company/product identity and restore original
+ProjectSettings bytes afterward. Hosted CI uses the committed identity in a fresh
+Linux profile. Never use developer save data as a test fixture.
+
+Physical controller testing, the full animated title/menu flow, visual AA/AO output
+and a standalone player build remain separate checks. Hardware presets are
+heuristics rather than measured performance guarantees. Missing audio clips are
+tolerated by the catalog; volume preferences remain functional.
 
 ## Review and rollback
 
