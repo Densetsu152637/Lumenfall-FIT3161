@@ -21,7 +21,12 @@ namespace Lumenfall.DataDriven
         [SerializeField] private NpcDefinition definition;
         [SerializeField] private string initialDialogueId;
         private static Texture2D interactionKeyTexture;
-        private void Awake() { ApplyDefinition(); }
+        private void Awake()
+        {
+            // Every NPC idles with some variety and turns to face the player; see NpcAmbientBehaviour.
+            if (GetComponent<NpcAmbientBehaviour>() == null) gameObject.AddComponent<NpcAmbientBehaviour>();
+            ApplyDefinition();
+        }
         private void OnEnable() { ApplyDefinition(); }
         private void ApplyDefinition()
         {
