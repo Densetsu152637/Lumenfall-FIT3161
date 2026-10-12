@@ -9,7 +9,7 @@ using Lumenfall.Quests;
 namespace Lumenfall.DataDriven
 {
     /// <summary>Instantiates inspector-authored world area and NPC assets.</summary>
-    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider
+    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider, ISaveStateValidator, ISaveStateRestorePhases
     {
         public static DataDrivenWorldLoader Instance { get; private set; }
         [SerializeField] private WorldAreaAsset startingArea;
@@ -37,7 +37,7 @@ namespace Lumenfall.DataDriven
         private void OnDestroy()
         {
             if (Instance != this) return;
-            if (registeredSaveProvider && saveManager != null) saveManager.UnregisterProvider(SaveKey);
+            if (registeredSaveProvider && saveManager != null) saveManager.UnregisterProvider(this);
             Instance = null;
         }
 
@@ -115,14 +115,39 @@ namespace Lumenfall.DataDriven
                 playerX = player == null ? 0 : player.CurrentCell.x, playerY = player == null ? 0 : player.CurrentCell.y });
         }
 
+        public bool ValidateStateJson(string json)
+        {
+            try
+            {
+                if (!GameSaveManager.IsValidPayloadObject(json, "mapId", "playerX", "playerY")) return false;
+                SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+                WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
+                GridMover player = FindAnyObjectByType<GridMover>();
+                GridWorld grid = world == null ? FindAnyObjectByType<GridWorld>() : world;
+                return area != null && area.areaPrefab != null && area.definition != null && player != null && !player.IsMoving && grid != null &&
+                    state.playerX >= 0 && state.playerY >= 0 && state.playerX < area.definition.width && state.playerY < area.definition.height;
+            }
+            catch { return false; }
+        }
+
+        public bool PrepareRestoreStateJson(string json)
+        {
+            if (!ValidateStateJson(json)) return false;
+            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (world == null) world = FindAnyObjectByType<GridWorld>();
+            Load(area, npcCatalog);
+            return CurrentArea == area;
+        }
+
         public bool RestoreStateJson(string json)
         {
+            if (!ValidateStateJson(json)) return false;
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
-            WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
-            if (area == null) return false;
-            Load(area, npcCatalog);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (CurrentArea != area && !PrepareRestoreStateJson(json)) return false;
             GridMover player = FindAnyObjectByType<GridMover>();
-            return player == null || world == null || player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
+            return CurrentArea == area && player != null && world != null && player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)
@@ -152,6 +177,14 @@ namespace Lumenfall.DataDriven
             return false;
         }
 
+        public bool TryGetMapDefinition(string id, out MapDefinition definition)
+        {
+            WorldAreaAsset area = FindArea(id);
+            definition = area == null ? null : area.definition;
+            return definition != null;
+        }
+
+        /// <summary>Saves made before the east forest was renamed still name it eastForest.</summary>
         private static string NormalizeMapId(string id)
         {
             return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
@@ -162,6 +195,7 @@ namespace Lumenfall.DataDriven
 
         private WorldAreaAsset FindArea(string id)
         {
+            id = NormalizeMapId(id);
             if (startingArea != null && startingArea.definition.id == id) return startingArea;
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
             // Code-built areas are not scene assets, so saves made inside them resolve here.

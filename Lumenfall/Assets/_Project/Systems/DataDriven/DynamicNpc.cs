@@ -48,10 +48,11 @@ namespace Lumenfall.DataDriven
         }
         private void Update()
         {
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
+            // OverlayInputGate covers the pause menu, journal, spell wheel and dialogue choices.
+            if (Time.timeScale <= 0f || OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen ||
                 DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
-                !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
-                GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
+                !(KeyBindings.WasPressed(GameAction.Talk) || Gamepad.current?.buttonSouth.wasPressedThisFrame == true) ||
+                GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
 
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null) return;
@@ -67,8 +68,8 @@ namespace Lumenfall.DataDriven
 
         private void OnGUI()
         {
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
+                DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;
@@ -101,7 +102,7 @@ namespace Lumenfall.DataDriven
             return interactionKeyTexture;
         }
         public DialogueSession Interact()
-        { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
+        { if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
         private string SelectDialogue()
         {
             if (definition == null) return DialogueId;

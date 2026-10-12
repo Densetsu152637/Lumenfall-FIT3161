@@ -1,241 +1,85 @@
-# Startup menu
+# Startup menu and shared settings
 
-`StartupMenu` creates an overlay after the first scene has loaded. The current world stays
-visible below it, while every `GridPlayerInput` component is disabled until Start or a successful
-Load closes the menu. This keeps the backdrop useful for orientation without allowing movement or
-portal interaction through the menu.
+`StartupMenu` bootstraps after scene load and pauses gameplay until Start or a successful Load completes its closing transition. It owns an `OverlayInputGate` lease, disables active gameplay input and dialogue overlays, and restores its previous time scale and input state when destroyed. Generated textures and event subscriptions are released with their owner.
 
-The menu has one dedicated `autosave` slot and three manual snapshot slots: `save-1`, `save-2`,
-and `save-3`. Autosave is the active writable slot throughout play, including after loading a
-manual snapshot. The existing `save-*` files remain in place when upgrading; if no autosave exists,
-the most recently played valid legacy slot is loaded and copied into `autosave` while remaining
-available as a manual save. On a fresh profile no placeholder save is created.
+## Settings
 
-Each game belongs to one manual slot. `ManualSaveSlot` stores the link as the game-event counter
-`save.manual-slot` (1 to 3, or 0 for none), so it is written into every save and restored with it.
-Saves made before the link existed load unlinked, because importing event state clears all counters.
+The menus keep their original look; the graphics, volume-bus and accessibility settings are added to them.
 
-- **New Game.** START opens a New Game page that lists the three manual slots as cards. Pressing a
-  card's START begins a new game in that slot. A filled slot asks for a second START before it is
-  replaced (`Slot 2 already holds a save…`). If the slot is empty but an autosave exists, the second
-  press confirms replacing the autosave instead. The run is linked at once, but nothing is written
-  until the run's first save: the first autosave after 30 seconds of real play, or an earlier journal
-  Save or Main menu. The slot is written together with that save
-  (`GameAutosave.BeginNewRun(slot)`), so a new game abandoned straight away leaves the old files as
-  they were.
-- **Load.** The Load page shows an Autosave card plus three Manual Slot cards. Loading a manual slot
-  restores its state and links the run to that slot (older files carry no link). Play then
-  continues in `autosave`, which is first written after 30 seconds of real play; the manual file is
-  never touched by autosave. Loading Autosave continues the current autosave, keeping whatever link
-  it holds.
-- **Save.** The journal's Save button writes the linked slot (see In-game options). A run with no
-  link, such as one carried over from before slots were linked, takes the first empty slot. If all
-  three are full, the player is asked to load one first. The overlay also disables
-active dialogue overlays while it is visible,
-so dialogue choices cannot be selected behind the menu.
+**Startup menu.** Settings is the original card: master, music, sound effects and ambience volume sliders, then the
+Show quest hints switch. Below it, **Controls** opens the key-rebinding page and **Graphics** opens a page in the same
+card style with VSync (relic switch), antialiasing Off/FXAA/SMAA (lavender pills), ambient occlusion (switch), shading
+quality Low/Medium/High (pills), the recommended preset and **Use recommended**. Pages keep fixed sizes (Settings
+560×758, Graphics 600×610) and shrink through `FitScale` on small windows.
 
-Button sheets are authored in `Assets/2D` and copied into `Resources/StartupButtons` for player
-build loading. The source files remain the authoring assets; replace both locations when art is
-updated, or change `LoadButtonTextures` to use a different asset pipeline. Master volume is stored
-in the `lumenfall.master-volume` PlayerPrefs key and currently maps to `AudioListener.volume`.
+**In-game options.** The Settings pop-out (`QuestHintOverlay`) and the journal's Settings tab (`InventoryEncyclopediaUI`)
+draw the same `OptionsPanel`: silk bookmark ribbons hanging from a spellbook spine, each with a rune, relic switches,
+lantern volume sliders, and page turns in the journal. The chosen section stays selected between openings. A section
+whose rows do not fit (for example with a large text size) scrolls with the gold scrollbar.
 
-The startup overlay freezes `Time.timeScale`, restores its previous value on exit, and repeatedly
-guards movement, dialogue, and the legacy save overlay as world objects are created. Successful
-gameplay loads and New Game starts update the last-played marker; backdrop restoration does not.
-
-## Files
-
-| File | Responsibility |
+| Section | Options |
 | --- | --- |
-| [`StartupMenu.cs`](StartupMenu.cs) | Menu flow, slot logic, pages, title sequence and rune ring. |
-| [`MenuArt.cs`](MenuArt.cs) | Palette and runtime-generated textures (panels, glows, rings, wand cursor). |
-| [`MenuSparks.cs`](MenuSparks.cs) | Screen-space motes and sparks: ambient motes, wand trail, click bursts, dissolve. |
-| [`MenuCameraDrift.cs`](MenuCameraDrift.cs) | Pans the gameplay camera while the menu is open and hands it back. |
-| [`SaveSlotSummary.cs`](SaveSlotSummary.cs) | Writes the location, quest, playtime and thumbnail shown on the Load page. |
-| [`MenuSkin.cs`](MenuSkin.cs) | The menu's look packaged for in-game menus: textures, styles, themed controls, motes, wand cursor and sparks. |
-| [`MenuSkinProps.cs`](MenuSkinProps.cs) | Themed props: relic switches, volume lantern, frost, hourglass, wax seal, inked text, ribbons, runes, page flips and candle hovers. |
-| [`MenuProps.cs`](MenuProps.cs) | Generated textures for those props. |
-| [`OptionsPanel.cs`](OptionsPanel.cs) | Sectioned in-game options shared by the Settings pop-out and the journal's Settings tab. |
+| Gameplay | Show quest hints; sprint Hold/Toggle. |
+| Audio | Master, music, sound effects and ambience volume. |
+| Display | Fullscreen (player build only); VSync. |
+| Graphics | Antialiasing (Off/FXAA/SMAA); ambient occlusion; shading quality (Low/Medium/High); recommended preset and Use recommended. |
+| Controls | Grouped key rebinding. |
+| Accessibility | Reduce menu motion; reduce camera motion; high contrast; instant dialogue; dialogue speed; text size (100–175%). |
 
-## Flow
+Keyboard and controller: on the startup Settings and Graphics pages, Up/Down move the focus, Left/Right adjust the
+focused slider, switch or choice, and Enter/A toggles or presses it. In the in-game options, Up/Down move between
+ribbons; Right or Enter steps into the section's rows, where Up/Down move between rows (Up from the first returns to the
+ribbons) and Left/Right/Enter adjust as above. The focus glow appears only once keys or a controller are used. Options
+the renderer cannot apply are dimmed, read `Not available with this renderer`, and keep their saved values.
 
-On the first open after launch the menu plays a title sequence. `Lumenfall` appears unlit in the
-centre of the screen, and a spark crosses it, lighting each letter like a lantern. A
-`Press any key to begin` prompt then appears. Any key or click (including one during the lighting)
-moves the title into the panel and fades the main page in. Reopening the menu from the journal
-with `ReturnToMainMenu` skips the sequence. The `introPlayed` flag is static and is reset at
-`SubsystemRegistration` so the sequence still plays when domain reload is disabled.
+The journal opens with the configured Journal key (Tab by default) or the controller Select button; shoulder buttons switch its outer Inventory/Encyclopedia/Settings pages. Escape closes it. Escape during gameplay or the Settings button opens the pause panel. The pause panel holds only the options and a `Game paused · Esc to resume` line; its top-right button reads Close. The journal footer provides **Main menu**, **Save · Slot N** and **Quit game**, with the linked slot's save time inked beside them. A failed save stays visible in the footer and prevents Quit from closing the game.
 
-Start and a successful Load dissolve the panel into light. The backdrop fades out and the camera
-eases back to its follow pose over `CloseSeconds` (1.3 seconds). Only then is the menu destroyed
-and input restored.
+Controls groups movement, spell and interface actions. Selecting an action captures its next key; a conflicting assignment requires an explicit Swap or Cancel. Escape cancels the capture. Runtime movement, sprint, talk, spell selection/casting and journal input use these bindings.
 
-During gameplay, Escape opens the Settings pause pop-out and Escape again resumes. The menu itself is
-reached from the journal's Main menu button (see In-game options below). With the menu open, Escape returns from Load and Settings to the main page, and from Controls to Settings; from
-the main page it closes the menu and resumes gameplay. While a key is being rebound or a swap prompt
-is showing, Escape only cancels that. On the main page, Up/Down (or W/S) select an option and Enter
-or Space activates it.
+## First-install graphics recommendations
 
-## Presentation
+`GraphicsPreferences.LoadOrCreate` fills missing graphics keys from `GraphicsRecommendations.ForCurrentDevice`. Existing choices survive launch and hardware changes. Use Recommended explicitly reapplies the current device's preset without changing Main settings.
 
-The menu is drawn with IMGUI. Apart from the button sheets, all of its art is generated at runtime
-and destroyed with the menu. That includes the four-pointed star from
-`GameSaveOverlay.CreateSparkleTexture`. The palette uses gold, cream and lavender to match the
-dialogue, building-sign and autosave overlays. Text uses `Resources/Dialogue/Nunito-Regular`.
-Animation uses `Time.unscaledTime` because the menu sets `Time.timeScale` to 0.
+| PC tier | Minimum reported specs | VSync | AA | AO | Shading |
+| --- | --- | --- | --- | --- | --- |
+| High | 15,000 MB RAM, 8 logical processors, 4,000 MB VRAM, shader level 45, graphics device | On | SMAA | On | High |
+| Medium | 7,500 MB RAM, 4 logical processors, 2,000 MB VRAM, shader level 45, graphics device | On | FXAA | Off | Medium |
+| Low | Below any Medium threshold, or unknown/headless hardware | On | Off | Off | Low |
 
-Pages are authored at fixed pixel sizes (Main 640×520, Load 700×650, Settings 560×560, Controls
-560×440–720) and draw at that size whenever they fit. If the current page, plus a 48×24 margin,
-does not fit the window, `FitScale` shrinks the title and panel uniformly through `GUI.matrix`, by
-just enough to fit, and the scale eases over a few frames when the page changes. The Controls page
-shortens its scrolling list (down to 440) before any scaling is needed. The backdrop, motes and
-sparks always use real window pixels; IMGUI maps the pointer into the scaled panel automatically.
+These are conservative hardware heuristics, not measured frame-rate guarantees. Shared/integrated GPU memory can be reported imprecisely; manual overrides remain available. Mobile retains Off VSync/AA/AO and High shading to preserve the existing mobile configuration.
 
-- **Living backdrop.** `MenuCameraDrift` moves the camera from `LateUpdate`, which runs after
-  `CameraFollow2_5D` because of the menu's execution order. It eases from the camera's current pose
-  into a wider view that sways a few degrees and wanders a few tiles around the player. On close it
-  returns to `CameraFollow2_5D.TryGetFollowPose` and calls `ResetSmoothing`. The world itself stays
-  paused, so only the camera moves.
-- **Parallax.** The pointer position, smoothed over time, shifts the motes (nearer motes shift
-  more), nudges the panel a few pixels and adds a small camera offset.
-- **Wand cursor.** While the menu is open the system cursor becomes a generated wand. The default
-  is restored in `OnDestroy`. Moving leaves a trail of sparks, and clicks throw a small burst.
-- **Rune ring and woven light.** The main page has a rune ring beside the buttons, with one rune
-  per option. At rest the ring turns slowly. Hovering a button or rune, or selecting one with the
-  keyboard, turns that rune to the socket on the ring's right. Once it is aligned, cyan light fills
-  the weave thread from the socket to the button, and beads of light travel along it. The threads
-  are amber while idle, matching `WeaveCableView`. Clicking a rune activates its option.
-- **Page changes.** Each page fades in and settles upward slightly over 0.25 seconds. The panel
-  takes the new page's size immediately.
-- **Controls.** Each button sheet has four stacked frames (normal, hover, pressed, disabled). The
-  menu uses the hover and pressed frames and keeps the sheet's aspect ratio. The volume slider and
-  the quest-hint switch are custom-drawn over IMGUI controls. The Controls page temporarily swaps
-  in a themed vertical scrollbar.
+Preferences use `lumenfall.graphics.vsync`, `.antialiasing`, `.ambient-occlusion`, and `.shading`. `GraphicsOptions` applies them before scene load, clones the active URP asset for runtime changes, configures current and later game cameras, and restores authored resources on destruction. VSync maps to `QualitySettings.vSyncCount`; AA uses URP camera FXAA/SMAA; AO toggles the renderer's existing SSAO feature. Shading adjusts shadow distance/resolution/cascades and LOD bias. Disabling AA restores each camera's original post-processing state. URP runtime variant stripping is disabled so player builds retain selectable AA variants.
 
-## Load page and save summaries
+Main preferences retain their own stores: `AudioMixSettings` owns bus levels, `AccessibilitySettings` owns accessibility preferences, `KeyBindings` owns keyboard bindings and `GameSettingsPanel` owns reduced menu motion. The old display VSync adapter delegates to `GraphicsOptions`, so no second VSync authority competes with it.
 
-The Load page shows each slot as a journal card. A filled card shows a thumbnail, the location, the
-quest in progress (or a status such as `A new term begins`), and a row of stars with one per quest,
-lit for each completed one, followed by `n of m quests`. The save file's last-write time and the total
-playtime sit in a small column under the card's LOAD button. Card text is single-line. Text that
-is too long steps its font size down to 12 and is then trimmed with an ellipsis. The slot the backdrop came from is
-marked `Most recent` (lavender), and the manual slot the current game belongs to is marked `Current` (gold). The New
-Game page reuses the same cards, with a START button on every card, including empty ones.
-Missing files read `Empty — a fresh page awaits`.
+## Main menu and saves
 
-`SaveSlotSummary` bootstraps itself after scene load and listens to `GameSaveManager.SaveCompleted`
-and `LoadCompleted`. It writes `<slot>.summary.json` and `<slot>.thumb.png` next to the save in
-`Application.persistentDataPath`, and never modifies the save file. A missing or stale summary only
-changes what the card shows.
+The first launch presents the authored starting world behind the menu without creating a placeholder save. Later launches load `autosave` as a backdrop. Legacy manual saves can be promoted to autosave without overwriting their originals. Backdrop loading does not mark a slot as newly played.
 
-| Field | Source |
-| --- | --- |
-| Location | The loaded map's name (`westForest` is `West Forest`, `B04.Ground` is `Sirius Dormitory`, and so on), refined by the smallest named map region containing the player. Code-like region names such as `S03` are ignored. |
-| Quest | `quest` holds the first active quest in `QuestHintOverlay.QuestOrder`, or `A new term begins`, `Between quests` or `Every quest complete`. `questsDone` and `questsTotal` hold the progress counts. Older summaries that stored the combined `title · n of m quests done` text are split when the Load page reads them. |
-| Playtime | Unscaled time while `Time.timeScale > 0` and the menu is hidden. It resets on New Game and is restored from the loaded slot's summary; loading a manual save carries that playtime into autosave. |
-| Thumbnail | A 320×180 render of `Camera.main` taken in `LateUpdate`. It uses a URP `StandardRequest` render request, falling back to `Camera.Render`. Autosaves refresh it at most every 10 seconds per slot. |
+Each game belongs to one manual slot (`save-1`, `save-2`, `save-3`). `ManualSaveSlot` stores the link as the game-event counter `save.manual-slot`, so it is written into every save and restored with it.
 
-Future menus can replace the IMGUI drawing methods while retaining the slot constants and the
-`GameSaveManager.FindMostRecentSlot` contract. `GameAutosave` writes to `autosave` every 30 seconds
-of active gameplay. Only time with the game running and the startup menu closed counts, so menus,
-the Settings pause and the menu's closing transition never bring a save closer. Nothing is written
-the moment a game is loaded or started; the first autosave waits for 30 seconds of real play. The
-only manual-slot writes are the journal's Save and a new game's first save. Returning to the main
-menu or quitting from the journal saves too, but only once the player has had five seconds of real
-play since the last load (`GameAutosave.HasPlayedSinceLoad`), so peeking at a load and backing out
-changes nothing. There are no event-triggered or app-pause autosaves.
+- **New Game.** START opens a New Game page with the three manual slots as cards. A card's START resets event/world state through the save manager's reset transaction and links the run to that slot. A filled slot, or an existing autosave, needs a second START. Nothing is written until the run's first save (`GameAutosave.BeginNewRun(slot)`), so a new game abandoned at once leaves the old files untouched.
+- **Load.** The Load page shows an Autosave card and three Manual Slot cards, tagged `Most recent` and `Current`. Loading a manual slot links the run to it and continues in `autosave`; the manual file is never touched by autosave.
+- **Save.** The journal's Save button writes the linked slot (`ManualSaveSlot.SaveToLinked`) after refreshing the autosave. An unlinked run takes the first empty slot.
 
-Manual validation (not yet executed): the title sequence, camera drift and return, cursor, rune
-ring, page fades and thumbnails have been compiled but not yet checked in Play mode or a player
-build.
+`GameAutosave` writes `autosave` after every 30 seconds of active play (time running and the startup menu closed), and never while `GameSaveManager.AutosaveAllowed` is false during recovery or another save operation. There are no event-triggered autosaves. Main menu and Quit game save first only once the player has played five seconds since the last load (`GameAutosave.HasPlayedSinceLoad`). The startup menu has no Save option; on the main page Up/Down (W/S, d-pad or stick) select START, LOAD, SETTINGS or EXIT, and on the New Game and Load pages they move between cards.
 
-## In-game options
+The Load page shows location, quest, playtime, timestamp and thumbnail summaries. If a primary save is invalid, the menu offers explicit valid previous/interrupted-write recovery candidates. Save validation, migrations, unknown-provider preservation and rollback live in `GameSaveManager`; the menu never silently promotes a recovery candidate. See [save recovery](../../../../../docs/implementation/feature-save-recovery-migrations.md).
 
-Two in-game menus reuse the startup menu's look: the Settings pop-out opened by the top-right
-button (`QuestHintOverlay`) and the journal (`InventoryEncyclopediaUI`). Each host owns a
-`MenuSkin` and an `OptionsPanel`. `StartupMenu` keeps its own copies of the same drawing code and
-does not use `MenuSkin` yet.
+`SaveSlotSummary` writes optional `.summary.json` and `.thumb.png` sidecars. They affect presentation only. Missing/stale summaries do not invalidate saves. `GameSaveOverlay` presents save feedback without a competing full-screen slot UI.
 
-`MenuSkin` builds its textures and Nunito styles on first use inside `OnGUI` and destroys them in
-`Dispose`. Every draw is multiplied by its `Fade`, so a host can fade whole layers. It also provides
-the dusk backdrop with 18 drifting motes, pointer parallax, the wand cursor with its spark trail and
-click bursts, the panel frame with twinkling corner stars, the title glow, the star divider, section
-headings, text buttons, tabs with a gold underline, the gold slider, the sliding switch, and a
-`using` scope that swaps in the gold scrollbar. Animation uses unscaled time.
+## Presentation and ownership
 
-`OptionsPanel` splits the options into five sections. Each section is a silk bookmark ribbon that
-hangs from a spellbook spine and carries a rune: a compass for Gameplay, a bell for Audio, a lantern
-for Display, a wand for Controls and an open hand for Accessibility. The chosen ribbon pulls out
-further, and its rune lights gold. In the pop-out the chosen section fades in, while the journal
-turns a page instead. The chosen section stays selected between openings.
+The IMGUI menu uses Nunito, the existing button sheets and runtime-generated gold/cream/lavender art. `MenuArt`, `MenuProps`, `MenuSparks`, `MenuCameraDrift`, `MenuSkin` and `MenuSkinProps` contain reusable presentation. Hosts dispose their own generated textures. Animation uses unscaled time. Reduced menu motion suppresses camera drift, pointer parallax, motes and spark trails; it is separate from reduced gameplay camera motion.
 
-| Section | Contents |
-| --- | --- |
-| Gameplay | `Show quest hints` (`QuestHintOverlay.HintsEnabled`, the same `lumenfall.quest-hints-enabled` key as the startup menu). |
-| Audio | Master volume (`GameSettingsPanel.MasterVolume`, `lumenfall.master-volume`). |
-| Display | Fullscreen (`Screen.fullScreen`, remembered by Unity, no effect in the editor) and VSync (`lumenfall.vsync`, applied at launch by `StartupMenu`). |
-| Controls | The grouped rebinding list from `GameSettingsPanel.DrawControls`. |
-| Accessibility | Reduce motion (`lumenfall.reduce-motion`). |
+Panels scale to the available window. In-game option sections scroll when needed and honor text-size preferences. Input leases prevent the journal, spell wheel, dialogue and pause menu from controlling gameplay simultaneously; each closes only its own movement lock. Spell and inventory subscriptions rebind when New Game replaces the event runtime.
 
-Reduce motion turns off the drifting motes, pointer parallax, the wand's spark trail and click
-bursts, the star divider's rocking, the panels' rise and settle, and the decorative motion listed
-under Themed props below. It applies to the in-game menus
-and to the startup menu, which also skips its camera drift. The startup menu reads it when it opens.
+See [UI integration sources and validation](../../../../../docs/implementation/graphics-ui-integration.md) for branch provenance, scoped imports, verification and remaining graphical checks.
 
-The rebinding list (shared with the startup menu's Controls page) is grouped under Movement, Spells
-and Interface headings. The seven spell slots are folded into one `Spell slots 1–7` row with a
-Show/Hide button, and they open automatically while one of them is being rebound. If the chosen key
-already belongs to another action, nothing changes until the player answers the prompt
-(`E is already used by Talk to NPC. Swap them, so Talk to NPC moves to F?`): **Swap** or Enter swaps
-the two keys, and **Cancel** or Escape keeps the old binding.
+## Integration validation
 
-- **Settings pop-out (pause menu).** The top-right `Settings` button, or Escape during play, opens
-  it. Escape does not open it while the startup menu exists or the journal is open, or on the frame
-  the journal closed (`InventoryUiState.ClosedFrame`). The pop-out sets `Time.timeScale` to 0 and
-  restores the previous value on close, unless something else changed it meanwhile. It also
-  disables `GridPlayerInput` and sets `QuestHintOverlay.IsSettingsOpen`, which gates casting, NPC
-  interaction and dialogue input. The panel (up to 860×620) holds only the options and a hint line:
-  a frozen hourglass, `Game paused` and `Esc to resume`. Escape again (when no key is being rebound)
-  closes the pop-out and resumes play; it does not go to the main menu. The top-right button reads
-  `Close` while open and also resumes play. It is hidden while the journal is open. Escape is handled here, not
-  in `GameAutosave`.
-- **Journal footer.** **Main menu** calls `ReturnToMainMenu`, which autosaves first if the player
-  has played since the last load. **Save · Slot N** (with the
-  hourglass) calls `ManualSaveSlot.SaveToLinked`. This refreshes the autosave through
-  `GameAutosave.SaveNow` (save indicator, 30-second timer) and then writes the linked manual slot and
-  retakes its thumbnail. **Quit game** autosaves under the same rule as Main menu and calls
-  `Application.Quit`, which does nothing in the editor. On the right, the linked slot's status (`Slot 1 saved 2 min ago`, from
-  `GameSaveManager.TryGetSavedAt`, checked at most once a second) writes itself in like ink, and a
-  wax seal is pressed beside it after a successful Save. `Tab or Esc to close` sits at the right of
-  the tab row.
-- **Journal.** The journal shows the same options on its Settings tab, and its frame, tabs and list
-  pages use the same skin. It locks the player mover but does not pause the world. See
-  [`docs/inventory-encyclopedia.md`](../../../../../docs/inventory-encyclopedia.md).
-- **Draw order.** Both menus set `GUI.depth` to -10 while open, so they draw above dialogue and the
-  quest hint card. Each restores `GUI.color` when it finishes drawing.
-
-### Themed props
-
-The props tie the menus to the game's magic. Each one settles to its end state when Reduce motion is
-on.
-
-| Prop | Behaviour |
-| --- | --- |
-| Relic switches | Each switch is an Ampere relic in a socket track. Off, it rests left, dim amber, with an idle amber thread. On, it slides right and turns cyan, humming, with a powered cyan thread behind it. These are the `WeaveCableView` colours. Toggling sends a spark along the track into the relic. |
-| Volume lantern | A brass lantern ends the volume slider. The flame and its light grow with the volume and flicker like a candle. At 0% it goes out with a wisp of smoke. |
-| Glaciate frost | While the pop-out pauses the game, frost creeps in from the screen edges over 1.2 seconds, with glints twinkling along it. After closing, it thaws over 0.8 seconds from however far it had grown. With Reduce motion it appears and disappears at once. The journal does not pause, so it has no frost. |
-| Hourglass | A small brass hourglass with sand frozen mid-fall sits beside `Game paused` in the pop-out's hint line and on the journal's Save button. |
-| Wax seal | A successful journal Save presses a gold wax seal beside the save status. It drops in, lands with a few sparks and glows briefly. It is cleared when the journal reopens. |
-| Inked status | The journal footer's save status writes itself in from left to right behind a glowing nib, then dries from cream to muted. This happens whenever the text changes. |
-| Page turns | The journal's tabs and its Settings sections turn in from the left like a book page (0.4 seconds), with shading and a bright page edge. |
-| Candle hovers | Hovered buttons, tabs, ribbons, switch rows and rebinding rows get a warm, flickering candle glow, which replaced the steady lavender glow. `GameSettingsPanel.RowHover` lets the host draw it on rebinding rows. |
-
-The startup menu's own Settings and Controls pages still use the plain gold slider and switch, and
-do not have these props.
-
-Manual validation (not yet executed): the themed props, the pop-out and journal, the section
-navigation, Escape to open and close the pop-out, deferred first saves after New Game and Load,
-pausing, the journal's
-Save, status line and Quit game (Quit only in a player build), the swap prompt, the folded spell
-slots, fullscreen and VSync in a player build, and Reduce motion have been compiled but not yet
-checked in Play mode or a player build.
+The current test contract is defined by the [fixture inventory](../../../../../tests/gameplay_suites.json)
+and [test procedures](../../../../../tests/README.md). Batch CI explicitly excludes
+`RequiresGraphics`; run that category separately in a graphical Editor and inspect
+its screenshots. Follow the test procedures for exact verification and local
+preference/save isolation.

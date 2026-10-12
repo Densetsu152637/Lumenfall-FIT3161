@@ -45,6 +45,7 @@ namespace Lumenfall.GridMovement
         private bool isMoving;
         private bool isSliding;
         private bool movementLocked;
+        private readonly System.Collections.Generic.HashSet<object> movementLockOwners = new System.Collections.Generic.HashSet<object>();
         private GridPortal suppressedPortal;
 
         public GridWorld World => world;
@@ -53,7 +54,7 @@ namespace Lumenfall.GridMovement
         public bool IsMoving => isMoving;
         /// <summary>True while the current step starts or ends on ice; input is ignored until the slide stops.</summary>
         public bool IsSliding => isSliding;
-        public bool IsMovementLocked => movementLocked;
+        public bool IsMovementLocked => movementLocked || movementLockOwners.Count > 0;
         public GridMovementMode MovementMode => movementMode;
         public float CurrentStepDuration => movementMode == GridMovementMode.Sprint
             ? sprintMoveDuration
@@ -127,6 +128,7 @@ namespace Lumenfall.GridMovement
             isMoving = false;
             isSliding = false;
             movementLocked = false;
+            movementLockOwners.Clear();
         }
 
         /// <summary>
@@ -134,7 +136,7 @@ namespace Lumenfall.GridMovement
         /// </summary>
         public bool TryMove(Vector2Int direction)
         {
-            if (!isActiveAndEnabled || world == null || isMoving || movementLocked)
+            if (!isActiveAndEnabled || world == null || isMoving || IsMovementLocked)
             {
                 return false;
             }
@@ -164,6 +166,12 @@ namespace Lumenfall.GridMovement
         public bool TryTeleportTo(GridWorld destinationWorld, Vector2Int cell)
         {
             return TryTeleportTo(destinationWorld, cell, null);
+        }
+
+        public void SetMovementLocked(object owner, bool locked)
+        {
+            if (owner == null) throw new ArgumentNullException(nameof(owner));
+            if (locked) movementLockOwners.Add(owner); else movementLockOwners.Remove(owner);
         }
 
         public void SetMovementLocked(bool locked)
@@ -305,7 +313,7 @@ namespace Lumenfall.GridMovement
 
         private bool TryContinueSlide(Vector2Int direction)
         {
-            if (movementLocked || !world.TryReserveStep(this, direction, out Vector2Int next))
+            if (IsMovementLocked || !world.TryReserveStep(this, direction, out Vector2Int next))
             {
                 return false;
             }

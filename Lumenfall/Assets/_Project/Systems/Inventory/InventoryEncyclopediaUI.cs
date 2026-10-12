@@ -29,7 +29,7 @@ namespace Lumenfall.Inventory
     {
         private const string CharacterFlagPrefix = "character.discovered.";
         private const string ItemFlagPrefix = "inventory.keyitem.";
-        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake" };
+        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake", "optional-recovered-item" };
         private static readonly Dictionary<string, CharacterEntry> CharacterEntries =
             new Dictionary<string, CharacterEntry>(StringComparer.OrdinalIgnoreCase)
             {
@@ -60,6 +60,7 @@ namespace Lumenfall.Inventory
         private const float PageFlipSeconds = 0.4f;
 
         private Page page;
+        private readonly UiNavigationInput navigation = new UiNavigationInput();
         private readonly MenuSkin skin = new MenuSkin();
         private readonly OptionsPanel options = new OptionsPanel { FlipPages = true };
         private readonly Rect[] tabRects = new Rect[PageLabels.Length];
@@ -121,6 +122,7 @@ namespace Lumenfall.Inventory
             runtime.DialogueStarted += OnDialogueStarted;
             runtime.StateRestored += OnStateRestored;
             runtime.DialogueEnded += OnDialogueEnded;
+            runtime.QuestStatusChanged += OnQuestStatusChanged;
         }
 
         private void UnsubscribeRuntime()
@@ -129,6 +131,7 @@ namespace Lumenfall.Inventory
             subscribedRuntime.DialogueStarted -= OnDialogueStarted;
             subscribedRuntime.StateRestored -= OnStateRestored;
             subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
             subscribedRuntime = null;
         }
 
@@ -136,21 +139,34 @@ namespace Lumenfall.Inventory
         {
             SubscribeRuntime();
             Keyboard keyboard = Keyboard.current;
+            Gamepad pad = Gamepad.current;
             if (InventoryUiState.IsOpen)
             {
                 float deltaTime = Time.unscaledDeltaTime;
                 skin.Tick(deltaTime);
                 // While a control is being rebound, every key (including the journal key and Escape) belongs to the rebind.
                 bool wasRebinding = options.IsRebinding;
-                options.Tick(deltaTime);
+                if (page == Page.Settings) options.Tick(deltaTime);
+                navigation.Read();
+                if (page != Page.Settings && navigation.Horizontal != 0)
+                { page = (Page)(((int)page + navigation.Horizontal + PageLabels.Length) % PageLabels.Length); pageChangedAt = Time.unscaledTime; listScroll = Vector2.zero; }
                 if (wasRebinding) return;
-                if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                int pageStep = pad?.leftShoulder.wasPressedThisFrame == true ? -1 : pad?.rightShoulder.wasPressedThisFrame == true ? 1 : 0;
+                if (pageStep != 0)
+                {
+                    options.CancelRebind();
+                    page = (Page)(((int)page + pageStep + PageLabels.Length) % PageLabels.Length);
+                    pageChangedAt = Time.unscaledTime;
+                    listScroll = Vector2.zero;
+                }
+                if (navigation.Cancel)
                 {
                     Close();
                     return;
                 }
             }
-            if (keyboard == null || !KeyBindings.WasPressed(GameAction.Journal)) return;
+            if (!InventoryUiState.IsOpen && OverlayInputGate.IsBlocked) return;
+            if (!KeyBindings.WasPressed(GameAction.Journal) && pad?.selectButton.wasPressedThisFrame != true) return;
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             if (InventoryUiState.IsOpen) Close();
             else Open();
@@ -161,6 +177,7 @@ namespace Lumenfall.Inventory
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
                 QuestHintOverlay.IsSettingsOpen) return;
             InventoryUiState.IsOpen = true;
+            OverlayInputGate.Acquire(this);
             openedAt = pageChangedAt = Time.unscaledTime;
             underlinePlaced = false;
             saveFeedback = null;
@@ -169,16 +186,17 @@ namespace Lumenfall.Inventory
             options.Reset();
             skin.ResetAmbience();
             lockedMover = FindAnyObjectByType<GridMover>();
-            if (lockedMover != null) lockedMover.SetMovementLocked(true);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
         }
 
         private void Close()
         {
             if (InventoryUiState.IsOpen) InventoryUiState.ClosedFrame = Time.frameCount;
             InventoryUiState.IsOpen = false;
+            OverlayInputGate.Release(this);
             options.CancelRebind();
             skin.ShowWandCursor(false);
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
         }
 
@@ -194,6 +212,11 @@ namespace Lumenfall.Inventory
         {
             if (session == null || !session.IsCompleted) return;
             GrantMetadataItem(session.Definition?.metadata);
+        }
+
+        private static void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
+        {
+            if (current == QuestStatus.Completed && quest != null) GrantMetadataItem(quest.metadata);
         }
 
         private static void GrantMetadataItem(GameMetadataEntry[] metadata)
@@ -408,7 +431,7 @@ namespace Lumenfall.Inventory
                 if (!IsKeyItemOwned(id)) continue;
                 shown = true;
                 GUILayout.BeginVertical(skin.Entry);
-                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id, skin.EntryTitle);
+                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id == "optional-recovered-item" ? "Recovered item (optional)" : id, skin.EntryTitle);
                 GUILayout.EndVertical();
             }
             if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);

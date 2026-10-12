@@ -165,27 +165,85 @@ class GameplayVerificationTests(unittest.TestCase):
             with self.subTest(count=count), self.assertRaises(ValueError):
                 gameplay.read_manifest(path)
 
+    def test_graphical_manifest_is_separate_and_requires_explicit_category(self):
+        path = self.artifacts / "manifest.json"
+        manifest = {"schema_version": 1, "platforms": self.platforms,
+                    "graphical": {"name": "Pointer interaction", "category": "RequiresGraphics",
+                                  "fixtures": {"Game.PointerTests": 1}}}
+        path.write_text(json.dumps(manifest))
+        self.assertEqual(gameplay.read_manifest(path), self.platforms)
+        self.assertEqual(gameplay.read_manifest(path, graphical=True),
+                         {"playmode": manifest["graphical"]})
+        for category in [None, "", "OtherCategory"]:
+            manifest["graphical"]["category"] = category
+            path.write_text(json.dumps(manifest))
+            with self.subTest(category=category), self.assertRaises(ValueError):
+                gameplay.read_manifest(path, graphical=True)
+
 
 class GameplayContractTests(unittest.TestCase):
     def test_manifest_matches_current_test_sources_and_expected_totals(self):
         platforms = gameplay.read_manifest()
-        for platform, expected_total in [("editmode", 156), ("playmode", 6)]:
-            actual = {}
-            for path in (gameplay.ROOT / "Lumenfall/Assets").rglob("*Tests.cs"):
-                if platform not in [part.lower() for part in path.parts]:
+        actual = {"editmode": {}, "playmode": {}}
+        graphical = {}
+        assets = gameplay.ROOT / "Lumenfall/Assets"
+        # Discover every current test assembly and every C# file within it, including
+        # fixture files whose names do not end in Tests.cs. Nested asmdefs own their files.
+        assemblies = {path.parent: json.loads(path.read_text(encoding="utf-8-sig"))
+                      for path in assets.rglob("*.asmdef")}
+        seen = set()
+        for path in assets.rglob("*.cs"):
+            owner = next((parent for parent in path.parents if parent in assemblies), None)
+            if owner is None or "TestAssemblies" not in assemblies[owner].get("optionalUnityReferences", []):
+                continue
+            seen.add(assemblies[owner]["name"])
+            platform = "editmode" if "Editor" in assemblies[owner].get("includePlatforms", []) else "playmode"
+            source = path.read_text(encoding="utf-8-sig")
+            self.assertNotRegex(source, r"\bAssert\.Ignore\s*\(|\[(?:Ignore|Explicit)\b")
+            namespace = re.search(r"namespace\s+([\w.]+)", source)
+            # Helper classes can precede methods inside their owning fixture.
+            # Mask comments and strings so their braces cannot change class scope.
+            masked = re.sub(r'@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|//[^\n]*|/\*.*?\*/',
+                            lambda match: " " * len(match.group()), source, flags=re.S)
+            classes = []
+            for declaration in re.finditer(r"\bclass\s+(\w+)[^{]*\{", masked):
+                start = declaration.end() - 1
+                depth = 1
+                end = start + 1
+                while depth and end < len(masked):
+                    depth += (masked[end] == "{") - (masked[end] == "}")
+                    end += 1
+                classes.append((start, end, declaration.group(1)))
+            methods = re.finditer(r"((?:\s*\[[^\]]+\])+\s*)public\s+(?:[\w<>,.?\[\]]+\s+)+(\w+)\s*\(", source)
+            for method in methods:
+                attributes = method.group(1)
+                cases = len(re.findall(r"\bTestCase\s*\(", attributes))
+                if not cases and re.search(r"\b(?:Test|UnityTest)\b", attributes):
+                    cases = 1
+                if not cases:
                     continue
-                source = path.read_text(encoding="utf-8")
-                namespace = re.search(r"namespace\s+([\w.]+)", source).group(1)
-                fixture = re.search(r"public\s+(?:sealed\s+)?class\s+(\w+)", source).group(1)
-                self.assertNotRegex(source, r"\[(?:Ignore|Explicit)\b")
-                actual[f"{namespace}.{fixture}"] = len(re.findall(r"\[(?:Test|UnityTest)\]|\[TestCase\(", source))
-            self.assertEqual(actual, platforms[platform]["fixtures"])
-            self.assertEqual(sum(actual.values()), expected_total)
+                self.assertIsNotNone(namespace, str(path))
+                fixture = next(name for start, end, name in reversed(classes) if start < method.start() < end)
+                identity = f"{namespace.group(1)}.{fixture}"
+                is_graphical = 'Category("RequiresGraphics")' in attributes
+                self.assertFalse(is_graphical and platform != "playmode", str(path))
+                destination = graphical if is_graphical else actual[platform]
+                destination[identity] = destination.get(identity, 0) + cases
+        self.assertEqual(seen, {"Lumenfall.GameEvents.Tests", "Lumenfall.Startup.Tests",
+                                "Lumenfall.World.PlayModeTests", "Lumenfall.Startup.PlayModeTests"})
+        for platform, expected_total in [("editmode", 239), ("playmode", 15)]:
+            self.assertEqual(actual[platform], platforms[platform]["fixtures"])
+            self.assertEqual(sum(actual[platform].values()), expected_total)
+        self.assertEqual(graphical, gameplay.read_manifest(graphical=True)["playmode"]["fixtures"])
+        self.assertEqual(sum(graphical.values()), 2)
 
     def test_workflow_uses_one_current_checkout_action_and_verified_cache_save(self):
         workflow = (gameplay.ROOT / ".github/workflows/pr-validation.yml").read_text()
         self.assertEqual(workflow.count("uses: game-ci/unity-test-runner@v4"), 1)
         self.assertIn("testMode: all", workflow)
+        self.assertIn("customParameters: -testCategory !RequiresGraphics", workflow)
+        unity_job = workflow.split("  run-gameplay-tests:", 1)[1]
+        self.assertIn("lfs: true", unity_job.split("      - name: Free disk space", 1)[0])
         self.assertIn("projectPath: Lumenfall", workflow)
         self.assertIn("chownFilesTo: ${{ steps.unity-version.outputs.runner-owner }}", workflow)
         self.assertIn("steps.verify-gameplay.outcome == 'success'", workflow)

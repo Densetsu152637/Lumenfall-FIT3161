@@ -147,7 +147,7 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            return saveManager != null && Time.timeScale > 0f && !StartupMenu.IsVisible &&
+            return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible &&
                 (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
         }
     }

@@ -30,15 +30,22 @@ workflow has no path filter, so documentation-only PRs still report both checks.
 ## Current-project gameplay regression
 
 One job checks out the current event revision with depth one and runs `Lumenfall`
-through one GameCI action, using `testMode: all`. The integrated suite contains 156 EditMode cases. The job also
-runs the 6 PlayMode scene/world integration cases. The
-[behavior inventory and coverage limits](../tests/README.md) describe all 156/6 cases.
+through one GameCI action, using `testMode: all` and
+`customParameters: -testCategory !RequiresGraphics`. Its checkout enables Git LFS
+so terrain and other binary assets are available to Unity. The integrated inventory
+contains 239 EditMode and fifteen batch-capable PlayMode cases. Two additional rendering
+cases are explicitly categorized `RequiresGraphics` and must run separately
+in a graphical Editor; it is never accepted as a skipped CI test. The
+[behavior inventory and graphical procedure](../tests/README.md) cover all 256 cases.
 There are no historical source fetches or snapshot matrices.
 
 The supported `cliVersion` input pins
 [GameCI CLI v0.1.72](https://github.com/game-ci/cli/releases/tag/v0.1.72).
 The [action's all-mode mapping](https://github.com/game-ci/unity-test-runner/blob/32e57712352b500e17974b245a6dce9e11a73213/src/test-args.ts#L49)
-selects PlayMode, EditMode and result combination. The
+selects PlayMode, EditMode and result combination. Unity's
+[category argument](https://docs.unity3d.com/Packages/com.unity.test-framework@1.4/manual/reference-command-line.html#testcategory)
+supports `!RequiresGraphics`. The pinned CLI expands custom parameters as separate
+arguments without eval; the category needs no embedded shell quotes. The
 [CLI platform loop](https://github.com/game-ci/cli/blob/v0.1.72/dist/platforms/ubuntu/steps/test.sh#L172)
 uses the same project/Library while launching Unity for each phase; one action does
 not mean one Editor process. The image matches `m_EditorVersion` in
@@ -77,7 +84,7 @@ Workspace and Library remain intact. Release cleanup is configured independently
 
 Concurrency includes workflow, event and PR number or ref. New commits cancel
 obsolete runs for that PR; independent PRs, main pushes and manual runs do not
-cancel each other. Release behavior is unchanged.
+cancel each other. The Windows player build checkout also enables Git LFS; publication behavior is unchanged.
 
 ## One-time Unity license setup
 

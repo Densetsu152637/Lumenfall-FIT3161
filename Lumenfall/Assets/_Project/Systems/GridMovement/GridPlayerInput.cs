@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Accessibility;
 using Lumenfall.Controls;
 
 namespace Lumenfall.GridMovement
@@ -36,6 +37,8 @@ namespace Lumenfall.GridMovement
         private bool enabledSprintActionHere;
         private Vector2Int heldDirection;
         private float nextRepeatTime;
+        private readonly SprintPreferenceState sprintPreference = new SprintPreferenceState();
+        private bool sprinting;
         // A finished slide needs a fresh press, so a held key cannot launch an unintended second slide.
         private bool waitForRelease;
 
@@ -53,6 +56,7 @@ namespace Lumenfall.GridMovement
         private void OnEnable()
         {
             mover.MoveCompleted += HandleMoveCompleted;
+            AccessibilitySettings.Changed += OnPreferencesChanged;
             mover.SlideEnded += HandleSlideEnded;
             ResolveActions();
             if (activeMoveAction == null)
@@ -78,6 +82,9 @@ namespace Lumenfall.GridMovement
         private void OnDisable()
         {
             mover.MoveCompleted -= HandleMoveCompleted;
+            AccessibilitySettings.Changed -= OnPreferencesChanged;
+            sprintPreference.Reset();
+            sprinting = false;
             mover.SlideEnded -= HandleSlideEnded;
             waitForRelease = false;
 
@@ -114,12 +121,15 @@ namespace Lumenfall.GridMovement
 
         private void Update()
         {
-            if (activeMoveAction == null)
+            if (AccessibilitySettingsOverlay.InputBlocked || activeMoveAction == null || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
+                heldDirection = Vector2Int.zero;
                 return;
             }
 
-            bool sprinting = ReadSprint();
+            // The accessibility preference turns sprint into hold or toggle; the raw input ignores rebound keyboard keys.
+            sprinting = sprintPreference.Resolve(AccessibilitySettings.Current.HoldToSprint, ReadSprint(), ReadSprintPressed(),
+                mover.IsMovementLocked || Time.timeScale <= 0f);
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
 
             Vector2Int direction = QuantiseDirection(ReadMove());
@@ -154,7 +164,7 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
-            if (waitForRelease || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked)
+            if (waitForRelease || AccessibilitySettingsOverlay.InputBlocked || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 return;
             }
@@ -169,10 +179,11 @@ namespace Lumenfall.GridMovement
             }
 
             heldDirection = direction;
-            bool sprinting = ReadSprint();
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
             TryMoveHeldDirection();
         }
+
+        private void OnPreferencesChanged(AccessibilitySnapshot _) { sprintPreference.Reset(); sprinting = false; }
 
         private void TryMoveHeldDirection()
         {
@@ -195,6 +206,12 @@ namespace Lumenfall.GridMovement
         {
             if (KeyBindings.IsPressed(GameAction.Sprint)) return true;
             return activeSprintAction != null && !IsKeyboardDriven(activeSprintAction) && activeSprintAction.IsPressed();
+        }
+
+        private bool ReadSprintPressed()
+        {
+            if (KeyBindings.WasPressed(GameAction.Sprint)) return true;
+            return activeSprintAction != null && !IsKeyboardDriven(activeSprintAction) && activeSprintAction.WasPressedThisFrame();
         }
 
         private static bool IsKeyboardDriven(InputAction action)

@@ -1,7 +1,7 @@
 # Gameplay test suites
 
 The current Unity checkout is the test subject. `Gameplay regression tests` runs
-the complete EditMode and PlayMode assemblies against `Lumenfall` in one GameCI
+all batch-capable EditMode and PlayMode tests against `Lumenfall` in one GameCI
 action. It shares one project and Library across both modes. No historical source
 fetches, extracted snapshots or per-feature import matrix are required.
 
@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 156 EditMode cases and six PlayMode cases:
+The integrated suite contains 239 EditMode, fifteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -35,14 +35,29 @@ The integrated suite contains 156 EditMode cases and six PlayMode cases:
 | Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 5 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
-| **Gameplay rules / EditMode** | | **156** |
-| Scene boot/references, saved-state refresh, forest gate, campus/Cinna routes and rune-hall portal save restoration | AuthoredWorldPlayModeTests | **6** |
+| Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
+| Audio buses and feedback | AudioFeedbackTests | 15 |
+| Transactional save recovery and rollback | GameSaveRecoveryTests | 18 |
+| Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
+| Graphics preference persistence | GraphicsPreferencesTests | 13 |
+| Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
+| **Gameplay rules / EditMode** | | **239** |
+| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 6 |
+| Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
+| Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
+| Settings keyboard navigation and preset isolation | OptionsPanelPlayModeTests | 2 |
+| Dialogue pointer gating, runtime replacement and owned cleanup | DialogueSettingsUiPlayModeTests | 1 |
+| Wheel casts, sibling ownership and closing-frame input consumption | SpellWheelCastingPlayModeTests | 1 |
+| **Batch PlayMode** | | **15** |
+| Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
+| Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
 
-EditMode sources are under
-[`GameEvents/Tests/EditMode`](../Lumenfall/Assets/_Project/Systems/GameEvents/Tests/EditMode)
-in `Lumenfall.GameEvents.Tests`. PlayMode sources are under
-[`DataDriven/Tests/PlayMode`](../Lumenfall/Assets/_Project/Systems/DataDriven/Tests/PlayMode)
-in `Lumenfall.World.PlayModeTests`. No tests are ignored or explicit-only.
+Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tests`,
+`Lumenfall.Startup.Tests`, `Lumenfall.World.PlayModeTests` and
+`Lumenfall.Startup.PlayModeTests`. The source inventory discovers all C# files owned
+by test assembly definitions, including nested helpers and files with other names.
+No test uses Ignore or Explicit. Both rendering tests have the explicit
+`RequiresGraphics` category and fails if accidentally selected in batch mode.
 
 ## Running and verifying
 
@@ -54,7 +69,17 @@ instances, and unsubscribe fixture-owned event handlers during cleanup. Quest
 monitors must load their definitions before evaluation. Preserve production reward
 and completion requirements.
 
-CI uses `testMode: all` with GameCI CLI `v0.1.72`. The CLI runs both modes against
+Authored-world PlayMode cases load their own `SampleScene` additively while
+retaining the runner and an empty fixture host. Teardown unloads only that owned
+world, checks loader/listener cleanup, then restores the runner and removes the
+host. Tests wait for any startup menu to finish before establishing a fresh
+authored world. Portal expectations use fixed current prefab geometry: all three
+campus forest-gate cells and all four vertical B02 entrance cells must transfer,
+and the B02 landing must reach Stella's actual prefab position and return portal.
+
+CI uses `testMode: all` with GameCI CLI `v0.1.72` and
+`customParameters: -testCategory !RequiresGraphics`. The Unity checkout enables
+Git LFS so terrain and other binary assets are materialized before import. The CLI runs both modes against
 the same project, then combines results; it launches Unity separately for each
 phase. The verifier requires the separate `editmode-results.xml` and
 `playmode-results.xml`. Combined XML cannot stand in for either mode. It rejects
@@ -80,29 +105,35 @@ python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
 ```
 
+## Graphical settings acceptance and local isolation
+
+Run both rendering cases separately in a graphical Editor, without `-batchmode`, using
+`-runTests -testPlatform PlayMode -testCategory RequiresGraphics` and
+`-testResults <fresh-graphical-directory>/playmode-results.xml`. After the Editor
+exits successfully, verify the separate manifest and exact current revision:
+
+```sh
+python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical-directory> --outcome success --revision <full-current-checkout-sha>
+```
+
+The graphical inventory has exactly two cases; the batch inventory contains the
+other fifteen PlayMode cases. Both verifications reject any failed or skipped case.
+Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
+under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
+pointer repaint or visible layout quality.
+
+A checkout does not isolate PlayerPrefs or `Application.persistentDataPath`.
+Local validation must use a dedicated temporary company/product identity in the
+task-owned checkout, preserve the original ProjectSettings bytes, and restore them
+after all Editor processes exit. Report this identity-only configuration difference.
+Never run recovery tests or startup backdrops against a developer's normal saves.
+Hosted Linux jobs have disposable user profiles and validate the committed identity.
+
 ## Consolidation and coverage limits
 
-The retired catalog contained 101 cases across historical pinned implementations
-(98 Unity cases and three Python mutations). Those counts described other source
-snapshots, not tests of the current project. The replacement retains all existing
-current-project coverage and migrates only the three critical effect/cable cases
-above. Existing quest/world/save-state tests already cover the overlapping
-progression scenarios, and the Rotara fixture covers alignment and invalid-angle
-behavior without another boundary table. Fast useful assertions remain; removing
-the historical snapshot matrix and repeated Unity imports addresses the main
-execution cost.
-
-Historical tests of retry/reset extensions, chapter transitions, audio signals and
-area audio, optional power/recovery activities, accessibility/localization,
-reserved regions, presentation catalogs, overlay/focus
-indexes, travel/ambient policies, performance diagnostics, camera framing,
-occlusion, ice-slide lanes and graphics preferences depend on APIs absent from this
-checkout. Their snapshot infrastructure and validator mutation tests were removed.
-Passing the current suite does not validate those branch-only features; add focused
-behavior tests alongside their eventual implementation.
-
-Save coverage here exercises state round trips and slot policy. Public disk
-save/load failure rollback remains a gap; these tests do not access or change a
-user's persistent save directory. The PlayMode smoke checks do not establish player
-build compatibility, visual quality, audio output or performance. Hosted results
-and timings are required before claiming a measured speedup.
+The historical snapshot matrix remains retired. All tests exercise the current
+checkout; graphics, settings, audio, accessibility, save recovery and overlay
+coverage now ship with their corresponding implementations. Physical controller
+behavior, visual AA/AO quality, audio output, standalone player compatibility and
+performance still require their own acceptance evidence. Source inventory and local
+checks do not substitute for successful hosted checks on the final revision.

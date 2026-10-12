@@ -102,6 +102,7 @@ namespace Lumenfall.GameEvents
             if (Runtime == null)
             {
                 Runtime = BuildRuntimeFromResources();
+                RuntimeChanged?.Invoke(Runtime);
             }
         }
 

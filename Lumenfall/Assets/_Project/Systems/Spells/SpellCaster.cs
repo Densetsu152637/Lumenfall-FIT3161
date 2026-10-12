@@ -10,7 +10,7 @@ using Lumenfall.Quests;
 
 namespace Lumenfall.Spells
 {
-    /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default) or middle mouse opens the spell wheel,
+    /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default), middle mouse or the right gamepad shoulder opens the spell wheel,
     /// the wheel selects a spell, and right mouse (or the interact key at a mechanism) casts at the nearest compatible object.
     [DisallowMultipleComponent]
     public sealed class SpellCaster : MonoBehaviour
@@ -32,6 +32,8 @@ namespace Lumenfall.Spells
         private const string AlignmentObjectId = CinnaAlignmentRelic.RelicId;
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         private readonly SpellWheelView wheelView = new SpellWheelView();
+        // Arrow keys and the gamepad stick move round the open wheel; submit casts and cancel closes it.
+        private readonly Lumenfall.Startup.UiNavigationInput wheelNavigation = new Lumenfall.Startup.UiNavigationInput();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
@@ -154,10 +156,19 @@ namespace Lumenfall.Spells
             }
             Mouse mouse = Mouse.current;
             Keyboard keyboard = Keyboard.current;
-            if ((mouse != null && mouse.middleButton.wasPressedThisFrame) || KeyBindings.WasPressed(GameAction.SpellWheel))
+            if ((mouse != null && mouse.middleButton.wasPressedThisFrame) || KeyBindings.WasPressed(GameAction.SpellWheel) ||
+                Gamepad.current?.rightShoulder.wasPressedThisFrame == true)
             {
                 if (spellWheelOpen) CloseSpellWheel();
                 else OpenSpellWheel();
+            }
+            if (spellWheelOpen)
+            {
+                wheelNavigation.Read();
+                int offset = wheelNavigation.Horizontal != 0 ? wheelNavigation.Horizontal : wheelNavigation.Vertical;
+                if (offset != 0) SelectSpellByOffset(offset);
+                if (wheelNavigation.Cancel) { CloseSpellWheel(); return; }
+                if (wheelNavigation.Submit) { CastSelected(); CloseSpellWheel(); return; }
             }
             if (mouse != null && spellWheelOpen)
             {
@@ -173,15 +184,7 @@ namespace Lumenfall.Spells
 
             if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             {
-                // Lost Echoes searches the area around the player, so it needs no target.
-                if (selectedSpell == SpellId.LostEchoes) CastLostEchoes();
-                // Vis sets a held relic down on the tile ahead instead of looking for a target.
-                else if (selectedSpell == SpellId.Vis && HeldRelic != null) { if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell); }
-                else
-                {
-                    string target = FindNearestTarget();
-                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
-                }
+                CastSelected();
                 CloseSpellWheel();
             }
 
@@ -210,6 +213,20 @@ namespace Lumenfall.Spells
             if (KeyBindings.WasPressed(GameAction.Spell5)) SelectSpell(SpellId.Glaciate);
             if (KeyBindings.WasPressed(GameAction.Spell6)) SelectSpell(SpellId.Vis);
             if (KeyBindings.WasPressed(GameAction.Spell7)) SelectSpell(SpellId.LostEchoes);
+        }
+
+        /// Casts the selected spell at the nearest compatible object. Lost Echoes searches the area around the player,
+        /// so it needs no target.
+        private void CastSelected()
+        {
+            if (selectedSpell == SpellId.LostEchoes) { CastLostEchoes(); return; }
+            if (selectedSpell == SpellId.Vis && HeldRelic != null)
+            {
+                if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell);
+                return;
+            }
+            string target = FindNearestTarget();
+            if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
         }
 
         private SpellId[] AvailableSpells
@@ -250,7 +267,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
+        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {
@@ -258,21 +275,23 @@ namespace Lumenfall.Spells
             spellWheelOpen = true;
             wheelView.Open();
             wheelMovementLockOwned = true;
-            GetComponent<GridMover>()?.SetMovementLocked(true);
+            GetComponent<GridMover>()?.SetMovementLocked(this, true);
+            OverlayInputGate.Acquire(this);
         }
         /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
         public bool CastSelectedAt(string targetId)
-        { CloseSpellWheel(); return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+        {
+            try { return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+            finally { CloseSpellWheel(); }
+        }
         private void CloseSpellWheel(SpellId? picked = null)
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
             wheelView.Close(picked);
-            // The inventory may have taken ownership of the same movement lock earlier
-            // in this frame. Release only the lock owned by the wheel in that case.
-            if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
-                subscribedRuntime?.ActiveDialogue == null)
-                GetComponent<GridMover>()?.SetMovementLocked(false);
+            // The wheel holds its own movement lock, so the journal's or dialogue's locks are left untouched.
+            if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
+            OverlayInputGate.Release(this);
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
@@ -284,6 +303,7 @@ namespace Lumenfall.Spells
             if (InputBlockedByOverlay) return;
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
                 GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
+            if (Time.timeScale <= 0f) return;
             if (!wheelView.Visible)
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.
@@ -294,7 +314,8 @@ namespace Lumenfall.Spells
             }
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
-            string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click: cast   " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
+            string hint = "Click, scroll or arrows: select   Right click / Enter / A: cast   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   " +
+                KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
             SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon, hint);
             if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(picked); }
         }
@@ -304,14 +325,17 @@ namespace Lumenfall.Spells
         /// </summary>
         public bool CastLostEchoes()
         {
-            CloseSpellWheel();
-            if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
-            WorldStateService state = WorldStateService.Instance;
-            if (state == null || !state.IsReady) return false;
-            List<string> revealed = new List<string>();
-            RevealHiddenAroundPlayer(state, revealed);
-            foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
-            return revealed.Count > 0;
+            try
+            {
+                if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
+                WorldStateService state = WorldStateService.Instance;
+                if (state == null || !state.IsReady) return false;
+                List<string> revealed = new List<string>();
+                RevealHiddenAroundPlayer(state, revealed);
+                foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
+                return revealed.Count > 0;
+            }
+            finally { CloseSpellWheel(); }
         }
         // Results are shown by LostEchoesPresentation (pulse, glow and sound), so the search reports no text.
         private int RevealHiddenAroundPlayer(WorldStateService state, List<string> revealed = null)

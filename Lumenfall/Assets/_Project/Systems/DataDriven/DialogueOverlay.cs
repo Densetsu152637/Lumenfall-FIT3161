@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lumenfall.Controls;
+using Lumenfall.Accessibility;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Quests;
@@ -18,13 +19,15 @@ namespace Lumenfall.DataDriven
     /// </summary>
     public sealed class DialogueOverlay : MonoBehaviour
     {
-        private const float CharactersPerSecond = 42f;
         private const float ConversationNpcRange = 3f;
         private const float ConversationZoom = 0.72f;
         // Roughly three lines in the full-size box; longer lines are split into pages.
         private const int MaxPageCharacters = 130;
 
         private DialogueSession session;
+        private GameEventRuntime subscribedRuntime;
+        private AccessibilitySnapshot appliedSettings;
+        private readonly AccessibilityMenuInput menuInput = new AccessibilityMenuInput();
         private GridMover lockedMover;
         private DynamicNpc conversationNpc;
         private DialogueView view;
@@ -53,21 +56,45 @@ namespace Lumenfall.DataDriven
 
         private void OnEnable()
         {
-            if (GameEventManager.Instance != null)
-            {
-                GameEventManager.Instance.Runtime.DialogueStarted += OnStarted;
-                GameEventManager.Instance.Runtime.DialogueEnded += OnEnded;
-            }
+            OnPreferencesChanged(AccessibilitySettings.Current);
+            BindRuntime();
+            AccessibilitySettings.Changed += OnPreferencesChanged;
         }
 
         private void OnDisable()
         {
+            AccessibilitySettings.Changed -= OnPreferencesChanged;
             EndPresentation();
-            if (GameEventManager.Instance != null)
-            {
-                GameEventManager.Instance.Runtime.DialogueStarted -= OnStarted;
-                GameEventManager.Instance.Runtime.DialogueEnded -= OnEnded;
-            }
+            UnbindRuntime();
+        }
+
+        private void UnbindRuntime()
+        {
+            if (subscribedRuntime == null) return;
+            subscribedRuntime.DialogueStarted -= OnStarted;
+            subscribedRuntime.DialogueEnded -= OnEnded;
+            subscribedRuntime = null;
+        }
+
+        private void BindRuntime()
+        {
+            GameEventRuntime current = GameEventManager.Instance.Runtime;
+            if (current == subscribedRuntime) return;
+            EndPresentation();
+            UnbindRuntime();
+            subscribedRuntime = current;
+            if (current == null) return;
+            current.DialogueStarted += OnStarted;
+            current.DialogueEnded += OnEnded;
+            if (current.ActiveDialogue != null) OnStarted(current.ActiveDialogue);
+        }
+
+        private void OnPreferencesChanged(AccessibilitySnapshot value)
+        {
+            appliedSettings = value;
+            view?.SetAccessibility(value);
+            // Rebuild the localized page and choices at the new scale/contrast.
+            nodeId = null;
         }
 
         private void OnDestroy()
@@ -80,20 +107,23 @@ namespace Lumenfall.DataDriven
         {
             if (view != null) return;
             view = new DialogueView(transform);
-            view.ChoiceHovered += SelectChoice;
+            view.ChoiceHovered += index => { if (CanTakeInput()) SelectChoice(index); };
             view.ChoiceClicked += index => { if (CanTakeInput()) Choose(index); };
-            view.BoxClicked += () => pointerConfirm = true;
+            view.BoxClicked += () => { if (CanTakeInput()) pointerConfirm = true; };
             portrait = new DialoguePortrait(transform);
             blips = new DialogueBlips(gameObject);
+            OnPreferencesChanged(AccessibilitySettings.Current);
         }
 
         private void OnStarted(DialogueSession value)
         {
             EnsurePresentation();
+            if (session != null) EndPresentation();
             session = value;
+            OverlayInputGate.Acquire(this);
             GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
             lockedMover = input != null ? input.GetComponent<GridMover>() : FindAnyObjectByType<GridMover>();
-            if (lockedMover != null) lockedMover.SetMovementLocked(true);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
             conversationNpc = NearestNpc();
             inputBlockedFrame = Time.frameCount;
             nodeId = null;
@@ -110,7 +140,10 @@ namespace Lumenfall.DataDriven
 
         private void EndPresentation()
         {
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            if (session != null) npcInteractionBlockUntilFrame = Time.frameCount + 1;
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
+            OverlayInputGate.Release(this);
+            pointerConfirm = false;
             lockedMover = null;
             session = null;
             nodeId = null;
@@ -122,9 +155,10 @@ namespace Lumenfall.DataDriven
 
         private void Update()
         {
+            BindRuntime();
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
             EnsureNode();
-            Reveal();
+            if (!AccessibilitySettingsOverlay.InputBlocked && !OverlayInputGate.IsBlockedExcept(this)) Reveal();
             HandleInput();
             // Input may have ended the dialogue or moved to another node.
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
@@ -132,6 +166,10 @@ namespace Lumenfall.DataDriven
             RefreshText();
             RefreshChoices();
             view.SetWaiting(Revealed && (!OnLastPage || session.AvailableChoices.Count == 0));
+            view.SetContinuePrompt(Localization.Resolve(!Revealed ? "dialogue.reveal_hint" : OnLastPage &&
+                string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "dialogue.close" : "dialogue.continue",
+                !Revealed ? "Press Space, E or controller A to reveal" : OnLastPage &&
+                string.IsNullOrWhiteSpace(session.CurrentNode.nextNodeId) ? "Close" : "Continue"));
             FrameCamera();
             view.Tick();
         }
@@ -147,12 +185,15 @@ namespace Lumenfall.DataDriven
             DialogueNodeDefinition node = session.CurrentNode;
             nodeId = node.id;
             speaker = string.IsNullOrWhiteSpace(node.speaker) ? session.Definition.id : node.speaker;
-            pages = DialoguePaging.Split(node.text ?? string.Empty, MaxPageCharacters);
+            string localized = Localization.Resolve(Localization.DialogueTextId(session.Definition.id, nodeId), node.text ?? string.Empty);
+            if (appliedSettings.HighContrast) localized = AccessibleDialogueText.RemoveColorTags(localized);
+            int pageCharacters = Mathf.Max(30, Mathf.FloorToInt(MaxPageCharacters / (appliedSettings.TextScale * appliedSettings.TextScale)));
+            pages = DialoguePaging.Split(localized, pageCharacters);
             pageIndex = 0;
             ShowPage();
 
             Color colour = SpeakerColor(speaker);
-            view.SetSpeaker(speaker, colour, SpeakerFrame(speaker));
+            view.SetSpeaker(Localization.Resolve("speaker." + speaker, speaker), colour, SpeakerFrame(speaker));
             Transform subject = SpeakerTransform(speaker);
             Color background = Color.Lerp(colour, new Color(0.96f, 0.91f, 0.82f), 0.72f);
             bool showPortrait = subject != null && portrait.Show(subject, background);
@@ -164,20 +205,21 @@ namespace Lumenfall.DataDriven
         private void ShowPage()
         {
             prepared = DialogueTextEffects.Prepare(pages[pageIndex]);
-            visibleCharacters = 0;
+            visibleCharacters = appliedSettings.InstantReveal ? DialogueTextReveal.VisibleCharacterCount(prepared.RichText) : 0;
             shownCharacters = -1;
             revealAccumulator = 0f;
             selectedChoice = 0;
             choicesForNode = null;
             view.ClearChoices();
-            view.FitTo(prepared.RichText, OnLastPage ? session.AvailableChoices.Select(c => c.text ?? c.id).ToList() : null);
+            view.FitTo(prepared.RichText, OnLastPage ? session.AvailableChoices.Select(ChoiceText).ToList() : null);
         }
 
         private void Reveal()
         {
             int count = DialogueTextReveal.VisibleCharacterCount(prepared.RichText);
             if (visibleCharacters >= count) return;
-            revealAccumulator += Time.unscaledDeltaTime * CharactersPerSecond;
+            if (appliedSettings.InstantReveal) { visibleCharacters = count; return; }
+            revealAccumulator += Time.unscaledDeltaTime * appliedSettings.CharactersPerSecond;
             while (revealAccumulator >= 1f && visibleCharacters < count)
             {
                 revealAccumulator -= 1f;
@@ -200,12 +242,20 @@ namespace Lumenfall.DataDriven
             IReadOnlyList<DialogueChoiceDefinition> available = session.AvailableChoices;
             if (!Revealed || !OnLastPage || available.Count == 0 || choicesForNode == nodeId) return;
             choicesForNode = nodeId;
-            view.SetChoices(available.Select(c => c.text ?? c.id).ToList());
+            view.SetChoices(available.Select(ChoiceText).ToList());
             selectedChoice = 0;
             view.SetSelected(0);
         }
 
-        private bool CanTakeInput() => session != null && Time.frameCount > inputBlockedFrame && !QuestHintOverlay.IsSettingsOpen;
+        private string ChoiceText(DialogueChoiceDefinition choice)
+        {
+            string localized = Localization.Resolve(Localization.DialogueChoiceId(session.Definition.id, nodeId, choice.id), choice.text ?? choice.id);
+            return appliedSettings.HighContrast ? AccessibleDialogueText.RemoveColorTags(localized) : localized;
+        }
+
+        private bool CanTakeInput() => subscribedRuntime == GameEventManager.Instance.Runtime && session != null && session.IsActive && Time.frameCount > inputBlockedFrame &&
+            !AccessibilitySettingsOverlay.InputBlocked && !OverlayInputGate.IsBlockedExcept(this) &&
+            !QuestHintOverlay.IsSettingsOpen && !CinnaTrialDeparture.InProgress;
 
         private void HandleInput()
         {
@@ -213,9 +263,10 @@ namespace Lumenfall.DataDriven
             pointerConfirm = false;
             if (!CanTakeInput()) return;
 
-            Gamepad pad = Gamepad.current;
-            bool confirm = pointer || KeyBindings.WasPressed(GameAction.Talk) || Pressed(Key.Space) || Pressed(Key.Enter) ||
-                           Pressed(Key.NumpadEnter) || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            menuInput.Poll();
+            if (menuInput.Cancel) { session.End(); return; }
+            bool confirm = pointer || menuInput.Submit || KeyBindings.WasPressed(GameAction.Talk) || Pressed(Key.Space) || Pressed(Key.Enter) ||
+                           Pressed(Key.NumpadEnter);
             if (!Revealed)
             {
                 if (!confirm) return;
@@ -240,9 +291,9 @@ namespace Lumenfall.DataDriven
             }
 
             if (!view.HasChoices) return;
-            if (KeyBindings.WasPressed(GameAction.MoveUp) || Pressed(Key.UpArrow) || (pad != null && pad.dpad.up.wasPressedThisFrame))
+            if (KeyBindings.WasPressed(GameAction.MoveUp) || menuInput.Direction.y < 0)
                 SelectChoice((selectedChoice + choiceCount - 1) % choiceCount);
-            if (KeyBindings.WasPressed(GameAction.MoveDown) || Pressed(Key.DownArrow) || (pad != null && pad.dpad.down.wasPressedThisFrame))
+            if (KeyBindings.WasPressed(GameAction.MoveDown) || menuInput.Direction.y > 0)
                 SelectChoice((selectedChoice + 1) % choiceCount);
             for (int i = 0; i < Mathf.Min(choiceCount, 9); i++)
             {
@@ -271,7 +322,7 @@ namespace Lumenfall.DataDriven
 
         private void FrameCamera()
         {
-            if (lockedMover == null) return;
+            if (lockedMover == null || appliedSettings.ReducedMotion) return;
             Transform subject = portrait.Subject != null ? portrait.Subject : conversationNpc != null ? conversationNpc.transform : null;
             Vector3 player = lockedMover.transform.position;
             Vector3 focus = subject == null ? player : Vector3.Lerp(player, subject.position, 0.5f);

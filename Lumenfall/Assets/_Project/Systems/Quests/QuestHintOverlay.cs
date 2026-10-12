@@ -48,6 +48,13 @@ namespace Lumenfall.Quests
 
         public static bool HintsEnabled => PlayerPrefs.GetInt(EnabledKey, 1) != 0;
         public static bool IsSettingsOpen => instance != null && instance.settingsOpen;
+        public static int SettingsClosedFrame { get; private set; } = -1;
+        public static void OpenSettings()
+        {
+            if (instance != null && !StartupMenu.IsVisible && !InventoryUiState.IsOpen) instance.SetSettingsOpen(true);
+        }
+        public static void CloseSettings() { if (instance != null) instance.SetSettingsOpen(false); }
+        private readonly UiNavigationInput settingsNavigation = new UiNavigationInput();
 
         public static void SetHintsEnabled(bool enabled)
         {
@@ -460,7 +467,8 @@ namespace Lumenfall.Quests
             bool wasRebinding = options.IsRebinding;
             options.Tick(deltaTime);
             Keyboard keyboard = Keyboard.current;
-            if (!wasRebinding && keyboard != null && keyboard.escapeKey.wasPressedThisFrame) SetSettingsOpen(false);
+            settingsNavigation.Read();
+            if (!wasRebinding && settingsNavigation.Cancel) SetSettingsOpen(false);
         }
 
         /// <summary>
@@ -472,7 +480,7 @@ namespace Lumenfall.Quests
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return false;
             if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount) return false;
-            return FindAnyObjectByType<StartupMenu>() == null;
+            return !OverlayInputGate.IsBlocked && SettingsClosedFrame != Time.frameCount && FindAnyObjectByType<StartupMenu>() == null;
         }
 
         /// <summary>The Settings pop-out, styled like the startup menu: the options, then a short paused hint.</summary>
@@ -543,6 +551,7 @@ namespace Lumenfall.Quests
             settingsOpen = open;
             if (open)
             {
+                OverlayInputGate.Acquire(this);
                 settingsOpenedAt = Time.unscaledTime;
                 options.Reset();
                 skin.ResetAmbience();
@@ -554,6 +563,8 @@ namespace Lumenfall.Quests
             }
             else
             {
+                OverlayInputGate.Release(this);
+                if (wasOpen) SettingsClosedFrame = Time.frameCount;
                 options.CancelRebind();
                 skin.ShowWandCursor(false);
                 if (wasOpen)

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "tests/gameplay_suites.json"
 
 
-def read_manifest(path: Path = MANIFEST) -> dict:
+def read_manifest(path: Path = MANIFEST, *, graphical: bool = False) -> dict:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
         raise ValueError("Unsupported gameplay manifest version")
@@ -32,6 +32,17 @@ def read_manifest(path: Path = MANIFEST) -> dict:
                 or any(not isinstance(name, str) or not name.strip()
                        or type(count) is not int or count <= 0 for name, count in fixtures.items())):
             raise ValueError("Gameplay suites require a name and positive fixture case counts")
+    if graphical:
+        suite = manifest.get("graphical", {})
+        if not isinstance(suite, dict) or suite.get("category") != "RequiresGraphics":
+            raise ValueError("Graphical suite must select RequiresGraphics")
+        fixtures = suite.get("fixtures")
+        if (not isinstance(suite.get("name"), str) or not suite["name"].strip()
+                or not isinstance(fixtures, dict) or not fixtures
+                or any(not isinstance(name, str) or not name.strip()
+                       or type(count) is not int or count <= 0 for name, count in fixtures.items())):
+            raise ValueError("Graphical suite requires a name and positive fixture case counts")
+        return {"playmode": suite}
     return platforms
 
 
@@ -110,11 +121,12 @@ def write_report(report: dict, artifacts: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, default=ROOT / "artifacts/gameplay")
+    parser.add_argument("--graphical", action="store_true", help="Verify a separate RequiresGraphics PlayMode run")
     parser.add_argument("--outcome", required=True)
     parser.add_argument("--revision", required=True)
     args = parser.parse_args(argv)
     try:
-        report = verify(args.artifacts, read_manifest(), args.outcome, args.revision)
+        report = verify(args.artifacts, read_manifest(graphical=args.graphical), args.outcome, args.revision)
         actual = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                 check=True, capture_output=True, text=True, timeout=30).stdout.strip()
         if actual != args.revision:
