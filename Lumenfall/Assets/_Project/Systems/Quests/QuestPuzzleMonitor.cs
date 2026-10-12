@@ -48,6 +48,8 @@ namespace Lumenfall.Quests
         public bool requiredPowered;
         public bool requiredConnected;
         public bool requiredRevealed;
+        /// <summary>The object must have been picked up (see WorldPickupInteraction).</summary>
+        public bool requiredCollected;
         public bool requiredFrozen;
         public bool requiredAligned;
         public int requiredRotation = -1;
@@ -194,6 +196,7 @@ namespace Lumenfall.Quests
             if (target.requiredPowered && !snapshot.powered) return false;
             if (target.requiredConnected && !IsConnectedToAny(state, snapshot.id)) return false;
             if (target.requiredRevealed && !snapshot.revealed) return false;
+            if (target.requiredCollected && !snapshot.collected) return false;
             if (target.requiredFrozen && !snapshot.frozen) return false;
             if (target.requiredAligned && !snapshot.aligned) return false;
             if (target.requiredRotation >= 0 && !Mathf.Approximately(NormalizeAngle(snapshot.rotation), NormalizeAngle(target.requiredRotation))) return false;

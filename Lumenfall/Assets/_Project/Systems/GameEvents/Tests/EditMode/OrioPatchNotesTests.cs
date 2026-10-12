@@ -18,7 +18,6 @@ namespace Lumenfall.Tests.GameEvents
         private GameObject stateHost;
         private GameObject casterHost;
         private SpellCaster caster;
-        private WorldStateService previousState;
         private const string Quest = "orio_patch_notes";
         private const string Event = "complete_orio_patch_notes";
         private const string North = "mechanism.orio.socket.north";

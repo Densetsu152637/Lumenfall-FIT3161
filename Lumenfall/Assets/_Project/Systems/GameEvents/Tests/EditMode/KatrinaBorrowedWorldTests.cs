@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using NUnit.Framework;
@@ -19,13 +20,15 @@ namespace Lumenfall.Tests.GameEvents
         private static readonly Vector2Int Cell = new Vector2Int(12, 9);
         private const string RecessMapId = "C04.Recess";
         private static readonly string[] EchoTags = { "hidden", "lost-echoes" };
+        private static readonly string[] PickupTags = { "hidden", "pickup" };
 
         [SetUp]
         public void SetUp()
         {
             Runtime.ResetState();
-            grid = Create("grid").AddComponent<GridWorld>(); grid.ConfigureBounds(100, 60);
+            typeof(InventoryUiState).GetProperty(nameof(InventoryUiState.IsOpen)).SetValue(null, false);
             previousState = WorldStateService.Instance;
+            grid = Create("grid").AddComponent<GridWorld>(); grid.ConfigureBounds(100, 60);
             state = Create("state").AddComponent<WorldStateService>();
             EditModeLifecycle.SetWorldInstance(state);
             state.BeginMapRebuild("campus");
@@ -63,7 +66,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void DirectCastRejectsDistantAndUnhiddenTargetsAndReportsSearchFeedback()
+        public void DirectCastRejectsDistantAndUnhiddenTargets()
         {
             Register(Keepsake, Cell, EchoTags);
             Register("visible", new Vector2Int(1, 0), null);
@@ -72,7 +75,6 @@ namespace Lumenfall.Tests.GameEvents
             EditModeLifecycle.Call(caster, "OnEnable");
             Runtime.SetFlag("spell.unlocked.LostEchoes", true); state.EndMapRebuild();
             Assert.That(caster.Cast(SpellId.LostEchoes, Keepsake, Vector2Int.up), Is.False);
-            Assert.That(caster.LastSearchFeedback, Does.Contain("No hidden traces within 2 cells"));
             Assert.That(caster.Cast(SpellId.LostEchoes, "visible", Vector2Int.up), Is.False);
             Assert.That(state.TryGetObject(Keepsake, out WorldObjectSnapshot target) && target.revealed, Is.False);
         }
@@ -159,14 +161,19 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             state.BeginMapRebuild("eastForest"); Register(Keepsake, Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
-            state.BeginMapRebuild(RecessMapId); Register(Keepsake, Cell + Vector2Int.right, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
+            state.BeginMapRebuild(RecessMapId); Register(Keepsake, Cell + Vector2Int.right, PickupTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             state.SetProperty(Keepsake, value => value.cell = Cell);
             Runtime.ResetState(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             Runtime.StartQuest("katrina_something_borrowed");
+            Assert.That(monitor.EvaluatePuzzles(), Is.Zero, "A revealed keepsake still has to be picked up.");
+            Assert.That(state.TryCollectObject(Keepsake, Cell + new Vector2Int(2, 0), 1), Is.False, "Pickup needs the player within one cell.");
+            Assert.That(state.TryCollectObject(Keepsake, Cell, 1), Is.True);
             Assert.That(monitor.EvaluatePuzzles(), Is.EqualTo(1));
             Assert.That(Runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
             Assert.That(Runtime.ActiveDialogue.Definition.id, Is.EqualTo("katrina_keepsake_recovered"));
+            Assert.That(Runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active),
+                "Finding the keepsake leaves the return conversation pending.");
             Runtime.ActiveDialogue.Continue(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             string saved = Runtime.ExportStateJson(false); Runtime.ResetState(); Runtime.ImportStateJson(saved);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

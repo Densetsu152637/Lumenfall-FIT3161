@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -151,6 +152,12 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            if (string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
+                runtime.HasEventTriggered("found_katrina_keepsake"))
+            {
+                hint = "Return the keepsake to Katrina on campus.";
+                return;
+            }
             if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
             {
                 if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
@@ -249,6 +256,7 @@ namespace Lumenfall.Quests
                 requiredPowered = questTarget.requiredPowered || best.requiredPowered,
                 requiredConnected = questTarget.requiredConnected || best.requiredConnected,
                 requiredRevealed = questTarget.requiredRevealed || best.requiredRevealed,
+                requiredCollected = questTarget.requiredCollected,
                 requiredFrozen = questTarget.requiredFrozen || best.requiredFrozen,
                 requiredAligned = questTarget.requiredAligned || best.requiredAligned,
                 requiredRotation = questTarget.requiredRotation >= 0 ? questTarget.requiredRotation : best.requiredRotation,
@@ -308,7 +316,7 @@ namespace Lumenfall.Quests
                 foreach (string otherId in target.objectIds)
                     if (!string.Equals(id, otherId, StringComparison.Ordinal) && world.IsConnected(id, otherId)) connected = true;
                 bool valid = (!target.requiredPowered || state.powered) && (!target.requiredConnected || connected) &&
-                    (!target.requiredRevealed || state.revealed) && (!target.requiredFrozen || state.frozen) &&
+                    (!target.requiredRevealed || state.revealed) && (!target.requiredCollected || state.collected) && (!target.requiredFrozen || state.frozen) &&
                     (!target.requiredAligned || state.aligned) && (target.requiredRotation < 0 || Mathf.RoundToInt(state.rotation) % 360 == target.requiredRotation % 360) &&
                     (target.requiredPositionX == int.MinValue || state.cell.x == target.requiredPositionX) &&
                     (target.requiredPositionY == int.MinValue || state.cell.y == target.requiredPositionY);
@@ -336,6 +344,11 @@ namespace Lumenfall.Quests
             if (target.requiredAligned) return "Align the objects with Vis.";
             if (target.requiredFrozen) return "Freeze the trial object with Glaciate and move it to the marked cell.";
             if (target.requiredRotation >= 0) return $"Rotate the mechanism to {target.requiredRotation} degrees.";
+            if (target.requiredCollected)
+                foreach (string id in target.objectIds ?? Array.Empty<string>())
+                    if (world.TryGetObject(id, out WorldObjectSnapshot found) && found.revealed && !found.collected)
+                        return $"Pick up the revealed keepsake with {KeyBindings.GetKeyLabel(GameAction.Talk)}.";
+            if (target.requiredCollected) return $"Find the hidden keepsake and pick it up with {KeyBindings.GetKeyLabel(GameAction.Talk)}; Lost Echoes helps locate it.";
             if (target.requiredRevealed) return "Reveal the hidden keepsake with Lost Echoes.";
             return "Work on the quest puzzle.";
         }

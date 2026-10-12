@@ -215,6 +215,43 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void FoundKeepsakeHintPointsToKatrinaWhileReturnRemainsPending()
+        {
+            BeginMap("C04.Recess");
+            stateEnd();
+            runtime.StartQuest("katrina_something_borrowed");
+            Assert.That(runtime.TriggerEvent("found_katrina_keepsake").Succeeded, Is.True);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+            Assert.That(runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+
+            BeginMap("campus");
+            stateEnd();
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the keepsake to Katrina on campus"));
+        }
+
+        [Test]
+        public void OrioHintGuidesLessonRotationAndManualConfirmation()
+        {
+            BeginMap(OrioRuneDiscPuzzle.PuzzleMapId);
+            OrioRuneDiscPuzzle.RegisterPuzzleObjects(world, OrioDaisRoom.DaisCentre);
+            stateEnd();
+            runtime.StartQuest("orio_patch_notes");
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("finish his Rotara lesson"));
+            runtime.SetFlag("spell.unlocked.Rotara", true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("clockwise by 90 degrees"));
+            foreach (string disc in OrioRuneDiscPuzzle.DiscIds)
+                world.SetProperty(disc, state => state.rotation = 0);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio"));
+            Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
+        }
+
+        [Test]
         public void ColdFeetDirectionChangesFromLiveObjectToGoalAfterFreezing()
         {
             GridWorld grid = NewGrid();

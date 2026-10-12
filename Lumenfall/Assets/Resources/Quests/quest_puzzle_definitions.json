@@ -51,7 +51,7 @@
       "successDialogueId": "katrina_keepsake_recovered",
       "mapId": "C04.Recess",
       "targets": [
-        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredPositionX": 12, "requiredPositionY": 9 }
+        { "id": "revealed_keepsake", "objectIds": ["keepsake.katrina.hidden"], "requiredRevealed": true, "requiredCollected": true, "requiredPositionX": 12, "requiredPositionY": 9 }
       ]
     }
   ]
