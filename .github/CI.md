@@ -164,6 +164,14 @@ It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 It requires the same three Unity secrets described above. The Windows build cache
 is separate from the EditMode cache.
 
+The build checkout explicitly downloads Git LFS content (`lfs: true`), including
+textures, models, audio and tracked terrain data. Before restoring the Library or
+starting Unity, `validate_unity_project.py Lumenfall --require-lfs-assets` rejects
+any remaining pointer placeholders. The lightweight repository-integrity checks
+keep their default metadata-only validation and do not download LFS objects.
+The FastMesh `SceneViewText` component retains its serialized toggle in players;
+its scene-view callbacks and UnityEditor references compile only with `UNITY_EDITOR`.
+
 The workflow runs automatically on every push to `main`. A successful build of the
 current `main` head publishes a `main-<workflow-run-id>` release with the runnable
 ZIP and checksum and marks it **Latest**. Its tag points to the exact pushed commit.
