@@ -41,6 +41,18 @@ namespace Lumenfall.GridMovement
         private bool isMoving;
         private bool movementLocked;
         private GridPortal suppressedPortal;
+        private static GridMover cachedActive;
+
+        /// <summary>
+        /// Cached <c>FindAnyObjectByType&lt;GridMover&gt;()</c> for per-frame and OnGUI callers; the scene
+        /// is only searched again once the cached mover is destroyed or deactivated.
+        /// </summary>
+        public static GridMover FindActive()
+        {
+            if (cachedActive == null || !cachedActive.gameObject.activeInHierarchy)
+                cachedActive = FindAnyObjectByType<GridMover>();
+            return cachedActive;
+        }
 
         public GridWorld World => world;
         public Vector2Int CurrentCell => currentCell;

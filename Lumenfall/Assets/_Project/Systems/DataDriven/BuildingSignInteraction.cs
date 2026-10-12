@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.GameEvents;
@@ -16,6 +17,8 @@ namespace Lumenfall.DataDriven
         private static BuildingSignInteraction activeSign;
         private static int inputBlockedUntilFrame = -1;
         private static Texture2D keyTexture;
+        // Signs on active GameObjects, so the nearest-sign check does not search the scene every frame.
+        private static readonly List<BuildingSignInteraction> active = new List<BuildingSignInteraction>();
 
         [SerializeField] private string buildingName;
         private GridMover lockedMover;
@@ -36,7 +39,7 @@ namespace Lumenfall.DataDriven
                 DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 GridPortal.IsPlayerAtInteractivePortal || Keyboard.current == null) return;
 
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (player == null) return;
 
             if (activeSign == this)
@@ -61,7 +64,7 @@ namespace Lumenfall.DataDriven
                 InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
 
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (player == null || !IsNearestInteractionTarget(player)) return;
             Vector3 screen = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 1.6f);
             if (screen.z <= 0f) return;
@@ -85,7 +88,7 @@ namespace Lumenfall.DataDriven
 
             BuildingSignInteraction nearestSign = null;
             float nearestSignDistance = InteractionRange;
-            foreach (BuildingSignInteraction sign in FindObjectsByType<BuildingSignInteraction>(FindObjectsInactive.Exclude))
+            foreach (BuildingSignInteraction sign in active)
             {
                 float distance = Vector3.Distance(player.transform.position, sign.transform.position);
                 if (distance <= nearestSignDistance) { nearestSignDistance = distance; nearestSign = sign; }
@@ -94,7 +97,7 @@ namespace Lumenfall.DataDriven
 
             DynamicNpc nearestNpc = null;
             float nearestNpcDistance = InteractionRange;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+            foreach (DynamicNpc npc in DynamicNpc.Active)
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= nearestNpcDistance) { nearestNpcDistance = distance; nearestNpc = npc; }
@@ -119,8 +122,14 @@ namespace Lumenfall.DataDriven
             lockedMover = null;
         }
 
+        private void OnEnable()
+        {
+            if (!active.Contains(this)) active.Add(this);
+        }
+
         private void OnDisable()
         {
+            active.Remove(this);
             if (activeSign == this) Close();
         }
 

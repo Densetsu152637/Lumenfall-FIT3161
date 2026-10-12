@@ -33,6 +33,10 @@ namespace Lumenfall.Spells
         private GUIStyle boxStyle;
         private GUIStyle keyStyle;
         private Texture2D keyTexture;
+        private GridPlayerInput playerInput;
+        private WorldObjectSnapshot[] cachedObjects;
+        private WorldStateService cachedState;
+        private int cachedVersion;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -67,12 +71,19 @@ namespace Lumenfall.Spells
         {
             promptTarget = null;
             WorldStateService state = WorldStateService.Instance;
-            GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
-            GridMover player = input == null ? null : input.GetComponent<GridMover>();
+            if (playerInput == null || !playerInput.gameObject.activeInHierarchy) playerInput = FindAnyObjectByType<GridPlayerInput>();
+            GridMover player = playerInput == null ? null : playerInput.GetComponent<GridMover>();
             GridWorld world = player == null ? null : player.World;
             if (state == null || !state.IsReady || world == null) { ClearMarkers(); return; }
 
-            WorldObjectSnapshot[] objects = state.SnapshotObjects();
+            // Cloning every world object each frame fed the GC; re-snapshot only when the world state has moved on.
+            if (cachedObjects == null || cachedState != state || cachedVersion != state.Version)
+            {
+                cachedObjects = state.SnapshotObjects();
+                cachedState = state;
+                cachedVersion = state.Version;
+            }
+            WorldObjectSnapshot[] objects = cachedObjects;
             UpdateMarkers(objects, state.CurrentMapId, world, player);
 
             bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
@@ -109,7 +120,7 @@ namespace Lumenfall.Spells
         // Mirrors DynamicNpc's talk range so the talk key has exactly one meaning at a time.
         private static bool IsNpcInTalkRange(Vector3 position)
         {
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+            foreach (DynamicNpc npc in DynamicNpc.Active)
                 if (Vector3.Distance(position, npc.transform.position) <= NpcTalkRange) return true;
             return false;
         }

@@ -41,6 +41,8 @@ namespace Lumenfall.Spells
         private bool rebuilding;
         public string CurrentMapId { get; private set; }
         public bool IsReady { get; private set; }
+        /// Bumped on every registration, rebuild or state change, so per-frame readers can cache snapshots until it moves.
+        public int Version { get; private set; }
         public string SaveKey => "spell-world-state";
         public event Action<MapStateSnapshot> StateChanged;
         public event Action<MapRebuildEvent> MapRebuilt;
@@ -70,11 +72,11 @@ namespace Lumenfall.Spells
         {
             if (IsReady && !string.IsNullOrWhiteSpace(CurrentMapId)) { archivedMaps[CurrentMapId] = CaptureSnapshot(); archivedEffects[CurrentMapId] = new List<string>(pendingEffects); }
             PruneDestroyedRenderers();
-            rebuilding = true; IsReady = false; CurrentMapId = mapId ?? string.Empty; entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; puzzleTargets = Array.Empty<PuzzleTargetDefinition>();
+            rebuilding = true; IsReady = false; Version++; CurrentMapId = mapId ?? string.Empty; entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; puzzleTargets = Array.Empty<PuzzleTargetDefinition>();
             if (archivedMaps.TryGetValue(CurrentMapId, out MapStateSnapshot saved)) pendingRestore = saved;
             if (archivedEffects.TryGetValue(CurrentMapId, out List<string> effects)) pendingEffects.AddRange(effects);
         }
-        public void ResetAllState() { PruneDestroyedRenderers(); archivedMaps.Clear(); archivedEffects.Clear(); entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; CurrentMapId = string.Empty; IsReady = false; }
+        public void ResetAllState() { PruneDestroyedRenderers(); Version++;archivedMaps.Clear(); archivedEffects.Clear(); entries.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; CurrentMapId = string.Empty; IsReady = false; }
         public void RegisterPuzzleTargets(PuzzleTargetDefinition[] definitions) { puzzleTargets = definitions ?? Array.Empty<PuzzleTargetDefinition>(); }
         public void RegisterObject(string id, GameObject sceneObject, Vector2Int cell, Vector2Int size, bool compatible, string[] tags)
         {
@@ -90,6 +92,7 @@ namespace Lumenfall.Spells
             WorldEntry entry = new WorldEntry { sceneObject = sceneObject, renderers = renderers, rendererEnabledStates = enabledStates, authoredHidden = Array.Exists(tags ?? Array.Empty<string>(), tag => string.Equals(tag, "hidden", StringComparison.OrdinalIgnoreCase)),
                 state = new WorldObjectSnapshot { id = id, mapId = CurrentMapId, cell = cell, size = size, elevation = sceneObject == null ? 0 : sceneObject.transform.position.y, rotation = sceneObject == null ? 0 : sceneObject.transform.eulerAngles.y, spellCompatible = compatible, tags = tags ?? Array.Empty<string>() } };
             entries[id] = entry;
+            Version++;
             SyncPresentation(entry);
         }
         public void EndMapRebuild()
@@ -215,8 +218,13 @@ namespace Lumenfall.Spells
             TriggerTaggedEvents(collected, OnPickupTagPrefix);
             return true;
         }
-        private static bool HasTag(WorldObjectSnapshot target, string tag) =>
-            Array.Exists(target.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
+        // A plain loop: the per-frame pickup check calls this for every object, and a capturing lambda allocates each call.
+        private static bool HasTag(WorldObjectSnapshot target, string tag)
+        {
+            foreach (string value in target.tags ?? Array.Empty<string>())
+                if (string.Equals(value, tag, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
         private static void TriggerTaggedEvents(WorldObjectSnapshot target, string prefix)
         {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
@@ -286,7 +294,7 @@ namespace Lumenfall.Spells
             foreach (KeyValuePair<string, WorldEntry> pair in entries)
                 if (IsConductor(pair.Value.state)) pair.Value.state.powered = reached.Contains(pair.Key);
         }
-        private void NotifyChanged() { PropagateConductorPower(); if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
+        private void NotifyChanged() { PropagateConductorPower(); Version++; if (!rebuilding) StateChanged?.Invoke(new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray() }); }
         private MapStateSnapshot CaptureSnapshot() { return new MapStateSnapshot { mapId = CurrentMapId, objects = SnapshotObjects(), connections = new List<string>(connections).ToArray(), connectionStrengths = CaptureConnectionStrengths() }; }
         private float[] CaptureConnectionStrengths() { float[] values = new float[connections.Count]; int i = 0; foreach (string key in connections) values[i++] = connectionStrengths.TryGetValue(key, out float value) ? value : 1f; return values; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;

@@ -18,10 +18,12 @@ namespace Lumenfall.DataDriven
         [SerializeField] private Transform contentRoot;
         [SerializeField] private GridWorld world;
         private readonly Dictionary<WorldAreaAsset, GameObject> areaInstances = new Dictionary<WorldAreaAsset, GameObject>();
-        private string npcStateSignature;
+        private readonly List<int> npcStateSignature = new List<int>();
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
+        /// The live instance of <see cref="CurrentArea"/>; a new object whenever an area is loaded or re-instantiated.
+        public GameObject CurrentAreaRoot { get; private set; }
         public string SaveKey => "data-driven-world";
 
         private void Awake()
@@ -41,18 +43,33 @@ namespace Lumenfall.DataDriven
         private void Update()
         {
             if (LoadedNpcs == null || GameEventManager.Instance == null) return;
-            System.Text.StringBuilder state = new System.Text.StringBuilder();
-            foreach (NpcDefinition n in LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>())
-                state.Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.showWhenQuestCompleted))
-                    .Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.hideWhenQuestCompleted));
-            string current = state.ToString();
-            if (npcStateSignature != current)
+            // Compared in place rather than as a rebuilt string, so the per-frame check does not allocate.
+            NpcDefinition[] npcs = LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>();
+            bool changed = npcStateSignature.Count != npcs.Length * 2;
+            if (changed)
             {
-                npcStateSignature = current;
+                npcStateSignature.Clear();
+                for (int i = 0; i < npcs.Length * 2; i++) npcStateSignature.Add(-1);
+            }
+            for (int i = 0; i < npcs.Length; i++)
+            {
+                changed |= UpdateSignature(i * 2, npcs[i].showWhenQuestCompleted);
+                changed |= UpdateSignature(i * 2 + 1, npcs[i].hideWhenQuestCompleted);
+            }
+            if (changed)
+            {
                 GameObject activeArea;
                 if (CurrentArea != null && areaInstances.TryGetValue(CurrentArea, out activeArea))
                     foreach (DynamicNpc npc in activeArea.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             }
+        }
+
+        private bool UpdateSignature(int index, string questId)
+        {
+            int status = (int)GameEventManager.Instance.Runtime.GetQuestStatus(questId);
+            if (npcStateSignature[index] == status) return false;
+            npcStateSignature[index] = status;
+            return true;
         }
 
         public void Load(WorldAreaAsset area, NpcCatalogAsset catalog)
@@ -75,6 +92,7 @@ namespace Lumenfall.DataDriven
                 areaInstances.Add(area, root);
             }
             root.SetActive(true);
+            CurrentAreaRoot = root;
             RotaraGearMechanism.AttachTo(root);
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             ApplySpawn(LoadedMap);
@@ -85,7 +103,7 @@ namespace Lumenfall.DataDriven
         public void Clear()
         {
             foreach (GameObject item in areaInstances.Values) if (item != null) { item.SetActive(false); Destroy(item); }
-            areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null;
+            areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null; CurrentAreaRoot = null;
         }
 
         public void ResetToStartingState()

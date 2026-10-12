@@ -61,7 +61,7 @@ namespace Lumenfall.GridMovement
         {
             get
             {
-                GridMover player = FindAnyObjectByType<GridMover>();
+                GridMover player = GridMover.FindActive();
                 if (player == null || player.World == null || player.IsMoving || player.IsMovementLocked) return false;
                 GridPortal portal = player.World.GetPortalAt(player.CurrentCell);
                 return portal != null && portal.CanOfferInteraction(player);
@@ -257,7 +257,7 @@ namespace Lumenfall.GridMovement
 
         private void Update()
         {
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (!CanOfferInteraction(player) || InputBlocked()) return;
             if (KeyBindings.WasPressed(GameAction.Talk)) TryEnter(player);
         }
@@ -265,7 +265,7 @@ namespace Lumenfall.GridMovement
         private void OnGUI()
         {
             if (InputBlocked() || Camera.main == null) return;
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (!CanOfferInteraction(player)) return;
 
             Vector3 screen = Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 1.6f);

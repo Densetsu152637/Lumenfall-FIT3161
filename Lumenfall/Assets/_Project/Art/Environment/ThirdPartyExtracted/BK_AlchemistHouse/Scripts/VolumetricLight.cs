@@ -75,8 +75,17 @@ public class VolumetricLight : MonoBehaviour
     /// <summary>
     /// 
     /// </summary>
-    void Start() 
+    void Start()
     {
+        // Built-in pipeline effect: the shader was not extracted and light command buffers
+        // do not run under URP, so switch off quietly instead of throwing every play.
+        Shader shader = Shader.Find("Sandbox/VolumetricLight");
+        if (shader == null)
+        {
+            enabled = false;
+            return;
+        }
+
 #if UNITY_5_5_OR_NEWER
         if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D11 || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 ||
             SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal || SystemInfo.graphicsDeviceType == GraphicsDeviceType.PlayStation4 ||
@@ -104,9 +113,6 @@ public class VolumetricLight : MonoBehaviour
         else
             _light.AddCommandBuffer(LightEvent.AfterShadowMap, _commandBuffer);
 
-        Shader shader = Shader.Find("Sandbox/VolumetricLight");
-        if (shader == null)
-            throw new Exception("Critical Error: \"Sandbox/VolumetricLight\" shader is missing. Make sure it is included in \"Always Included Shaders\" in ProjectSettings/Graphics.");
         _material = new Material(shader); // new Material(VolumetricLightRenderer.GetLightMaterial());
     }
 
@@ -131,7 +137,8 @@ public class VolumetricLight : MonoBehaviour
     /// </summary>
     public void OnDestroy()
     {        
-        Destroy(_material);
+        if (_material != null)
+            Destroy(_material);
     }
 
     /// <summary>
