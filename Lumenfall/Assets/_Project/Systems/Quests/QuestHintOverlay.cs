@@ -151,25 +151,6 @@ namespace Lumenfall.Quests
                 return;
             }
 
-            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal) &&
-                IsOnMap(selectedPuzzle, world.CurrentMapId))
-            {
-                if (!runtime.GetFlag("spell.unlocked.Rotara"))
-                    hint = "Finish Orio's Rotara lesson, then rotate the west forest gear to the marked quarter turn.";
-                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
-                    hint = "The objective is complete. Return to Orio to confirm the patch.";
-                else
-                {
-                    hint = "Rotate the mechanism to 90 degrees with Rotara. Each cast turns it clockwise by 90 degrees.";
-                    if (world.TryGetObject(RotaraGearMechanism.PuzzleObjectId, out WorldObjectSnapshot gear))
-                    {
-                        string direction = DirectionToCell(gear.cell);
-                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
-                    }
-                }
-                return;
-            }
-
             if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
             {
                 if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
@@ -202,17 +183,17 @@ namespace Lumenfall.Quests
                 return;
             }
 
-            // Orio deliberately has no automatic monitor: the player reports the live gear alignment.
+            // Orio confirms the live or archived rune dais through dialogue.
             if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
             {
-                if (!string.Equals(world.CurrentMapId, RotaraGearMechanism.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
-                    hint = "Travel to the west forest and speak with Orio at the mechanism glade.";
-                else if (!runtime.GetFlag("spell.unlocked.Rotara"))
-                    hint = "Speak with Orio and finish his Rotara lesson before turning the forest gear.";
-                else if (RotaraGearMechanism.IsQuestReady(world, runtime))
-                    hint = "The forest gear is aligned. Return to Orio and confirm the patch.";
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio and finish his Rotara lesson before turning the rune dais.";
+                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                    hint = "The rune dais is aligned. Return to Orio and confirm the patch.";
+                else if (!string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Travel to the west forest and use the teleport pad beside Orio to enter the rune hall.";
                 else
-                    hint = "Select Rotara and cast at the forest gear. Each cast turns it clockwise by 90 degrees; reach the 90-degree notch, then report to Orio.";
+                    hint = "Cast Rotara at the sockets. Each turns its linked discs clockwise by 90 degrees; line up all three teal notches.";
                 return;
             }
 
@@ -290,7 +271,7 @@ namespace Lumenfall.Quests
                 if (puzzle != null && string.Equals(puzzle.questId, questId, StringComparison.Ordinal)) return puzzle;
             // Orio reports the live gear through dialogue rather than an automatic monitor.
             if (string.Equals(questId, "orio_patch_notes", StringComparison.Ordinal))
-                return new QuestPuzzleDefinition { questId = questId, mapId = RotaraGearMechanism.PuzzleMapId };
+                return new QuestPuzzleDefinition { questId = questId, mapId = OrioRuneDiscPuzzle.PuzzleMapId };
             return null;
         }
 

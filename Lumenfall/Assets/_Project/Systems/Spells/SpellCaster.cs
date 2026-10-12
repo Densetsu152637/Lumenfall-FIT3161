@@ -58,7 +58,7 @@ namespace Lumenfall.Spells
             subscribedRuntime = runtime;
             if (runtime != null)
             {
-                RotaraGearMechanism.RegisterQuestConditions(runtime);
+                OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
                 runtime.QuestStatusChanged += OnQuestStatusChanged;
                 runtime.DialogueEnded += OnDialogueEnded;
                 runtime.StateRestored += OnProgressionRestored;
@@ -282,6 +282,11 @@ namespace Lumenfall.Spells
                 case SpellId.Rotara:
                     if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
                         float.IsNaN(target.rotation) || float.IsInfinity(target.rotation)) break;
+                    // A linked socket turns every disc it touches; the socket turns too, which drives its press feedback.
+                    if (Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetLinkedDiscs(state.CurrentMapId, targetId, out string[] linkedDiscs))
+                        foreach (string disc in linkedDiscs)
+                            if (state.TryGetObject(disc, out WorldObjectSnapshot linked) && !float.IsNaN(linked.rotation) && !float.IsInfinity(linked.rotation))
+                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     break;
                 case SpellId.Glaciate: changed = FreezeSlide(state, targetId, ClampDirection(direction)); break;

@@ -34,11 +34,11 @@ Potential side content includes restoring power to the dormitory grid and locati
 
 ## Runtime puzzle targets
 
-First Light uses five runtime toggle relics in `B02.Ground`; all five must be powered. After First Light, accepting String Them Together teaches Weave immediately while the new quest remains Active. Its five board relics take power only through a woven chain from `relic.stella.power`, using `circuit.stella.link` and the authored relays as needed. All five must be lit for completion.
+First Light uses five runtime toggle relics in `B02.Ground`; all five must be powered. After First Light, finishing String Them Together's lesson teaches Weave while the new quest remains Active. Its five board relics take power only through a woven chain from `relic.stella.power`, using `circuit.stella.link` and the authored relays as needed. All five must be lit for completion.
 
 Cinna's alignment target is on `campus`: `orientation.cinna.align` must be aligned. The ice trial requires `trial.cinna.ice` to be frozen at `(34,67)`. Katrina's keepsake is in `C04.Recess` at `(12,9)`; revealing it there grants the key item and starts the recovery conversation, and returning it to Katrina completes the quest.
 
-Orio's `westForest` mechanism starts at 180 degrees. Finish his Rotara lesson, cast three clockwise quarter turns to reach 90 degrees, then report to Orio. Completion requires the learned spell and the exact live mechanism; the automatic quest monitor deliberately does not complete this quest. Orio teaches Rotara only, and Gravitate stays locked. The quest hint directs the player to the west forest, the unfinished lesson, the required turns, or the final confirmation according to live state.
+Orio's westForest mechanism is a teleport pad to `orioDaisRoom`. Finish his Rotara lesson, cast at the four sockets until all three rune discs point to their teal notches, then return to Orio to report. Completion reads the live or archived hall state and requires the learned spell; the automatic quest monitor does not complete this quest. Orio teaches Rotara only, and Gravitate stays locked. See [the implementation note](implementation/quest-orio-patch-notes.md).
 
 ## Implementation trackers
 

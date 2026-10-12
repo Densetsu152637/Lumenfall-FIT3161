@@ -159,12 +159,10 @@ namespace Lumenfall.Tests.GameEvents
         public void OrioHintTracksLessonAlignmentAndConfirmationWithoutCompletingTheQuest()
         {
             runtime.StartQuest("orio_patch_notes");
-            BeginMap(RotaraGearMechanism.PuzzleMapId);
-            world.RegisterObject(RotaraGearMechanism.PuzzleObjectId, null, new Vector2Int(8, 21),
-                Vector2Int.one, true, new[] { "rotara" });
+            BeginMap(OrioRuneDiscPuzzle.PuzzleMapId);
+            OrioRuneDiscPuzzle.RegisterPuzzleObjects(world, OrioDaisRoom.DaisCentre);
             stateEnd();
-            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 180);
-            RotaraGearMechanism.RegisterQuestConditions(runtime);
+            OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
             RefreshHint();
             Assert.That(ReadField<string>("hint"), Does.Contain("finish his Rotara lesson"));
 
@@ -173,7 +171,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(ReadField<string>("hint"), Does.Contain("clockwise by 90 degrees"));
             Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
 
-            world.SetProperty(RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 90);
+            foreach (string disc in OrioRuneDiscPuzzle.DiscIds)
+                world.SetProperty(disc, item => item.rotation = 0);
             RefreshHint();
             Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio and confirm"));
             Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
