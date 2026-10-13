@@ -221,7 +221,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
+        private bool InputBlockedByOverlay => Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen ||InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {

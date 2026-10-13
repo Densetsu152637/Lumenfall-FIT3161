@@ -138,6 +138,8 @@ namespace Lumenfall.Startup
             scrollbarStyle, scrollThumbStyle;
 
         public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
+        /// True from the moment the menu is created until it closes, including the frame before it is ready.
+        public static bool IsOpen => current != null;
 
         private int SelectedOption => keyboardMode ? keyboardOption : hoverOption;
 
