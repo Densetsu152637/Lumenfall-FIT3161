@@ -150,7 +150,7 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
-        public IEnumerator IceTrialPortalSlidesFollowTheSketchRouteAndCompleteColdFeet()
+        public IEnumerator IceTrialPortalSlidesFollowASolutionRouteAndCompleteColdFeet()
         {
             yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
             yield return null;
@@ -192,11 +192,12 @@ namespace Lumenfall.Tests.World
             Assert.That(world.IsIce(entranceCell + Vector2Int.up), Is.True);
             Assert.That(player.TryTeleportTo(world, entranceCell), Is.True);
 
+            // One of the shortest solutions: every snow patch and pillar, all nine switches, then the seal.
             Vector2Int[] route =
             {
-                Vector2Int.up, Vector2Int.right, Vector2Int.left, Vector2Int.down, Vector2Int.right,
-                Vector2Int.right, Vector2Int.down, Vector2Int.down, Vector2Int.right, Vector2Int.left,
-                Vector2Int.up, Vector2Int.up, Vector2Int.right, Vector2Int.up, Vector2Int.right
+                Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left, Vector2Int.up, Vector2Int.right,
+                Vector2Int.right, Vector2Int.up, Vector2Int.right, Vector2Int.up, Vector2Int.up, Vector2Int.left,
+                Vector2Int.down, Vector2Int.left, Vector2Int.right, Vector2Int.down, Vector2Int.right
             };
             foreach (Vector2Int direction in route)
             {

@@ -45,6 +45,11 @@ namespace Lumenfall.GameEvents
 
         public string SaveDirectory => Application.persistentDataPath;
         public string LastError { get; private set; }
+        /// <summary>
+        /// True while providers restore a save, so state they apply then can be shown as already settled rather than as a
+        /// live change (for example, a restored frozen pool should not replay its freeze).
+        /// </summary>
+        public bool IsRestoring { get; private set; }
 
         /// <summary>Returns the newest valid save among the supplied slots, or null when none exist.</summary>
         public string FindMostRecentSlot(IList<string> slots)
@@ -249,29 +254,37 @@ namespace Lumenfall.GameEvents
                 return Fail($"Save slot '{slot}' contains invalid game-event state.");
             }
 
-            foreach (ProviderState state in file.providers ?? Array.Empty<ProviderState>())
+            IsRestoring = true;
+            try
             {
-                if (state == null || string.IsNullOrWhiteSpace(state.key) || !providers.TryGetValue(state.key, out ISaveStateProvider provider))
+                foreach (ProviderState state in file.providers ?? Array.Empty<ProviderState>())
                 {
-                    continue;
-                }
+                    if (state == null || string.IsNullOrWhiteSpace(state.key) || !providers.TryGetValue(state.key, out ISaveStateProvider provider))
+                    {
+                        continue;
+                    }
 
-                bool restored;
-                try
-                {
-                    restored = provider.RestoreStateJson(state.payload ?? string.Empty);
-                }
-                catch (Exception exception)
-                {
-                    Rollback(runtime, previousEventState, previousProviderStates);
-                    return Fail($"Save provider '{state.key}' could not restore its state: {exception.Message}");
-                }
+                    bool restored;
+                    try
+                    {
+                        restored = provider.RestoreStateJson(state.payload ?? string.Empty);
+                    }
+                    catch (Exception exception)
+                    {
+                        Rollback(runtime, previousEventState, previousProviderStates);
+                        return Fail($"Save provider '{state.key}' could not restore its state: {exception.Message}");
+                    }
 
-                if (!restored)
-                {
-                    Rollback(runtime, previousEventState, previousProviderStates);
-                    return Fail($"Save provider '{state.key}' rejected its state.");
+                    if (!restored)
+                    {
+                        Rollback(runtime, previousEventState, previousProviderStates);
+                        return Fail($"Save provider '{state.key}' rejected its state.");
+                    }
                 }
+            }
+            finally
+            {
+                IsRestoring = false;
             }
 
             if (markPlayed) MarkPlayed(slot);

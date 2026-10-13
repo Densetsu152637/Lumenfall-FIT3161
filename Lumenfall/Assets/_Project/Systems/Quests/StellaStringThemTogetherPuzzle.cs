@@ -5,6 +5,7 @@ using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Quests
 {

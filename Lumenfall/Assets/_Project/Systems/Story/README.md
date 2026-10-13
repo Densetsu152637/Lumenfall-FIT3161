@@ -34,6 +34,21 @@ The shout has no portrait, because Kepler is far away when it plays. Once the pl
   - Talking to her again gives the short `bann_reminder` ("Your dorm first, {player}…") instead. Her first node triggers the repeatable event `bann_remind_if_met`, which swaps in the reminder once the flag is set.
 - **Kit's everyday conversation** (`ambient_courtyard_student`, after the tour): "Hey, {player}! Settling in all right?", with two choices. "Can you remind me of the campus buildings and areas?" repeats the landmark tour: the fountain, the Main Academy Building, the Arcane Workshop, the Dormitory and Library, the forest back through the gate, and the building signs. "Bye!" gets "See you around!". Kit's two one-line courtyard chats (`_2`, `_3`) are unchanged, apart from the speaker now being Kit.
 
+## Ambient cast
+
+`AmbientCast` keeps background students and staff on the maps, so the academy feels lived in until the dorm and later story content exist. Each is an NPC catalog record, spawned through `StoryNpc` whenever the player is on their map, with a short placeholder conversation in `Resources/GameEvents/ambient_cast.json` to be rewritten later.
+
+| Character | Catalog id | Prefab | Map and cell |
+| --- | --- | --- | --- |
+| Prof. Voltaire | `prof_voltaire` | `Teacher_02` | Library, `B04.Ground` `(7,17)` |
+| Vex | `vex` | `Student_04` | Library, `B04.Ground` `(2,11)` |
+| Luna | `luna` | `Student_01` | Campus, `(22,77)` |
+| Juno | `juno` | `Student_03` | Campus, `(43,42)` |
+| Rowan | `rowan` | `Student_02` | Training Centre, `B01.Ground` `(6,4)` |
+| Moss | `moss` | `Student_05` | West forest, `(25,32)` |
+
+Cells were set by hand on 2026-10-14. Marigold and Thistle (`Receptionist_01`, `_02`) and Odette (`Student_06`) are kept back for later. The older baked forest student (`forest_student`, at around `(16,39)` in the West Forest prefab) is now called Grace, in the catalog, the prefab, `npcs.json`, the journal and their three forest conversations. Moss stands beyond the forest's gate-scene trigger row, so the player meets Moss on a return visit. Each cast member has a journal entry.
+
 ## Story-only characters
 
 `StoryNpc` spawns a character from their NPC catalog record (prefab, map and cell) instead of baking them into an area prefab, in the way the ice trial spawns its Cinna. Each frame, the owning scene says whether the story wants them present.
@@ -41,9 +56,10 @@ The shout has no portrait, because Kepler is far away when it plays. Once the pl
 - They appear on their map as a child of its area object, facing south, with a `DynamicNpc` and a one-cell `GridObstacle`. They switch off with the area, and are removed when they leave their map or are no longer wanted.
 - They are removed while the startup menu is open, because saves load then, and a blocker on a saved player cell made the world provider reject the save.
 - If the player stands on their cell, they wait until the player steps off.
+- If their authored cell is blocked (a tree, a wall, the fountain) or is a doorway, they stand on the nearest free cell within four cells instead. The interior and forest layouts only exist in the area prefabs, so authored cells cannot all be checked ahead of time.
 
 ## Verification
 
-`LateToOrientationTests` and `LayOfTheLandTests` (EditMode) check Kit's and Bann's catalog records, when Kit's scene plays, its step order and its conversations. `LateToOrientationTests` also check the trigger row, Kepler's catalog record, the scene's step order (call, walk beside Kepler, ask for a name, mark down, flag, walk onto the gate, enter it) and the three conversations. They compile but have not yet been run in Unity.
+`LateToOrientationTests`, `LayOfTheLandTests` and `AmbientCastTests` (EditMode) check the cast's prefabs, maps and conversations, Kit's and Bann's catalog records, when Kit's scene plays, its step order and its conversations. `LateToOrientationTests` also check the trigger row, Kepler's catalog record, the scene's step order (call, walk beside Kepler, ask for a name, mark down, flag, walk onto the gate, enter it) and the three conversations. They compile but have not yet been run in Unity.
 
 Manual validation (not yet executed): check that the shout plays at row 22 and the walk finds a way through the real forest. A walk that is blocked for three seconds, or has no path, places the player at its destination instead. Also check that Kepler's model, facing and portrait look right; that the name prompt works with the keyboard; that the player arrives on campus; and that Kepler is gone on returning to the forest.

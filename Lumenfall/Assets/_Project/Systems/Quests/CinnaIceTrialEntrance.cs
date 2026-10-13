@@ -102,6 +102,7 @@ namespace Lumenfall.Quests
                     renderer.material.EnableKeyword("_EMISSION");
                 }
                 ring = visual.transform;
+                BuildFrost(portalObject.transform);
             }
             // Sit the ring on the player's ground height so raised campus tiles cannot bury it.
             GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
@@ -109,6 +110,36 @@ namespace Lumenfall.Quests
             portalObject.transform.position = world.CellToWorld(EntranceCell, elevation + 0.03f);
             portal.Configure(content, world);
             if (!world.IsCellAvailable(EntranceCell)) Debug.LogWarning($"Ice trial entrance cell {EntranceCell} is blocked on campus.", this);
+        }
+
+        // A frost patch under the ring and small crystals at the tile's corners hint at the ice trial beyond. They sit
+        // inside the portal's own tile and do not block, so the campus path around it is unchanged.
+        private static void BuildFrost(Transform parent)
+        {
+            CinnaIceTrialArt art = CinnaIceTrialArt.Instance;
+            if (art == null) return;
+            if (art.frostMaterial != null)
+            {
+                GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                patch.name = "Ice trial entrance frost";
+                Collider collider = patch.GetComponent<Collider>();
+                if (collider != null) Destroy(collider);
+                patch.transform.SetParent(parent, false);
+                patch.transform.localPosition = new Vector3(0f, 0.005f, 0f);
+                patch.transform.localScale = new Vector3(1.1f, 0.005f, 1.1f);
+                patch.GetComponent<Renderer>().sharedMaterial = art.frostMaterial;
+            }
+            GameObject[] crystals = art.entranceCrystals ?? Array.Empty<GameObject>();
+            for (int i = 0; i < 4 && crystals.Length > 0; i++)
+            {
+                GameObject source = crystals[i % crystals.Length];
+                if (source == null) continue;
+                GameObject crystal = Instantiate(source, parent);
+                crystal.name = "Ice trial entrance crystal " + (i + 1);
+                float angle = 45f + 90f * i;
+                crystal.transform.localPosition = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * 0.55f;
+                crystal.transform.localRotation = Quaternion.Euler(0f, angle + 30f * i, 0f);
+            }
         }
     }
 }

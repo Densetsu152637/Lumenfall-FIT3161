@@ -41,7 +41,14 @@ namespace Lumenfall.Inventory
                 { "orio", new CharacterEntry("Orio", "A clever, reliable student who enjoys games, automation, and optimisation.") },
                 { "katrina", new CharacterEntry("Katrina", "A student searching for a keepsake while keeping its importance understated.") },
                 { "campus_student", new CharacterEntry("Kit", "A friendly student by the campus entrance who gives newcomers the lay of the land.") },
-                { "forest_student", new CharacterEntry("Forest student", "A student familiar with the lantern trail and quiet forest practice spots.") }
+                { "forest_student", new CharacterEntry("Grace", "A student familiar with the lantern trail and quiet forest practice spots.") },
+                { "prof_bann", new CharacterEntry("Prof. Bann", "The headmistress of Lumenfall, found by the fountain in the courtyard.") },
+                { "prof_voltaire", new CharacterEntry("Prof. Voltaire", "A professor who keeps the Library in order, and has opinions about overdue books.") },
+                { "vex", new CharacterEntry("Vex", "A student who treats the Library's quiet as a personal responsibility.") },
+                { "luna", new CharacterEntry("Luna", "A student who spends more time looking at the sky than at the path.") },
+                { "juno", new CharacterEntry("Juno", "A student who always seems to know the latest campus news first.") },
+                { "rowan", new CharacterEntry("Rowan", "A student who practically lives in the Training Centre.") },
+                { "moss", new CharacterEntry("Moss", "A student who goes to the forest to think, and to listen to it.") }
             };
         private static readonly Dictionary<SpellId, string> SpellDescriptions =
             new Dictionary<SpellId, string>

@@ -9,10 +9,14 @@ namespace Lumenfall.Story
     /// <summary>
     /// A character who only exists for part of the story, spawned at runtime from their NPC catalog record (prefab, map
     /// and cell) rather than baked into an area prefab, in the way the ice trial spawns its Cinna. The scene that owns
-    /// them calls <see cref="Keep"/> every frame with whether the story wants them present.
+    /// them calls <see cref="Keep"/> every frame with whether the story wants them present. If their cell turns out to be
+    /// blocked (a tree, a wall, a fountain) or is a doorway, they stand on the nearest free cell instead.
     /// </summary>
     internal sealed class StoryNpc
     {
+        /// <summary>How far, in cells, to look for somewhere to stand when the authored cell cannot be used.</summary>
+        public const int StandingSearchRadius = 4;
+
         private readonly string npcId;
         private readonly Quaternion facing;
         private GameObject instance;
@@ -61,6 +65,12 @@ namespace Lumenfall.Story
 
             Vector2Int cell = new Vector2Int(record.x, record.y);
             if (player != null && (player.CurrentCell == cell || player.DestinationCell == cell)) return;
+            if (!TryFindStandingCell(world, cell, out cell))
+            {
+                if (!warnedMissingRecord) Debug.LogWarning($"'{npcId}' has nowhere to stand near ({record.x},{record.y}) on {record.mapId}.");
+                warnedMissingRecord = true;
+                return;
+            }
 
             // A child of the area object, so they switch off (with their blocker) whenever another area is loaded.
             instance = UnityEngine.Object.Instantiate(record.prefab, current.transform);
@@ -72,6 +82,25 @@ namespace Lumenfall.Story
             blocker.transform.SetParent(instance.transform, false);
             blocker.AddComponent<GridObstacle>().Configure(world, Vector2Int.one);
             area = current;
+        }
+
+        /// <summary>
+        /// The authored cell if it is free and not a doorway, otherwise the nearest such cell, searching outward ring by ring.
+        /// </summary>
+        internal static bool TryFindStandingCell(GridWorld world, Vector2Int wanted, out Vector2Int found)
+        {
+            for (int radius = 0; radius <= StandingSearchRadius; radius++)
+                for (int dx = -radius; dx <= radius; dx++)
+                    for (int dy = -radius; dy <= radius; dy++)
+                    {
+                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) != radius) continue;
+                        Vector2Int cell = wanted + new Vector2Int(dx, dy);
+                        if (!world.IsCellAvailable(cell) || world.GetPortalAt(cell) != null) continue;
+                        found = cell;
+                        return true;
+                    }
+            found = wanted;
+            return false;
         }
 
         public void Remove()

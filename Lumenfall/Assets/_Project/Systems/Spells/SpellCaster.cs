@@ -8,6 +8,7 @@ using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Cutscenes;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Spells
 {
@@ -303,8 +304,7 @@ namespace Lumenfall.Spells
         private void OnGUI()
         {
             if (InputBlockedByOverlay) return;
-            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
-                GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
+            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback)) HudSkin.Message(LastCastFeedback);
             if (!wheelView.Visible)
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.

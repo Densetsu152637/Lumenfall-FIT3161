@@ -32,7 +32,7 @@
       "successDialogueId": "cinna_ice_trial_solved",
       "mapId": "C03.IceTrial",
       "targets": [
-        { "id": "lit_switches", "objectIds": ["switch.cinna.ice.01", "switch.cinna.ice.02", "switch.cinna.ice.03", "switch.cinna.ice.04", "switch.cinna.ice.05", "switch.cinna.ice.06", "switch.cinna.ice.07", "switch.cinna.ice.08", "switch.cinna.ice.09", "switch.cinna.ice.10", "switch.cinna.ice.11", "switch.cinna.ice.12"], "requiredPowered": true },
+        { "id": "lit_switches", "objectIds": ["switch.cinna.ice.01", "switch.cinna.ice.02", "switch.cinna.ice.03", "switch.cinna.ice.04", "switch.cinna.ice.05", "switch.cinna.ice.06", "switch.cinna.ice.07", "switch.cinna.ice.08", "switch.cinna.ice.09"], "requiredPowered": true },
         { "id": "open_seal", "objectIds": ["switch.cinna.ice.final"], "requiredPowered": true }
       ]
     },
