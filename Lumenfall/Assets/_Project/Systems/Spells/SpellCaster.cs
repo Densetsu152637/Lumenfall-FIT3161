@@ -78,7 +78,7 @@ namespace Lumenfall.Spells
         { SubscribeProgression(); RefreshSelection(); }
         // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
         private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.RotaraGearMechanism.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
+        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.OrioRuneDiscPuzzle.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
         private void UnsubscribeProgression()
         { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
@@ -381,6 +381,11 @@ namespace Lumenfall.Spells
                 case SpellId.Rotara:
                     if (!Array.Exists(target.tags ?? Array.Empty<string>(), tag => string.Equals(tag, "rotara", StringComparison.OrdinalIgnoreCase)) ||
                         float.IsNaN(target.rotation) || float.IsInfinity(target.rotation)) break;
+                    // A linked socket turns every disc it touches; the socket turns too, which drives its press feedback.
+                    if (Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetLinkedDiscs(state.CurrentMapId, targetId, out string[] linkedDiscs))
+                        foreach (string disc in linkedDiscs)
+                            if (state.TryGetObject(disc, out WorldObjectSnapshot linked) && !float.IsNaN(linked.rotation) && !float.IsInfinity(linked.rotation))
+                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
                     break;
                 case SpellId.Glaciate:

@@ -11,9 +11,8 @@ using Lumenfall.Spells;
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Gear presentation for authored Rotara mechanisms. Orio teaches Rotara before the player
-    /// casts the selected spell at the gear. Live world state, rather than a saved readiness flag,
-    /// verifies the exact forest mechanism when Orio confirms the patch.
+    /// Gear presentation for standalone authored Rotara mechanisms, such as the campus practice copy, plus the shared
+    /// quarter-turn helpers. Orio's forest mechanism is the teleport pad of <see cref="OrioDaisRoom"/> instead.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RotaraGearMechanism : MonoBehaviour
@@ -22,11 +21,6 @@ namespace Lumenfall.Quests
         private static float panelDrawnAt = -10f;
         /// True while a mechanism's bottom-left status panel is on screen, so other HUD can move out of its way.
         public static bool PanelVisible => Time.unscaledTime - panelDrawnAt < 0.2f;
-        private const string QuestId = "orio_patch_notes";
-        public const string PuzzleMapId = "westForest";
-        public const string PuzzleObjectId = "mechanism.orio.rotate";
-        public const string AlignmentCondition = "OrioMechanismAligned";
-        private const string AlignedFlag = "orio.patch_notes.mechanism_aligned";
         private const int StepDegrees = 90;
         private const int FallbackRequiredRotation = 90;
         private const float TurnSpeed = 240f;
@@ -56,11 +50,15 @@ namespace Lumenfall.Quests
         /// <summary>Called by the area loader so every authored Rotara mechanism is presented as a gear.</summary>
         public static void AttachTo(GameObject areaRoot)
         {
-            RegisterQuestConditions(GameEventManager.Instance?.Runtime);
             if (areaRoot == null) return;
+            bool padMap = string.Equals(WorldStateService.Instance?.CurrentMapId, OrioDaisRoom.ForestMapId, StringComparison.OrdinalIgnoreCase);
             foreach (WorldObjectRegistration registration in areaRoot.GetComponentsInChildren<WorldObjectRegistration>(true))
+            {
+                // The forest mechanism is presented as the teleport pad to Orio's dais hall, not as a gear.
+                if (padMap && string.Equals(registration.ObjectId, OrioDaisRoom.ForestPadId, StringComparison.Ordinal)) continue;
                 if (registration.GetComponent<RotaraGearMechanism>() == null && HasRotaraTag(registration.Tags))
                     registration.gameObject.AddComponent<RotaraGearMechanism>();
+            }
         }
 
         private void Awake()
@@ -68,7 +66,6 @@ namespace Lumenfall.Quests
             objectId = GetComponent<WorldObjectRegistration>().ObjectId;
             requiredRotation = ResolveRequiredRotation(objectId);
             BuildPresentation();
-            RegisterQuestConditions(GameEventManager.Instance?.Runtime);
         }
 
         // Area switches and save restores reactivate the area, so the gear snaps to stored state instead of spinning.
@@ -102,16 +99,6 @@ namespace Lumenfall.Quests
                 SetColor(targetNotch, solved ? SolvedColor : TargetColor);
                 SetColor(pointer, solved ? SolvedColor : PointerColor);
             }
-
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            RegisterQuestConditions(runtime);
-            // Preserve the legacy feedback flag, but never use it as completion authority.
-            if (runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Active &&
-                string.Equals(objectId, PuzzleObjectId, StringComparison.Ordinal))
-            {
-                bool aligned = IsQuestReady(state, runtime);
-                if (runtime.GetFlag(AlignedFlag) != aligned) runtime.SetFlag(AlignedFlag, aligned);
-            }
         }
 
         private bool PlayerInRange(WorldObjectSnapshot snapshot)
@@ -128,26 +115,6 @@ namespace Lumenfall.Quests
         private bool IsAnimating(WorldObjectSnapshot snapshot) => hasDisplayedAngle && Mathf.Abs(Mathf.DeltaAngle(displayedAngle, snapshot.rotation)) > 0.5f;
         private bool IsSolved(WorldObjectSnapshot snapshot) => RotationMatches(snapshot.rotation, requiredRotation);
 
-        /// <summary>Registers a stateless resolver; it retains no gear, map instance or old runtime.</summary>
-        public static void RegisterQuestConditions(GameEventRuntime runtime)
-        {
-            runtime?.RegisterConditionHandler(AlignmentCondition, (condition, current) =>
-                string.Equals(condition.key, PuzzleObjectId, StringComparison.Ordinal) &&
-                IsQuestReady(WorldStateService.Instance, current));
-        }
-
-        public static bool IsQuestReady(WorldStateService state, GameEventRuntime runtime) =>
-            runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Active &&
-            runtime.GetFlag("spell.unlocked.Rotara") && state != null && state.IsReady &&
-            state.TryGetObject(PuzzleObjectId, out WorldObjectSnapshot snapshot) &&
-            MatchesQuestTarget(state.CurrentMapId, snapshot);
-
-        public static bool MatchesQuestTarget(string mapId, WorldObjectSnapshot snapshot) =>
-            string.Equals(mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) && snapshot != null &&
-            string.Equals(snapshot.mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(snapshot.id, PuzzleObjectId, StringComparison.Ordinal) && snapshot.spellCompatible &&
-            HasRotaraTag(snapshot.tags) && RotationMatches(snapshot.rotation, FallbackRequiredRotation);
-
         public static bool RotationMatches(float angle, int required) =>
             !float.IsNaN(angle) && !float.IsInfinity(angle) &&
             Math.Abs(NormalizeDegrees(angle) - NormalizeDegrees(required)) < 0.001f;
@@ -163,14 +130,8 @@ namespace Lumenfall.Quests
             if (state == null || !state.IsReady || InventoryUiState.IsOpen ||
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 !state.TryGetObject(objectId, out WorldObjectSnapshot snapshot) || !PlayerInRange(snapshot)) return;
-            string status = RotationMatches(snapshot.rotation, requiredRotation) ? "At target. Return to Orio to confirm." :
-                "Each Rotara cast turns clockwise by 90 degrees. Overshot? Keep turning to retry.";
-            if (!string.Equals(state.CurrentMapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) || objectId != PuzzleObjectId)
-                status = "Practice mechanism; this does not complete Orio's forest puzzle.";
-            else if (!GameEventManager.Instance.Runtime.GetFlag("spell.unlocked.Rotara"))
-                status = "Finish Orio's Rotara lesson before casting.";
-            else if (GameEventManager.Instance.Runtime.GetQuestStatus(QuestId) == QuestStatus.Completed)
-                status = "Patch confirmed. Further turns are practice; completion is saved.";
+            string status = !GameEventManager.Instance.Runtime.GetFlag("spell.unlocked.Rotara") ? "Finish Orio's Rotara lesson before casting." :
+                "Practice mechanism; Orio's puzzle is the rune dais, through the teleport pad in the west forest glade.";
             panelDrawnAt = Time.unscaledTime;
             GUI.Box(new Rect(16f, Screen.height - 108f, 590f, 92f), "Rotara mechanism");
             GUI.Label(new Rect(28f, Screen.height - 84f, 566f, 24f),

@@ -98,6 +98,8 @@ namespace Lumenfall.DataDriven
             ApplySpawn(LoadedMap);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
+            OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
+            OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -136,7 +138,8 @@ namespace Lumenfall.DataDriven
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || world == null || sourcePortal == null || sourcePortal.destination == null || sourcePortal.destination.area == null) return false;
             PortalContentAsset destinationPortal = sourcePortal.destination;
-            if (Array.IndexOf(availableAreas, destinationPortal.area) < 0 && destinationPortal.area != startingArea)
+            // FindArea also resolves code-built areas, which are not in Available Areas.
+            if (FindArea(destinationPortal.area.definition?.id) != destinationPortal.area)
             { Debug.LogError($"Portal destination area '{destinationPortal.area.name}' is not in Available Areas.", this); return false; }
             Vector2Int previousCell = player.CurrentCell;
             WorldAreaAsset previousArea = CurrentArea;
@@ -152,6 +155,7 @@ namespace Lumenfall.DataDriven
             // PortalContentAsset only supplies the connection and optional legacy offset.
             Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
+            Debug.LogWarning($"Portal '{sourcePortal.id}' could not place the player at {arrival} in '{destinationPortal.area.definition.id}'; returning to the previous area.", this);
             if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
             return false;
         }
@@ -161,10 +165,15 @@ namespace Lumenfall.DataDriven
             return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
         }
 
+        /// <summary>Resolves an area by map id, including code-built areas.</summary>
+        public WorldAreaAsset GetArea(string mapId) => FindArea(mapId);
+
         private WorldAreaAsset FindArea(string id)
         {
             if (startingArea != null && startingArea.definition.id == id) return startingArea;
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
+            // Code-built areas are not scene assets, so saves made inside them resolve here.
+            if (id == OrioDaisRoom.MapId) return OrioDaisRoom.GetOrCreateArea();
             return null;
         }
         private GridPortal FindLivePortal(PortalContentAsset target)

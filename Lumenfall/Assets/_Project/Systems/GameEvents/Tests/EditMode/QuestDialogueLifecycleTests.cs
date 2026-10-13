@@ -255,45 +255,6 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void OrioTeachesRotaraAndRequiresTheLiveGearBeforeCompletion()
-        {
-            GameEventManager manager = GameEventManager.Instance;
-            manager.Runtime.ResetState();
-            WorldStateService previousState = WorldStateService.Instance;
-            GameObject worldHost = new GameObject("orio-progression-world-test");
-            WorldStateService world = worldHost.AddComponent<WorldStateService>();
-            EditModeLifecycle.SetWorldInstance(world);
-            GameObject host = new GameObject("later-spell-progression-test");
-            try
-            {
-                SpellCaster caster = host.AddComponent<SpellCaster>();
-                EnableForTest(caster);
-                DialogueSession dialogue = manager.Runtime.StartDialogue("orio_patch_notes_dialogue");
-                Assert.That(dialogue.SelectChoice("accept"), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
-                Assert.That(dialogue.Continue(), Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
-                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
-                world.BeginMapRebuild(Lumenfall.Quests.RotaraGearMechanism.PuzzleMapId);
-                world.RegisterObject(Lumenfall.Quests.RotaraGearMechanism.PuzzleObjectId, null,
-                    new Vector2Int(8, 21), Vector2Int.one, true, new[] { "rotara" });
-                world.SetProperty(Lumenfall.Quests.RotaraGearMechanism.PuzzleObjectId, item => item.rotation = 90);
-                world.EndMapRebuild();
-                Assert.That(manager.Runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.True);
-                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False, "Orio teaches Rotara, not Gravitate.");
-                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
-            }
-            finally
-            {
-                InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
-                Object.DestroyImmediate(host);
-                Object.DestroyImmediate(worldHost);
-                EditModeLifecycle.SetWorldInstance(previousState);
-            }
-        }
-
-        [Test]
         public void AuthoredQuestCompletionGrantsKeepsakeAndPersistsDiscovery()
         {
             GameEventManager manager = GameEventManager.Instance;
