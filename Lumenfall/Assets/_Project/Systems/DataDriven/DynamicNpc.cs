@@ -7,6 +7,7 @@ using Lumenfall.Inventory;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.DataDriven
 {
@@ -52,7 +53,7 @@ namespace Lumenfall.DataDriven
         }
         private void Update()
         {
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
+            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
                 DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal ||
                 !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
@@ -73,7 +74,7 @@ namespace Lumenfall.DataDriven
         private void OnGUI()
         {
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+                CutscenePlayer.BlocksInput || GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = GridMover.FindActive();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;

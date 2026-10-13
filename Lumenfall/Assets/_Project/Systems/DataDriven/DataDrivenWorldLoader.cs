@@ -72,10 +72,14 @@ namespace Lumenfall.DataDriven
             return true;
         }
 
-        public void Load(WorldAreaAsset area, NpcCatalogAsset catalog)
+        public void Load(WorldAreaAsset area, NpcCatalogAsset catalog) => Load(area, catalog, true);
+
+        // A portal or a loaded save places the player itself, so those loads skip the map's spawn point.
+        private void Load(WorldAreaAsset area, NpcCatalogAsset catalog, bool placeAtSpawn)
         {
             if (area == null || area.areaPrefab == null) { Debug.LogError("Assign an authored area prefab to this World Area asset.", this); return; }
             if (world == null) world = FindAnyObjectByType<GridWorld>();
+            LiftOffGrid(FindAnyObjectByType<GridMover>());
             if (CurrentArea != null && areaInstances.TryGetValue(CurrentArea, out GameObject previous)) previous.SetActive(false);
             CurrentArea = area;
             LoadedMap = area.definition;
@@ -94,7 +98,7 @@ namespace Lumenfall.DataDriven
             root.SetActive(true);
             CurrentAreaRoot = root;
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
-            ApplySpawn(LoadedMap);
+            ApplySpawn(LoadedMap, placeAtSpawn);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
@@ -126,7 +130,7 @@ namespace Lumenfall.DataDriven
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
             WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
             if (area == null) return false;
-            Load(area, npcCatalog);
+            Load(area, npcCatalog, false);
             GridMover player = FindAnyObjectByType<GridMover>();
             return player == null || world == null || player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
         }
@@ -140,12 +144,12 @@ namespace Lumenfall.DataDriven
             { Debug.LogError($"Portal destination area '{destinationPortal.area.name}' is not in Available Areas.", this); return false; }
             Vector2Int previousCell = player.CurrentCell;
             WorldAreaAsset previousArea = CurrentArea;
-            Load(destinationPortal.area, npcCatalog);
+            Load(destinationPortal.area, npcCatalog, false);
             GridPortal target = FindLivePortal(destinationPortal);
             if (target == null)
             {
                 Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
-                if (previousArea != null) Load(previousArea, npcCatalog);
+                if (previousArea != null) { Load(previousArea, npcCatalog, false); player.TryTeleportTo(world, previousCell); }
                 return false;
             }
             // The live destination GridPortal is authoritative for its origin and footprint.
@@ -153,7 +157,7 @@ namespace Lumenfall.DataDriven
             Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             Debug.LogWarning($"Portal '{sourcePortal.id}' could not place the player at {arrival} in '{destinationPortal.area.definition.id}'; returning to the previous area.", this);
-            if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
+            if (previousArea != null) { Load(previousArea, npcCatalog, false); player.TryTeleportTo(world, previousCell); }
             return false;
         }
 
@@ -176,13 +180,25 @@ namespace Lumenfall.DataDriven
             return null;
         }
 
-        private void ApplySpawn(MapDefinition definition)
+        // The grid is shared by every area. While the next area's obstacles register, the player would still occupy their
+        // old cell and be reported as blocked by whatever stands there in the new area, so every load takes them off the
+        // grid; the spawn, the portal arrival or the saved cell then places them again.
+        private void LiftOffGrid(GridMover player)
+        {
+            if (player != null && world != null && player.World == world && !player.IsMoving) world.UnregisterMover(player);
+        }
+
+        private void ApplySpawn(MapDefinition definition, bool placeAtSpawn)
         {
             if (world == null || definition == null || definition.spawn == null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>();
-            if (player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
+            if (placeAtSpawn && player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
+            {
                 Debug.LogWarning($"Map '{definition.id}' spawn is unavailable; keeping player position.", this);
+                // Rejoin the grid where they stand, since the load took them off it.
+                player.TryTeleportTo(world, player.CurrentCell);
+            }
         }
     }
 }

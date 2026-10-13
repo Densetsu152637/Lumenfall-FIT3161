@@ -8,6 +8,7 @@ using Lumenfall.Controls;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.Inventory
 {
@@ -160,7 +161,7 @@ namespace Lumenfall.Inventory
         private void Open()
         {
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
-                QuestHintOverlay.IsSettingsOpen) return;
+                QuestHintOverlay.IsSettingsOpen || CutscenePlayer.BlocksInput) return;
             InventoryUiState.IsOpen = true;
             openedAt = pageChangedAt = Time.unscaledTime;
             underlinePlaced = false;

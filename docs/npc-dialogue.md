@@ -17,6 +17,8 @@
 
 **Input.** Talk (`E`, rebindable), Space, Return or the gamepad south button reveals the line, then continues. Clicking the box also reveals or continues. Choices are parchment rows: select them with up/down (`W`/`S`, the arrow keys or the D-pad) and confirm, or click a row. The number keys 1–9 also pick a choice directly, in list order. The opening interaction frame is ignored so `E` cannot skip the first line, and the movement lock stays active throughout.
 
+**Player token.** `{player}` as a node speaker means the player character: the ribbon shows their name, or `???` before they have one, and no portrait is shown. In node and choice text it is replaced with the same name. See the [Player README](../Lumenfall/Assets/_Project/Systems/Player/README.md).
+
 **Writer tags.** Standard rich-text tags (`<b>`, `<i>`, `<color>`) pass through, and `DialogueTextEffects` adds three more:
 
 | Tag | Effect |

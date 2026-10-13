@@ -5,6 +5,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.DataDriven
 {
@@ -35,7 +36,7 @@ namespace Lumenfall.DataDriven
         private void Update()
         {
             if (activeSign != null && activeSign != this) return;
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
+            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
                 DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 GridPortal.IsPlayerAtInteractivePortal || Keyboard.current == null) return;
 
@@ -60,7 +61,7 @@ namespace Lumenfall.DataDriven
                 return;
             }
 
-            if (activeSign != null || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f ||
+            if (activeSign != null || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || CutscenePlayer.BlocksInput ||
                 InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
 

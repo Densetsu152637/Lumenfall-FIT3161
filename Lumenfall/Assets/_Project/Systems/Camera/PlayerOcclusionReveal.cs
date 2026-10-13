@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using Lumenfall.DataDriven;
+using Lumenfall.GridMovement;
 
 namespace Lumenfall.CameraEffects
 {
@@ -277,7 +278,8 @@ namespace Lumenfall.CameraEffects
         {
             if (camera != view) return;
             Shader.SetGlobalFloat(Enabled, 0f);
-            if (target == null) return;
+            // A see-through circle in the trees would give away a hidden player's spot behind the startup menu.
+            if (target == null || PlayerVisibility.IsHidden) return;
             Vector3 focus = target.position + targetOffset
                 + view.transform.right * viewOffset.x + view.transform.up * viewOffset.y;
             if (view.WorldToViewportPoint(focus).z <= view.nearClipPlane) return;

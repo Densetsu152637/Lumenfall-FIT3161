@@ -22,7 +22,9 @@ Saves made before the link existed load unlinked, because importing event state 
   until the run's first save: the first autosave after 30 seconds of real play, or an earlier journal
   Save or Main menu. The slot is written together with that save
   (`GameAutosave.BeginNewRun(slot)`), so a new game abandoned straight away leaves the old files as
-  they were.
+  they were. New Game also queues the opening cutscene (`opening_arrival`). It takes over the panel's
+  dissolve, so the light streams into the player's spawn and the player appears from it; see
+  [the Cutscenes README](../Cutscenes/README.md). Autosave waits while it plays.
 - **Load.** The Load page shows an Autosave card plus three Manual Slot cards. Loading a manual slot
   restores its state and links the run to that slot (older files carry no link). Play then
   continues in `autosave`, which is first written after 30 seconds of real play; the manual file is
@@ -96,6 +98,13 @@ sparks always use real window pixels; IMGUI maps the pointer into the scaled pan
   into a wider view that sways a few degrees and wanders a few tiles around the player. On close it
   returns to `CameraFollow2_5D.TryGetFollowPose` and calls `ResetSmoothing`. The world itself stays
   paused, so only the camera moves.
+- **No player in the backdrop.** While the menu is open, the player is hidden through
+  `PlayerVisibility` (re-applied each frame, since loading the backdrop save can rebuild the world),
+  and the tree see-through circle (`PlayerOcclusionReveal`) is off, so a new player does not think
+  they are already playing. Load and Escape show the player as the panel dissolves. After New Game
+  the opening hides them first, so they stay hidden until its flash. A save thumbnail taken while
+  the menu is open (Main menu's autosave, or promoting a legacy slot) briefly shows the player for
+  the render (`PlayerVisibility.RenderVisible`).
 - **Parallax.** The pointer position, smoothed over time, shifts the motes (nearer motes shift
   more), nudges the panel a few pixels and adds a small camera offset.
 - **Wand cursor.** While the menu is open the system cursor becomes a generated wand. The default

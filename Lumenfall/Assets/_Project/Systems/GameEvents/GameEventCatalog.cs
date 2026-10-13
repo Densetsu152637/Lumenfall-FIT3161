@@ -44,6 +44,25 @@ namespace Lumenfall.GameEvents
             },
             StringComparer.OrdinalIgnoreCase);
 
+        // Custom types that a game system registers a handler for on the live runtime after the catalogue is built.
+        private static readonly HashSet<string> DeclaredConditionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> DeclaredActionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Declares a custom condition type whose handler is registered on the runtime later, so the catalogue does not
+        /// warn that it has no handler. Declare it before the catalogue is built (for example at SubsystemRegistration).
+        /// </summary>
+        public static void DeclareCustomConditionType(string type)
+        {
+            if (!string.IsNullOrWhiteSpace(type)) DeclaredConditionTypes.Add(type.Trim());
+        }
+
+        /// <summary>The action-type counterpart of <see cref="DeclareCustomConditionType"/>.</summary>
+        public static void DeclareCustomActionType(string type)
+        {
+            if (!string.IsNullOrWhiteSpace(type)) DeclaredActionTypes.Add(type.Trim());
+        }
+
         private readonly Dictionary<string, GameEventDefinition> events =
             new Dictionary<string, GameEventDefinition>(StringComparer.Ordinal);
         private readonly Dictionary<string, QuestDefinition> quests =
@@ -310,7 +329,7 @@ namespace Lumenfall.GameEvents
                     continue;
                 }
 
-                if (!BuiltInConditionTypes.Contains(condition.type))
+                if (!BuiltInConditionTypes.Contains(condition.type) && !DeclaredConditionTypes.Contains(condition.type))
                 {
                     AddWarning(source, $"Condition type '{condition.type}' requires a custom handler.");
                 }
@@ -350,7 +369,7 @@ namespace Lumenfall.GameEvents
                     continue;
                 }
 
-                if (!BuiltInActionTypes.Contains(action.type))
+                if (!BuiltInActionTypes.Contains(action.type) && !DeclaredActionTypes.Contains(action.type))
                 {
                     AddWarning(source, $"Action type '{action.type}' requires a custom handler.");
                 }

@@ -1,0 +1,22 @@
+{
+  "id": "falling_star",
+  "once": true,
+  "steps": [
+    { "type": "wait", "seconds": 0.5 },
+    { "type": "camera", "x": -1.5, "y": 0, "z": 1.5, "zoom": 1 },
+    { "type": "wait", "seconds": 0.9 },
+    { "type": "star", "seconds": 3.6 },
+    { "type": "fade", "color": "#FFF7E6", "alpha": 0.9, "seconds": 0.06 },
+    { "type": "shake", "amplitude": 0.35, "seconds": 0.8, "background": true },
+    { "type": "fade", "alpha": 0.15, "seconds": 0.7 },
+    { "type": "cameraRelease" },
+    { "type": "fade", "color": "#000000", "alpha": 1, "seconds": 1.8 },
+    { "type": "wait", "seconds": 1.2 },
+    { "type": "caption", "text": "A star let go of the sky.", "seconds": 3.2 },
+    { "type": "caption", "text": "It fell, and it fell towards you.", "seconds": 3.4 },
+    { "type": "wait", "seconds": 0.6 },
+    { "type": "caption", "text": "Then nothing at all, until the smell of pine and a lantern, far away.", "seconds": 4.2 },
+    { "type": "wait", "seconds": 0.8 },
+    { "type": "fade", "alpha": 0, "seconds": 3.5 }
+  ]
+}

@@ -240,6 +240,17 @@ MonoBehaviour:
       prerequisiteQuestId: 
       prerequisiteQuestStatus: 
       weight: 5
+  - id: prof_kepler
+    displayName: Prof. Kepler
+    prefab: {fileID: 4952834012050930133, guid: da6a4041f0426914385511a2b46fd568, type: 3}
+    mapId: westForest
+    x: 19
+    y: 46
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue: []
   layers:
   - mapId: campus
     tileFile: campus.npcs.txt

@@ -186,6 +186,10 @@ runtime.RegisterActionHandler("GiveItem", (action, state) =>
     inventory.Add(action.key, action.intValue));
 ```
 
-Unknown custom types produce catalogue warnings until their handlers are registered. Invalid IDs,
+Unknown custom types produce catalogue warnings, because the catalogue is built before handlers are
+registered. A system whose handler is registered later declares its type up front, with
+`GameEventCatalog.DeclareCustomConditionType` or `DeclareCustomActionType` at `SubsystemRegistration`,
+and the warning is skipped. Orio's `OrioMechanismAligned` condition and the cutscene `playcutscene`
+action are declared this way. Invalid IDs,
 duplicate definitions, broken dialogue links and unsupported schema versions are reported in the
 Unity Console during startup.

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Lumenfall.Startup;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.GameEvents
 {
@@ -147,7 +148,8 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            return saveManager != null && Time.timeScale > 0f && !StartupMenu.IsVisible &&
+            // A cutscene would be saved mid-fade with a black thumbnail, so the save waits for the next interval.
+            return saveManager != null && Time.timeScale > 0f && !StartupMenu.IsVisible && !CutscenePlayer.IsPlaying &&
                 (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
         }
     }

@@ -8,6 +8,7 @@ using Lumenfall.Inventory;
 using Lumenfall.Quests;
 using Lumenfall.Startup;
 using UnityEngine.Serialization;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.GridMovement
 {
@@ -292,7 +293,8 @@ namespace Lumenfall.GridMovement
         {
             return QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
                 DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || PortalBlockedPopup.IsVisible;
+                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || PortalBlockedPopup.IsVisible ||
+                CutscenePlayer.BlocksInput;
         }
 
         private static Texture2D InteractionKeyTexture()

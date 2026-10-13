@@ -7,6 +7,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.Spells
 {
@@ -220,7 +221,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen ||InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
+        private bool InputBlockedByOverlay => Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen ||InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress || CutscenePlayer.BlocksInput ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {

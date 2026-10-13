@@ -11,6 +11,8 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.DataDriven;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
+using Lumenfall.Player;
 
 namespace Lumenfall.Startup
 {
@@ -185,6 +187,9 @@ namespace Lumenfall.Startup
             GameSettingsPanel.ApplySavedDisplay();
             reduceMotion = GameSettingsPanel.ReduceMotion;
             SetGameplayInput(false);
+            // The world shows behind the menu, but the player is not shown in it: a new player should not think they
+            // are already playing, and the New Game opening is where the player first appears.
+            PlayerVisibility.Hide(this);
             LoadButtonTextures();
             CreateArt();
             // The title sequence plays once per launch; returning from the journal goes straight to the menu.
@@ -239,6 +244,8 @@ namespace Lumenfall.Startup
         private void Update()
         {
             if (ready) SetGameplayInput(false);
+            // Loading the backdrop save can rebuild the world, so the player is hidden again each frame.
+            if (phase != Phase.Closing) PlayerVisibility.Refresh();
             float now = Time.unscaledTime;
             float deltaTime = Time.unscaledDeltaTime;
             UpdatePointer(deltaTime);
@@ -274,6 +281,7 @@ namespace Lumenfall.Startup
             if (current == this) current = null;
             Time.timeScale = previousTimeScale;
             SetGameplayInput(true);
+            PlayerVisibility.Show(this);
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             foreach (Texture2D texture in buttonTextures.Values)
             {
@@ -1141,10 +1149,14 @@ namespace Lumenfall.Startup
             GameEventManager.Instance.ReloadDefinitions();
             DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
             if (worldLoader != null) worldLoader.ResetToStartingState();
+            // A new character has no name until the story asks for one.
+            PlayerProfile.Forget();
             ManualSaveSlot.Link(slot);
             SaveSlotSummary.BeginNewGame();
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
             GameAutosave.BeginNewRun(slot);
+            // The opening, in which the player appears out of the menu's light, starts as this menu dissolves.
+            CutscenePlayer.QueueAfterMenu(CutscenePlayer.OpeningCutsceneId);
             backdropSlot = GameSaveManager.AutosaveSlot;
             confirmSlot = null;
             message = string.Empty;
@@ -1192,7 +1204,11 @@ namespace Lumenfall.Startup
             phase = Phase.Closing;
             phaseStartedAt = Time.unscaledTime;
             closingPanelAlpha = lastPanelAlpha;
-            sparks.Dissolve(lastPanel, 170);
+            // After New Game the opening takes the dissolve over, so the panel's light streams into the player's arrival,
+            // and keeps the player hidden until they appear. Otherwise (Load, or resuming) the player shows as the menu
+            // dissolves and the camera returns to them.
+            if (!CutscenePlayer.TakeOverMenuDissolve(lastPanel)) sparks.Dissolve(lastPanel, 170);
+            PlayerVisibility.Show(this);
         }
 
         private void CloseMenu()
