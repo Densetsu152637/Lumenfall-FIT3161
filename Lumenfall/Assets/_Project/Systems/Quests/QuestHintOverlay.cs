@@ -8,6 +8,7 @@ using Lumenfall.Inventory;
 using Lumenfall.Spells;
 using Lumenfall.DataDriven;
 using Lumenfall.Startup;
+using Lumenfall.Controls;
 
 namespace Lumenfall.Quests
 {
@@ -24,14 +25,13 @@ namespace Lumenfall.Quests
         };
 
         private static QuestHintOverlay instance;
-        private static GUIStyle boxStyle;
-        private static GUIStyle titleStyle;
-        private static GUIStyle bodyStyle;
         private QuestPuzzleDatabase puzzleDatabase;
         private string hint;
         private string title;
+        private string tracker;
         private float refreshAt;
         private bool settingsOpen;
+        private bool hintsCollapsed;
         private float settingsOpenedAt;
         // The pop-out pauses the world; the previous time scale comes back when it closes.
         private bool pausedTime;
@@ -44,6 +44,8 @@ namespace Lumenfall.Quests
         private readonly List<GridPlayerInput> pausedInputs = new List<GridPlayerInput>();
         private readonly MenuSkin skin = new MenuSkin();
         private readonly OptionsPanel options = new OptionsPanel();
+        private GUIStyle questTrackerStyle;
+        private GUIStyle questHintStyle;
 
         public static bool HintsEnabled => PlayerPrefs.GetInt(EnabledKey, 1) != 0;
         public static bool IsSettingsOpen => instance != null && instance.settingsOpen;
@@ -89,6 +91,10 @@ namespace Lumenfall.Quests
             if (StartupMenu.IsVisible && settingsOpen) SetSettingsOpen(false);
             if (settingsOpen) UpdateSettings();
             else if (CanOpenFromEscape()) SetSettingsOpen(true);
+            Keyboard keyboard = Keyboard.current;
+            if (!settingsOpen && !StartupMenu.IsVisible && HintsEnabled && !string.IsNullOrEmpty(hint) &&
+                keyboard != null && keyboard.hKey.wasPressedThisFrame)
+                hintsCollapsed = !hintsCollapsed;
             if (Time.unscaledTime < refreshAt) return;
             refreshAt = Time.unscaledTime + 0.35f;
             RefreshHint();
@@ -98,6 +104,7 @@ namespace Lumenfall.Quests
         {
             hint = null;
             title = null;
+            tracker = null;
             if (!HintsEnabled || StartupMenu.IsVisible) return;
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             WorldStateService world = WorldStateService.Instance;
@@ -142,11 +149,30 @@ namespace Lumenfall.Quests
 
             if (activeQuest == null) return;
             title = activeQuest.title;
-            if (runtime.GetQuestStatus(activeQuest.id) == QuestStatus.Active &&
-                string.Equals(activeQuest.id, "katrina_something_borrowed", StringComparison.Ordinal) &&
-                runtime.GetFlag("inventory.keyitem.katrina-keepsake"))
+            if (string.Equals(activeQuest.id, KatrinaLostEchoesGuide.QuestId, StringComparison.Ordinal) &&
+                KatrinaLostEchoesGuide.IsActive(runtime))
             {
-                hint = "All three memory anchors recovered. Return them to Katrina on campus.";
+                title = "Lost Echoes";
+                tracker = KatrinaLostEchoesGuide.Tracker(runtime);
+                hint = KatrinaLostEchoesGuide.Instructions(runtime);
+                if (!runtime.GetFlag(KatrinaLostEchoesGuide.KeepsakeFlag))
+                {
+                    if (selectedPuzzle == null)
+                        hint += "\nContinue searching for the remaining memory anchors.";
+                    else if (!IsOnMap(selectedPuzzle, world.CurrentMapId))
+                        hint += $"\nTravel to {MapName(selectedPuzzle.mapId)} to continue the search.";
+                    else if (selectedPuzzle?.targets != null)
+                    {
+                        foreach (QuestPuzzleTarget sourceTarget in selectedPuzzle.targets)
+                        {
+                            QuestPuzzleTarget target = MergeCurrentMapTarget(sourceTarget, world);
+                            if (TargetComplete(target, world)) continue;
+                            string direction = DirectionTo(target, world);
+                            if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
+                            break;
+                        }
+                    }
+                }
                 return;
             }
             if (runtime.GetQuestStatus(activeQuest.id) == QuestStatus.NotStarted)
@@ -393,8 +419,8 @@ namespace Lumenfall.Quests
         {
             int dx = destination.x - from.x, dy = destination.y - from.y;
             if (dx == 0 && dy == 0) return headingToGoal ? "Goal: move the object to your cell." : "The target is here.";
-            string horizontal = dx == 0 ? null : $"{Mathf.Abs(dx)} {(Mathf.Abs(dx) == 1 ? "tile" : "tiles")} {(dx > 0 ? "east" : "west")}";
-            string vertical = dy == 0 ? null : $"{Mathf.Abs(dy)} {(Mathf.Abs(dy) == 1 ? "tile" : "tiles")} {(dy > 0 ? "north" : "south")}";
+            string horizontal = dx == 0 ? null : $"{Mathf.Abs(dx)} {(Mathf.Abs(dx) == 1 ? "tile" : "tiles")} to the {(dx > 0 ? "right" : "left")}";
+            string vertical = dy == 0 ? null : $"{Mathf.Abs(dy)} {(Mathf.Abs(dy) == 1 ? "tile" : "tiles")} to the {(dy > 0 ? "top" : "bottom")}";
             string direction = horizontal == null ? vertical : vertical == null ? horizontal : horizontal + ", " + vertical;
             return (headingToGoal ? "Goal: " : "Target: ") + $"{direction} (cell {destination.x}, {destination.y}).";
         }
@@ -416,25 +442,59 @@ namespace Lumenfall.Quests
 
         private void OnGUI()
         {
-            EnsureStyles();
             if (StartupMenu.IsVisible) return;
+            skin.Ensure();
+            if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 13 };
+            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13 };
             // The pop-out draws above dialogue and other overlays; IMGUI puts lower depths in front.
             GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))
             {
                 float width = Mathf.Min(360f, Screen.width - 32f);
-                Rect card = new Rect(Screen.width - width - 16f, 58f, width, 94f);
-                WorldStateService world = WorldStateService.Instance;
-                if (world != null && string.Equals(world.CurrentMapId, "B02.Ground", StringComparison.OrdinalIgnoreCase) && card.xMin < 438f)
-                    card.position = new Vector2(16f, 124f);
-                GUI.Box(card, GUIContent.none, boxStyle);
-                GUI.Label(new Rect(card.x + 14f, card.y + 9f, card.width - 28f, 24f), title ?? "Quest", titleStyle);
-                GUI.Label(new Rect(card.x + 14f, card.y + 35f, card.width - 28f, 54f), hint, bodyStyle);
+                float innerWidth = width - 28f;
+                float indentedWidth = innerWidth - 16f;
+                float trackerHeight = string.IsNullOrEmpty(tracker) ? 0f : questTrackerStyle.CalcHeight(new GUIContent(tracker), indentedWidth);
+                float hintHeight = hintsCollapsed ? 0f : questHintStyle.CalcHeight(new GUIContent(hint), indentedWidth);
+                float trackerSpace = trackerHeight > 0f ? trackerHeight + 3f : 0f;
+                float cardHeight = 12f + 42f + trackerSpace + 20f + (hintsCollapsed ? 12f : hintHeight + 16f);
+                Rect card = new Rect(16f, 16f, width, cardHeight);
+                float now = Time.unscaledTime;
+                skin.Fade = 1f;
+                skin.PanelFrame(card, now);
+
+                float pulse = 0.5f + 0.5f * Mathf.Sin(now * 2.4f);
+                Rect star = new Rect(card.x + 18f, card.y + 17f, 24f, 24f);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    skin.Draw(new Rect(star.x - 9f, star.y - 9f, star.width + 18f, star.height + 18f),
+                        skin.Glow, MenuArt.Gold, 0.35f + 0.3f * pulse);
+                    skin.Draw(star, skin.Sparkle, Color.Lerp(MenuArt.Gold, MenuArt.Cream, pulse * 0.45f), 1f);
+                }
+                // Size the title rectangle to its text so centring does not create a large invisible gap after the star.
+                string questTitle = title ?? "Quest";
+                float titleWidth = Mathf.Min(skin.Title.CalcSize(new GUIContent(questTitle)).x + 4f, card.width - 82f);
+                skin.DrawTitle(new Rect(star.xMax + 10f, card.y + 9f, titleWidth, 38f), questTitle, now);
+
+                float contentY = card.y + 54f;
+                if (trackerHeight > 0f)
+                {
+                    skin.Label(new Rect(card.x + 30f, contentY, indentedWidth, trackerHeight), tracker, questTrackerStyle, MenuArt.Cream);
+                    contentY += trackerHeight + 3f;
+                }
+                string toggle = hintsCollapsed ? "Click to show hints (H)" : "Click to hide hints (H)";
+                // Indent the hide/show action by roughly two characters.
+                Rect toggleRect = new Rect(card.x + 30f, contentY, indentedWidth, 20f);
+                bool hoverToggle = toggleRect.Contains(Event.current.mousePosition);
+                skin.Label(toggleRect, toggle, skin.Small, hoverToggle ? MenuArt.Gold : MenuArt.Muted);
+                if (GUI.Button(toggleRect, GUIContent.none, GUIStyle.none))
+                    hintsCollapsed = !hintsCollapsed;
+                contentY += 23f;
+                if (!hintsCollapsed)
+                    skin.Label(new Rect(card.x + 30f, contentY, indentedWidth, hintHeight), hint, questHintStyle, MenuArt.Cream);
             }
 
             // The journal draws its own copy of these options, so the button steps aside while it is open.
             if (InventoryUiState.IsOpen) return;
-            skin.Ensure();
             Color previousColor = GUI.color;
             if (settingsOpen) DrawSettingsPanel();
             skin.Fade = 1f;
@@ -567,12 +627,5 @@ namespace Lumenfall.Quests
             pausedInputs.Clear();
         }
 
-        private static void EnsureStyles()
-        {
-            if (boxStyle != null) return;
-            boxStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, padding = new RectOffset(12, 12, 8, 8) };
-            titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } };
-            bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 13, wordWrap = true, normal = { textColor = Color.white } };
-        }
     }
 }
