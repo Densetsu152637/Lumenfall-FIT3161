@@ -41,7 +41,6 @@ namespace Lumenfall.GridMovement
         [Header("Editor Preview")]
         [SerializeField] private Color gizmoColour = new Color(0.65f, 0.15f, 0.95f, 0.55f);
         [SerializeField, Range(0.05f, 1f)] private float gizmoFillOpacity = 0.22f;
-        private static Texture2D interactionKeyTexture;
 
         public GridWorld World => world;
         public Vector2Int CentreCell => world == null ? Vector2Int.zero : world.WorldToCell(transform.position);
@@ -269,17 +268,7 @@ namespace Lumenfall.GridMovement
             GridMover player = GridMover.FindActive();
             if (!CanOfferInteraction(player)) return;
 
-            Vector3 screen = Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 1.6f);
-            if (screen.z <= 0f) return;
-            GUIStyle box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 14 };
-            box.normal.textColor = new Color(0.95f, 0.92f, 0.84f);
-            GUIStyle key = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 13 };
-            key.normal.textColor = new Color(0.10f, 0.11f, 0.13f);
-            key.normal.background = InteractionKeyTexture();
-            Rect rect = new Rect(screen.x - 58f, Screen.height - screen.y - 17f, 116f, 34f);
-            GUI.Box(rect, GUIContent.none, box);
-            GUI.Label(new Rect(rect.x + 7f, rect.y + 5f, 24f, 24f), KeyBindings.GetKeyLabel(GameAction.Talk), key);
-            GUI.Label(new Rect(rect.x + 35f, rect.y + 5f, 74f, 24f), "Enter", box);
+            HudSkin.PromptAbove(player.transform.position + Vector3.up * 1.6f, KeyBindings.GetKeyLabel(GameAction.Talk), "Enter");
         }
 
         private bool CanOfferInteraction(GridMover player)
@@ -297,14 +286,6 @@ namespace Lumenfall.GridMovement
                 CutscenePlayer.BlocksInput;
         }
 
-        private static Texture2D InteractionKeyTexture()
-        {
-            if (interactionKeyTexture != null) return interactionKeyTexture;
-            interactionKeyTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            interactionKeyTexture.SetPixel(0, 0, new Color(0.93f, 0.78f, 0.36f, 1f));
-            interactionKeyTexture.Apply();
-            return interactionKeyTexture;
-        }
     }
 
     /// <summary>A brief portal-entry notice using the same generated skin as the menu and options UI.</summary>

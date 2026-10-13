@@ -158,6 +158,17 @@ Manual validation (not yet executed): the title sequence, camera drift and retur
 ring, page fades and thumbnails have been compiled but not yet checked in Play mode or a player
 build.
 
+## In-game HUD
+
+`HudSkin` gives the small boxes drawn over the world the quest hint card's look: the startup menu's plum-and-gold panel from `MenuSkin`. Conversations keep their own painted dialogue frames. It provides:
+
+- **Interaction prompts:** a plum pill with a gold key cap and the action, shown above NPCs (Talk), portals (Enter), pickups (Pick up) and building signs (Read). The key cap shows the bound key from `KeyBindings`; building signs now use the Talk binding too, instead of a fixed E.
+- **Side panels:** the menu panel frame with a gold title and cream text, in the top-right corner below the Settings button, sized to their text. The quest hint card has the top-left. Stella's First Light and String Them Together progress panels and the ice trial guide use these; Stella's panels used to sit under the hint card.
+- **Messages:** a slim plum card near the bottom of the screen, for spell feedback, with the ice trial's feedback just above it.
+- **Sign card:** the building sign's popup, with a gold "Campus Building" heading, a divider, the building's name as a title, and an Exit prompt.
+
+One skin is shared by every caller and drawn from OnGUI. The portal "door is locked" popup, the journal, the Settings pop-out and the name prompt already used `MenuSkin` directly.
+
 ## In-game options
 
 Two in-game menus reuse the startup menu's look: the Settings pop-out opened by the top-right

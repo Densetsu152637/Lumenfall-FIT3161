@@ -8,6 +8,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Spells;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Quests
 {
@@ -71,10 +72,6 @@ namespace Lumenfall.Quests
         private bool frozenApplied;
         private string feedback;
         private float feedbackUntil;
-        private GUIStyle titleStyle;
-        private GUIStyle bodyStyle;
-        private GUIStyle panelStyle;
-        private Texture2D panelTexture;
 
         private void OnEnable()
         {
@@ -101,7 +98,6 @@ namespace Lumenfall.Quests
 
         private void OnDestroy()
         {
-            if (panelTexture != null) Destroy(panelTexture);
         }
 
         private void Update()
@@ -285,9 +281,8 @@ namespace Lumenfall.Quests
             if (runtime == null || runtime.ActiveDialogue != null) return;
             WorldStateService state = WorldStateService.Instance;
             if (state == null || !string.Equals(state.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return;
-            EnsureStyles();
-            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(feedback))
-                GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 120f, 480f, 42f), feedback);
+            // Above the spell feedback message, which sits at the bottom of the screen.
+            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(feedback)) HudSkin.Message(feedback, 82f);
             if (!runtime.GetFlag(LessonFlag) && !runtime.GetFlag(LearnedFlag)) return;
 
             string body;
@@ -296,28 +291,8 @@ namespace Lumenfall.Quests
                        "2. Stand beside the relic on its stand and right-click (or press " + KeyBindings.GetKeyLabel(GameAction.Interact) + ") to freeze the pool.";
             else
                 body = DescribeStep(state) + "\nSlides stop only on switches, walls or the entrance. Cast Glaciate on the relic again to thaw the pool.";
-            float width = Mathf.Min(360f, Screen.width - 40f);
-            float height = 40f + bodyStyle.CalcHeight(new GUIContent(body), width - 28f);
-            Rect panel = new Rect(Screen.width - width - 20f, 20f, width, height);
-            GUI.Box(panel, GUIContent.none, panelStyle);
-            GUI.Label(new Rect(panel.x + 14f, panel.y + 8f, width - 28f, 24f), "Ice Trial", titleStyle);
-            GUI.Label(new Rect(panel.x + 14f, panel.y + 34f, width - 28f, height - 40f), body, bodyStyle);
-        }
-
-        private void EnsureStyles()
-        {
-            if (panelStyle != null) return;
-            panelTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            panelTexture.SetPixel(0, 0, new Color(0.06f, 0.09f, 0.13f, 0.84f));
-            panelTexture.Apply();
-            panelStyle = new GUIStyle(GUI.skin.box);
-            panelStyle.normal.background = panelTexture;
-            titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold };
-            titleStyle.normal.textColor = new Color(0.7f, 0.92f, 1f);
-            bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
-            bodyStyle.normal.textColor = new Color(0.92f, 0.95f, 0.97f);
-            Font font = Resources.Load<Font>("Dialogue/Nunito-Regular");
-            if (font != null) { titleStyle.font = font; bodyStyle.font = font; }
+            // Top-right, below the Settings button; the quest hint card has the top-left.
+            HudSkin.SidePanel("Ice Trial", body);
         }
 
         private void Build(MapDefinition map, WorldAreaAsset area, NpcDatabaseDefinition npcs)

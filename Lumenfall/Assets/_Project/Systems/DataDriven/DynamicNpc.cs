@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.Quests;
 using Lumenfall.Cutscenes;
+using Lumenfall.Startup;
 
 namespace Lumenfall.DataDriven
 {
@@ -21,7 +22,6 @@ namespace Lumenfall.DataDriven
         public NpcDefinition Definition => definition;
         [SerializeField] private NpcDefinition definition;
         [SerializeField] private string initialDialogueId;
-        private static Texture2D interactionKeyTexture;
         private static readonly List<DynamicNpc> active = new List<DynamicNpc>();
         /// NPCs on active GameObjects; per-frame callers read this instead of searching the scene.
         public static IReadOnlyList<DynamicNpc> Active => active;
@@ -84,27 +84,8 @@ namespace Lumenfall.DataDriven
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }
             }
-            if (nearest != this || Camera.main == null) return;
-            Vector3 screen = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 1.8f);
-            if (screen.z <= 0f) return;
-            GUIStyle box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 14 };
-            box.normal.textColor = new Color(0.95f, 0.92f, 0.84f);
-            GUIStyle key = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 13 };
-            key.normal.textColor = new Color(0.10f, 0.11f, 0.13f);
-            key.normal.background = InteractionKeyTexture();
-            Rect rect = new Rect(screen.x - 52f, Screen.height - screen.y - 17f, 104f, 34f);
-            GUI.Box(rect, GUIContent.none, box);
-            GUI.Label(new Rect(rect.x + 8f, rect.y + 5f, 24f, 24f), "E", key);
-            GUI.Label(new Rect(rect.x + 37f, rect.y + 5f, 58f, 24f), "Talk", box);
-        }
-
-        private static Texture2D InteractionKeyTexture()
-        {
-            if (interactionKeyTexture != null) return interactionKeyTexture;
-            interactionKeyTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            interactionKeyTexture.SetPixel(0, 0, new Color(0.93f, 0.78f, 0.36f, 1f));
-            interactionKeyTexture.Apply();
-            return interactionKeyTexture;
+            if (nearest != this) return;
+            HudSkin.PromptAbove(transform.position + Vector3.up * 1.8f, KeyBindings.GetKeyLabel(GameAction.Talk), "Talk");
         }
         public DialogueSession Interact()
         { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }

@@ -7,6 +7,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Spells;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Quests
 {
@@ -539,7 +540,6 @@ namespace Lumenfall.Quests
             for (int i = 0; i < powered.Length; i++)
                 if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) && (powered[i] = snapshot.powered)) count++;
             bool showGuidance = QuestHintOverlay.HintsEnabled && !QuestHintOverlay.IsSettingsOpen;
-            GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — First Light");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
             string instruction = complete ? "All five relics are glowing. Return to Stella." : "Cast Ampere on the large relics until all five glow together.";
@@ -556,28 +556,27 @@ namespace Lumenfall.Quests
                 }
                 if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Select Ampere and cast to trigger its resonance";
             }
-            if (showGuidance) GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
             string status = "Power: ";
             for (int i = 0; i < powered.Length; i++) status += (i == 0 ? "" : "   ") + (i + 1) + (powered[i] ? " ●" : " ○");
-            GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + count + "/5");
+            // Top-right, below the Settings button; the quest hint card has the top-left.
+            HudSkin.SidePanel("Stella — First Light", (showGuidance ? instruction + "\n" : string.Empty) + status + "     " + count + "/5");
         }
 
         private void DrawCircuitPanel()
         {
             bool showGuidance = QuestHintOverlay.HintsEnabled && !QuestHintOverlay.IsSettingsOpen;
-            GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — String Them Together");
+            string instruction = string.Empty;
             if (showGuidance)
             {
                 SpellCaster caster = FindAnyObjectByType<SpellCaster>();
-                string instruction = caster != null && caster.HeldThread != null
+                instruction = (caster != null && caster.HeldThread != null
                         ? "Holding a thread from " + NodeName(caster.HeldThread) + ". Weave the next relic."
-                        : "Cast Weave on a glowing relic, then link nearby relays until the magical item is powered.";
-                GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
+                        : "Cast Weave on a glowing relic, then link nearby relays until the magical item is powered.") + "\n";
             }
             string status = "Lit: ";
             for (int i = 0; i < RelicCount; i++)
                 status += (i == 0 ? "" : "   ") + (i + 1) + (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered ? " ●" : " ○");
-            GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + CountLitRelics(state) + "/5");
+            HudSkin.SidePanel("Stella — String Them Together", instruction + status + "     " + CountLitRelics(state) + "/5");
         }
 
         private static string ObjectId(int index) => IdPrefix + (index + 1);
