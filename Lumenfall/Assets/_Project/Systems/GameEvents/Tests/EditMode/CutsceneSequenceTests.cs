@@ -32,7 +32,7 @@ namespace Lumenfall.Tests.GameEvents
             public bool StartNamePrompt() { Calls.Add("name"); NamePromptOpen = HoldOpen; return true; }
             public bool IsNamePromptOpen => NamePromptOpen;
             public bool Walking;
-            public bool StartWalk(Vector2Int cell, bool hurry) { Calls.Add($"walk:{cell.x},{cell.y}{(hurry ? "!" : "")}"); Walking = HoldOpen; return true; }
+            public bool StartWalk(Vector2Int cell, bool hurry, string npcId) { Calls.Add($"walk:{npcId}{cell.x},{cell.y}{(hurry ? "!" : "")}"); Walking = HoldOpen; return true; }
             public bool IsWalking => Walking;
             public bool EnterPortal(Vector2Int cell) { Calls.Add($"enter:{cell.x},{cell.y}"); return true; }
             public void StopEffects() => Calls.Add("stopEffects");
@@ -275,6 +275,21 @@ namespace Lumenfall.Tests.GameEvents
             CutsceneDefinition definition = Define(new CutsceneStep { type = "wait", seconds = 1f });
             definition.unskippable = true;
             Assert.That(new CutsceneSequence(definition, new FakeHost()).CanSkip, Is.False);
+        }
+
+        [Test]
+        public void WalkToAnNpcTakesAnOffsetThatMayBeNegative()
+        {
+            List<string> problems = new List<string>();
+            Assert.That(CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"walk\",\"key\":\"kit\",\"x\":0,\"y\":-2}]}", problems), Is.Not.Null);
+            Assert.That(problems, Is.Empty);
+            Assert.That(CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"walk\",\"x\":0,\"y\":-2}]}", problems), Is.Null,
+                "Without an NPC, a walk names a map cell, which cannot be negative.");
+
+            FakeHost host = new FakeHost();
+            CutsceneSequence sequence = new CutsceneSequence(Define(new CutsceneStep { type = "walk", key = "kit", y = -2 }), host);
+            sequence.Advance(0.1f);
+            Assert.That(host.Calls, Does.Contain("walk:kit0,-2"));
         }
 
         [Test]

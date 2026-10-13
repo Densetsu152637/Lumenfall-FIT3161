@@ -42,7 +42,7 @@ Each step has a `type`. Timed steps hold the sequence for their `seconds` unless
 | `cameraRelease` | | Return the camera to normal following. |
 | `dialogue` | `key` | Open that dialogue and wait until it ends. |
 | `name` | | Ask the player for their name (`PlayerNamePrompt`, see [the Player README](../Player/README.md)) and wait for the answer. Put it between two dialogue steps. |
-| `walk` | `x`, `y`, `value` | The game walks the player to that cell on the current map (`CutsceneWalk`) and waits until they arrive. `value` true makes them hurry. The player's own input is off and they take ordinary grid steps along a `GridPathfinder` path, so they go around obstacles. A cell that cannot be stood on is replaced by the nearest one that can. After three seconds blocked, or with no path, the player is placed at the destination. |
+| `walk` | `x`, `y`, `value`, `key` | The game walks the player to that cell on the current map (`CutsceneWalk`) and waits until they arrive. `value` true makes them hurry. With `key` set to an NPC id, `x`, `y` is instead an offset from wherever that NPC stands in the scene, for example `0`, `-2` for two cells in front of them, so it does not depend on their catalog cell. The player's own input is off and they take ordinary grid steps along a `GridPathfinder` path, so they go around obstacles. A cell that cannot be stood on is replaced by the nearest one that can. After three seconds blocked, or with no path, the player is placed at the destination. |
 | `enter` | `x`, `y` | Take the player through the portal at that cell, placing them on it first if they are not already. Usually wrapped in a fade. |
 | `flag` | `key`, `value` | Set a GameEvents flag. |
 

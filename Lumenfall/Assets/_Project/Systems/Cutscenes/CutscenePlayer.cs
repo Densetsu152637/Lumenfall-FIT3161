@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
+using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Player;
@@ -123,6 +124,8 @@ namespace Lumenfall.Cutscenes
             if (definition.once && Runtime != null && Runtime.GetFlag(definition.PlayedFlag)) return false;
             sequence = new CutsceneSequence(definition, this);
             skipArmedUntil = float.NegativeInfinity;
+            // Halt the player at once, so a held movement key cannot carry them a step further into the scene.
+            LockPlayer(true);
             return true;
         }
 
@@ -278,12 +281,33 @@ namespace Lumenfall.Cutscenes
 
         public bool IsNamePromptOpen => PlayerNamePrompt.IsOpen;
 
-        public bool StartWalk(Vector2Int cell, bool hurry)
+        public bool StartWalk(Vector2Int cell, bool hurry, string npcId)
         {
             walk?.Arrive();
+            walk = null;
             GridMover player = Player();
-            walk = player == null ? null : new CutsceneWalk(player, cell, hurry);
-            return walk != null;
+            if (player == null || player.World == null) return false;
+            Vector2Int target = cell;
+            if (!string.IsNullOrEmpty(npcId))
+            {
+                // Measured from where the NPC actually stands, which can differ from their catalog cell.
+                DynamicNpc npc = FindNpc(npcId);
+                if (npc == null)
+                {
+                    Debug.LogWarning($"Cutscene '{CurrentId}' cannot walk to NPC '{npcId}': they are not in this area.");
+                    return false;
+                }
+                target = player.World.WorldToCell(npc.transform.position) + cell;
+            }
+            walk = new CutsceneWalk(player, target, hurry);
+            return true;
+        }
+
+        private static DynamicNpc FindNpc(string npcId)
+        {
+            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+                if (npc != null && npc.Id == npcId) return npc;
+            return null;
         }
 
         public bool IsWalking => walk != null && !walk.IsFinished;

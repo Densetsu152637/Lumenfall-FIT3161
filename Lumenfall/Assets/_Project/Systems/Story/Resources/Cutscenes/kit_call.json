@@ -1,0 +1,10 @@
+{
+  "id": "kit_call",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "wait", "seconds": 0.6 },
+    { "type": "dialogue", "key": "kit_call" },
+    { "type": "flag", "key": "story.orientation.kit_called", "value": true }
+  ]
+}

@@ -103,7 +103,9 @@ namespace Lumenfall.Cutscenes
                         break;
                     case CutsceneStepKind.Walk:
                     case CutsceneStepKind.Enter:
-                        if (step.x < 0f || step.y < 0f) problems.Add($"{label} names a cell outside the map.");
+                        // A walk to an NPC takes an offset, which may be negative.
+                        bool offset = step.Kind == CutsceneStepKind.Walk && !string.IsNullOrWhiteSpace(step.key);
+                        if (!offset && (step.x < 0f || step.y < 0f)) problems.Add($"{label} names a cell outside the map.");
                         break;
                 }
             }
@@ -128,7 +130,8 @@ namespace Lumenfall.Cutscenes
     /// <item><c>dialogue</c>: open dialogue <c>key</c> and wait until it ends.</item>
     /// <item><c>name</c>: ask the player for their name (blank gives the default) and wait for the answer.</item>
     /// <item><c>walk</c>: the game walks the player to cell <c>x</c>, <c>y</c> on the current map and waits until they
-    /// arrive; <c>value</c> true makes them hurry.</item>
+    /// arrive; <c>value</c> true makes them hurry. With <c>key</c> set to an NPC id, <c>x</c>, <c>y</c> is instead an
+    /// offset from wherever that NPC stands, such as 0, -2 for two cells in front of them.</item>
     /// <item><c>enter</c>: take the player through the portal at cell <c>x</c>, <c>y</c>.</item>
     /// <item><c>flag</c>: set GameEvents flag <c>key</c> to <c>value</c>. Skipping still applies it.</item>
     /// </list>

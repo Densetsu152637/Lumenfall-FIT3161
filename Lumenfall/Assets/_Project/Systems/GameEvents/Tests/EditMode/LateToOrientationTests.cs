@@ -39,6 +39,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(18, 21)), Is.False);
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(18, 22)), Is.True);
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(15, 30)), Is.True);
+            // The scene checks the cell the player is stepping into as well, so it starts mid-step rather than when they stop.
         }
 
         [Test]
@@ -69,9 +70,10 @@ namespace Lumenfall.Tests.GameEvents
             }));
 
             CutsceneStep[] walks = cutscene.steps.Where(step => step.Kind == CutsceneStepKind.Walk).ToArray();
-            NpcDefinition kepler = Kepler();
-            // The player is walked to stand two cells in front of Kepler, one back from the cell beside him.
-            Assert.That(walks[0].Cell, Is.EqualTo(new Vector2Int(kepler.x, kepler.y - 2)));
+            // The player is walked to stand two cells in front of wherever Kepler stands.
+            Assert.That(walks[0].key, Is.EqualTo(LateToOrientationScene.KeplerNpcId));
+            Assert.That(walks[0].Cell, Is.EqualTo(new Vector2Int(0, -2)));
+            Assert.That(walks[1].key, Is.Null.Or.Empty, "The walk onto the gate is to a map cell.");
             CutsceneStep enter = cutscene.steps.Single(step => step.Kind == CutsceneStepKind.Enter);
             Assert.That(enter.Cell, Is.EqualTo(walks[1].Cell), "The player walks onto the gate before going through it.");
             Assert.That(enter.Cell, Is.EqualTo(new Vector2Int(17, 48)), "The west-forest gate to campus (portal P.F00).");
@@ -99,7 +101,7 @@ namespace Lumenfall.Tests.GameEvents
                     if (PlayerProfile.IsPlayerSpeaker(node.speaker))
                         Assert.That(node.text, Does.StartWith("<i>").And.EndWith("</i>"), $"{id}/{node.id} is the player's inner voice.");
                     else if (id != "kepler_far_call")
-                        // Matching the catalog name is what gives Kepler his portrait.
+                        // Matching the catalog name is what gives Kepler a portrait.
                         Assert.That(node.speaker, Is.EqualTo(keplerName), $"{id}/{node.id}");
                     Assert.That(node.choices, Is.Empty, $"{id}/{node.id} moves straight on.");
                 }

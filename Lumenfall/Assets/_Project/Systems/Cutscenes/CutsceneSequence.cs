@@ -20,8 +20,11 @@ namespace Lumenfall.Cutscenes
         /// <summary>Opens the player-name prompt; returns false if it could not open, so the cutscene does not wait.</summary>
         bool StartNamePrompt();
         bool IsNamePromptOpen { get; }
-        /// <summary>Starts walking the player to a cell on the current map; returns false if there is no player to walk.</summary>
-        bool StartWalk(Vector2Int cell, bool hurry);
+        /// <summary>
+        /// Starts walking the player to a cell on the current map, or, with <paramref name="npcId"/>, to that offset from
+        /// where the NPC stands. Returns false if there is no player to walk or no such NPC.
+        /// </summary>
+        bool StartWalk(Vector2Int cell, bool hurry, string npcId);
         bool IsWalking { get; }
         /// <summary>Takes the player through the portal at a cell, moving them onto it first if needed.</summary>
         bool EnterPortal(Vector2Int cell);
@@ -228,7 +231,7 @@ namespace Lumenfall.Cutscenes
                     waitingForName = host.StartNamePrompt();
                     break;
                 case CutsceneStepKind.Walk:
-                    waitingForWalk = host.StartWalk(step.Cell, step.value) && !step.background;
+                    waitingForWalk = host.StartWalk(step.Cell, step.value, step.key?.Trim()) && !step.background;
                     break;
                 case CutsceneStepKind.Enter:
                     host.EnterPortal(step.Cell);

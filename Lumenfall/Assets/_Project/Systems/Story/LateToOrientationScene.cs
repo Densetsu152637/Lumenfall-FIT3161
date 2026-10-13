@@ -1,4 +1,3 @@
-using System;
 using Lumenfall.Cutscenes;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -10,10 +9,10 @@ namespace Lumenfall.Story
 {
     /// <summary>
     /// The walk from the forest to the academy gate. Until it has played, Prof. Kepler waits by the west-forest gate
-    /// (spawned here from his NPC catalog record). The first time the player reaches the trigger row, the cutscene
-    /// <see cref="CutsceneId"/> plays: Kepler calls from the gate, the player is walked up to him, gives their name and
+    /// (spawned from their NPC catalog record). The first time the player reaches the trigger row, the cutscene
+    /// <see cref="CutsceneId"/> plays: Kepler calls from the gate, the player is walked up to them, gives their name and
     /// is walked through the gate onto campus. Its flag step sets <see cref="MetFlag"/>, after which this Kepler is
-    /// removed for good; the character is meant to be reused elsewhere later with his own placement.
+    /// removed for good; the character is meant to be reused elsewhere later with their own placement.
     /// </summary>
     public sealed class LateToOrientationScene : MonoBehaviour
     {
@@ -30,10 +29,8 @@ namespace Lumenfall.Story
 
         private static LateToOrientationScene instance;
 
-        private GameObject kepler;
-        private GameObject keplerArea;
+        private readonly StoryNpc kepler = new StoryNpc(KeplerNpcId);
         private GameObject failedArea;
-        private bool warnedMissingRecord;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => instance = null;
@@ -56,77 +53,17 @@ namespace Lumenfall.Story
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             if (loader == null || runtime == null) return;
 
-            if (runtime.GetFlag(MetFlag))
-            {
-                // Kepler stays while the cutscene walks the player through the gate, then leaves for good.
-                if (kepler != null && !CutscenePlayer.IsPlaying) RemoveKepler();
-                return;
-            }
-
-            // Saves are loaded while the startup menu is open, and a save may have the player standing on Kepler's cell.
-            // His blocker would make that placement fail and the whole load be rejected, so he only exists during play.
-            if (StartupMenu.IsOpen)
-            {
-                RemoveKepler();
-                return;
-            }
-
-            bool inForest = loader.LoadedMap != null && string.Equals(loader.LoadedMap.id, MapId, StringComparison.OrdinalIgnoreCase);
-            if (!inForest) return;
-            EnsureKepler(loader);
-            if (kepler == null || failedArea == loader.CurrentAreaRoot) return;
+            // Kepler waits until the scene has played, and stays while it walks the player through the gate.
+            bool met = runtime.GetFlag(MetFlag);
+            kepler.Keep(!met || CutscenePlayer.CurrentId == CutsceneId);
+            if (met || !kepler.IsPresent || failedArea == loader.CurrentAreaRoot) return;
             if (CutscenePlayer.IsPlaying || StartupMenu.IsOpen || Time.timeScale <= 0f || runtime.ActiveDialogue != null) return;
 
-            GridMover player = Player();
-            if (player == null || player.IsMoving || !HasReachedTrigger(player.CurrentCell)) return;
+            // The step onto the row counts as reaching it, so the scene starts at once; the cutscene halts the player.
+            GridMover player = StoryNpc.Player();
+            if (player == null || !(HasReachedTrigger(player.CurrentCell) || HasReachedTrigger(player.DestinationCell))) return;
             // A missing or broken cutscene would otherwise be retried every frame.
             if (!CutscenePlayer.Play(CutsceneId)) failedArea = loader.CurrentAreaRoot;
-        }
-
-        private void EnsureKepler(DataDrivenWorldLoader loader)
-        {
-            GameObject area = loader.CurrentAreaRoot;
-            if (area == null || (kepler != null && keplerArea == area)) return;
-            RemoveKepler();
-
-            NpcDefinition record = Array.Find(loader.LoadedNpcs?.npcs ?? Array.Empty<NpcDefinition>(),
-                npc => npc != null && npc.id == KeplerNpcId);
-            GridWorld world = Player()?.World ?? FindAnyObjectByType<GridWorld>();
-            if (record == null || record.prefab == null || world == null)
-            {
-                if (!warnedMissingRecord) Debug.LogError($"The NPC catalog has no '{KeplerNpcId}' record with a prefab, so the gate scene cannot play.", this);
-                warnedMissingRecord = true;
-                return;
-            }
-
-            // A save can leave the player standing where Kepler waits; he appears once they have stepped off.
-            Vector2Int cell = new Vector2Int(record.x, record.y);
-            GridMover player = Player();
-            if (player != null && (player.CurrentCell == cell || player.DestinationCell == cell)) return;
-
-            // A child of the forest's area object, so he is switched off (with his blocker) whenever another area is loaded.
-            kepler = Instantiate(record.prefab, area.transform);
-            kepler.name = record.displayName;
-            kepler.transform.position = world.CellToWorld(cell);
-            kepler.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            kepler.AddComponent<DynamicNpc>().Configure(record, null);
-            GameObject blocker = new GameObject(record.displayName + " obstacle");
-            blocker.transform.SetParent(kepler.transform, false);
-            blocker.AddComponent<GridObstacle>().Configure(world, Vector2Int.one);
-            keplerArea = area;
-        }
-
-        private void RemoveKepler()
-        {
-            if (kepler != null) Destroy(kepler);
-            kepler = null;
-            keplerArea = null;
-        }
-
-        private static GridMover Player()
-        {
-            GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
-            return input == null ? null : input.GetComponent<GridMover>();
         }
     }
 }

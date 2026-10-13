@@ -27534,7 +27534,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.DynamicNpc
   definition:
     id: campus_student
-    displayName: Campus student
+    displayName: Kit
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
     mapId: campus
     x: 32

@@ -4,7 +4,7 @@
   "unskippable": true,
   "steps": [
     { "type": "dialogue", "key": "kepler_far_call" },
-    { "type": "walk", "x": 19, "y": 44 },
+    { "type": "walk", "key": "prof_kepler", "x": 0, "y": -2 },
     { "type": "wait", "seconds": 0.3 },
     { "type": "dialogue", "key": "kepler_late" },
     { "type": "name" },
