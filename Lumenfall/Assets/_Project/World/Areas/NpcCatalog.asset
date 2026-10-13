@@ -183,7 +183,7 @@ MonoBehaviour:
       prerequisiteQuestStatus: 
       weight: 1
   - id: forest_student
-    displayName: Forest student
+    displayName: Grace
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
     mapId: westForest
     x: 16
@@ -263,6 +263,108 @@ MonoBehaviour:
     dialogueIds: []
     dialogue:
     - dialogueId: bann_orientation
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: prof_voltaire
+    displayName: Prof. Voltaire
+    prefab: {fileID: 6625074197923019482, guid: b4b9cc7e8b600a74d889bca7718da7ce, type: 3}
+    mapId: B04.Ground
+    x: 7
+    y: 17
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_prof_voltaire
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: vex
+    displayName: Vex
+    prefab: {fileID: 1990108517027432954, guid: d954dd3e135534f42a8ce304945df58e, type: 3}
+    mapId: B04.Ground
+    x: 2
+    y: 11
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_vex
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: luna
+    displayName: Luna
+    prefab: {fileID: 2978429342055920372, guid: 6e9907542c8c00c4488a58e9b1f90aa2, type: 3}
+    mapId: campus
+    x: 22
+    y: 77
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_luna
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: juno
+    displayName: Juno
+    prefab: {fileID: 8107989214175302219, guid: 9293640f6c143834c9197dba0d21dc7e, type: 3}
+    mapId: campus
+    x: 43
+    y: 42
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_juno
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: rowan
+    displayName: Rowan
+    prefab: {fileID: 2045118110938966410, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
+    mapId: B01.Ground
+    x: 6
+    y: 4
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_rowan
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: moss
+    displayName: Moss
+    prefab: {fileID: 4777863523848655004, guid: 3229cbe4193f2a7428ceedb7cc2d21cb, type: 3}
+    mapId: westForest
+    x: 25
+    y: 32
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: ambient_moss
       questId: 
       requiredQuestStatus: 
       prerequisiteQuestId: 
