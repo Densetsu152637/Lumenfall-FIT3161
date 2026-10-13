@@ -33,7 +33,7 @@ namespace Lumenfall.Quests
     public sealed class CinnaIceTrialRoom : MonoBehaviour
     {
         public const string MapId = "C03.IceTrial";
-        public const string ReturnPortalId = "P.ICETRIAL.CAMPUS";
+        public const string ReturnPortalId = "P.I.00";
         public const string QuestId = "cinna_cold_feet_warm_idea";
         public const string RelicId = "relic.cinna.frost";
         public const string FinalSwitchId = "switch.cinna.ice.final";
@@ -511,11 +511,11 @@ namespace Lumenfall.Quests
             // A GridPortal's cell is its transform position; the landing stone sits on the trial spawn cell.
             Vector2Int landingCell = map.spawn != null ? new Vector2Int(map.spawn.x, map.spawn.y) : new Vector2Int(5, 0);
             Part(PrimitiveType.Cylinder, "Landing Stone", world.CellToWorld(landingCell, 0.02f), new Vector3(0.9f * size, 0.02f, 0.9f * size), StoneColor);
-            // Built active inside the map rebuild so the loader finds it and suppresses re-entry on arrival.
-            portalObject = new GameObject("Ice Trial Return Portal");
-            portalObject.transform.SetParent(geometry, false);
-            portalObject.transform.position = world.CellToWorld(landingCell, 0.03f);
-            GridPortal portal = portalObject.AddComponent<GridPortal>();
+            GridPortal portal = null;
+            foreach (GridPortal candidate in GetComponentsInChildren<GridPortal>(true))
+                if (candidate.Content == content) { portal = candidate; break; }
+            if (portal == null) { Debug.LogError($"Portal '{ReturnPortalId}' is missing from the C03.IceTrial prefab.", this); return; }
+            portalObject = portal.gameObject;
             portal.Configure(content, world);
             GameObject visual = Part(PrimitiveType.Cylinder, "Return portal ring", Vector3.zero, new Vector3(0.82f * size, 0.06f, 0.82f * size), PortalColor, true);
             visual.transform.SetParent(portalObject.transform, false);

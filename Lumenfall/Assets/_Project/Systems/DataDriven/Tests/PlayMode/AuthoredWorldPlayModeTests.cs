@@ -169,7 +169,7 @@ namespace Lumenfall.Tests.World
 
             GridPortal entrance = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Single(portal => portal.Content != null && portal.Content.id == CinnaIceTrialEntrance.PortalId);
-            Assert.That(entrance.World.WorldToCell(entrance.transform.position), Is.EqualTo(new Vector2Int(47, 45)));
+              Assert.That(entrance.World.WorldToCell(entrance.transform.position), Is.EqualTo(CinnaIceTrialEntrance.EntranceCell));
             // Out of Alignment delivers the relic to the pedestal; only then does it take Glaciate.
             GameEventManager.Instance.Runtime.SetFlag(SpellCaster.VisDeliveredFlagPrefix + CinnaAlignmentRelic.RelicId, true);
             Assert.That(loader.SwitchArea(entrance.Content, Vector2Int.zero), Is.True, "The campus portal should enter the ice trial.");

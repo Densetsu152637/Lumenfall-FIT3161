@@ -7,16 +7,16 @@ using Lumenfall.Spells;
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Campus entrance to Cinna Cirra's ice trial at <c>P.CAMPUS.ICETRIAL</c>, on the campus path at <c>(47,45)</c>.
+    /// Campus entrance to Cinna Cirra's ice trial at <c>P.C05</c>, on the campus path at <c>(47,45)</c>.
     /// Like Katrina's recess entrance it is open whenever campus is loaded; the trial returns to this tile through its
     /// landing stone. It is built at runtime, so the baked area prefabs and their PlayMode route count are unchanged.
     /// </summary>
     public sealed class CinnaIceTrialEntrance : MonoBehaviour
     {
-        public const string PortalId = "P.CAMPUS.ICETRIAL";
+        public const string PortalId = "P.C05";
         private const string MapId = "campus";
         // Portal content assets only describe connections; a GridPortal's cell is its transform position.
-        public static readonly Vector2Int EntranceCell = new Vector2Int(47, 45);
+        public static readonly Vector2Int EntranceCell = new Vector2Int(18, 45);
         private static readonly Color PortalColor = new Color(0.62f, 0.86f, 1f);
         private static CinnaIceTrialEntrance instance;
 
@@ -83,10 +83,12 @@ namespace Lumenfall.Quests
 
             if (portalObject == null)
             {
-                portalObject = new GameObject("Cinna Ice Trial Entrance");
-                portalObject.transform.SetParent(transform, false);
-                portalObject.SetActive(false);
-                portal = portalObject.AddComponent<GridPortal>();
+                GameObject areaRoot = DataDrivenWorldLoader.Instance?.CurrentAreaRoot;
+                if (areaRoot != null)
+                    foreach (GridPortal candidate in areaRoot.GetComponentsInChildren<GridPortal>(true))
+                        if (candidate.Content == content) { portal = candidate; break; }
+                if (portal == null) { Debug.LogError($"Portal '{PortalId}' is missing from the campus prefab.", this); return; }
+                portalObject = portal.gameObject;
                 GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 visual.name = "Ice trial entrance ring";
                 visual.transform.SetParent(portalObject.transform, false);
@@ -104,10 +106,6 @@ namespace Lumenfall.Quests
                 ring = visual.transform;
                 BuildFrost(portalObject.transform);
             }
-            // Sit the ring on the player's ground height so raised campus tiles cannot bury it.
-            GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
-            float elevation = input == null ? 0f : world.WorldToElevation(input.transform.position);
-            portalObject.transform.position = world.CellToWorld(EntranceCell, elevation + 0.03f);
             portal.Configure(content, world);
             if (!world.IsCellAvailable(EntranceCell)) Debug.LogWarning($"Ice trial entrance cell {EntranceCell} is blocked on campus.", this);
         }
