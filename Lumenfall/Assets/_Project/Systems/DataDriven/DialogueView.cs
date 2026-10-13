@@ -18,6 +18,7 @@ namespace Lumenfall.DataDriven
     {
         private const string Shown = "dialogue-root--shown";
         private const string HasPortrait = "dialogue-box--portrait";
+        private const string StretchFrame = "dialogue-box--stretch";
         private const string Waiting = "dialogue-box--waiting";
         private const string Selected = "dialogue-choice--selected";
 
@@ -29,15 +30,22 @@ namespace Lumenfall.DataDriven
         private const float BaseHeight = 420f;
         private const float ContentWidth = 0.66f;
         private const float ContentHeight = 0.57f;
+        private const float StretchBaseHeight = 360f;
+        private const float StretchContentChrome = 206f; // 114px top + 92px bottom in DialogueBox.uss.
         private static readonly float[] BoxSizes = { 0.72f, 0.8f, 0.88f, 1f, 1.12f, 1.24f };
 
         private readonly GameObject host;
         private readonly PanelSettings settings;
         private readonly VisualElement root;
         private readonly VisualElement box;
+        private readonly VisualElement stretchFrame;
+        private readonly VisualElement stretchLeft;
+        private readonly VisualElement stretchMiddle;
+        private readonly VisualElement stretchRight;
         private readonly VisualElement portrait;
         private readonly VisualElement ribbon;
         private readonly Label nameLabel;
+        private readonly ScrollView content;
         private readonly Label text;
         private readonly VisualElement choices;
         private readonly DialogueTriangle continueArrow;
@@ -49,6 +57,8 @@ namespace Lumenfall.DataDriven
         private DialogueTextEffects.Effect[] glyphEffects = Array.Empty<DialogueTextEffects.Effect>();
         private bool animatedText;
         private bool fitPending;
+        private bool fitHasChoices;
+        private bool usesStretchFrame;
         private int fitRequestedFrame;
         private Color accent = Color.gray;
 
@@ -89,8 +99,21 @@ namespace Lumenfall.DataDriven
 
             box = new VisualElement { pickingMode = PickingMode.Ignore };
             box.AddToClassList("dialogue-box");
-            box.RegisterCallback<PointerDownEvent>(_ => BoxClicked?.Invoke());
+            box.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (e.button == 0 && !IsScrollbarTarget(e.target as VisualElement)) BoxClicked?.Invoke();
+            });
             layer.Add(box);
+
+            stretchFrame = new VisualElement { pickingMode = PickingMode.Ignore };
+            stretchFrame.AddToClassList("dialogue-stretch-frame");
+            stretchLeft = StretchPiece("dialogue-stretch-frame__left", "Dialogue/Random NPC Left v4");
+            stretchMiddle = StretchPiece("dialogue-stretch-frame__middle", "Dialogue/Random NPC Middle v4");
+            stretchRight = StretchPiece("dialogue-stretch-frame__right", "Dialogue/Random NPC Right v4");
+            stretchFrame.Add(stretchLeft);
+            stretchFrame.Add(stretchMiddle);
+            stretchFrame.Add(stretchRight);
+            box.Add(stretchFrame);
 
             portrait = new VisualElement { pickingMode = PickingMode.Ignore };
             portrait.AddToClassList("dialogue-portrait");
@@ -104,7 +127,12 @@ namespace Lumenfall.DataDriven
             ribbon.Add(nameLabel);
             box.Add(ribbon);
 
-            var content = new VisualElement { pickingMode = PickingMode.Ignore };
+            content = new ScrollView(ScrollViewMode.Vertical)
+            {
+                pickingMode = PickingMode.Position,
+                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+                verticalScrollerVisibility = ScrollerVisibility.Auto
+            };
             content.AddToClassList("dialogue-content");
             box.Add(content);
             text = new Label { enableRichText = true, pickingMode = PickingMode.Ignore };
@@ -148,7 +176,17 @@ namespace Lumenfall.DataDriven
             ribbon.style.backgroundColor = colour;
             portrait.style.borderTopColor = portrait.style.borderBottomColor =
                 portrait.style.borderLeftColor = portrait.style.borderRightColor = colour;
-            box.style.backgroundImage = frame != null ? new StyleBackground(frame) : new StyleBackground(StyleKeyword.None);
+            usesStretchFrame = frame != null && SetStretchFrame(frame.name);
+            box.EnableInClassList(StretchFrame, usesStretchFrame);
+            box.style.backgroundImage = !usesStretchFrame && frame != null
+                ? new StyleBackground(frame)
+                : new StyleBackground(StyleKeyword.None);
+            if (usesStretchFrame)
+            {
+                box.style.width = StyleKeyword.Null;
+                box.style.height = StyleKeyword.Null;
+                fitPending = false;
+            }
             continueArrow.Fill = colour;
             foreach (VisualElement row in choiceRows) Recolour(row);
         }
@@ -177,6 +215,8 @@ namespace Lumenfall.DataDriven
         /// </summary>
         public void FitTo(string richText, IReadOnlyList<string> choiceLabels)
         {
+            content.scrollOffset = Vector2.zero;
+            fitHasChoices = choiceLabels != null && choiceLabels.Count > 0;
             for (int i = 0; i < sizers.Length; i++)
             {
                 sizerTexts[i].text = richText ?? string.Empty;
@@ -188,9 +228,39 @@ namespace Lumenfall.DataDriven
             fitRequestedFrame = Time.frameCount;
         }
 
+        private static bool IsScrollbarTarget(VisualElement target)
+        {
+            for (VisualElement current = target; current != null; current = current.parent)
+                if (current is Scroller) return true;
+            return false;
+        }
+
         private void TryFit()
         {
             if (!fitPending || box.panel == null || Time.frameCount <= fitRequestedFrame) return;
+            if (usesStretchFrame)
+            {
+                box.style.width = StyleKeyword.Null;
+                if (!fitHasChoices)
+                {
+                    box.style.height = StyleKeyword.Null;
+                    fitPending = false;
+                    return;
+                }
+
+                // Stretch frames are pinned to the bottom of the screen. Grow their top edge enough to reveal the
+                // complete dialogue and its reply rows; if the page is taller than the screen, the existing ScrollView
+                // remains the final fallback instead of pushing choices outside the viewport.
+                float needed = sizers[sizers.Length - 1].layout.height;
+                if (float.IsNaN(needed) || needed <= 0f) return;
+                float panelHeight = root.layout.height;
+                float maximum = !float.IsNaN(panelHeight) && panelHeight > 0f
+                    ? Mathf.Max(StretchBaseHeight, panelHeight - 24f)
+                    : 840f;
+                box.style.height = Mathf.Clamp(needed + StretchContentChrome + 12f, StretchBaseHeight, maximum);
+                fitPending = false;
+                return;
+            }
             float chosen = BoxSizes[BoxSizes.Length - 1];
             for (int i = 0; i < BoxSizes.Length; i++)
             {
@@ -204,6 +274,30 @@ namespace Lumenfall.DataDriven
             box.style.width = BaseWidth * chosen;
             box.style.height = BaseHeight * chosen;
             fitPending = false;
+        }
+
+        private static VisualElement StretchPiece(string className, string resource)
+        {
+            var piece = new VisualElement { pickingMode = PickingMode.Ignore };
+            piece.AddToClassList(className);
+            Texture2D texture = Resources.Load<Texture2D>(resource);
+            piece.style.backgroundImage = texture != null
+                ? new StyleBackground(texture)
+                : new StyleBackground(StyleKeyword.None);
+            return piece;
+        }
+
+        private bool SetStretchFrame(string frameName)
+        {
+            Texture2D left = Resources.Load<Texture2D>($"Dialogue/{frameName} Left v4");
+            Texture2D middle = Resources.Load<Texture2D>($"Dialogue/{frameName} Middle v4");
+            Texture2D right = Resources.Load<Texture2D>($"Dialogue/{frameName} Right v4");
+            if (left == null || middle == null || right == null) return false;
+
+            stretchLeft.style.backgroundImage = new StyleBackground(left);
+            stretchMiddle.style.backgroundImage = new StyleBackground(middle);
+            stretchRight.style.backgroundImage = new StyleBackground(right);
+            return true;
         }
 
         public bool HasChoices => choiceRows.Count > 0;

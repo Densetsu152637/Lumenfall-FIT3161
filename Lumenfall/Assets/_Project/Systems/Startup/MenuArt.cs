@@ -16,7 +16,7 @@ namespace Lumenfall.Startup
         public static readonly Color Ember = new Color(1f, 0.80f, 0.58f);
         public static readonly Color Ink = new Color(0.07f, 0.05f, 0.12f);
         public static readonly Color Dusk = new Color(0.25f, 0.21f, 0.36f);
-        public static readonly Color PanelFill = new Color(0.11f, 0.085f, 0.18f, 0.95f);
+        public static readonly Color PanelFill = new Color(0.11f, 0.085f, 0.18f, 0.5f);
 
         // Weave thread colours match WeaveCableView: cyan when powered, amber when idle.
         public static readonly Color ThreadLive = new Color(0.45f, 0.95f, 1f);

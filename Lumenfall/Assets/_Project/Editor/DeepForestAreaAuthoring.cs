@@ -11,6 +11,7 @@ namespace Lumenfall.EditorTools
     public static class DeepForestAreaAuthoring
     {
         private const string SessionKey = "Lumenfall.DeepForestAreaAuthoring.Applied";
+        private const string RotationMarker = "deep-forest-rotated-clockwise-180-v2";
         private const string AreaFolder = "Assets/_Project/World/Areas";
         private const string PrefabPath = AreaFolder + "/Prefabs/Deep Forest.prefab";
         private const string TerrainPath = "Assets/_Project/Art/Environment/Terrain/DeepForestTerrainData.asset";
@@ -28,6 +29,15 @@ namespace Lumenfall.EditorTools
                 AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaPath) != null) return;
             SessionState.SetBool(SessionKey, true);
             EditorApplication.delayCall += Apply;
+        }
+
+        [InitializeOnLoadMethod]
+        private static void RotateOnceAfterImport()
+        {
+            if (Application.isBatchMode) return;
+            AssetImporter importer = AssetImporter.GetAtPath(TerrainPath);
+            if (importer == null || importer.userData.Contains(RotationMarker)) return;
+            EditorApplication.delayCall += RotateTerrainClockwise90;
         }
 
         public static void Apply()
@@ -107,6 +117,106 @@ namespace Lumenfall.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Deep Forest area, terrain, and connected P.F01/P.DF00 portals created successfully.");
+        }
+
+        [MenuItem("Lumenfall/World/Rotate Deep Forest Terrain 90 Clockwise")]
+        public static void RotateTerrainClockwise90()
+        {
+            TerrainData terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(TerrainPath);
+            if (terrain == null) throw new InvalidOperationException("Could not load Deep Forest terrain data.");
+            if (!Mathf.Approximately(terrain.size.x, terrain.size.z))
+                throw new InvalidOperationException("Deep Forest terrain must be square for this rotation.");
+
+            int heightResolution = terrain.heightmapResolution;
+            terrain.SetHeights(0, 0, RotateClockwise(terrain.GetHeights(0, 0, heightResolution, heightResolution)));
+
+            int alphaWidth = terrain.alphamapWidth;
+            int alphaHeight = terrain.alphamapHeight;
+            if (alphaWidth > 0 && alphaWidth == alphaHeight && terrain.alphamapLayers > 0)
+                terrain.SetAlphamaps(0, 0,
+                    RotateClockwise(terrain.GetAlphamaps(0, 0, alphaWidth, alphaHeight)));
+
+            int detailResolution = terrain.detailResolution;
+            for (int layer = 0; layer < terrain.detailPrototypes.Length && detailResolution > 0; layer++)
+            {
+                int[,] details = terrain.GetDetailLayer(0, 0, detailResolution, detailResolution, layer);
+                terrain.SetDetailLayer(0, 0, layer, RotateClockwise(details));
+            }
+
+            int holesResolution = terrain.holesResolution;
+            if (holesResolution > 0)
+                terrain.SetHoles(0, 0,
+                    RotateClockwise(terrain.GetHoles(0, 0, holesResolution, holesResolution)));
+
+            TreeInstance[] trees = terrain.treeInstances;
+            for (int i = 0; i < trees.Length; i++)
+            {
+                TreeInstance tree = trees[i];
+                Vector3 position = tree.position;
+                tree.position = new Vector3(position.z, position.y, 1f - position.x);
+                tree.rotation = Mathf.Repeat(tree.rotation + Mathf.PI * 0.5f, Mathf.PI * 2f);
+                trees[i] = tree;
+            }
+            terrain.treeInstances = trees;
+
+            EditorUtility.SetDirty(terrain);
+            AssetDatabase.SaveAssets();
+            AssetImporter importer = AssetImporter.GetAtPath(TerrainPath);
+            if (importer != null && !importer.userData.Contains(RotationMarker))
+            {
+                importer.userData = string.IsNullOrWhiteSpace(importer.userData)
+                    ? RotationMarker
+                    : importer.userData + ";" + RotationMarker;
+                importer.SaveAndReimport();
+            }
+            AssetDatabase.Refresh();
+            Debug.Log("Rotated Deep Forest TerrainData 90 degrees clockwise around Y.");
+        }
+
+        private static float[,] RotateClockwise(float[,] source)
+        {
+            int size = source.GetLength(0);
+            if (size != source.GetLength(1)) throw new InvalidOperationException("Terrain data layer is not square.");
+            float[,] result = new float[size, size];
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                    result[z, x] = source[size - 1 - x, z];
+            return result;
+        }
+
+        private static int[,] RotateClockwise(int[,] source)
+        {
+            int size = source.GetLength(0);
+            if (size != source.GetLength(1)) throw new InvalidOperationException("Terrain detail layer is not square.");
+            int[,] result = new int[size, size];
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                    result[z, x] = source[size - 1 - x, z];
+            return result;
+        }
+
+        private static bool[,] RotateClockwise(bool[,] source)
+        {
+            int size = source.GetLength(0);
+            if (size != source.GetLength(1)) throw new InvalidOperationException("Terrain holes layer is not square.");
+            bool[,] result = new bool[size, size];
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                    result[z, x] = source[size - 1 - x, z];
+            return result;
+        }
+
+        private static float[,,] RotateClockwise(float[,,] source)
+        {
+            int size = source.GetLength(0);
+            if (size != source.GetLength(1)) throw new InvalidOperationException("Terrain alphamap is not square.");
+            int layers = source.GetLength(2);
+            float[,,] result = new float[size, size, layers];
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                    for (int layer = 0; layer < layers; layer++)
+                        result[z, x, layer] = source[size - 1 - x, z, layer];
+            return result;
         }
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
