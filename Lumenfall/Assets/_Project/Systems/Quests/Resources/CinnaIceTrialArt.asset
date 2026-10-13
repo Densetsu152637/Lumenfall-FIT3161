@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c748194f38a2824184f283223125917, type: 3}
+  m_Name: CinnaIceTrialArt
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Quests.CinnaIceTrialArt
+  thawedFloorMaterial: {fileID: 2100000, guid: 0f887b274ea89c949ad935f40eb59db0, type: 2}
+  thawedWallMaterial: {fileID: 2100000, guid: 8a8ee607740dc404da1f3b4711a12416, type: 2}
+  waterMaterial: {fileID: 2100000, guid: a5448f190b8bb144480753ddbe0349d3, type: 2}
+  basinMaterial: {fileID: 2100000, guid: 5c77002a2d528a3449889965c5d3a121, type: 2}
+  floorMaterial: {fileID: 2100000, guid: 21f7466b54a3c70418dacc05c2e66721, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 2f472073be78f794dbad85b68854b526, type: 2}
+  iceMaterial: {fileID: 2100000, guid: 7cde6f5b7b06a304080fafd7bd360fa2, type: 2}
+  snowSurfaceMaterial: {fileID: 2100000, guid: 3fd784284ecc67f4ab491ce21ae01ab3, type: 2}
+  iceSurfaceMaterial: {fileID: 2100000, guid: db2b2ea1e0e833343aaa8916184900de, type: 2}
+  wallSpikes:
+  - {fileID: 1339501918897812213, guid: fcbc05753c0f6d646ad035ebd00d3976, type: 3}
+  - {fileID: 1243484616587114411, guid: 651fa01790af681438dc0f76dca676c1, type: 3}
+  - {fileID: 5503840962039145548, guid: ff3871c31a8a20a4abcdcd088332a6e8, type: 3}
+  icicle: {fileID: 8333653174811471836, guid: 8a4e4dad90d6dd349bc740a31d554cac, type: 3}
+  mistMaterial: {fileID: 2100000, guid: 28e3e2348aed370408c13304ba18d760, type: 2}
+  runeMaterial: {fileID: 2100000, guid: 32e7cf4007e1a424c87654e22ba7fb26, type: 2}
+  switchBaseMaterial: {fileID: 2100000, guid: b9d59bccc86b9b64e83806db1ff1d900, type: 2}
+  sparkleMaterial: {fileID: 2100000, guid: 9bedae5e301555b4eb5721665dfc78d2, type: 2}
+  icePillar: {fileID: 125296859855757372, guid: db2eb4b31e922b54296d6ef9aa3ebd5b, type: 3}
+  pedestal: {fileID: 3185349276289549973, guid: b52e85b3542e11b4bb438e20a9fd020a, type: 3}
+  sealCrystal: {fileID: 3458691331053799004, guid: d9cbe8b54f4365d478f94106f7aca9be, type: 3}
+  relic: {fileID: 731932103690340193, guid: 07df112d2da1f1148b1b287b9ecb4142, type: 3}
+  frostMaterial: {fileID: 2100000, guid: 8338068d10f1f2347a97eb1da6ad7166, type: 2}
+  entranceCrystals:
+  - {fileID: 8149818171943002117, guid: c841a2c02802e58449c9bf2879c64b6d, type: 3}
+  - {fileID: 5508394757608120681, guid: b9f4946c8a9bb1c408f18f363ad47c3c, type: 3}

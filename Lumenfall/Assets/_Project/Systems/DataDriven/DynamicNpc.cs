@@ -53,8 +53,9 @@ namespace Lumenfall.DataDriven
         }
         private void Update()
         {
+            // The departure fade runs right after a dialogue closes; a quick Talk press must not reopen it behind the fade.
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
-                DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
+                CinnaTrialDeparture.InProgress || DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal ||
                 !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
                 GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
@@ -74,7 +75,7 @@ namespace Lumenfall.DataDriven
         private void OnGUI()
         {
             if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                CutscenePlayer.BlocksInput || GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+                CutscenePlayer.BlocksInput || CinnaTrialDeparture.InProgress || GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = GridMover.FindActive();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;

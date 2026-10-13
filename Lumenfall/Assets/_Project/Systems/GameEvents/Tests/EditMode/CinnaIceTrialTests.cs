@@ -18,12 +18,13 @@ namespace Lumenfall.Tests.GameEvents
         private const string Dialogue = "cinna_cold_feet_warm_idea_dialogue";
         private const string Lesson = "spell.lesson.Glaciate";
         private const string Learned = "spell.unlocked.Glaciate";
-        // The route drawn on the sketch, from the pool entrance: fifteen slides that light all twelve switches.
-        internal static readonly Vector2Int[] SketchRoute =
+        // One of the shortest solutions, from the pool entrance: seventeen slides that light all nine switches, in their
+        // numbered order, using every snow patch and crystal pillar on the way. Ten routes of this length exist.
+        internal static readonly Vector2Int[] SolutionRoute =
         {
-            Vector2Int.up, Vector2Int.right, Vector2Int.left, Vector2Int.down, Vector2Int.right,
-            Vector2Int.right, Vector2Int.down, Vector2Int.down, Vector2Int.right, Vector2Int.left,
-            Vector2Int.up, Vector2Int.up, Vector2Int.right, Vector2Int.up, Vector2Int.right
+            Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left, Vector2Int.up, Vector2Int.right,
+            Vector2Int.right, Vector2Int.up, Vector2Int.right, Vector2Int.up, Vector2Int.up, Vector2Int.left,
+            Vector2Int.down, Vector2Int.left, Vector2Int.right, Vector2Int.down, Vector2Int.right
         };
         private static readonly Vector2Int[] Directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
@@ -52,31 +53,45 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void AuthoredPoolIsEnclosedAndTheSketchRouteSolvesIt()
+        public void AuthoredPoolOpensOntoTheChasmAndTheRouteSolvesIt()
         {
             Layout layout = Layout.Load();
-            Assert.That(layout.Switches, Has.Count.EqualTo(12));
-            foreach (Vector2Int cell in layout.Switches.Keys) Assert.That(layout.Pool.Contains(cell), Is.True, $"Switch {cell} must sit inside the pool.");
-            Assert.That(layout.Final, Is.EqualTo(new Vector2Int(11, 8)), "The seal sits in the east wall.");
+            Assert.That(layout.Switches, Has.Count.EqualTo(9));
+            Assert.That(layout.Pillars, Has.Count.EqualTo(3));
+            Assert.That(layout.Stops, Has.Count.EqualTo(3));
+            foreach (Vector2Int cell in layout.Switches.Keys.Concat(layout.Pillars).Concat(layout.Stops))
+                Assert.That(layout.Pool.Contains(cell), Is.True, $"{cell} must sit inside the pool.");
+            Assert.That(layout.Final, Is.EqualTo(new Vector2Int(11, 8)), "The seal sits on the east ledge.");
             Assert.That(layout.Entrance, Is.EqualTo(new Vector2Int(5, 2)), "The entrance is the gap in the south wall.");
+            // Every pool edge leads to more pool, a pillar or wall, the seal, the entrance or the chasm.
             foreach (Vector2Int cell in layout.Pool)
                 foreach (Vector2Int direction in Directions)
                 {
                     Vector2Int next = cell + direction;
-                    Assert.That(layout.Pool.Contains(next) || layout.Blocked.Contains(next) || next == layout.Final || next == layout.Entrance,
-                        Is.True, $"Pool edge {cell} leaks to {next}.");
+                    Assert.That(layout.Pool.Contains(next) || layout.Blocked.Contains(next) || layout.Drops.Contains(next) ||
+                        next == layout.Final || next == layout.Entrance, Is.True, $"Pool edge {cell} leaks to {next}.");
                 }
+            for (int y = 3; y <= 12; y++)
+            {
+                Assert.That(layout.Drops.Contains(new Vector2Int(0, y)), Is.True, $"The west edge is open at row {y}.");
+                if (y != 8) Assert.That(layout.Drops.Contains(new Vector2Int(11, y)), Is.True, $"The east edge is open at row {y}.");
+            }
+            for (int x = 1; x <= 10; x++) Assert.That(layout.Drops.Contains(new Vector2Int(x, 13)), Is.True, $"The north edge is open at column {x}.");
 
             Vector2Int position = layout.Entrance;
             int mask = 0;
-            foreach (Vector2Int direction in SketchRoute)
+            foreach (Vector2Int direction in SolutionRoute)
             {
-                Assert.That(layout.TrySlide(position, direction, out position), Is.True, $"The sketch route is blocked at {position}.");
+                Assert.That(layout.TrySlide(position, direction, out position), Is.True, $"The route is blocked at {position}.");
+                Assert.That(layout.Drops.Contains(position), Is.False, $"The route falls into the chasm at {position}.");
                 if (layout.Switches.TryGetValue(position, out int bit)) mask ^= 1 << bit;
             }
             Assert.That(position, Is.EqualTo(layout.Final));
-            Assert.That(mask, Is.EqualTo((1 << 12) - 1), "The sketch route lands on every switch an odd number of times.");
-            Assert.That(layout.ShortestSolution(), Is.EqualTo(SketchRoute.Length), "No shorter route than the sketch exists.");
+            Assert.That(mask, Is.EqualTo((1 << 9) - 1), "The route lands on every switch an odd number of times.");
+            Assert.That(layout.ShortestSolution(), Is.EqualTo(SolutionRoute.Length), "No shorter route exists.");
+            Vector2Int first;
+            Assert.That(layout.TrySlide(layout.Entrance, Vector2Int.up, out first) && layout.Stops.Contains(first), Is.True,
+                "The first slide from the entrance stops safely on a snow patch.");
         }
 
         [Test]
@@ -198,6 +213,9 @@ namespace Lumenfall.Tests.GameEvents
             public readonly HashSet<Vector2Int> Pool = new HashSet<Vector2Int>();
             public readonly HashSet<Vector2Int> Blocked = new HashSet<Vector2Int>();
             public readonly Dictionary<Vector2Int, int> Switches = new Dictionary<Vector2Int, int>();
+            public readonly HashSet<Vector2Int> Drops = new HashSet<Vector2Int>();
+            public readonly HashSet<Vector2Int> Pillars = new HashSet<Vector2Int>();
+            public readonly HashSet<Vector2Int> Stops = new HashSet<Vector2Int>();
             public Vector2Int Final;
             public Vector2Int Entrance;
 
@@ -215,12 +233,22 @@ namespace Lumenfall.Tests.GameEvents
                                 layout.Pool.Add(cell + new Vector2Int(x, y));
                     }
                     else if (item.type == CinnaIceTrialRoom.EntranceType) layout.Entrance = cell;
+                    else if (item.type == CinnaIceTrialRoom.DropType)
+                    {
+                        for (int x = 0; x < item.width; x++)
+                            for (int y = 0; y < item.height; y++)
+                                layout.Drops.Add(cell + new Vector2Int(x, y));
+                    }
+                    else if (item.type == CinnaIceTrialRoom.StopType) layout.Stops.Add(cell);
                     else if (item.tags.Contains(CinnaIceTrialRoom.SwitchTag)) layout.Switches[cell] = layout.Switches.Count;
                     else if (item.tags.Contains(CinnaIceTrialRoom.FinalTag)) layout.Final = cell;
                     else if (item.blocks)
+                    {
+                        if (item.type == CinnaIceTrialRoom.PillarType) layout.Pillars.Add(cell);
                         for (int x = 0; x < item.width; x++)
                             for (int y = 0; y < item.height; y++)
                                 layout.Blocked.Add(cell + new Vector2Int(x, y));
+                    }
                 }
                 return layout;
             }
@@ -228,7 +256,7 @@ namespace Lumenfall.Tests.GameEvents
             private bool Passable(Vector2Int cell) => cell.x >= 0 && cell.y >= 0 && cell.x < Area.definition.width &&
                 cell.y < Area.definition.height && !Blocked.Contains(cell);
 
-            private bool Ice(Vector2Int cell) => Pool.Contains(cell) && !Switches.ContainsKey(cell);
+            private bool Ice(Vector2Int cell) => Pool.Contains(cell) && !Switches.ContainsKey(cell) && !Stops.Contains(cell) && !Blocked.Contains(cell);
 
             // Matches GridMover: a step that starts or ends on ice keeps going while the mover stands on ice.
             public bool TrySlide(Vector2Int from, Vector2Int direction, out Vector2Int stop)
@@ -254,7 +282,8 @@ namespace Lumenfall.Tests.GameEvents
                     if (cell == Final && mask == full) return distance[(cell, mask)];
                     foreach (Vector2Int direction in Directions)
                     {
-                        if (!TrySlide(cell, direction, out Vector2Int stop)) continue;
+                        // A fall returns to the entrance with every switch dark, so it never shortens a route.
+                        if (!TrySlide(cell, direction, out Vector2Int stop) || Drops.Contains(stop)) continue;
                         int next = Switches.TryGetValue(stop, out int bit) ? mask ^ (1 << bit) : mask;
                         if (distance.ContainsKey((stop, next))) continue;
                         distance[(stop, next)] = distance[(cell, mask)] + 1;

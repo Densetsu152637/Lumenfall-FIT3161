@@ -19,6 +19,8 @@ namespace Lumenfall.DataDriven
         [SerializeField] private GridWorld world;
         private readonly Dictionary<WorldAreaAsset, GameObject> areaInstances = new Dictionary<WorldAreaAsset, GameObject>();
         private readonly List<int> npcStateSignature = new List<int>();
+        private Vector2Int? pendingPlayerCell;
+        private string pendingPlayerMap;
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
@@ -131,8 +133,32 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
             if (area == null) return false;
             Load(area, npcCatalog, false);
+            pendingPlayerCell = null;
             GridMover player = FindAnyObjectByType<GridMover>();
-            return player == null || world == null || player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
+            if (player == null || world == null) return true;
+            Vector2Int saved = new Vector2Int(state.playerX, state.playerY);
+            if (player.TryTeleportTo(world, saved)) return true;
+            // The saved cell can be blocked only until a later provider restores the world state; a player saved on a
+            // frozen pool stands where open water blocks until the frozen relic is restored. Hold them at the spawn and
+            // place them once the whole load has finished.
+            Vector2Int spawn = area.definition.spawn == null ? player.CurrentCell : new Vector2Int(area.definition.spawn.x, area.definition.spawn.y);
+            if (!player.TryTeleportTo(world, spawn)) player.TryTeleportTo(world, player.CurrentCell);
+            pendingPlayerCell = saved;
+            pendingPlayerMap = area.definition.id;
+            GameSaveManager saves = GameSaveManager.Instance;
+            if (saves != null) { saves.LoadCompleted -= PlacePendingPlayer; saves.LoadCompleted += PlacePendingPlayer; }
+            return true;
+        }
+
+        private void PlacePendingPlayer(string slot)
+        {
+            if (GameSaveManager.Instance != null) GameSaveManager.Instance.LoadCompleted -= PlacePendingPlayer;
+            Vector2Int? cell = pendingPlayerCell;
+            pendingPlayerCell = null;
+            if (cell == null || LoadedMap == null || !string.Equals(LoadedMap.id, pendingPlayerMap, StringComparison.OrdinalIgnoreCase)) return;
+            GridMover player = FindAnyObjectByType<GridMover>();
+            if (player != null && world != null && !player.TryTeleportTo(world, cell.Value))
+                Debug.LogWarning($"Saved player cell {cell.Value} on '{LoadedMap.id}' is still blocked; keeping the spawn.", this);
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)

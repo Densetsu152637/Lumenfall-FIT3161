@@ -3,6 +3,7 @@
     "rootNamespace": "Lumenfall",
     "references": [
         "Lumenfall.GameEvents",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime"
     ]
 }
