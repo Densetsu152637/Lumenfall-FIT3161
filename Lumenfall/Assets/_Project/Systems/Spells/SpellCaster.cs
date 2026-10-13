@@ -47,7 +47,6 @@ namespace Lumenfall.Spells
         private float feedbackUntil;
         private float nextScrollAt;
         private const float ScrollCooldown = 0.06f;
-        private const float ChipClearanceOverRotaraPanel = 104f;
         private const string CircuitTag = "circuit";
         private const string AnchoredTag = "anchored";
         public event Action<SpellId, string, bool> CastCompleted;
@@ -317,8 +316,7 @@ namespace Lumenfall.Spells
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.
                 if (Event.current.type == EventType.Repaint && AvailableSpells.Length > 0)
-                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel),
-                        Lumenfall.Quests.RotaraGearMechanism.PanelVisible ? ChipClearanceOverRotaraPanel : 0f);
+                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel));
                 return;
             }
             SpellId[] spells = AvailableSpells;
@@ -385,8 +383,8 @@ namespace Lumenfall.Spells
                     if (Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetLinkedDiscs(state.CurrentMapId, targetId, out string[] linkedDiscs))
                         foreach (string disc in linkedDiscs)
                             if (state.TryGetObject(disc, out WorldObjectSnapshot linked) && !float.IsNaN(linked.rotation) && !float.IsInfinity(linked.rotation))
-                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
-                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
+                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.OrioRuneDiscPuzzle.NextQuarterTurn(x.rotation));
+                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.OrioRuneDiscPuzzle.NextQuarterTurn(x.rotation));
                     break;
                 case SpellId.Glaciate:
                     changed = HasTag(target, AnchoredTag) && target.frozen ? ThawAnchored(state, targetId) : FreezeSlide(state, targetId, ClampDirection(direction));

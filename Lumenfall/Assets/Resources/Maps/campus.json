@@ -195,19 +195,6 @@
       "width": 1,
       "height": 1,
       "rotation": 0
-    },
-    {
-      "id": "mechanism.orio.rotate",
-      "type": "mechanism",
-      "x": 25,
-      "y": 34,
-      "blocks": false,
-      "tags": [
-        "rotara"
-      ],
-      "width": 1,
-      "height": 1,
-      "rotation": 180
     }
   ],
   "puzzleTargets": [
@@ -229,13 +216,6 @@
         "relic.stella.power|circuit.stella.link"
       ],
       "minimumEffectivePower": 0.2
-    },
-    {
-      "id": "quest.orio.patch-notes",
-      "objectIds": [
-        "mechanism.orio.rotate"
-      ],
-      "requiredRotation": 180
     }
   ],
   "portals": [

@@ -207,26 +207,6 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void OrioHintGuidesLessonRotationAndManualConfirmation()
-        {
-            BeginMap(OrioDaisRoom.ForestMapId);
-            world.RegisterObject(OrioDaisRoom.ForestPadId, null,
-                new Vector2Int(8, 21), Vector2Int.one, true, new[] { "rotara" });
-            world.SetProperty(OrioDaisRoom.ForestPadId, state => state.rotation = 180);
-            stateEnd();
-            runtime.StartQuest("orio_patch_notes");
-            RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Finish Orio's Rotara lesson"));
-            runtime.SetFlag("spell.unlocked.Rotara", true);
-            RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Rotate the mechanism to 90 degrees"));
-            world.SetProperty(OrioDaisRoom.ForestPadId, state => state.rotation = 90);
-            RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return to Orio"));
-            Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Active));
-        }
-
-        [Test]
         public void ColdFeetPointsToTheTrialPortalThenFollowsTheIceTrial()
         {
             GridWorld grid = NewGrid();

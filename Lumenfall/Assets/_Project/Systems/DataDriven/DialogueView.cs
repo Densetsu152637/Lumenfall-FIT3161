@@ -21,13 +21,15 @@ namespace Lumenfall.DataDriven
         private const string Waiting = "dialogue-box--waiting";
         private const string Selected = "dialogue-choice--selected";
 
-        // The box keeps the frames' 3:1 shape and shrinks as a whole for short pages, so the painted borders never
-        // distort. These match .dialogue-box and .dialogue-content in DialogueBox.uss.
+        // The box keeps the frames' 3:1 shape and resizes as a whole, so the painted borders never distort: it shrinks
+        // for short pages and grows past the stylesheet size when a long page also carries choices. These match
+        // .dialogue-box and .dialogue-content in DialogueBox.uss. Each size has a hidden sizer that lays out the full
+        // page and its choice rows at that size's content width, so the fit uses real styled heights, not estimates.
         private const float BaseWidth = 1260f;
         private const float BaseHeight = 420f;
         private const float ContentWidth = 0.66f;
         private const float ContentHeight = 0.57f;
-        private static readonly float[] BoxSizes = { 0.72f, 0.8f, 0.88f, 1f };
+        private static readonly float[] BoxSizes = { 0.72f, 0.8f, 0.88f, 1f, 1.12f, 1.24f };
 
         private readonly GameObject host;
         private readonly PanelSettings settings;
@@ -41,11 +43,13 @@ namespace Lumenfall.DataDriven
         private readonly DialogueTriangle continueArrow;
         private readonly List<VisualElement> choiceRows = new List<VisualElement>();
         private readonly List<FontAsset> fontAssets = new List<FontAsset>();
+        private readonly VisualElement[] sizers = new VisualElement[BoxSizes.Length];
+        private readonly Label[] sizerTexts = new Label[BoxSizes.Length];
+        private readonly VisualElement[] sizerChoices = new VisualElement[BoxSizes.Length];
         private DialogueTextEffects.Effect[] glyphEffects = Array.Empty<DialogueTextEffects.Effect>();
         private bool animatedText;
-        private string fitText;
-        private IReadOnlyList<string> fitChoices;
         private bool fitPending;
+        private int fitRequestedFrame;
         private Color accent = Color.gray;
 
         public event Action<int> ChoiceHovered;
@@ -114,6 +118,20 @@ namespace Lumenfall.DataDriven
             continueArrow = new DialogueTriangle(true);
             continueArrow.AddToClassList("dialogue-continue");
             box.Add(continueArrow);
+
+            for (int i = 0; i < BoxSizes.Length; i++)
+            {
+                sizers[i] = new VisualElement { pickingMode = PickingMode.Ignore };
+                sizers[i].AddToClassList("dialogue-sizer");
+                sizers[i].style.width = BaseWidth * BoxSizes[i] * ContentWidth;
+                sizerTexts[i] = new Label { enableRichText = true, pickingMode = PickingMode.Ignore };
+                sizerTexts[i].AddToClassList("dialogue-text");
+                sizers[i].Add(sizerTexts[i]);
+                sizerChoices[i] = new VisualElement { pickingMode = PickingMode.Ignore };
+                sizerChoices[i].AddToClassList("dialogue-choices");
+                sizers[i].Add(sizerChoices[i]);
+                layer.Add(sizers[i]);
+            }
         }
 
         public void Show(bool visible)
@@ -154,34 +172,32 @@ namespace Lumenfall.DataDriven
 
         /// <summary>
         /// Sizes the box for a page: the smallest size whose text area holds the whole page, plus the choices that
-        /// will follow it, without the text shrinking. Measured once styles have resolved.
+        /// will follow it, without the text shrinking. The sizers are laid out by the panel, so the size is chosen on a
+        /// later frame.
         /// </summary>
         public void FitTo(string richText, IReadOnlyList<string> choiceLabels)
         {
-            fitText = richText ?? string.Empty;
-            fitChoices = choiceLabels;
+            for (int i = 0; i < sizers.Length; i++)
+            {
+                sizerTexts[i].text = richText ?? string.Empty;
+                sizerChoices[i].Clear();
+                sizerChoices[i].style.display = choiceLabels != null && choiceLabels.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+                if (choiceLabels != null) foreach (string label in choiceLabels) sizerChoices[i].Add(CreateRow(label));
+            }
             fitPending = true;
-            TryFit();
+            fitRequestedFrame = Time.frameCount;
         }
 
         private void TryFit()
         {
-            if (!fitPending || text.panel == null || text.resolvedStyle.fontSize < 1f) return;
-            if (fitText.Length > 0 && Measure(fitText, 1000f) <= 0f) return;
-
-            float chosen = 1f;
-            foreach (float size in BoxSizes)
+            if (!fitPending || box.panel == null || Time.frameCount <= fitRequestedFrame) return;
+            float chosen = BoxSizes[BoxSizes.Length - 1];
+            for (int i = 0; i < BoxSizes.Length; i++)
             {
-                float width = BaseWidth * size * ContentWidth;
-                float needed = Measure(fitText, width);
-                if (fitChoices != null && fitChoices.Count > 0)
-                {
-                    needed += 10f;
-                    foreach (string choice in fitChoices) needed += Measure(choice, width - 48f) + 20f;
-                }
-
-                if (needed > BaseHeight * size * ContentHeight - 6f) continue;
-                chosen = size;
+                float needed = sizers[i].layout.height;
+                if (float.IsNaN(needed) || needed <= 0f) return;
+                if (needed > BaseHeight * BoxSizes[i] * ContentHeight - 2f) continue;
+                chosen = BoxSizes[i];
                 break;
             }
 
@@ -189,9 +205,6 @@ namespace Lumenfall.DataDriven
             box.style.height = BaseHeight * chosen;
             fitPending = false;
         }
-
-        private float Measure(string richText, float width) =>
-            text.MeasureTextSize(richText, width, VisualElement.MeasureMode.Exactly, 0f, VisualElement.MeasureMode.Undefined).y;
 
         public bool HasChoices => choiceRows.Count > 0;
 
@@ -201,20 +214,26 @@ namespace Lumenfall.DataDriven
             for (int i = 0; i < labels.Count; i++)
             {
                 int index = i;
-                var row = new VisualElement();
-                row.AddToClassList("dialogue-choice");
-                var arrow = new DialogueTriangle(false);
-                arrow.AddToClassList("dialogue-choice__arrow");
-                row.Add(arrow);
-                var label = new Label(labels[i]) { enableRichText = true, pickingMode = PickingMode.Ignore };
-                label.AddToClassList("dialogue-choice__text");
-                row.Add(label);
+                VisualElement row = CreateRow(labels[i]);
                 row.RegisterCallback<PointerEnterEvent>(_ => ChoiceHovered?.Invoke(index));
                 row.RegisterCallback<PointerDownEvent>(e => { e.StopPropagation(); ChoiceClicked?.Invoke(index); });
                 Recolour(row);
                 choices.Add(row);
                 choiceRows.Add(row);
             }
+        }
+
+        private static VisualElement CreateRow(string text)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("dialogue-choice");
+            var arrow = new DialogueTriangle(false);
+            arrow.AddToClassList("dialogue-choice__arrow");
+            row.Add(arrow);
+            var label = new Label(text) { enableRichText = true, pickingMode = PickingMode.Ignore };
+            label.AddToClassList("dialogue-choice__text");
+            row.Add(label);
+            return row;
         }
 
         public void ClearChoices()

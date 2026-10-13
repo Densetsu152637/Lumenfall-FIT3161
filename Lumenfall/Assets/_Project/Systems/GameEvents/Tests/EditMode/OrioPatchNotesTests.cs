@@ -24,7 +24,7 @@ namespace Lumenfall.Tests.GameEvents
         private const string West = "mechanism.orio.socket.west";
         private const string East = "mechanism.orio.socket.east";
         private const string Centre = OrioRuneDiscPuzzle.AnchorId;
-        private const string Hall = OrioDaisRoom.MapId;
+        private const string DaisMap = OrioRuneDiscPuzzle.PuzzleMapId;
 
         [SetUp]
         public void SetUp()
@@ -41,7 +41,7 @@ namespace Lumenfall.Tests.GameEvents
             caster = casterHost.AddComponent<SpellCaster>();
             EditModeLifecycle.Call(caster, "OnEnable");
             OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
-            RegisterDais(Hall);
+            RegisterDais(DaisMap);
         }
 
         [TearDown]
@@ -121,7 +121,7 @@ namespace Lumenfall.Tests.GameEvents
             float[] after = DiscRotations();
             bool[] expected = { northwest, northeast, south };
             for (int i = 0; i < expected.Length; i++)
-                Assert.That(after[i], Is.EqualTo(expected[i] ? RotaraGearMechanism.NextQuarterTurn(before[i]) : before[i]), OrioRuneDiscPuzzle.DiscIds[i]);
+                Assert.That(after[i], Is.EqualTo(expected[i] ? OrioRuneDiscPuzzle.NextQuarterTurn(before[i]) : before[i]), OrioRuneDiscPuzzle.DiscIds[i]);
         }
 
         [Test]
@@ -145,22 +145,22 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void DiscsOutsideTheHallCannotComplete()
+        public void DiscsOutsideTheDeepForestCannotComplete()
         {
             Teach(); runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
             RegisterDais("campus"); SetDiscs(0f, 0f, 0f);
-            Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.False, "The hall itself is still at its authored start.");
-            Assert.That(OrioRuneDiscPuzzle.TryGetLinkedDiscs("campus", Centre, out _), Is.False, "The campus copy is a plain gear.");
-            Assert.That(OrioRuneDiscPuzzle.TryGetLinkedDiscs("westForest", Centre, out _), Is.False, "The forest pad is not a socket.");
+            Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.False, "The deep forest dais is still at its authored start.");
+            Assert.That(OrioRuneDiscPuzzle.TryGetLinkedDiscs("campus", Centre, out _), Is.False, "Sockets only work in the deep forest.");
+            Assert.That(OrioRuneDiscPuzzle.TryGetLinkedDiscs("westForest", Centre, out _), Is.False, "Sockets only work in the deep forest.");
         }
 
         [Test]
-        public void ReportingInTheForestReadsTheHallLeftBehind()
+        public void ReportingInTheWestForestReadsTheDeepForestLeftBehind()
         {
             Teach();
             EnterForest();
-            Assert.That(OrioRuneDiscPuzzle.IsQuestReady(state, runtime), Is.False, "The hall was left unsolved.");
-            RegisterDais(Hall); SetDiscs(0f, 0f, 0f);
+            Assert.That(OrioRuneDiscPuzzle.IsQuestReady(state, runtime), Is.False, "The deep forest dais was left unsolved.");
+            RegisterDais(DaisMap); SetDiscs(0f, 0f, 0f);
             EnterForest();
             Assert.That(state.CurrentMapId, Is.EqualTo("westForest"));
             DialogueSession report = runtime.StartDialogue(Quest + "_dialogue");
@@ -178,7 +178,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(OrioRuneDiscPuzzle.IsQuestReady(state, runtime), Is.False);
             foreach (int unused in new[] { 1, 2, 3 }) caster.Cast(SpellId.Rotara, Centre, Vector2Int.up);
             Assert.That(OrioRuneDiscPuzzle.IsQuestReady(state, runtime), Is.True);
-            state.ResetAllState(); RegisterDais(Hall);
+            state.ResetAllState(); RegisterDais(DaisMap);
             Assert.That(state.RestoreStateJson(worldSave), Is.True);
             runtime.ResetState(); Assert.That(runtime.ImportStateJson(questSave), Is.True);
             Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
@@ -193,9 +193,9 @@ namespace Lumenfall.Tests.GameEvents
         public void NewGameRestartsDiscsAtAuthoredAngles()
         {
             SetDiscs(0f, 0f, 0f);
-            state.ResetAllState(); RegisterDais(Hall);
+            state.ResetAllState(); RegisterDais(DaisMap);
             Assert.That(DiscRotations(), Is.EqualTo(OrioRuneDiscPuzzle.DiscStartRotations.Select(angle => (float)angle).ToArray()));
-            Assert.That(OrioRuneDiscPuzzle.AreDiscsAligned(Hall, Snapshots()), Is.False, "The authored start is unsolved.");
+            Assert.That(OrioRuneDiscPuzzle.AreDiscsAligned(DaisMap, Snapshots()), Is.False, "The authored start is unsolved.");
         }
 
         [Test]
@@ -207,13 +207,13 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(replacement.TriggerEvent(Event).Succeeded, Is.False);
             replacement.StartQuest(Quest); replacement.SetFlag("spell.unlocked.Rotara", true);
             Assert.That(replacement.TriggerEvent(Event).Succeeded, Is.True);
-            state.ResetAllState(); RegisterDais(Hall);
+            state.ResetAllState(); RegisterDais(DaisMap);
             Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.False);
         }
 
         [TestCase(-90f, 0f)] [TestCase(270f, 0f)] [TestCase(360f, 90f)] [TestCase(450f, 180f)]
         public void QuarterTurnsNormalizeSavedAngles(float angle, float next)
-        { Assert.That(RotaraGearMechanism.NextQuarterTurn(angle), Is.EqualTo(next)); }
+        { Assert.That(OrioRuneDiscPuzzle.NextQuarterTurn(angle), Is.EqualTo(next)); }
 
         [Test]
         public void RotaraRejectsIncompatibleTargets()
@@ -234,14 +234,13 @@ namespace Lumenfall.Tests.GameEvents
         private void RegisterDais(string map)
         {
             state.BeginMapRebuild(map);
-            OrioRuneDiscPuzzle.RegisterPuzzleObjects(state, OrioDaisRoom.DaisCentre);
+            OrioRuneDiscPuzzle.RegisterPuzzleObjects(state, OrioRuneDiscPuzzle.DaisCentre);
             state.EndMapRebuild();
         }
 
         private void EnterForest()
         {
             state.BeginMapRebuild("westForest");
-            state.RegisterObject(OrioDaisRoom.ForestPadId, null, new Vector2Int(8, 21), Vector2Int.one, true, new[] { "rotara" });
             state.EndMapRebuild();
         }
 
