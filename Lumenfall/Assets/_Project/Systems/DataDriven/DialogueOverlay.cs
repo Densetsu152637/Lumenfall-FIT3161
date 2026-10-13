@@ -20,6 +20,8 @@ namespace Lumenfall.DataDriven
     public sealed class DialogueOverlay : MonoBehaviour
     {
         private const float CharactersPerSecond = 42f;
+        private const float FastForwardCharactersPerSecond = 420f;
+        private const float FastForwardAdvanceInterval = 0.12f;
         private const float ConversationNpcRange = 3f;
         private const float ConversationZoom = 0.72f;
         // Roughly three lines in the full-size box; longer lines are split into pages.
@@ -44,6 +46,7 @@ namespace Lumenfall.DataDriven
         private string choicesForNode;
         private int inputBlockedFrame = -1;
         private bool pointerConfirm;
+        private float nextFastForwardAdvance;
         private static int npcInteractionBlockUntilFrame = -1;
 
         internal static bool IsNpcInteractionBlocked => Time.frameCount <= npcInteractionBlockUntilFrame;
@@ -153,7 +156,6 @@ namespace Lumenfall.DataDriven
                 : string.IsNullOrWhiteSpace(node.speaker) ? session.Definition.id : PlayerProfile.Substitute(node.speaker);
             pages = DialoguePaging.Split(PlayerProfile.Substitute(node.text ?? string.Empty), MaxPageCharacters);
             pageIndex = 0;
-            ShowPage();
 
             Color colour = SpeakerColor(speaker);
             view.SetSpeaker(speaker, colour, SpeakerFrame(speaker));
@@ -162,6 +164,9 @@ namespace Lumenfall.DataDriven
             bool showPortrait = subject != null && portrait.Show(subject, background);
             if (!showPortrait) portrait.Hide();
             view.SetPortrait(showPortrait ? portrait.Texture : null);
+            // Set the frame before measuring the page. SetSpeaker switches between fixed and stretch layouts and
+            // clears an obsolete pending fit; measuring first would therefore discard first-node choice expansion.
+            ShowPage();
         }
 
         /// <summary>Starts revealing the current page and resizes the box to fit it (plus the node's choices on the last page).</summary>
@@ -171,6 +176,7 @@ namespace Lumenfall.DataDriven
             visibleCharacters = 0;
             shownCharacters = -1;
             revealAccumulator = 0f;
+            nextFastForwardAdvance = Time.unscaledTime + FastForwardAdvanceInterval;
             selectedChoice = 0;
             choicesForNode = null;
             view.ClearChoices();
@@ -181,14 +187,15 @@ namespace Lumenfall.DataDriven
         {
             int count = DialogueTextReveal.VisibleCharacterCount(prepared.RichText);
             if (visibleCharacters >= count) return;
-            revealAccumulator += Time.unscaledDeltaTime * CharactersPerSecond;
+            bool fastForward = FastForwardHeld();
+            revealAccumulator += Time.unscaledDeltaTime * (fastForward ? FastForwardCharactersPerSecond : CharactersPerSecond);
             while (revealAccumulator >= 1f && visibleCharacters < count)
             {
                 revealAccumulator -= 1f;
                 char last = DialogueTextReveal.VisibleCharacterAt(prepared.RichText, visibleCharacters++);
                 if (char.IsLetterOrDigit(last) && visibleCharacters % 2 == 0) blips.Play(speaker);
                 float punctuationPause = DialogueTextReveal.PunctuationPause(last);
-                if (punctuationPause > 0f) revealAccumulator = Mathf.Min(revealAccumulator, -punctuationPause);
+                if (!fastForward && punctuationPause > 0f) revealAccumulator = Mathf.Min(revealAccumulator, -punctuationPause);
             }
         }
 
@@ -220,6 +227,7 @@ namespace Lumenfall.DataDriven
             Gamepad pad = Gamepad.current;
             bool confirm = pointer || KeyBindings.WasPressed(GameAction.Talk) || Pressed(Key.Space) || Pressed(Key.Enter) ||
                            Pressed(Key.NumpadEnter) || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            bool fastAdvance = FastForwardHeld() && Time.unscaledTime >= nextFastForwardAdvance;
             if (!Revealed)
             {
                 if (!confirm) return;
@@ -230,7 +238,8 @@ namespace Lumenfall.DataDriven
 
             if (!OnLastPage)
             {
-                if (!confirm) return;
+                if (!confirm && !fastAdvance) return;
+                nextFastForwardAdvance = Time.unscaledTime + FastForwardAdvanceInterval;
                 pageIndex++;
                 ShowPage();
                 return;
@@ -239,7 +248,11 @@ namespace Lumenfall.DataDriven
             int choiceCount = session.AvailableChoices.Count;
             if (choiceCount == 0)
             {
-                if (confirm) session.Continue();
+                if (confirm || fastAdvance)
+                {
+                    nextFastForwardAdvance = Time.unscaledTime + FastForwardAdvanceInterval;
+                    session.Continue();
+                }
                 return;
             }
 
@@ -286,6 +299,12 @@ namespace Lumenfall.DataDriven
         {
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard[key].wasPressedThisFrame;
+        }
+
+        private static bool FastForwardHeld()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && (keyboard[Key.LeftCtrl].isPressed || keyboard[Key.RightCtrl].isPressed);
         }
 
         /// <summary>The NPC the player just spoke to: the nearest one within talking distance.</summary>

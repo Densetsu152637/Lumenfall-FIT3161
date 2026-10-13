@@ -16,7 +16,7 @@ Chapter 1 designation expresses a recommendation for this layout, not an increas
 
 ## Overall arrangement
 
-North is up on the map. A walled academy campus contains separate buildings, paths, gardens, and a freely traversable commons. B01 is the Training Centre, B02 is the Arcane Workshop, B03 is the Main Academy Building, and B04 is the Library. Outdoor paths suggest navigation between buildings but are not mandatory linear passages.
+North is up on the map. A walled academy campus contains separate buildings, paths, gardens, and a freely traversable commons. B01 is the Dormitory, B02 is the Arcane Workshop, B03 is the Main Academy Building, and B04 is the Library. Outdoor paths suggest navigation between buildings but are not mandatory linear passages.
 
 The starting forest lies immediately beyond the west wall. Its trail reaches the west gate and forest threshold, making the forest a distinct neighbouring area rather than a route running through the campus. The north, south, and east gates are visible but reserved for future map expansion. There are no enclosed castle ranges or required corridors between buildings.
 
@@ -26,7 +26,7 @@ Each building is single-storey. Interiors use open halls with activity zones; Si
 
 | ID  | Building or range     | Position and orientation                                               | Function and entrances                                                                                                                   |
 | --- | --------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| B01 | Training Centre      | Southwest campus; public entrance faces the campus commons             | Practical spell training and supervised exercises. Its doors open to A01 and the campus paths.                                                             |
+| B01 | Dormitory      | Southwest campus; public entrance faces the campus commons             | Student rooms, shared common spaces, and daily campus life. Its doors open to A01 and the campus paths.                                                     |
 | B02 | Arcane Workshop    | Northwest campus; work areas face the commons                          | Stella's magical-engineering assignments, relics, circuits, and experimental machinery. A west door opens to campus paths.         |
 | B03 | Main Academy Building    | North-central campus; public doors face the commons                     | The academy's main portal, reception, and central services. Rooms are reached through its own internal hall.                                           |
 | B04 | Library     | Southeast campus; public entrance faces the commons  | Reading, study, and archive spaces associated with Katrina. Its lobby opens to campus paths.                    |
@@ -52,7 +52,7 @@ These are four separate buildings inside the same academy wall. Their entrances 
 
 C02 and C03 are adjacent outdoor zones, not buildings. Their puzzle props are proposed interpretations of Cinna Cirra's duties; the exact Vis targets and trap sequence remain undecided. C04 does not determine the identity or family significance of Katrina's missing item.
 
-## B01: Training Centre
+## B01: Dormitory
 
 | ID  | Room or circulation space | Floor and placement     | Direct connections and intended use                                                                                       | Access    |
 | --- | ------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------- |

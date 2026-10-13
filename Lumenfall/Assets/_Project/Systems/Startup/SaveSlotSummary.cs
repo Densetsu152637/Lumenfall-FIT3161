@@ -31,7 +31,7 @@ namespace Lumenfall.Startup
             { "westForest", "West Forest" },
             { "campus", "Academy Campus" },
             { "C04.Recess", "Garden Recess" },
-            { "B01.Ground", "Training Centre" },
+            { "B01.Ground", "Dormitory" },
             { "B02.Ground", "Arcane Workshop" },
             { "B03.Ground", "Main Academy Building" },
             { "B04.Ground", "Library" }

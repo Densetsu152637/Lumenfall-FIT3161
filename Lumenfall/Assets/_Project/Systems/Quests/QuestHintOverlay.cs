@@ -185,35 +185,17 @@ namespace Lumenfall.Quests
                 return;
             }
 
-            if (string.Equals(activeQuest.id, "stella_first_light", StringComparison.Ordinal))
+            if (StellaQuestGuide.IsActive(activeQuest.id, runtime))
             {
-                if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
-                    StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string boardHint, out Vector2Int boardCell))
+                tracker = StellaQuestGuide.Tracker(activeQuest.id, world);
+                hint = StellaQuestGuide.Instructions(activeQuest.id, out Vector2Int targetCell);
+                if (!string.Equals(world.CurrentMapId, StellaQuestGuide.MapId, StringComparison.OrdinalIgnoreCase))
+                    hint += $"\nTravel to {MapName(StellaQuestGuide.MapId)} to continue.";
+                else if (targetCell != default)
                 {
-                    hint = boardHint;
-                    if (!string.IsNullOrWhiteSpace(boardHint) && boardCell != default)
-                    {
-                        string direction = DirectionToCell(boardCell);
-                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
-                    }
+                    string direction = DirectionToCell(targetCell);
+                    if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
                 }
-                else hint = "Find the five circuit relics in Stella's room. Each switch changes several relics.";
-                return;
-            }
-
-            if (string.Equals(activeQuest.id, "stella_string_them_together", StringComparison.Ordinal))
-            {
-                if (IsOnMap(selectedPuzzle, world.CurrentMapId) &&
-                    StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string circuitHint, out Vector2Int circuitCell))
-                {
-                    hint = circuitHint;
-                    if (circuitCell != default)
-                    {
-                        string direction = DirectionToCell(circuitCell);
-                        if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
-                    }
-                }
-                else hint = "Return to Stella's room and weave power from her relic to all five board relics.";
                 return;
             }
 
@@ -435,7 +417,7 @@ namespace Lumenfall.Quests
             return "the quest giver";
         }
 
-        private static string MapName(string mapId) => mapId == "B01.Ground" ? "Training Centre" :
+        private static string MapName(string mapId) => mapId == "B01.Ground" ? "Dormitory" :
             mapId == "B02.Ground" ? "Arcane Workshop" : mapId == "B03.Ground" ? "Main Academy Building" :
             mapId == "B04.Ground" ? "Library" :
             mapId == CinnaIceTrialRoom.MapId ? "Cinna's ice trial (portal at campus 47, 45)" :

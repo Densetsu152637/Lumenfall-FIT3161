@@ -82,7 +82,7 @@ namespace Lumenfall.Tests.GameEvents
                 tourText += " " + tour.CurrentNode.text;
                 tour.Continue();
             }
-            Assert.That(tourText, Does.Contain("Training Centre"));
+            Assert.That(tourText, Does.Contain("Dormitory"));
             Assert.That(tourText, Does.Contain("Arcane Workshop"));
             Assert.That(tourText, Does.Contain("Main Academy Building"));
             Assert.That(tourText, Does.Contain("Library"));

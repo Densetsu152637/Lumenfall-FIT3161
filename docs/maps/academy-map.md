@@ -17,7 +17,7 @@ The primary spatial reading is an open field inside a continuous perimeter wall:
 F01--F02--F03 <--- [B02 Arcane Workshop] C03 C02 [B03 Main Academy] |
  West Forest   |                                           | EAST
 WEST GATE      |        C01 CAMPUS COMMONS      [B04 Library] | GATE
-                | [B01 Training Centre] C04 Garden           | FUTURE
+                | [B01 Dormitory] C04 Garden           | FUTURE
                 +-------------------------------------------+
               [SOUTH GATE — FUTURE EXPANSION]
 ```
@@ -42,7 +42,7 @@ Buildings are freestanding and connected by traversable campus paths. The legacy
   F05 Brook            \         |          |       C04      | area     |
                         \        | W01      |       Garden -- D01      |
                          \       +----------+--- C05 --------+----------+
-                          \      | B01 TRAINING CENTRE                  |
+                          \      | B01 DORMITORY                  |
                            A01 -- S01 -- S02 Training -- S03 to C05      |
                         Forecourt+--------------------------------------+
 
@@ -73,7 +73,7 @@ The F03 west gate and campus grounds become available after the first reception 
 
 ## Single-storey interiors
 
-All four buildings are ground-floor maps. B01 is the Training Centre; B02 is Stella's Arcane Workshop; B03 is the Main Academy Building and houses the main portal; and B04 is the Library. All travel stays on the ground level.
+All four buildings are ground-floor maps. B01 is the Dormitory; B02 is Stella's Arcane Workshop; B03 is the Main Academy Building and houses the main portal; and B04 is the Library. All travel stays on the ground level.
 
 ## Creative explanation
 

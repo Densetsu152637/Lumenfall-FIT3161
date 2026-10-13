@@ -59,7 +59,7 @@
         {
           "id": "training_library",
           "speaker": "Kit",
-          "text": "The Training Centre is for spell practice, and the Library is for studying. Or napping between the shelves. I won't tell.",
+          "text": "The Dormitory is where students live, and the Library is for studying. Or napping between the shelves. I won't tell.",
           "nextNodeId": "forest"
         },
         {

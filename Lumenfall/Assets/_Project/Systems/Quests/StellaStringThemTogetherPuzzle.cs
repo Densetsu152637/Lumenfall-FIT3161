@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
-using Lumenfall.Inventory;
 using Lumenfall.Spells;
 
 namespace Lumenfall.Quests
@@ -150,13 +148,6 @@ namespace Lumenfall.Quests
             if (id == WorkbenchLinkId) return "the magical item";
             if (id != null && id.StartsWith(IdPrefix, StringComparison.Ordinal)) return "relic " + id.Substring(IdPrefix.Length);
             return "the next relay";
-        }
-
-        private static int CountLitRelics(WorldStateService worldState)
-        {
-            int lit = 0;
-            for (int i = 0; i < RelicCount; i++) if (worldState.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered) lit++;
-            return lit;
         }
 
         private static bool CircuitNetworkComplete(WorldStateService worldState)
@@ -527,59 +518,6 @@ namespace Lumenfall.Quests
                     if (relayViews[i] != null) relayViews[i].transform.SetPositionAndRotation(relayPositions[i], relayRotations[i]);
         }
 
-        private void OnGUI()
-        {
-            if (state == null || !state.IsReady || !string.Equals(state.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return;
-            GameEventRuntime progress = GameEventManager.Instance?.Runtime;
-            QuestStatus circuitStatus = progress == null ? QuestStatus.NotStarted : progress.GetQuestStatus(CircuitQuestId);
-            if (circuitStatus == QuestStatus.Completed) return;
-            if (circuitStatus == QuestStatus.Active) { DrawCircuitPanel(); return; }
-            bool[] powered = new bool[RelicCount];
-            int count = 0;
-            for (int i = 0; i < powered.Length; i++)
-                if (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot snapshot) && (powered[i] = snapshot.powered)) count++;
-            bool showGuidance = QuestHintOverlay.HintsEnabled && !QuestHintOverlay.IsSettingsOpen;
-            GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — First Light");
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            bool complete = runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Completed;
-            string instruction = complete ? "All five relics are glowing. Return to Stella." : "Cast Ampere on the large relics until all five glow together.";
-            GridMover player = FindAnyObjectByType<GridMover>();
-            if (!complete && player != null)
-            {
-                int nearest = -1;
-                int best = 3;
-            for (int i = 0; i < RelicCount; i++)
-                {
-                    if (!state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic)) continue;
-                    int distance = Mathf.Abs(player.CurrentCell.x - relic.cell.x) + Mathf.Abs(player.CurrentCell.y - relic.cell.y);
-                    if (distance <= best) { best = distance; nearest = i; }
-                }
-                if (nearest >= 0) instruction = "Nearby relic " + (nearest + 1) + "  •  Select Ampere and cast to trigger its resonance";
-            }
-            if (showGuidance) GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
-            string status = "Power: ";
-            for (int i = 0; i < powered.Length; i++) status += (i == 0 ? "" : "   ") + (i + 1) + (powered[i] ? " ●" : " ○");
-            GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + count + "/5");
-        }
-
-        private void DrawCircuitPanel()
-        {
-            bool showGuidance = QuestHintOverlay.HintsEnabled && !QuestHintOverlay.IsSettingsOpen;
-            GUI.Box(new Rect(18f, 18f, 420f, showGuidance ? 98f : 70f), "Stella — String Them Together");
-            if (showGuidance)
-            {
-                SpellCaster caster = FindAnyObjectByType<SpellCaster>();
-                string instruction = caster != null && caster.HeldThread != null
-                        ? "Holding a thread from " + NodeName(caster.HeldThread) + ". Weave the next relic."
-                        : "Cast Weave on a glowing relic, then link nearby relays until the magical item is powered.";
-                GUI.Label(new Rect(32f, 42f, 396f, 22f), instruction);
-            }
-            string status = "Lit: ";
-            for (int i = 0; i < RelicCount; i++)
-                status += (i == 0 ? "" : "   ") + (i + 1) + (state.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered ? " ●" : " ○");
-            GUI.Label(new Rect(32f, showGuidance ? 68f : 44f, 396f, 22f), status + "     " + CountLitRelics(state) + "/5");
-        }
-
         private static string ObjectId(int index) => IdPrefix + (index + 1);
         private static string RelayId(int index) => RelayPrefix + (index + 1);
         private static bool SetPoweredVisual(GameObject target, bool powered)
@@ -601,6 +539,68 @@ namespace Lumenfall.Quests
             renderer.material.color = color;
             renderer.material.SetColor("_EmissionColor", color * 0.18f);
             renderer.material.EnableKeyword("_EMISSION");
+        }
+    }
+
+    /// <summary>Stella-specific progress and instructions presented by the shared <see cref="QuestHintOverlay"/>.</summary>
+    internal static class StellaQuestGuide
+    {
+        internal const string FirstLightQuestId = "stella_first_light";
+        internal const string CircuitQuestId = "stella_string_them_together";
+        internal const string MapId = "B02.Ground";
+        private const int RelicCount = 5;
+        private const int RelayCount = 10;
+        private const string RelicPrefix = "stella.string-together.relic.";
+        private const string RelayPrefix = "stella.circuit.relay.";
+        private const string MagicalItemId = "circuit.stella.link";
+
+        internal static bool IsActive(string questId, GameEventRuntime runtime) => runtime != null &&
+            (questId == FirstLightQuestId || questId == CircuitQuestId) &&
+            runtime.GetQuestStatus(questId) == QuestStatus.Active;
+
+        internal static string Tracker(string questId, WorldStateService world)
+        {
+            int litRelics = CountPowered(world, RelicPrefix, RelicCount);
+            if (questId == FirstLightQuestId) return $"Relics lit: {litRelics}/{RelicCount}";
+
+            int liveRelays = CountPowered(world, RelayPrefix, RelayCount);
+            bool itemPowered = TryGet(world, MagicalItemId, out WorldObjectSnapshot item) && item.powered;
+            return $"Relics lit: {litRelics}/{RelicCount}\nRelays powered: {liveRelays}/{RelayCount}\nMagical item: {(itemPowered ? "powered" : "not powered")}";
+        }
+
+        internal static string Instructions(string questId, out Vector2Int targetCell)
+        {
+            targetCell = default;
+            string wheel = KeyBindings.GetKeyLabel(GameAction.SpellWheel);
+            string cast = KeyBindings.GetKeyLabel(GameAction.Interact);
+            if (questId == FirstLightQuestId)
+            {
+                string result = $"1. Press {wheel} and select Ampere.\n" +
+                                $"2. Right-click or press {cast} on a numbered relic.\n" +
+                                "3. Each cast changes several relics; light all five together.";
+                if (StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string next, out targetCell)) result += "\n" + next;
+                return result;
+            }
+
+            string circuit = $"1. Press {wheel} and select Weave.\n" +
+                             $"2. Right-click or press {cast} on a powered relic to hold a thread.\n" +
+                             "3. Weave through nearby relays until every relic and the magical item receive power.";
+            if (StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string nextStep, out targetCell)) circuit += "\n" + nextStep;
+            return circuit;
+        }
+
+        private static int CountPowered(WorldStateService world, string prefix, int count)
+        {
+            int powered = 0;
+            for (int i = 1; i <= count; i++)
+                if (TryGet(world, prefix + i, out WorldObjectSnapshot item) && item.powered) powered++;
+            return powered;
+        }
+
+        private static bool TryGet(WorldStateService world, string id, out WorldObjectSnapshot item)
+        {
+            item = null;
+            return world != null && world.TryGetObjectInMap(MapId, id, out item);
         }
     }
 }

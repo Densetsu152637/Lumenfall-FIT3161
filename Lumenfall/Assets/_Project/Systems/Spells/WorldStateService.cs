@@ -80,7 +80,8 @@ namespace Lumenfall.Spells
         }
         public void ResetAllState() { PruneDestroyedRenderers(); Version++; archivedMaps.Clear(); archivedEffects.Clear(); entries.Clear(); authoredPoses.Clear(); connections.Clear(); connectionStrengths.Clear(); pendingEffects.Clear(); pendingRestore = null; CurrentMapId = string.Empty; IsReady = false; }
         public void RegisterPuzzleTargets(PuzzleTargetDefinition[] definitions) { puzzleTargets = definitions ?? Array.Empty<PuzzleTargetDefinition>(); }
-        public void RegisterObject(string id, GameObject sceneObject, Vector2Int cell, Vector2Int size, bool compatible, string[] tags, float? authoredRotation = null)
+        public void RegisterObject(string id, GameObject sceneObject, Vector2Int cell, Vector2Int size, bool compatible, string[] tags,
+            float? authoredRotation = null, bool syncSceneTransform = true)
         {
             if (string.IsNullOrWhiteSpace(id)) return;
             Renderer[] renderers = sceneObject == null ? Array.Empty<Renderer>() : sceneObject.GetComponentsInChildren<Renderer>(true);
@@ -91,7 +92,7 @@ namespace Lumenfall.Spells
                     authoredRendererStates[renderers[i]] = authoredEnabled = renderers[i].enabled;
                 enabledStates[i] = authoredEnabled;
             }
-            WorldEntry entry = new WorldEntry { sceneObject = sceneObject, renderers = renderers, rendererEnabledStates = enabledStates, authoredHidden = Array.Exists(tags ?? Array.Empty<string>(), tag => string.Equals(tag, "hidden", StringComparison.OrdinalIgnoreCase)),
+            WorldEntry entry = new WorldEntry { sceneObject = sceneObject, syncSceneTransform = syncSceneTransform, renderers = renderers, rendererEnabledStates = enabledStates, authoredHidden = Array.Exists(tags ?? Array.Empty<string>(), tag => string.Equals(tag, "hidden", StringComparison.OrdinalIgnoreCase)),
                 state = new WorldObjectSnapshot { id = id, mapId = CurrentMapId, cell = cell, size = size, elevation = sceneObject == null ? 0 : sceneObject.transform.position.y, rotation = authoredRotation ?? (sceneObject == null ? 0 : sceneObject.transform.eulerAngles.y), spellCompatible = compatible, tags = tags ?? Array.Empty<string>() } };
             entries[id] = entry;
             Version++;
@@ -284,7 +285,18 @@ namespace Lumenfall.Spells
         private static string NormalizeMapId(string mapId) => string.Equals(mapId, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : mapId;
         private static void NormalizeObjectMapIds(WorldObjectSnapshot[] objects) { foreach (WorldObjectSnapshot item in objects ?? Array.Empty<WorldObjectSnapshot>()) if (item != null) item.mapId = NormalizeMapId(item.mapId); }
         private void ApplySnapshot(MapStateSnapshot snapshot) { connections.Clear(); connectionStrengths.Clear(); string[] savedConnections = snapshot.connections ?? Array.Empty<string>(); float[] savedStrengths = snapshot.connectionStrengths ?? Array.Empty<float>(); connections.UnionWith(savedConnections); for (int i = 0; i < savedConnections.Length; i++) connectionStrengths[savedConnections[i]] = i < savedStrengths.Length ? savedStrengths[i] : 1f; foreach (WorldObjectSnapshot saved in snapshot.objects ?? Array.Empty<WorldObjectSnapshot>()) if (entries.TryGetValue(saved.id, out WorldEntry entry)) { string[] authoredTags = entry.state.tags; bool compatible = entry.state.spellCompatible; entry.state = Clone(saved); entry.state.tags = authoredTags; entry.state.spellCompatible = compatible; entry.state.mapId = CurrentMapId; SyncTransform(entry); } }
-        private void SyncTransform(WorldEntry entry) { if (entry.sceneObject == null) return; GridWorld world = FindAnyObjectByType<GridWorld>(); if (world != null) entry.sceneObject.transform.position = world.CellToWorld(entry.state.cell, entry.state.elevation); entry.sceneObject.transform.rotation = Quaternion.Euler(0, entry.state.rotation, 0); entry.sceneObject.GetComponent<GridObstacle>()?.RefreshFootprint(); SyncPresentation(entry); }
+        private void SyncTransform(WorldEntry entry)
+        {
+            if (entry.sceneObject == null) return;
+            if (entry.syncSceneTransform)
+            {
+                GridWorld world = FindAnyObjectByType<GridWorld>();
+                if (world != null) entry.sceneObject.transform.position = world.CellToWorld(entry.state.cell, entry.state.elevation);
+                entry.sceneObject.transform.rotation = Quaternion.Euler(0, entry.state.rotation, 0);
+                entry.sceneObject.GetComponent<GridObstacle>()?.RefreshFootprint();
+            }
+            SyncPresentation(entry);
+        }
         private void PruneDestroyedRenderers()
         {
             var destroyed = new List<Renderer>();
@@ -330,7 +342,7 @@ namespace Lumenfall.Spells
         private static float NormalizeRotation(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
         private static string ConnectionKey(string a, string b) => string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;
         private static WorldObjectSnapshot Clone(WorldObjectSnapshot s) => s == null ? null : new WorldObjectSnapshot { id = s.id, mapId = s.mapId, cell = s.cell, size = s.size, elevation = s.elevation, rotation = s.rotation, powered = s.powered, frozen = s.frozen, revealed = s.revealed, collected = s.collected, aligned = s.aligned, spellCompatible = s.spellCompatible, tags = s.tags ?? Array.Empty<string>() };
-        private sealed class WorldEntry { public GameObject sceneObject; public WorldObjectSnapshot state; public Renderer[] renderers; public bool[] rendererEnabledStates; public bool authoredHidden; }
+        private sealed class WorldEntry { public GameObject sceneObject; public bool syncSceneTransform; public WorldObjectSnapshot state; public Renderer[] renderers; public bool[] rendererEnabledStates; public bool authoredHidden; }
         [Serializable] private sealed class SaveData { public string mapId; public WorldObjectSnapshot[] objects = Array.Empty<WorldObjectSnapshot>(); public string[] connections = Array.Empty<string>(); public float[] connectionStrengths = Array.Empty<float>(); public string[] pendingEffects = Array.Empty<string>(); public MapArchive[] maps = Array.Empty<MapArchive>(); }
         [Serializable] private sealed class MapArchive { public string mapId; public MapStateSnapshot snapshot; public string[] pendingEffects = Array.Empty<string>(); }
     }

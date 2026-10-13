@@ -15,7 +15,7 @@ namespace Lumenfall.EditorTools
             {
                 (string objectName, string displayName)[] signs =
                 {
-                    ("Sign-Training Centre", "Training Centre"),
+                    ("Sign-Dormitory", "Dormitory"),
                     ("Sign-Arcane Workshop", "Arcane Workshop"),
                     ("Sign-Main Academy Building", "Main Academy Building"),
                     ("Sign-Library", "Library")

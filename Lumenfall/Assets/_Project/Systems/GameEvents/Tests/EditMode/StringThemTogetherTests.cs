@@ -103,7 +103,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(Powered(Link) || Powered("relic.near"), Is.False, "Switching the source off darkens the chain.");
         }
 
-        [Test] public void EmptyWeaveCastCutsNewestCableAndAllowsANewStartingNode()
+        [Test] public void EmptyWeaveCastReleasesHeldThreadWithoutCuttingCompletedCable()
         {
             state.RegisterObject("relay.a", null, new Vector2Int(12, 3), Vector2Int.one, true, ConductorTags);
             state.RegisterObject("relay.b", null, new Vector2Int(13, 3), Vector2Int.one, true, ConductorTags);
@@ -113,8 +113,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(caster.Cast(SpellId.Weave, "relay.b", Vector2Int.up), Is.True);
             Assert.That(state.IsConnected("relay.a", "relay.b"), Is.True);
 
-            Assert.That(caster.CancelHeldThread(), Is.True, "An empty cast removes the cable just drawn into the held node.");
-            Assert.That(state.IsConnected("relay.a", "relay.b"), Is.False);
+            Assert.That(caster.CancelHeldThread(), Is.True, "An empty cast releases the temporary player tether.");
+            Assert.That(state.IsConnected("relay.a", "relay.b"), Is.True, "Completed item-to-item cables remain connected.");
             Assert.That(caster.HeldThread, Is.Null);
 
             Assert.That(caster.Cast(SpellId.Weave, "relay.a", Vector2Int.up), Is.False);

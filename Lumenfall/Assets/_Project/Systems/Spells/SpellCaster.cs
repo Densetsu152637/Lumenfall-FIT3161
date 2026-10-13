@@ -44,7 +44,6 @@ namespace Lumenfall.Spells
         /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
-        private string previousThreadNode;
         private float feedbackUntil;
         private float nextScrollAt;
         private const float ScrollCooldown = 0.06f;
@@ -270,27 +269,20 @@ namespace Lumenfall.Spells
         }
 
         /// <summary>
-        /// Releases the active Weave thread. If it was advanced by the previous cast, the newest cable is removed too.
-        /// A later cast on any circuit node starts a fresh thread from that node.
+        /// Releases only the temporary Weave thread between the held circuit item and the player.
+        /// Completed item-to-item cables remain connected.
         /// </summary>
         public bool CancelHeldThread()
         {
             if (HeldThread == null) return false;
-            WorldStateService state = WorldStateService.Instance;
-            bool removed = state != null && !string.IsNullOrEmpty(previousThreadNode) &&
-                           state.IsConnected(previousThreadNode, HeldThread) &&
-                           state.RemoveConnection(previousThreadNode, HeldThread);
             ClearHeldThread();
-            ShowFeedback(removed
-                ? "Newest cable disconnected. Cast Weave on a relic to start again from it."
-                : "Thread released. Cast Weave on a relic to start again from it.");
-            return removed;
+            ShowFeedback("Thread released. Completed cables remain connected.");
+            return true;
         }
 
         private void ClearHeldThread()
         {
             HeldThread = null;
-            previousThreadNode = null;
         }
         private void CloseSpellWheel(SpellId? picked = null)
         {
@@ -416,7 +408,6 @@ namespace Lumenfall.Spells
             if (HeldThread == null || !state.TryGetObject(HeldThread, out _))
             {
                 HeldThread = targetId;
-                previousThreadNode = null;
                 ShowFeedback("Thread held. Cast Weave on another relic within four tiles to tie it.");
                 return false;
             }
@@ -434,7 +425,6 @@ namespace Lumenfall.Spells
                 return false;
             }
             HeldThread = targetId;
-            previousThreadNode = from;
             bool lit = state.TryGetObject(targetId, out WorldObjectSnapshot tied) && tied.powered;
             ShowFeedback(lit ? "Cable tied and carrying power. Keep weaving from here." : "Cable tied. It lights once the chain reaches a powered relic.");
             return true;

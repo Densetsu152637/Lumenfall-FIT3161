@@ -87,6 +87,11 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             runtime.StartQuest("stella_first_light");
 
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"));
+            Assert.That(ReadField<string>("tracker"), Is.EqualTo("Relics lit: 0/5"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("select Ampere"));
+
             for (int initial = 0; initial < 32; initial++)
             {
                 SetBoard(initial);

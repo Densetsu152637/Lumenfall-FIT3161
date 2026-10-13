@@ -1713,7 +1713,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3646890467456275951}
   m_Layer: 0
-  m_Name: Training Centre
+  m_Name: Dormitory
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
