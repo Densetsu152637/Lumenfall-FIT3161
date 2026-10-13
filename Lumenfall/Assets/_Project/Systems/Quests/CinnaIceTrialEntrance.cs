@@ -1,143 +1,14 @@
-using System;
 using UnityEngine;
-using Lumenfall.DataDriven;
-using Lumenfall.GridMovement;
-using Lumenfall.Spells;
 
 namespace Lumenfall.Quests
 {
     /// <summary>
-    /// Campus entrance to Cinna Cirra's ice trial at <c>P.C05</c>, on the campus path at <c>(47,45)</c>.
-    /// Like Katrina's recess entrance it is open whenever campus is loaded; the trial returns to this tile through its
-    /// landing stone. It is built at runtime, so the baked area prefabs and their PlayMode route count are unchanged.
+    /// Shared identifiers for the authored Campus entrance to Cinna Cirra's ice trial.
+    /// The actual portal is the P.C05 GridPortal stored in the Campus area prefab.
     /// </summary>
-    public sealed class CinnaIceTrialEntrance : MonoBehaviour
+    public static class CinnaIceTrialEntrance
     {
         public const string PortalId = "P.C05";
-        private const string MapId = "campus";
-        // Portal content assets only describe connections; a GridPortal's cell is its transform position.
         public static readonly Vector2Int EntranceCell = new Vector2Int(18, 45);
-        private static readonly Color PortalColor = new Color(0.62f, 0.86f, 1f);
-        private static CinnaIceTrialEntrance instance;
-
-        private WorldStateService subscribedState;
-        private GameObject portalObject;
-        private GridPortal portal;
-        private Transform ring;
-        private bool onCampus;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
-        {
-            if (instance != null) return;
-            GameObject host = new GameObject("[Cinna Ice Trial Entrance]");
-            instance = host.AddComponent<CinnaIceTrialEntrance>();
-            DontDestroyOnLoad(host);
-        }
-
-        private void Awake()
-        {
-            if (instance != null && instance != this) { Destroy(gameObject); return; }
-            instance = this;
-            Subscribe();
-        }
-
-        private void OnDestroy()
-        {
-            if (subscribedState != null) subscribedState.MapRebuilt -= OnMapRebuilt;
-            if (instance == this) instance = null;
-        }
-
-        private void Update()
-        {
-            Subscribe();
-            if (ring != null && portalObject != null && portalObject.activeSelf) ring.Rotate(0f, 85f * Time.unscaledDeltaTime, 0f, Space.Self);
-        }
-
-        // MapRebuilt fires inside the loader's Load, before SwitchArea looks up the live destination portal, so the
-        // entrance is active in time to suppress an immediate re-entry when the player returns onto its tile.
-        private void Subscribe()
-        {
-            WorldStateService state = WorldStateService.Instance;
-            if (state == null || state == subscribedState) return;
-            if (subscribedState != null) subscribedState.MapRebuilt -= OnMapRebuilt;
-            subscribedState = state;
-            state.MapRebuilt += OnMapRebuilt;
-            if (state.IsReady) OnMapRebuilt(new MapRebuildEvent(state.CurrentMapId));
-        }
-
-        private void OnMapRebuilt(MapRebuildEvent rebuild)
-        {
-            onCampus = rebuild != null && string.Equals(rebuild.MapId, MapId, StringComparison.OrdinalIgnoreCase);
-            if (onCampus) BuildOrRebind();
-            if (portalObject != null && portalObject.activeSelf != onCampus) portalObject.SetActive(onCampus);
-        }
-
-        private void BuildOrRebind()
-        {
-            GridWorld world = FindAnyObjectByType<GridWorld>();
-            PortalContentAsset content = null;
-            foreach (PortalContentAsset candidate in DataDrivenWorldLoader.Instance?.CurrentArea?.portals ?? Array.Empty<PortalContentAsset>())
-                if (candidate != null && string.Equals(candidate.id, PortalId, StringComparison.Ordinal)) { content = candidate; break; }
-            if (world == null || content == null) { Debug.LogError($"Missing authored portal content '{PortalId}'.", this); return; }
-
-            if (portalObject == null)
-            {
-                GameObject areaRoot = DataDrivenWorldLoader.Instance?.CurrentAreaRoot;
-                if (areaRoot != null)
-                    foreach (GridPortal candidate in areaRoot.GetComponentsInChildren<GridPortal>(true))
-                        if (candidate.Content == content) { portal = candidate; break; }
-                if (portal == null) { Debug.LogError($"Portal '{PortalId}' is missing from the campus prefab.", this); return; }
-                portalObject = portal.gameObject;
-                GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                visual.name = "Ice trial entrance ring";
-                visual.transform.SetParent(portalObject.transform, false);
-                visual.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-                visual.transform.localScale = new Vector3(0.82f, 0.06f, 0.82f);
-                Collider collider = visual.GetComponent<Collider>();
-                if (collider != null) Destroy(collider);
-                Renderer renderer = visual.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material.color = PortalColor;
-                    renderer.material.SetColor("_EmissionColor", PortalColor * 2f);
-                    renderer.material.EnableKeyword("_EMISSION");
-                }
-                ring = visual.transform;
-                BuildFrost(portalObject.transform);
-            }
-            portal.Configure(content, world);
-            if (!world.IsCellAvailable(EntranceCell)) Debug.LogWarning($"Ice trial entrance cell {EntranceCell} is blocked on campus.", this);
-        }
-
-        // A frost patch under the ring and small crystals at the tile's corners hint at the ice trial beyond. They sit
-        // inside the portal's own tile and do not block, so the campus path around it is unchanged.
-        private static void BuildFrost(Transform parent)
-        {
-            CinnaIceTrialArt art = CinnaIceTrialArt.Instance;
-            if (art == null) return;
-            if (art.frostMaterial != null)
-            {
-                GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                patch.name = "Ice trial entrance frost";
-                Collider collider = patch.GetComponent<Collider>();
-                if (collider != null) Destroy(collider);
-                patch.transform.SetParent(parent, false);
-                patch.transform.localPosition = new Vector3(0f, 0.005f, 0f);
-                patch.transform.localScale = new Vector3(1.1f, 0.005f, 1.1f);
-                patch.GetComponent<Renderer>().sharedMaterial = art.frostMaterial;
-            }
-            GameObject[] crystals = art.entranceCrystals ?? Array.Empty<GameObject>();
-            for (int i = 0; i < 4 && crystals.Length > 0; i++)
-            {
-                GameObject source = crystals[i % crystals.Length];
-                if (source == null) continue;
-                GameObject crystal = Instantiate(source, parent);
-                crystal.name = "Ice trial entrance crystal " + (i + 1);
-                float angle = 45f + 90f * i;
-                crystal.transform.localPosition = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * 0.55f;
-                crystal.transform.localRotation = Quaternion.Euler(0f, angle + 30f * i, 0f);
-            }
-        }
     }
 }

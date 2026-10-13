@@ -78,7 +78,6 @@ namespace Lumenfall.Quests
         private const float FallFadeInSeconds = 0.45f;
         private static readonly Color RelicBaseColor = new Color(0.5f, 0.5f, 0.56f);
         private static readonly Color StoneColor = new Color(0.55f, 0.55f, 0.6f);
-        private static readonly Color PortalColor = new Color(0.62f, 0.86f, 1f);
 
         [Tooltip("Animator controller for Cinna's model, matching their campus placement.")]
         [SerializeField] private RuntimeAnimatorController cinnaAnimator;
@@ -100,8 +99,6 @@ namespace Lumenfall.Quests
         private int worldWidth;
         private int worldHeight;
         private Transform geometry;
-        private GameObject portalObject;
-        private Transform ring;
         private Renderer poolRenderer;
         private GridObstacle water;
         private Vector2Int finalCell;
@@ -150,7 +147,6 @@ namespace Lumenfall.Quests
         {
             if (geometry == null) return;
             Subscribe();
-            if (ring != null && portalObject != null && portalObject.activeSelf) ring.Rotate(0f, 85f * Time.unscaledDeltaTime, 0f, Space.Self);
             AdvanceFall(Time.deltaTime);
             // A player left standing over the chasm (a save made mid-fall, for one) falls as soon as they are idle.
             if (fallTime < 0f && subscribedPlayer != null && !subscribedPlayer.IsMoving && dropCells.Contains(subscribedPlayer.CurrentCell))
@@ -515,12 +511,7 @@ namespace Lumenfall.Quests
             foreach (GridPortal candidate in GetComponentsInChildren<GridPortal>(true))
                 if (candidate.Content == content) { portal = candidate; break; }
             if (portal == null) { Debug.LogError($"Portal '{ReturnPortalId}' is missing from the C03.IceTrial prefab.", this); return; }
-            portalObject = portal.gameObject;
             portal.Configure(content, world);
-            GameObject visual = Part(PrimitiveType.Cylinder, "Return portal ring", Vector3.zero, new Vector3(0.82f * size, 0.06f, 0.82f * size), PortalColor, true);
-            visual.transform.SetParent(portalObject.transform, false);
-            visual.transform.localPosition = new Vector3(0f, 0.08f, 0f);
-            ring = visual.transform;
         }
 
         private void BuildPool(string id, Vector2Int cell, Vector2Int footprint, float size)

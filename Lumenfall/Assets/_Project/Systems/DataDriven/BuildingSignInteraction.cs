@@ -23,6 +23,8 @@ namespace Lumenfall.DataDriven
         private static readonly List<BuildingSignInteraction> active = new List<BuildingSignInteraction>();
 
         [SerializeField] private string buildingName;
+        [SerializeField] private string panelTitle = "Campus Building";
+        [SerializeField] private string promptLabel = "Read";
         private GridMover lockedMover;
         private bool moverWasLocked;
 
@@ -68,7 +70,8 @@ namespace Lumenfall.DataDriven
 
             GridMover player = GridMover.FindActive();
             if (player == null || !IsNearestInteractionTarget(player)) return;
-            HudSkin.PromptAbove(transform.position + Vector3.up * 1.6f, KeyBindings.GetKeyLabel(GameAction.Talk), "Read");
+            HudSkin.PromptAbove(transform.position + Vector3.up * 1.6f, KeyBindings.GetKeyLabel(GameAction.Talk),
+                string.IsNullOrWhiteSpace(promptLabel) ? "Read" : promptLabel);
         }
 
         private bool IsNearestInteractionTarget(GridMover player)
@@ -128,7 +131,7 @@ namespace Lumenfall.DataDriven
             float width = Mathf.Min(Screen.width - 40f, 560f);
             float height = Mathf.Min(Screen.height - 40f, 260f);
             Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            HudSkin.SignCard(panel, "Campus Building", buildingName);
+            HudSkin.SignCard(panel, string.IsNullOrWhiteSpace(panelTitle) ? "Campus Building" : panelTitle, buildingName);
             HudSkin.Prompt(new Vector2(panel.center.x, panel.yMax - 46f), KeyBindings.GetKeyLabel(GameAction.Talk), "Exit");
         }
     }
