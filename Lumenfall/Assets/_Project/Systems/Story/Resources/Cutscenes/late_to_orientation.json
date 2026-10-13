@@ -1,0 +1,19 @@
+{
+  "id": "late_to_orientation",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "dialogue", "key": "kepler_far_call" },
+    { "type": "walk", "key": "prof_kepler", "x": 0, "y": -2 },
+    { "type": "wait", "seconds": 0.3 },
+    { "type": "dialogue", "key": "kepler_late" },
+    { "type": "name" },
+    { "type": "dialogue", "key": "kepler_get_in" },
+    { "type": "flag", "key": "story.orientation.kepler_met", "value": true },
+    { "type": "walk", "x": 17, "y": 48 },
+    { "type": "fade", "color": "#000000", "alpha": 1, "seconds": 0.5 },
+    { "type": "enter", "x": 17, "y": 48 },
+    { "type": "wait", "seconds": 0.3 },
+    { "type": "fade", "alpha": 0, "seconds": 0.7 }
+  ]
+}

@@ -29,6 +29,8 @@ namespace Lumenfall.EditorTools
         private const string WitchMaterial = "Assets/ThirdParty/StylizedChibiWitch/Materials/Mat_Main_Custom.mat";
         private const string ChibiController = "Assets/_Project/Art/Charaters/Animations/NPCs/NPC_Chibi.controller";
         private const string StaffPrefab = "Assets/ThirdParty/Wand - Blink/Art/Weapons/Stylized/Staves/_PrefabsStaves/Staff4_1_1.prefab";
+        // The staff's own pack materials are not in the project, so every staff surface uses this URP wood material.
+        private const string StaffMaterial = MaterialFolder + "NPC_Staff.mat";
         private const string PreviewFolder = "Logs/NpcPreviews";
         private const float IdleSampleTime = 1.2f;
         private const int PreviewLayer = 31;
@@ -835,7 +837,8 @@ namespace Lumenfall.EditorTools
                         builder.AddMesh(filter.sharedMesh, place * filter.transform.localToWorldMatrix, materialList.IndexOf(shared[Mathf.Min(s, shared.Length - 1)]), s);
                 }
 
-                materials = materialList.ToArray();
+                Material wood = AssetDatabase.LoadAssetAtPath<Material>(StaffMaterial);
+                materials = wood == null ? materialList.ToArray() : materialList.Select(_ => wood).ToArray();
                 return SaveMesh("Staff", builder, hand);
             }
             finally

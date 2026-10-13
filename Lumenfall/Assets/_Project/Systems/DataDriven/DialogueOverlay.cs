@@ -4,6 +4,7 @@ using System.Linq;
 using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Player;
 using Lumenfall.Quests;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -146,14 +147,17 @@ namespace Lumenfall.DataDriven
             if (session.CurrentNode.id == nodeId) return;
             DialogueNodeDefinition node = session.CurrentNode;
             nodeId = node.id;
-            speaker = string.IsNullOrWhiteSpace(node.speaker) ? session.Definition.id : node.speaker;
-            pages = DialoguePaging.Split(node.text ?? string.Empty, MaxPageCharacters);
+            // "{player}" is the player character: their name, or "???" until they have one, and never an NPC's portrait.
+            bool playerSpeaks = PlayerProfile.IsPlayerSpeaker(node.speaker);
+            speaker = playerSpeaks ? PlayerProfile.DisplayName
+                : string.IsNullOrWhiteSpace(node.speaker) ? session.Definition.id : PlayerProfile.Substitute(node.speaker);
+            pages = DialoguePaging.Split(PlayerProfile.Substitute(node.text ?? string.Empty), MaxPageCharacters);
             pageIndex = 0;
             ShowPage();
 
             Color colour = SpeakerColor(speaker);
             view.SetSpeaker(speaker, colour, SpeakerFrame(speaker));
-            Transform subject = SpeakerTransform(speaker);
+            Transform subject = playerSpeaks ? null : SpeakerTransform(speaker);
             Color background = Color.Lerp(colour, new Color(0.96f, 0.91f, 0.82f), 0.72f);
             bool showPortrait = subject != null && portrait.Show(subject, background);
             if (!showPortrait) portrait.Hide();
@@ -170,7 +174,7 @@ namespace Lumenfall.DataDriven
             selectedChoice = 0;
             choicesForNode = null;
             view.ClearChoices();
-            view.FitTo(prepared.RichText, OnLastPage ? session.AvailableChoices.Select(c => c.text ?? c.id).ToList() : null);
+            view.FitTo(prepared.RichText, OnLastPage ? session.AvailableChoices.Select(c => PlayerProfile.Substitute(c.text ?? c.id)).ToList() : null);
         }
 
         private void Reveal()
@@ -200,7 +204,7 @@ namespace Lumenfall.DataDriven
             IReadOnlyList<DialogueChoiceDefinition> available = session.AvailableChoices;
             if (!Revealed || !OnLastPage || available.Count == 0 || choicesForNode == nodeId) return;
             choicesForNode = nodeId;
-            view.SetChoices(available.Select(c => c.text ?? c.id).ToList());
+            view.SetChoices(available.Select(c => PlayerProfile.Substitute(c.text ?? c.id)).ToList());
             selectedChoice = 0;
             view.SetSelected(0);
         }

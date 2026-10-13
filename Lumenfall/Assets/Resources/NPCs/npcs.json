@@ -194,7 +194,7 @@
     },
     {
       "id": "campus_student",
-      "displayName": "Campus student",
+      "displayName": "Kit",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
       "x": 32,

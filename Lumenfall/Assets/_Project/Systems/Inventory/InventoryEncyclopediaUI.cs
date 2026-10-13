@@ -8,6 +8,7 @@ using Lumenfall.Controls;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.Inventory
 {
@@ -39,7 +40,7 @@ namespace Lumenfall.Inventory
                 { "cinna_cirra_trial", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
                 { "orio", new CharacterEntry("Orio", "A clever, reliable student who enjoys games, automation, and optimisation.") },
                 { "katrina", new CharacterEntry("Katrina", "A student searching for a keepsake while keeping its importance understated.") },
-                { "campus_student", new CharacterEntry("Campus student", "A student seen around the courtyard and commons, sharing practical campus observations.") },
+                { "campus_student", new CharacterEntry("Kit", "A friendly student by the campus entrance who gives newcomers the lay of the land.") },
                 { "forest_student", new CharacterEntry("Forest student", "A student familiar with the lantern trail and quiet forest practice spots.") }
             };
         private static readonly Dictionary<SpellId, string> SpellDescriptions =
@@ -160,7 +161,7 @@ namespace Lumenfall.Inventory
         private void Open()
         {
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
-                QuestHintOverlay.IsSettingsOpen) return;
+                QuestHintOverlay.IsSettingsOpen || CutscenePlayer.BlocksInput) return;
             InventoryUiState.IsOpen = true;
             openedAt = pageChangedAt = Time.unscaledTime;
             underlinePlaced = false;

@@ -106,6 +106,10 @@ The world is shared by every area, so the code that adds ice must remove it when
 deactivates. `CinnaIceTrialRoom` is the current user: it turns its pool into ice while the frost
 relic is frozen and clears it in `OnDisable`.
 
+## Hiding the player
+
+`PlayerVisibility.Hide(owner)` and `Show(owner)` hide the player's renderers for as long as any owner still hides them. The startup menu and the New Game arrival (see [the Cutscenes README](../Cutscenes/README.md)) both use it. Only renderers it turned off are turned back on. Owners call `Refresh()` each frame, which also hides parts switched on in the meantime. The player still moves, collides and occupies their cell while hidden. `RenderVisible(action)` shows them for one render, such as a save thumbnail.
+
 ## Useful runtime queries
 
 ```csharp

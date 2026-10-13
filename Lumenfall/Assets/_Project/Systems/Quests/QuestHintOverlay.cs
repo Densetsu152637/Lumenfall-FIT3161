@@ -9,6 +9,7 @@ using Lumenfall.Spells;
 using Lumenfall.DataDriven;
 using Lumenfall.Startup;
 using Lumenfall.Controls;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.Quests
 {
@@ -442,7 +443,7 @@ namespace Lumenfall.Quests
 
         private void OnGUI()
         {
-            if (StartupMenu.IsVisible) return;
+            if (StartupMenu.IsVisible || CutscenePlayer.IsPlaying) return;
             skin.Ensure();
             if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 13 };
             if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13 };
@@ -523,7 +524,7 @@ namespace Lumenfall.Quests
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return false;
-            if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount) return false;
+            if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount || CutscenePlayer.BlocksInput) return false;
             return FindAnyObjectByType<StartupMenu>() == null;
         }
 

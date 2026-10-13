@@ -1,0 +1,9 @@
+{
+  "id": "kit_lay_of_the_land",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "dialogue", "key": "kit_lay_of_the_land" },
+    { "type": "flag", "key": "story.orientation.kit_met", "value": true }
+  ]
+}

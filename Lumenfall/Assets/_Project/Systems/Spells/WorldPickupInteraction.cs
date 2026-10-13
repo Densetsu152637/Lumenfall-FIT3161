@@ -5,6 +5,7 @@ using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
+using Lumenfall.Cutscenes;
 
 namespace Lumenfall.Spells
 {
@@ -86,7 +87,7 @@ namespace Lumenfall.Spells
             WorldObjectSnapshot[] objects = cachedObjects;
             UpdateMarkers(objects, state.CurrentMapId, world, player);
 
-            bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
+            bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked || CutscenePlayer.BlocksInput ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 IsNpcInTalkRange(player.transform.position);
             if (blocked) return;

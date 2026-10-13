@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "kit_call",
+      "startNodeId": "shout",
+      "metadata": [ { "key": "placement", "value": "A01" } ],
+      "nodes": [
+        {
+          "id": "shout",
+          "speaker": "Kit",
+          "text": "<shake>Hey! New face!</shake>",
+          "nextNodeId": "over_here"
+        },
+        {
+          "id": "over_here",
+          "speaker": "Kit",
+          "text": "Over here! You look about as lost as I was on my first day.",
+          "nextNodeId": "smiling"
+        },
+        {
+          "id": "smiling",
+          "speaker": "{player}",
+          "text": "<i>Another stranger shouting at me. At least this one's smiling.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "kit_lay_of_the_land",
+      "startNodeId": "intro",
+      "metadata": [ { "key": "placement", "value": "A01" } ],
+      "nodes": [
+        {
+          "id": "intro",
+          "speaker": "Kit",
+          "text": "I'm Kit. Welcome to Lumenfall Academy! Let me give you the lay of the land before you walk into a wall.",
+          "nextNodeId": "courtyard"
+        },
+        {
+          "id": "courtyard",
+          "speaker": "Kit",
+          "text": "Up ahead is the courtyard. The fountain sits right in the middle of it, so if you ever get lost, head back there.",
+          "nextNodeId": "main_building"
+        },
+        {
+          "id": "main_building",
+          "speaker": "Kit",
+          "text": "The grand one is the Main Academy Building: reception, the main portal and most of the staff. Every building has a sign by its door.",
+          "nextNodeId": "workshop"
+        },
+        {
+          "id": "workshop",
+          "speaker": "Kit",
+          "text": "The Arcane Workshop is where the engineering lot tinker with relics and machines. Mind the sparks.",
+          "nextNodeId": "training_library"
+        },
+        {
+          "id": "training_library",
+          "speaker": "Kit",
+          "text": "The Training Centre is for spell practice, and the Library is for studying. Or napping between the shelves. I won't tell.",
+          "nextNodeId": "forest"
+        },
+        {
+          "id": "forest",
+          "speaker": "Kit",
+          "text": "And back through the gate is the forest. Lovely in the daytime. A bit dramatic after dark.",
+          "nextNodeId": "magic_school"
+        },
+        {
+          "id": "magic_school",
+          "speaker": "{player}",
+          "text": "<i>Spell practice. Relics. So the afterlife is a magic school. Sure. Why not.</i>",
+          "nextNodeId": "ceremony"
+        },
+        {
+          "id": "ceremony",
+          "speaker": "Kit",
+          "text": "Oh! You missed the orientation ceremony, by the way. It finished a little while ago.",
+          "nextNodeId": "headmistress"
+        },
+        {
+          "id": "headmistress",
+          "speaker": "Kit",
+          "text": "But Professor Bann, the headmistress, is still by the fountain in the middle of the courtyard. Go and speak to her right away.",
+          "nextNodeId": "now"
+        },
+        {
+          "id": "now",
+          "speaker": "Kit",
+          "text": "Seriously, go now. She's lovely, but she does not like waiting.",
+          "nextNodeId": "right"
+        },
+        {
+          "id": "right",
+          "speaker": "{player}",
+          "text": "<i>The headmistress. By the fountain. Right.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "bann_orientation",
+      "startNodeId": "greet",
+      "metadata": [ { "key": "placement", "value": "C01" } ],
+      "nodes": [
+        {
+          "id": "greet",
+          "speaker": "Prof. Bann",
+          "text": "Ah, there you are. You must be {player}, our latecomer. Professor Kepler mentioned you.",
+          "onEnterActions": [ { "type": "TriggerEvent", "key": "bann_remind_if_met" } ],
+          "nextNodeId": "missed"
+        },
+        {
+          "id": "missed",
+          "speaker": "Prof. Bann",
+          "text": "I'm Professor Bann, headmistress of Lumenfall. I'm afraid you've missed orientation entirely.",
+          "nextNodeId": "guide"
+        },
+        {
+          "id": "guide",
+          "speaker": "Prof. Bann",
+          "text": "Not to worry. I'll organise a student guide to go over all of it with you tomorrow.",
+          "nextNodeId": "dorm"
+        },
+        {
+          "id": "dorm",
+          "speaker": "Prof. Bann",
+          "text": "For now, report to your dorm and get your room sorted.",
+          "nextNodeId": "explore"
+        },
+        {
+          "id": "explore",
+          "speaker": "Prof. Bann",
+          "text": "Today is meant for exploring and speaking to your fellow students. I suggest you get your room done first, then do whatever else you please.",
+          "nextNodeId": "organised"
+        },
+        {
+          "id": "organised",
+          "speaker": "{player}",
+          "text": "<i>A headmistress, a dorm room and a free day. For the afterlife, this is weirdly organised.</i>",
+          "nextNodeId": "off_you_go"
+        },
+        {
+          "id": "off_you_go",
+          "speaker": "Prof. Bann",
+          "text": "Off you go, then. Welcome to Lumenfall, {player}.",
+          "onEnterActions": [ { "type": "SetFlag", "key": "story.orientation.bann_met", "boolValue": true } ],
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "bann_reminder",
+      "startNodeId": "a",
+      "metadata": [ { "key": "placement", "value": "C01" } ],
+      "nodes": [
+        {
+          "id": "a",
+          "speaker": "Prof. Bann",
+          "text": "Your dorm first, {player}. Get your room sorted, and then the rest of the day is yours.",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "bann_remind_if_met",
+      "description": "Once the player has heard Prof. Bann out, talking to her again gives the short reminder instead.",
+      "repeatable": true,
+      "conditions": [ { "type": "Flag", "key": "story.orientation.bann_met", "boolValue": true } ],
+      "actions": [ { "type": "StartDialogue", "key": "bann_reminder" } ]
+    }
+  ]
+}

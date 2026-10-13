@@ -90,7 +90,7 @@ namespace Lumenfall.Tests.GameEvents
 
             DialogueSession farewell = runtime.StartDialogue("ambient_courtyard_student");
             Assert.That(farewell.SelectChoice("familiar"), Is.True);
-            Assert.That(farewell.CurrentNode.text, Does.Contain("Enjoy your day"));
+            Assert.That(farewell.CurrentNode.text, Does.Contain("See you around"));
         }
 
         private static void AcceptAndComplete(GameEventRuntime runtime, string questId)

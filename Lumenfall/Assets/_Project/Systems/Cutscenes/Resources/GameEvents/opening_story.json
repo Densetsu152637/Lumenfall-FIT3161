@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "opening_awakening",
+      "startNodeId": "wake",
+      "metadata": [
+        { "key": "placement", "value": "F01" },
+        { "key": "voice", "value": "inner" }
+      ],
+      "nodes": [
+        {
+          "id": "wake",
+          "speaker": "{player}",
+          "text": "<i><shake>HUH—</shake></i>",
+          "nextNodeId": "dead"
+        },
+        {
+          "id": "dead",
+          "speaker": "{player}",
+          "text": "<i>...Wow. I'm finally dead, aren't I?</i>",
+          "nextNodeId": "physics"
+        },
+        {
+          "id": "physics",
+          "speaker": "{player}",
+          "text": "<i>What was the point of studying PHYSICS, just to get hit by one of the very things I study?!</i>",
+          "nextNodeId": "groan"
+        },
+        {
+          "id": "groan",
+          "speaker": "{player}",
+          "text": "<i>Ughhh.</i>",
+          "nextNodeId": "where"
+        },
+        {
+          "id": "where",
+          "speaker": "{player}",
+          "text": "<i>Okay. Where even am I?</i>",
+          "choices": [
+            { "id": "look", "text": "Look around", "nextNodeId": "look" }
+          ]
+        },
+        {
+          "id": "look",
+          "speaker": "{player}",
+          "text": "<i>Trees. Grass. A sky that's way too pretty for the afterlife.</i>",
+          "nextNodeId": "get_up"
+        },
+        {
+          "id": "get_up",
+          "speaker": "{player}",
+          "text": "<i>Well, lying here won't explain anything. Let me get up and have a look around.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ],
+  "events": []
+}
