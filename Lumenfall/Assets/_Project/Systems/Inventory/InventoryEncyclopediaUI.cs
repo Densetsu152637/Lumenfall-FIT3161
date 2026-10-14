@@ -47,7 +47,9 @@ namespace Lumenfall.Inventory
                 { "vex", new CharacterEntry("Vex", "A student who treats the Library's quiet as a personal responsibility.") },
                 { "luna", new CharacterEntry("Luna", "A student who spends more time looking at the sky than at the path.") },
                 { "juno", new CharacterEntry("Juno", "A student who always seems to know the latest campus news first.") },
-                { "rowan", new CharacterEntry("Rowan", "A student who practically lives in the Training Centre.") },
+                { "rowan", new CharacterEntry("Rowan", "A student who has already claimed the dormitory lobby as their own.") },
+                { "marigold", new CharacterEntry("Marigold", "One of the dormitory receptionists, keeper of the room list and the key rack.") },
+                { "thistle", new CharacterEntry("Thistle", "One of the dormitory receptionists, who always seems to be mid-way through finding something.") },
                 { "moss", new CharacterEntry("Moss", "A student who goes to the forest to think, and to listen to it.") }
             };
         private static readonly Dictionary<SpellId, string> SpellDescriptions =

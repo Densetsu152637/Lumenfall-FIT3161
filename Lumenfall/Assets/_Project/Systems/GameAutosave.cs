@@ -140,7 +140,8 @@ namespace Lumenfall.GameEvents
                 initialAutosavePending = false;
                 saveManager.MarkPlayed(GameSaveManager.AutosaveSlot);
             }
-            if (pendingManualSlot == null) return;
+            // Empty, not null, after Unity reloads scripts during Play Mode, which serializes private strings.
+            if (string.IsNullOrEmpty(pendingManualSlot)) return;
             string slot = pendingManualSlot;
             pendingManualSlot = null;
             if (saveManager.Save(slot)) SaveSlotSummary.RequestThumbnailRefresh(slot);

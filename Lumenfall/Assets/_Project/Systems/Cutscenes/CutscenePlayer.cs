@@ -61,8 +61,14 @@ namespace Lumenfall.Cutscenes
             instance = null;
             queuedId = null;
             endedFrame = -1;
-            GameEventCatalog.DeclareCustomActionType(PlayActionType);
+            DeclareActionType();
         }
+
+        // Also declared after every editor script reload, since SubsystemRegistration only runs when Play Mode starts.
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        private static void DeclareActionType() => GameEventCatalog.DeclareCustomActionType(PlayActionType);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()

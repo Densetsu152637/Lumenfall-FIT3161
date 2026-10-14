@@ -126,8 +126,13 @@ namespace Lumenfall.Quests
             return AreDiscsAligned(PuzzleMapId, discs);
         }
 
-        // Orio's dialogue and completion event use this condition; its handler is registered once a runtime exists.
+        // Orio's dialogue and completion event use this condition; its handler is registered once a runtime exists. In the
+        // editor it is also declared after every script reload, which a reload during Play Mode needs: SubsystemRegistration
+        // only runs when Play Mode starts.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
         private static void DeclareQuestConditions() => GameEventCatalog.DeclareCustomConditionType(AlignmentCondition);
 
         /// <summary>Registers a stateless resolver; it retains no dais, map instance or old runtime.</summary>

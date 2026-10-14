@@ -340,8 +340,8 @@ MonoBehaviour:
     displayName: Rowan
     prefab: {fileID: 2045118110938966410, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
     mapId: B01.Ground
-    x: 6
-    y: 4
+    x: 12
+    y: 6
     layerSymbol: 
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 
@@ -365,6 +365,40 @@ MonoBehaviour:
     dialogueIds: []
     dialogue:
     - dialogueId: ambient_moss
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: marigold
+    displayName: Marigold
+    prefab: {fileID: 5084151064103132770, guid: 8c3d0d1084f1d6040b1fa335594b2958, type: 3}
+    mapId: B01.Ground
+    x: 8
+    y: 8
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: dorm_marigold
+      questId: 
+      requiredQuestStatus: 
+      prerequisiteQuestId: 
+      prerequisiteQuestStatus: 
+      weight: 1
+  - id: thistle
+    displayName: Thistle
+    prefab: {fileID: 4447613242070474150, guid: 83c9cba9f332e7e49b12586540e6d32f, type: 3}
+    mapId: B01.Ground
+    x: 12
+    y: 8
+    layerSymbol: 
+    showWhenQuestCompleted: 
+    hideWhenQuestCompleted: 
+    dialogueIds: []
+    dialogue:
+    - dialogueId: dorm_thistle
       questId: 
       requiredQuestStatus: 
       prerequisiteQuestId: 

@@ -5,59 +5,169 @@
     {
       "id": "ambient_prof_voltaire",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "library" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "library"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Prof. Voltaire", "text": "Welcome to the Library. Every book here is catalogued, cross-referenced and, on one occasion, struck by lightning.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Prof. Voltaire", "text": "Borrow whatever you like. Return it on time, and we shall get along splendidly.", "nextNodeId": "c" },
-        { "id": "c", "speaker": "{player}", "text": "<i>Struck by lightning... in a library. I'm not going to ask.</i>", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Prof. Voltaire",
+          "text": "Welcome to the Library. Every book here is catalogued, cross-referenced and, on one occasion, struck by lightning.",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Prof. Voltaire",
+          "text": "Borrow whatever you like. Return it on time, and we shall get along splendidly.",
+          "nextNodeId": "c"
+        },
+        {
+          "id": "c",
+          "speaker": "{player}",
+          "text": "<i>Struck by lightning... in a library. I'm not going to ask.</i>",
+          "nextNodeId": ""
+        }
       ]
     },
     {
       "id": "ambient_vex",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "library" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "library"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Vex", "text": "Library rules: no shouting, no spells, and no asking me what I'm reading.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Vex", "text": "...It's about ancient ward circles, if you must know. Fascinating stuff. Now shush.", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Vex",
+          "text": "Library rules: no shouting, no spells, and no asking me what I'm reading.",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Vex",
+          "text": "...It's about ancient ward circles, if you must know. Fascinating stuff. Now shush.",
+          "nextNodeId": ""
+        }
       ]
     },
     {
       "id": "ambient_luna",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "courtyard" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "courtyard"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Luna", "text": "Oh! Sorry, I was looking up. The sky's clearer here than anywhere I've ever lived.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Luna", "text": "If you're up late, come to the fountain. The water holds the stars perfectly still.", "nextNodeId": "c" },
-        { "id": "c", "speaker": "{player}", "text": "<i>Stars. Yeah. I've had about enough of those for one day.</i>", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Luna",
+          "text": "Oh! Sorry, I was looking up. The sky's clearer here than anywhere I've ever lived.",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Luna",
+          "text": "If you're up late, come to the fountain. The water holds the stars perfectly still.",
+          "nextNodeId": "c"
+        },
+        {
+          "id": "c",
+          "speaker": "{player}",
+          "text": "<i>Stars. Yeah. I've had about enough of those for one day.</i>",
+          "nextNodeId": ""
+        }
       ]
     },
     {
       "id": "ambient_juno",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "garden" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "garden"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Juno", "text": "Did you hear? Someone missed the entire orientation ceremony. The whole thing!", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Juno", "text": "Professor Kepler went looking for them at the forest gate. Apparently they turned up looking like they'd seen a ghost.", "nextNodeId": "c" },
-        { "id": "c", "speaker": "{player}", "text": "<i>...I am not telling them that was me.</i>", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Juno",
+          "text": "Did you hear? Someone missed the entire orientation ceremony. The whole thing!",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Juno",
+          "text": "Professor Kepler went looking for them at the forest gate. Apparently they turned up looking like they'd seen a ghost.",
+          "nextNodeId": "c"
+        },
+        {
+          "id": "c",
+          "speaker": "{player}",
+          "text": "<i>...I am not telling them that was me.</i>",
+          "nextNodeId": ""
+        }
       ]
     },
     {
       "id": "ambient_rowan",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "training" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "dormitory"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Rowan", "text": "The training dummies in here have been through a lot. Mostly because of me.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Rowan", "text": "Come back once you've learnt a spell or two. I could use someone to practise with who isn't made of straw.", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Rowan",
+          "text": "Welcome to the dorm! Mind the luggage. Half of it's mine, and I still haven't worked out which room it goes to.",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Rowan",
+          "text": "If you're after your key, the reception desk is right there. Ask nicely and they might even find it.",
+          "nextNodeId": ""
+        }
       ]
     },
     {
       "id": "ambient_moss",
       "startNodeId": "a",
-      "metadata": [ { "key": "ambient", "value": "forest" } ],
+      "metadata": [
+        {
+          "key": "ambient",
+          "value": "forest"
+        }
+      ],
       "nodes": [
-        { "id": "a", "speaker": "Moss", "text": "Shh. If you stand still long enough, you can hear the brook and the lanterns humming together.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Moss", "text": "I come out here to think. Campus is lovely, but it's loud.", "nextNodeId": "c" },
-        { "id": "c", "speaker": "{player}", "text": "<i>A forest with humming lanterns. Sure. Totally normal.</i>", "nextNodeId": "" }
+        {
+          "id": "a",
+          "speaker": "Moss",
+          "text": "Shh. If you stand still long enough, you can hear the brook and the lanterns humming together.",
+          "nextNodeId": "b"
+        },
+        {
+          "id": "b",
+          "speaker": "Moss",
+          "text": "I come out here to think. Campus is lovely, but it's loud.",
+          "nextNodeId": "c"
+        },
+        {
+          "id": "c",
+          "speaker": "{player}",
+          "text": "<i>A forest with humming lanterns. Sure. Totally normal.</i>",
+          "nextNodeId": ""
+        }
       ]
     }
   ],

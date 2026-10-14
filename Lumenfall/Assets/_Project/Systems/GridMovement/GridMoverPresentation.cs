@@ -33,6 +33,10 @@ namespace Lumenfall.GridMovement
         private bool hasGroundedParameter;
         private bool hasFallingParameter;
 
+        // Setting a parameter on an Animator that is inactive or has no controller (as during a script reload in Play Mode)
+        // only logs "Animator is not playing an AnimatorController".
+        private bool CanAnimate => animator != null && animator.isActiveAndEnabled && animator.runtimeAnimatorController != null;
+
         private void Reset()
         {
             facingRoot = transform;
@@ -73,7 +77,7 @@ namespace Lumenfall.GridMovement
             mover.Teleported -= HandleTeleported;
             targetAnimationSpeed = 0f;
 
-            if (animator != null && hasSpeedParameter)
+            if (CanAnimate && hasSpeedParameter)
             {
                 animator.SetFloat(speedParameterHash, 0f);
             }
@@ -89,7 +93,7 @@ namespace Lumenfall.GridMovement
                     rotationSpeed * Time.deltaTime);
             }
 
-            if (animator != null && hasSpeedParameter)
+            if (CanAnimate && hasSpeedParameter)
             {
                 animator.SetFloat(
                     speedParameterHash,

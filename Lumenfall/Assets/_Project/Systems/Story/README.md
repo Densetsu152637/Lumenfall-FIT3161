@@ -44,10 +44,21 @@ The shout has no portrait, because Kepler is far away when it plays. Once the pl
 | Vex | `vex` | `Student_04` | Library, `B04.Ground` `(2,11)` |
 | Luna | `luna` | `Student_01` | Campus, `(22,77)` |
 | Juno | `juno` | `Student_03` | Campus, `(43,42)` |
-| Rowan | `rowan` | `Student_02` | Training Centre, `B01.Ground` `(6,4)` |
 | Moss | `moss` | `Student_05` | West forest, `(25,32)` |
 
-Cells were set by hand on 2026-10-14. Marigold and Thistle (`Receptionist_01`, `_02`) and Odette (`Student_06`) are kept back for later. The older baked forest student (`forest_student`, at around `(16,39)` in the West Forest prefab) is now called Grace, in the catalog, the prefab, `npcs.json`, the journal and their three forest conversations. Moss stands beyond the forest's gate-scene trigger row, so the player meets Moss on a return visit. Each cast member has a journal entry.
+Cells were set by hand on 2026-10-14. Odette (`Student_06`) is kept back for later. The older baked forest student (`forest_student`, at around `(16,39)` in the West Forest prefab) is now called Grace, in the catalog, the prefab, `npcs.json`, the journal and their three forest conversations. Moss stands beyond the forest's gate-scene trigger row, so the player meets Moss on a return visit. Each cast member has a journal entry.
+
+### Dormitory
+
+The dormitory's people are placed in `Dormitory.prefab` (`B01.Ground`) rather than spawned. The editor tool `DormitoryInteriorBuilder` (Lumenfall > World > Build Dormitory Interior) builds the room and places each of them from their catalog record: the record's model, name, cell and dialogue, plus a one-cell blocker. To move one, change their cell in `NpcCatalog.asset` and rebuild the interior.
+
+| Character | Catalog id | Prefab | Cell |
+| --- | --- | --- | --- |
+| Marigold | `marigold` | `Receptionist_01` | Reception, behind the counter, `(8,8)` |
+| Thistle | `thistle` | `Receptionist_02` | Reception, behind the counter, `(12,8)` |
+| Rowan | `rowan` | `Student_02` | Lobby, in front of the counter, `(12,6)` |
+
+Marigold and Thistle staff the reception, ready for the story's key scene. Their lines (`Resources/GameEvents/dormitory.json`) are placeholders marked as such, until that scene is written. Rowan's lines (`ambient_cast.json`) were moved from the old Training Centre to the dormitory lobby, which `B01.Ground` now is.
 
 ## Story-only characters
 
