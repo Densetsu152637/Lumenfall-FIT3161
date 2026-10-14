@@ -212,7 +212,7 @@ namespace Lumenfall.Spells
             float reach = (radius + 0.5f) * world.CellSize;
             GameObject pulse = new GameObject("Lost Echoes Pulse");
             pulse.transform.SetParent(transform, false);
-            pulse.transform.SetPositionAndRotation(caster.transform.position + Vector3.up * 0.06f, world.transform.rotation);
+            pulse.transform.SetPositionAndRotation(OnFloor(caster.transform.position, caster.transform), world.transform.rotation);
             pulse.transform.Rotate(90f, 0f, 0f, Space.Self);
             LineRenderer line = pulse.AddComponent<LineRenderer>();
             line.sharedMaterial = material;
@@ -240,6 +240,8 @@ namespace Lumenfall.Spells
             if (world == null) return;
             float ground = caster != null ? world.WorldToElevation(caster.transform.position) : revealed.elevation;
             Vector3 spot = world.CellToWorld(revealed.cell, ground);
+            // The glow lies flat just above the spot, so it sits on the floor that is drawn there rather than the grid.
+            spot.y = OnFloor(spot, caster != null ? caster.transform : null).y - FloorClearance;
             Color colour = KindColour(revealed);
             Gather(world, spot, colour);
             audioSource.PlayOneShot(gatherClip, 0.4f);
@@ -330,6 +332,27 @@ namespace Lumenfall.Spells
             instanceMaterial = new Material(material) { mainTexture = glowTexture, color = colour };
             quad.GetComponent<Renderer>().sharedMaterial = instanceMaterial;
             return quad;
+        }
+
+        // Flat effects sit this far above the floor, and never lower than MinimumLift above the grid height. Some interiors
+        // draw their floor above the grid (the Arcane Workshop's is 0.11 up), which hid a pulse laid at the grid height.
+        private const float FloorClearance = 0.06f;
+        private const float MinimumLift = 0.15f;
+
+        /// <summary>
+        /// Where a flat effect at <paramref name="at"/> should lie: just above the highest floor collider under it, ignoring
+        /// <paramref name="ignore"/> (the player), and at least <see cref="MinimumLift"/> above the grid height.
+        /// </summary>
+        private static Vector3 OnFloor(Vector3 at, Transform ignore)
+        {
+            float height = at.y + MinimumLift;
+            Vector3 from = at + Vector3.up * 1f;
+            foreach (RaycastHit hit in Physics.RaycastAll(from, Vector3.down, 1.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (ignore != null && hit.transform.IsChildOf(ignore)) continue;
+                height = Mathf.Max(height, hit.point.y + FloorClearance);
+            }
+            return new Vector3(at.x, height, at.z);
         }
 
         private static void FaceCamera(Transform target)
