@@ -41,7 +41,7 @@
         {
           "id": "there_you_are",
           "speaker": "Prof. Kepler",
-          "text": "There you are! Do you have any idea what time it is?",
+          "text": "<wave>There</wave> you are！Do you have any idea what time it is?",
           "nextNodeId": "late"
         },
         {

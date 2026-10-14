@@ -554,6 +554,8 @@ namespace Lumenfall.Quests
         private const string RelicPrefix = "stella.string-together.relic.";
         private const string RelayPrefix = "stella.circuit.relay.";
         private const string MagicalItemId = "circuit.stella.link";
+        internal const string FirstLightReadyFlag = "stella.first_light.ready_to_report";
+        internal const string CircuitReadyFlag = "stella.string_them_together.ready_to_report";
 
         internal static bool IsActive(string questId, GameEventRuntime runtime) => runtime != null &&
             (questId == FirstLightQuestId || questId == CircuitQuestId) &&
@@ -572,6 +574,10 @@ namespace Lumenfall.Quests
         internal static string Instructions(string questId, out Vector2Int targetCell)
         {
             targetCell = default;
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (runtime != null && ((questId == FirstLightQuestId && runtime.GetFlag(FirstLightReadyFlag)) ||
+                                    (questId == CircuitQuestId && runtime.GetFlag(CircuitReadyFlag))))
+                return "Return to Stella.";
             string wheel = KeyBindings.GetKeyLabel(GameAction.SpellWheel);
             string cast = KeyBindings.GetKeyLabel(GameAction.Interact);
             if (questId == FirstLightQuestId)

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Lumenfall.DataDriven;
+using Lumenfall.GridMovement;
 using Lumenfall.Quests;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -97,7 +98,10 @@ namespace Lumenfall.EditorTools
             GameObject entranceB = SavePrefab("PF_IceTrial_EntranceCrystalB", root =>
                 AddModel(root, "iPoly3D/Crystal_ClusterB.glb", "Crystal", Vector3.zero, 0f, 0.28f));
             GameObject icePillar = SavePrefab("PF_IceTrial_Pillar", root =>
-                AddModel(root, "iPoly3D/Crystal_ColumnsA.glb", "Crystal", Vector3.zero, 0f, 1.15f));
+            {
+                AddModel(root, "iPoly3D/Crystal_ColumnsA.glb", "Crystal", Vector3.zero, 0f, 1.15f);
+                root.gameObject.AddComponent<GridObstacle>();
+            });
             GameObject spikeA = SavePrefab("PF_IceTrial_WallSpikeA", root => AddModel(root, "iPoly3D/Crystal_Shards.glb", "Crystal", Vector3.zero, 0f, 0.32f));
             GameObject spikeB = SavePrefab("PF_IceTrial_WallSpikeB", root => AddModel(root, "iPoly3D/Crystal_ColumnsB.glb", "Crystal", Vector3.zero, 0f, 0.26f));
             GameObject spikeC = SavePrefab("PF_IceTrial_WallSpikeC", root => AddModel(root, "iPoly3D/Crystal_Block.glb", "Crystal", Vector3.zero, 0f, 0.2f));
@@ -138,6 +142,7 @@ namespace Lumenfall.EditorTools
             art.frostMaterial = palette.frost;
             art.entranceCrystals = new[] { entranceA, entranceB };
             EditorUtility.SetDirty(art);
+            AssignObstaclePrefab(CinnaIceTrialRoom.PillarType, icePillar);
 
             VolumeProfile grade = SaveFrozenGrade();
             BuildDressing(palette, grade);
@@ -150,6 +155,15 @@ namespace Lumenfall.EditorTools
         {
             public Material floor, wall, water, ice, stone, frost, stoneFloor, stoneWall, basin, caveGround, caveRock, rug, crystal;
             public Material snowfall, flame, mist, glint;
+        }
+
+        private static void AssignObstaclePrefab(string type, GameObject prefab)
+        {
+            WorldAreaAsset area = AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaAssetPath);
+            if (area == null || area.definition == null) return;
+            foreach (MapObjectDefinition item in area.definition.objects ?? Array.Empty<MapObjectDefinition>())
+                if (item != null && string.Equals(item.type, type, StringComparison.OrdinalIgnoreCase)) item.prefab = prefab;
+            EditorUtility.SetDirty(area);
         }
 
         [InitializeOnLoadMethod]

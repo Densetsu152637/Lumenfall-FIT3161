@@ -420,17 +420,7 @@ namespace Lumenfall.Quests
             if (state == null || !string.Equals(state.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase)) return;
             // Above the spell feedback message, which sits at the bottom of the screen.
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(feedback)) HudSkin.Message(feedback, 82f);
-            if (!runtime.GetFlag(LessonFlag) && !runtime.GetFlag(LearnedFlag)) return;
-
-            string body;
-            if (!state.TryGetObject(RelicId, out WorldObjectSnapshot relic) || !relic.frozen)
-                body = $"1. Press {KeyBindings.GetKeyLabel(GameAction.Spell5)} to select Glaciate.\n" +
-                       "2. Stand beside the relic on its stand and right-click (or press " + KeyBindings.GetKeyLabel(GameAction.Interact) + ") to freeze the pool.";
-            else
-                body = DescribeStep(state) + "\nSlides stop on switches and snow patches, or in front of crystal pillars and the south wall. " +
-                       "The other edges drop into the chasm. Cast Glaciate on the relic again to thaw the pool.";
-            // Top-right, below the Settings button; the quest hint card has the top-left.
-            HudSkin.SidePanel("Ice Trial", body);
+            // Trial instructions are owned by QuestHintOverlay. Keep only short, transient action feedback here.
         }
 
         private void Build(MapDefinition map, WorldAreaAsset area, NpcDatabaseDefinition npcs)
@@ -470,7 +460,7 @@ namespace Lumenfall.Quests
                 else if (string.Equals(item.type, EntranceType, StringComparison.OrdinalIgnoreCase)) entranceCell = cell;
                 else if (HasTag(item, SwitchTag) || HasTag(item, FinalTag)) switches.Add(item);
                 else if (string.Equals(item.id, RelicId, StringComparison.Ordinal)) BuildRelic(item.id, cell, size);
-                else if (string.Equals(item.type, PillarType, StringComparison.OrdinalIgnoreCase)) BuildPillar(item.id, cell, size);
+                else if (string.Equals(item.type, PillarType, StringComparison.OrdinalIgnoreCase)) BuildPillar(item, cell, footprint, size);
                 else if (string.Equals(item.type, StopType, StringComparison.OrdinalIgnoreCase)) BuildStopTile(item.id, cell, size);
                 else if (string.Equals(item.type, DropType, StringComparison.OrdinalIgnoreCase))
                 {
@@ -693,21 +683,32 @@ namespace Lumenfall.Quests
         }
 
         // A crystal pillar standing in the pool. It blocks in both looks, so the route around it never changes.
-        private void BuildPillar(string id, Vector2Int cell, float size)
+        private void BuildPillar(MapObjectDefinition definition, Vector2Int cell, Vector2Int footprint, float size)
         {
-            pillarCells.Add(cell);
+            for (int x = 0; x < footprint.x; x++)
+                for (int y = 0; y < footprint.y; y++)
+                    pillarCells.Add(cell + new Vector2Int(x, y));
+
             Vector3 position = world.CellToWorld(cell);
-            if (art != null && art.icePillar != null)
+            GameObject prefab = definition.prefab != null ? definition.prefab : art == null ? null : art.icePillar;
+            GameObject pillar;
+            if (prefab != null)
             {
-                GameObject pillar = Instantiate(art.icePillar, geometry);
-                pillar.name = id;
-                pillar.transform.SetPositionAndRotation(position + Vector3.down * 0.1f, Quaternion.Euler(0f, (cell.x * 41 + cell.y * 23) % 360, 0f));
+                pillar = Instantiate(prefab, geometry);
+                pillar.name = definition.id;
+                float rotation = Mathf.Approximately(definition.rotation, 0f) ? (cell.x * 41 + cell.y * 23) % 360 : definition.rotation;
+                pillar.transform.SetPositionAndRotation(position + Vector3.up * (definition.elevation - 0.1f), Quaternion.Euler(0f, rotation, 0f));
             }
-            else Part(PrimitiveType.Cylinder, id, position + Vector3.up * 0.5f, new Vector3(0.6f * size, 0.5f, 0.6f * size), IceColor, true);
-            GameObject blocker = new GameObject(id + " obstacle");
-            blocker.transform.SetParent(geometry, false);
-            blocker.transform.position = position;
-            blocker.AddComponent<GridObstacle>().Configure(world, Vector2Int.one);
+            else
+            {
+                pillar = Part(PrimitiveType.Cylinder, definition.id, position + Vector3.up * 0.5f,
+                    new Vector3(0.6f * size, 0.5f, 0.6f * size), IceColor, true);
+            }
+
+            // Authored pillar prefabs carry this component. Keep the fallback for older/custom map prefabs.
+            GridObstacle obstacle = pillar.GetComponent<GridObstacle>();
+            if (obstacle == null) obstacle = pillar.AddComponent<GridObstacle>();
+            obstacle.Configure(world, footprint);
         }
 
         // A snow patch in the pool: plain ground, so slides stop on it, without toggling anything.

@@ -10,6 +10,7 @@ using Lumenfall.DataDriven;
 using Lumenfall.Startup;
 using Lumenfall.Controls;
 using Lumenfall.Cutscenes;
+using Lumenfall.Story;
 
 namespace Lumenfall.Quests
 {
@@ -24,6 +25,8 @@ namespace Lumenfall.Quests
             "stella_first_light", "stella_string_them_together", "cinna_out_of_alignment",
             "cinna_cold_feet_warm_idea", "orio_patch_notes", "katrina_something_borrowed"
         };
+        private const string LastQuestPersonFlagPrefix = "hint.last-quest-person.";
+        private static readonly string[] QuestPeople = { "stella", "cinna_cirra", "katrina", "orio" };
 
         private static QuestHintOverlay instance;
         private QuestPuzzleDatabase puzzleDatabase;
@@ -45,6 +48,7 @@ namespace Lumenfall.Quests
         private readonly List<GridPlayerInput> pausedInputs = new List<GridPlayerInput>();
         private readonly MenuSkin skin = new MenuSkin();
         private readonly OptionsPanel options = new OptionsPanel();
+        private GUIStyle questTitleStyle;
         private GUIStyle questTrackerStyle;
         private GUIStyle questHintStyle;
 
@@ -55,6 +59,16 @@ namespace Lumenfall.Quests
         {
             PlayerPrefs.SetInt(EnabledKey, enabled ? 1 : 0);
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Records which quest giver the player most recently chose to speak with.</summary>
+        public static void RecordQuestConversation(GameEventRuntime runtime, string npcId)
+        {
+            if (runtime == null) return;
+            string person = NpcIntroductions.PersonId(npcId);
+            if (Array.IndexOf(QuestPeople, person) < 0) return;
+            foreach (string candidate in QuestPeople)
+                runtime.SetFlag(LastQuestPersonFlagPrefix + candidate, string.Equals(candidate, person, StringComparison.Ordinal));
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -111,44 +125,15 @@ namespace Lumenfall.Quests
             WorldStateService world = WorldStateService.Instance;
             if (runtime == null || world == null) return;
 
-            QuestPuzzleDefinition activeSameMap = null, activeElsewhere = null;
-            QuestDefinition activeQuest = null;
-            QuestPuzzleDefinition availableSameMap = null, availableElsewhere = null;
-            QuestDefinition availableQuest = null;
-            foreach (string id in QuestOrder)
-            {
-                if (!runtime.Catalog.TryGetQuest(id, out QuestDefinition quest) || quest == null) continue;
-                QuestPuzzleDefinition puzzle = FindPuzzle(id, world.CurrentMapId, runtime);
-                QuestStatus status = runtime.GetQuestStatus(id);
-                if (status == QuestStatus.Active)
-                {
-                    if (activeQuest == null || IsOnMap(puzzle, world.CurrentMapId))
-                    {
-                        if (IsOnMap(puzzle, world.CurrentMapId)) { activeSameMap = puzzle; activeQuest = quest; }
-                        else if (activeQuest == null) { activeElsewhere = puzzle; activeQuest = quest; }
-                    }
-                    continue;
-                }
-                if (status != QuestStatus.NotStarted || !PrerequisitesMet(quest, runtime)) continue;
-                if (IsOnMap(puzzle, world.CurrentMapId))
-                {
-                    if (availableSameMap == null) { availableSameMap = puzzle; availableQuest = quest; }
-                }
-                else if (availableElsewhere == null) { availableElsewhere = puzzle; }
-            }
+            if (TryBuildOnboardingHint(runtime, world)) return;
 
-            QuestPuzzleDefinition selectedPuzzle;
-            if (activeSameMap != null) selectedPuzzle = activeSameMap;
-            else if (activeQuest != null) selectedPuzzle = activeElsewhere;
-            else if (availableSameMap != null) { selectedPuzzle = availableSameMap; activeQuest = availableQuest; }
-            else if (availableElsewhere != null)
+            QuestDefinition activeQuest = SelectActiveQuest(runtime);
+            if (activeQuest == null)
             {
-                selectedPuzzle = availableElsewhere;
-                activeQuest = FindQuestForPuzzle(selectedPuzzle, runtime);
+                BuildExploreHint(runtime);
+                return;
             }
-            else return;
-
-            if (activeQuest == null) return;
+            QuestPuzzleDefinition selectedPuzzle = FindPuzzle(activeQuest.id, world.CurrentMapId, runtime);
             title = activeQuest.title;
             if (string.Equals(activeQuest.id, KatrinaLostEchoesGuide.QuestId, StringComparison.Ordinal) &&
                 KatrinaLostEchoesGuide.IsActive(runtime))
@@ -176,15 +161,6 @@ namespace Lumenfall.Quests
                 }
                 return;
             }
-            if (runtime.GetQuestStatus(activeQuest.id) == QuestStatus.NotStarted)
-            {
-                hint = $"Talk to {CharacterFor(activeQuest.id)} to begin this quest.";
-                if (selectedPuzzle != null && !string.IsNullOrEmpty(selectedPuzzle.mapId) &&
-                    !string.Equals(selectedPuzzle.mapId, world.CurrentMapId, StringComparison.OrdinalIgnoreCase))
-                    hint += $"\nLocation: {MapName(selectedPuzzle.mapId)}.";
-                return;
-            }
-
             if (StellaQuestGuide.IsActive(activeQuest.id, runtime))
             {
                 tracker = StellaQuestGuide.Tracker(activeQuest.id, world);
@@ -209,7 +185,24 @@ namespace Lumenfall.Quests
             {
                 hint = IsOnMap(selectedPuzzle, world.CurrentMapId)
                     ? CinnaIceTrialRoom.DescribeStep(world)
-                    : $"Enter Cinna's ice trial through the portal on the campus path at ({CinnaIceTrialEntrance.EntranceCell.x}, {CinnaIceTrialEntrance.EntranceCell.y}).";
+                    : "Walk down out of the campus gate to the Freezing Pond area and enter Cinna's ice trial.";
+                return;
+            }
+
+            if (string.Equals(activeQuest.id, OrioRuneDiscPuzzle.QuestId, StringComparison.Ordinal))
+            {
+                if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                    hint = "Return to Orio.";
+                else if (string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Put all three discs of the Rune dais in the correct position.\n" +
+                        "1. Use Q to open the Spell Wheel and select Rotara.\n" +
+                        "2. Stand beside one of the four sockets around the Rune dais.\n" +
+                        "3. Right click or press F to cast Rotara at the socket.\n" +
+                        "4. Watch which discs the socket turns and find the sequence that aligns all three.";
+                else if (string.Equals(world.CurrentMapId, "westForest", StringComparison.OrdinalIgnoreCase))
+                    hint = "Find the Rune dais in the deep forest through the portal west of Orio.";
+                else
+                    hint = "Return to the west forest and find Orio. The Rune dais is in the deep forest through the portal west of him.";
                 return;
             }
 
@@ -235,6 +228,92 @@ namespace Lumenfall.Quests
                 return;
             }
             hint = $"The objective is complete. Return to {CharacterFor(activeQuest.id)}.";
+        }
+
+        private bool TryBuildOnboardingHint(GameEventRuntime runtime, WorldStateService world)
+        {
+            if (!runtime.GetFlag(LateToOrientationScene.MetFlag))
+            {
+                title = "Walk around this mysterious forest";
+                hint = "Press W, A, S, D to move";
+                return true;
+            }
+            if (!runtime.GetFlag(LayOfTheLandScene.MetFlag))
+            {
+                title = "Talk to the student calling you";
+                hint = "Move to the red hat student.\nPress E to interact";
+                return true;
+            }
+            if (!runtime.GetFlag(SettlingInScene.BannMetFlag))
+            {
+                title = "Speak to Professor Bann";
+                hint = "Professor Bann is next to the fountain.\nGreen is her favorite colour";
+                return true;
+            }
+            if (!runtime.GetFlag(SettlingInScene.NotReadyFlag))
+            {
+                if (!string.Equals(world.CurrentMapId, SettlingInScene.MapId, StringComparison.OrdinalIgnoreCase))
+                {
+                    title = "Go to Dormitory and check your room";
+                    hint = "Dormitory is below Kit.\nWalk to the entrance and press E to enter";
+                }
+                else
+                {
+                    title = "Talk with the Receptionist";
+                    hint = "She is ginger and wears glasses";
+                }
+                return true;
+            }
+            return false;
+        }
+
+        private static QuestDefinition SelectActiveQuest(GameEventRuntime runtime)
+        {
+            string selectedPerson = null;
+            foreach (string person in QuestPeople)
+                if (runtime.GetFlag(LastQuestPersonFlagPrefix + person)) { selectedPerson = person; break; }
+
+            if (selectedPerson != null)
+                foreach (string id in QuestOrder)
+                    if (runtime.GetQuestStatus(id) == QuestStatus.Active && QuestPerson(id) == selectedPerson &&
+                        runtime.Catalog.TryGetQuest(id, out QuestDefinition selected)) return selected;
+
+            foreach (string id in QuestOrder)
+                if (runtime.GetQuestStatus(id) == QuestStatus.Active && runtime.Catalog.TryGetQuest(id, out QuestDefinition fallback))
+                    return fallback;
+            return null;
+        }
+
+        private static string QuestPerson(string questId)
+        {
+            if (questId != null && questId.StartsWith("stella_", StringComparison.Ordinal)) return "stella";
+            if (questId != null && questId.StartsWith("cinna_", StringComparison.Ordinal)) return "cinna_cirra";
+            if (questId != null && questId.StartsWith("katrina_", StringComparison.Ordinal)) return "katrina";
+            if (questId != null && questId.StartsWith("orio_", StringComparison.Ordinal)) return "orio";
+            return null;
+        }
+
+        private void BuildExploreHint(GameEventRuntime runtime)
+        {
+            title = "Explore the campus and find your Dormmates";
+            List<string> people = new List<string>();
+            if (runtime.GetQuestStatus("stella_string_them_together") != QuestStatus.Completed)
+                people.Add("<b>Stella</b> is majoring Arcane Artifact Design.\n    Arcane Workshop is on top of the forest entrance.");
+            if (runtime.GetQuestStatus("cinna_cold_feet_warm_idea") != QuestStatus.Completed)
+                people.Add(runtime.GetQuestStatus("cinna_out_of_alignment") == QuestStatus.Completed
+                    ? "<b>Cinna Cirra</b> now waits near the Ice Trial area.\n    It is at the lower edge of campus."
+                    : "<b>Cinna Cirra</b> is responsible for orientation day.\n    He awaits near the fountain.");
+            if (runtime.GetQuestStatus("katrina_something_borrowed") != QuestStatus.Completed)
+                people.Add("<b>Katrina</b> is looking for something near the Library.\n    She is on the road beyond the fountain.");
+            if (runtime.GetQuestStatus("orio_patch_notes") != QuestStatus.Completed)
+                people.Add("<b>Orio</b> is studying a Rune dais in the forest.\n    Go back to the forest to find him.");
+            if (people.Count == 0)
+            {
+                title = "Talk with the Receptionist";
+                hint = "Return to the Dormitory reception.\n    Speak with the ginger receptionist who wears glasses.";
+                return;
+            }
+            hint = string.Join("\n\n", people);
         }
 
         private static QuestPuzzleTarget MergeCurrentMapTarget(QuestPuzzleTarget questTarget, WorldStateService world)
@@ -420,15 +499,17 @@ namespace Lumenfall.Quests
         private static string MapName(string mapId) => mapId == "B01.Ground" ? "Dormitory" :
             mapId == "B02.Ground" ? "Arcane Workshop" : mapId == "B03.Ground" ? "Main Academy Building" :
             mapId == "B04.Ground" ? "Library" :
-            mapId == CinnaIceTrialRoom.MapId ? "Cinna's ice trial (portal at campus 47, 45)" :
+            mapId == CinnaIceTrialRoom.MapId ? "Cinna's ice trial in the Freezing Pond area" :
             mapId == "campus" ? "campus" : mapId == "westForest" ? "west forest" : mapId;
 
         private void OnGUI()
         {
             if (StartupMenu.IsVisible || CutscenePlayer.IsPlaying) return;
             skin.Ensure();
+            if (questTitleStyle == null)
+                questTitleStyle = new GUIStyle(skin.Title) { alignment = TextAnchor.MiddleLeft, wordWrap = true };
             if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 13 };
-            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13 };
+            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13, richText = true };
             // The pop-out draws above dialogue and other overlays; IMGUI puts lower depths in front.
             GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))
@@ -436,10 +517,15 @@ namespace Lumenfall.Quests
                 float width = Mathf.Min(360f, Screen.width - 32f);
                 float innerWidth = width - 28f;
                 float indentedWidth = innerWidth - 16f;
+                string questTitle = title ?? "Quest";
+                float titleX = 16f + 18f + 24f + 10f;
+                float titleWidth = width - (titleX - 16f) - 18f;
+                float titleHeight = Mathf.Max(38f, questTitleStyle.CalcHeight(new GUIContent(questTitle), titleWidth));
+                float headerHeight = titleHeight + 4f;
                 float trackerHeight = string.IsNullOrEmpty(tracker) ? 0f : questTrackerStyle.CalcHeight(new GUIContent(tracker), indentedWidth);
-                float hintHeight = hintsCollapsed ? 0f : questHintStyle.CalcHeight(new GUIContent(hint), indentedWidth);
+                float hintHeight = hintsCollapsed ? 0f : HintHeight(hint, indentedWidth);
                 float trackerSpace = trackerHeight > 0f ? trackerHeight + 3f : 0f;
-                float cardHeight = 12f + 42f + trackerSpace + 20f + (hintsCollapsed ? 12f : hintHeight + 16f);
+                float cardHeight = 12f + headerHeight + trackerSpace + 20f + (hintsCollapsed ? 12f : hintHeight + 16f);
                 Rect card = new Rect(16f, 16f, width, cardHeight);
                 float now = Time.unscaledTime;
                 skin.Fade = 1f;
@@ -453,12 +539,9 @@ namespace Lumenfall.Quests
                         skin.Glow, MenuArt.Gold, 0.35f + 0.3f * pulse);
                     skin.Draw(star, skin.Sparkle, Color.Lerp(MenuArt.Gold, MenuArt.Cream, pulse * 0.45f), 1f);
                 }
-                // Size the title rectangle to its text so centring does not create a large invisible gap after the star.
-                string questTitle = title ?? "Quest";
-                float titleWidth = Mathf.Min(skin.Title.CalcSize(new GUIContent(questTitle)).x + 4f, card.width - 82f);
-                skin.DrawTitle(new Rect(star.xMax + 10f, card.y + 9f, titleWidth, 38f), questTitle, now);
+                skin.DrawTitle(new Rect(star.xMax + 10f, card.y + 9f, titleWidth, titleHeight), questTitle, now, questTitleStyle);
 
-                float contentY = card.y + 54f;
+                float contentY = card.y + 12f + headerHeight;
                 if (trackerHeight > 0f)
                 {
                     skin.Label(new Rect(card.x + 30f, contentY, indentedWidth, trackerHeight), tracker, questTrackerStyle, MenuArt.Cream);
@@ -473,7 +556,7 @@ namespace Lumenfall.Quests
                     hintsCollapsed = !hintsCollapsed;
                 contentY += 23f;
                 if (!hintsCollapsed)
-                    skin.Label(new Rect(card.x + 30f, contentY, indentedWidth, hintHeight), hint, questHintStyle, MenuArt.Cream);
+                    DrawHint(new Rect(card.x + 30f, contentY, indentedWidth, hintHeight));
             }
 
             // The journal draws its own copy of these options, so the button steps aside while it is open.
@@ -485,6 +568,66 @@ namespace Lumenfall.Quests
             if (SettingsButton(new Rect(Screen.width - 156f, 16f, 140f, 36f))) SetSettingsOpen(!settingsOpen);
             if (settingsOpen) skin.DrawSparks(1f);
             GUI.color = previousColor;
+        }
+
+        private float HintHeight(string text, float width)
+        {
+            if (!HasNumberedLines(text)) return questHintStyle.CalcHeight(new GUIContent(text), width);
+            float height = 0f;
+            foreach (string line in (text ?? string.Empty).Split('\n'))
+            {
+                if (TryNumberedLine(line, out _, out string body))
+                    height += questHintStyle.CalcHeight(new GUIContent(body), width - 24f) + 2f;
+                else
+                    height += questHintStyle.CalcHeight(new GUIContent(line), width) + 2f;
+            }
+            return Mathf.Max(0f, height - 2f);
+        }
+
+        private void DrawHint(Rect rect)
+        {
+            if (!HasNumberedLines(hint))
+            {
+                skin.Label(rect, hint, questHintStyle, MenuArt.Cream);
+                return;
+            }
+
+            float y = rect.y;
+            foreach (string line in (hint ?? string.Empty).Split('\n'))
+            {
+                if (TryNumberedLine(line, out string number, out string body))
+                {
+                    float lineHeight = questHintStyle.CalcHeight(new GUIContent(body), rect.width - 24f);
+                    skin.Label(new Rect(rect.x, y, 22f, lineHeight), "<b>" + number + "</b>", questHintStyle, MenuArt.Gold);
+                    skin.Label(new Rect(rect.x + 24f, y, rect.width - 24f, lineHeight), body, questHintStyle, MenuArt.Cream);
+                    y += lineHeight + 2f;
+                }
+                else
+                {
+                    float lineHeight = questHintStyle.CalcHeight(new GUIContent(line), rect.width);
+                    skin.Label(new Rect(rect.x, y, rect.width, lineHeight), line, questHintStyle, MenuArt.Cream);
+                    y += lineHeight + 2f;
+                }
+            }
+        }
+
+        private static bool HasNumberedLines(string text)
+        {
+            foreach (string line in (text ?? string.Empty).Split('\n'))
+                if (TryNumberedLine(line, out _, out _)) return true;
+            return false;
+        }
+
+        private static bool TryNumberedLine(string line, out string number, out string body)
+        {
+            number = null;
+            body = null;
+            if (string.IsNullOrEmpty(line)) return false;
+            int marker = line.IndexOf(". ", StringComparison.Ordinal);
+            if (marker <= 0 || marker > 2 || !int.TryParse(line.Substring(0, marker), out _)) return false;
+            number = line.Substring(0, marker + 1);
+            body = line.Substring(marker + 2);
+            return true;
         }
 
         private void UpdateSettings()

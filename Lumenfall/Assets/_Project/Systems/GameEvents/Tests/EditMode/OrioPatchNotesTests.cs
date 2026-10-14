@@ -93,7 +93,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void IntendedSocketPressesAlignDiscsAndCompletionEventCompletes()
+        public void IntendedSocketPressesAlignDiscsAndReportingToOrioCompletes()
         {
             Teach();
             string[] presses = { North, North, North, Centre, Centre, West, West, East };
@@ -104,7 +104,11 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(caster.Cast(SpellId.Rotara, socket, Vector2Int.up), Is.True);
             }
             Assert.That(DiscRotations(), Is.EqualTo(new[] { 0f, 0f, 0f }));
-            Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.True);
+            Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active), "Solving the Rune dais is not the hand-in.");
+            Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.False, "The completion event requires Orio's report dialogue.");
+            DialogueSession report = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(report.AvailableChoices.Any(choice => choice.id == "report"), Is.True);
+            Assert.That(report.SelectChoice("report"), Is.True);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
             Assert.That(runtime.TriggerEvent(Event).Status, Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
         }
@@ -163,7 +167,8 @@ namespace Lumenfall.Tests.GameEvents
             RegisterDais(DaisMap); SetDiscs(0f, 0f, 0f);
             EnterForest();
             Assert.That(state.CurrentMapId, Is.EqualTo("westForest"));
-            runtime.TriggerEvent(Event);
+            DialogueSession report = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
         }
 
@@ -176,7 +181,9 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(OrioRuneDiscPuzzle.IsQuestReady(state, runtime), Is.False);
             foreach (int unused in new[] { 1, 2, 3 }) caster.Cast(SpellId.Rotara, Centre, Vector2Int.up);
             Assert.That(DiscRotations(), Is.EqualTo(new[] { 0f, 0f, 0f }));
-            Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.True);
+            Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active));
+            DialogueSession report = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
             Assert.That(runtime.TriggerEvent(Event).Status, Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
         }
@@ -198,7 +205,9 @@ namespace Lumenfall.Tests.GameEvents
             OrioRuneDiscPuzzle.RegisterQuestConditions(replacement);
             Assert.That(replacement.TriggerEvent(Event).Succeeded, Is.False);
             replacement.StartQuest(Quest); replacement.SetFlag("spell.unlocked.Rotara", true);
-            Assert.That(replacement.TriggerEvent(Event).Succeeded, Is.True);
+            DialogueSession report = replacement.StartDialogue(Quest + "_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
+            Assert.That(replacement.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
             state.ResetAllState(); RegisterDais(DaisMap);
             Assert.That(runtime.TriggerEvent(Event).Succeeded, Is.False);
         }

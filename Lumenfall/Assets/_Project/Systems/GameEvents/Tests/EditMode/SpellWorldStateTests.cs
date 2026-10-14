@@ -112,6 +112,8 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(firstLight.SelectChoice("accept"), Is.True);
                 while (!firstLight.IsCompleted) Assert.That(firstLight.Continue(), Is.True);
                 Assert.That(runtime.TriggerEvent("complete_stella_first_light").Succeeded, Is.True);
+                firstLight = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(firstLight.SelectChoice("report"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
 
@@ -134,6 +136,9 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(state.AddConnection(network[network.Count - 2], network[network.Count - 1]), Is.True);
                 RunPuzzleMonitor(monitor);
                 Assert.That(state.TryGetObject("circuit.stella.link", out WorldObjectSnapshot item) && item.powered, Is.True);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+                circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
+                Assert.That(circuitQuest.SelectChoice("report"), Is.True);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             }
             finally

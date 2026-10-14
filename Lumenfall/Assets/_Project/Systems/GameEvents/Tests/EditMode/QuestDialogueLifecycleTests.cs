@@ -68,8 +68,23 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(ChoiceIds(active), Does.Contain("active"), questId);
                 Assert.That(ChoiceIds(active), Does.Not.Contain("accept"), questId);
 
-                if (questId == "orio_patch_notes") runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
-                Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
+                if (questId == "orio_patch_notes")
+                {
+                    runtime.SetFlag("orio.patch_notes.mechanism_aligned", true);
+                    DialogueSession report = runtime.StartDialogue(questId + "_dialogue");
+                    Assert.That(ChoiceIds(report), Does.Contain("report"), questId);
+                    Assert.That(report.SelectChoice("report"), Is.True, questId);
+                }
+                else
+                {
+                    Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
+                    if (questId == "stella_first_light" || questId == "stella_string_them_together")
+                    {
+                        DialogueSession report = runtime.StartDialogue(questId + "_dialogue");
+                        Assert.That(ChoiceIds(report), Does.Contain("report"), questId);
+                        Assert.That(report.SelectChoice("report"), Is.True, questId);
+                    }
+                }
                 DialogueSession completed = runtime.StartDialogue(questId + "_dialogue");
                 Assert.That(ChoiceIds(completed), Does.Contain("done"), questId);
                 Assert.That(ChoiceIds(completed), Does.Not.Contain("accept"), questId);
@@ -170,7 +185,9 @@ namespace Lumenfall.Tests.GameEvents
 
                 session = stella.Interact();
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
-                Assert.That(ChoiceIds(session), Does.Contain("done"));
+                Assert.That(ChoiceIds(session), Does.Contain("report"));
+                Assert.That(session.SelectChoice("report"), Is.True);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             }
             finally
             {
@@ -318,6 +335,12 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession dialogue = runtime.StartDialogue(questId + "_dialogue");
             Assert.That(dialogue.SelectChoice("accept"), Is.True, questId);
             Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
+            if (questId == "stella_first_light")
+            {
+                dialogue.End();
+                dialogue = runtime.StartDialogue(questId + "_dialogue");
+                Assert.That(dialogue.SelectChoice("report"), Is.True, questId);
+            }
         }
 
         private static List<string> ChoiceIds(DialogueSession session)

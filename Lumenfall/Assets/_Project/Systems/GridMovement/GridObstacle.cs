@@ -57,7 +57,8 @@ namespace Lumenfall.GridMovement
             ResolveWorld();
             if (world == null)
             {
-                Debug.LogError($"{name} needs a GridWorld to block cells.", this);
+                // Prefab assets may carry an obstacle before they are placed beneath a live GridWorld.
+                if (Application.isPlaying) Debug.LogError($"{name} needs a GridWorld to block cells.", this);
                 return;
             }
 

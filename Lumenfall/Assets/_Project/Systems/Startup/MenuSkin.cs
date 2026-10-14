@@ -248,11 +248,17 @@ namespace Lumenfall.Startup
         /// <summary>Gold heading with a soft pulsing lavender glow behind it.</summary>
         public void DrawTitle(Rect rect, string text, float now)
         {
+            DrawTitle(rect, text, now, Title);
+        }
+
+        /// <summary>Gold heading using a caller-provided layout style, such as a wrapped left-aligned card title.</summary>
+        public void DrawTitle(Rect rect, string text, float now, GUIStyle style)
+        {
             float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.6f);
             if (Event.current.type == EventType.Repaint)
                 Draw(Expand(rect, -rect.width * 0.3f, 2f), Glow, MenuArt.Lavender, 0.2f + 0.12f * pulse);
-            Label(new Rect(rect.x, rect.y + 2f, rect.width, rect.height), text, Title, MenuArt.Ink, 0.6f);
-            Label(rect, text, Title, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.15f * pulse));
+            Label(new Rect(rect.x, rect.y + 2f, rect.width, rect.height), text, style, MenuArt.Ink, 0.6f);
+            Label(rect, text, style, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.15f * pulse));
         }
 
         /// <summary>A soft gold rule with a gently rocking star in the middle.</summary>

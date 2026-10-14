@@ -31,7 +31,18 @@ namespace Lumenfall.Inventory
     {
         private const string CharacterFlagPrefix = "character.discovered.";
         private const string ItemFlagPrefix = "inventory.keyitem.";
-        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake" };
+        private static readonly string[] KeyItemIds =
+        {
+            "dormitory-key", "katrina-library-anchor", "katrina-garden-anchor", "katrina-stream-anchor"
+        };
+        private static readonly Dictionary<string, KeyItemEntry> KeyItemEntries =
+            new Dictionary<string, KeyItemEntry>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "dormitory-key", new KeyItemEntry("Dormitory Key", "Your key to the dormitory room assigned at reception.", null) },
+                { "katrina-library-anchor", new KeyItemEntry("Brass Bookmark", "Katrina's brass bookmark, its edge covered in tiny corrections.", "KeyItemIcons/KatrinaBrassBookmark") },
+                { "katrina-garden-anchor", new KeyItemEntry("Silver Constellation Ribbon", "A silver ribbon embroidered with three slightly crooked constellations.", "KeyItemIcons/KatrinaSilverRibbon") },
+                { "katrina-stream-anchor", new KeyItemEntry("Riverglass Chime", "Katrina's riverglass chime, still humming softly in time with running water.", "KeyItemIcons/KatrinaRiverglassChime") }
+            };
         private static readonly Dictionary<string, CharacterEntry> CharacterEntries =
             new Dictionary<string, CharacterEntry>(StringComparer.OrdinalIgnoreCase)
             {
@@ -92,7 +103,7 @@ namespace Lumenfall.Inventory
         private float sealedAt = float.NegativeInfinity;
         private GUIStyle wrappedSaveStatusStyle;
 
-        private enum FooterAction { None, MainMenu, Save, Quit }
+        private enum FooterAction { None, MainMenu, QuickSave, Save, Quit }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -262,11 +273,16 @@ namespace Lumenfall.Inventory
                 Close();
                 StartupMenu.ReturnToMainMenu();
             }
-            else if (action == FooterAction.Save) SaveNow();
+            else if (action == FooterAction.QuickSave) QuickSave();
+            else if (action == FooterAction.Save)
+            {
+                Close();
+                StartupMenu.OpenSaveSlotPicker();
+            }
             else if (action == FooterAction.Quit) QuitGame();
         }
 
-        /// <summary>Main menu, Save to the game's slot (with the hourglass) and Quit game, then the inked save status.</summary>
+        /// <summary>Main menu, quick save, manual slot selection and Quit game, then the inked save status.</summary>
         private FooterAction DrawFooter(Rect panel)
         {
             const float Height = 36f;
@@ -274,20 +290,29 @@ namespace Lumenfall.Inventory
             float y = panel.yMax - 58f;
             float x = panel.x + 36f;
             FooterAction action = FooterAction.None;
-            if (skin.Button(new Rect(x, y, 140f, Height), "Main menu")) action = FooterAction.MainMenu;
-            x += 140f + Gap;
-            if (SaveButton(new Rect(x, y, 160f, Height))) action = FooterAction.Save;
-            x += 160f + Gap;
-            if (skin.Button(new Rect(x, y, 130f, Height), "Quit game")) action = FooterAction.Quit;
-            x += 130f + Gap;
+            if (skin.Button(new Rect(x, y, 126f, Height), "Main menu")) action = FooterAction.MainMenu;
+            x += 126f + Gap;
+            string quickSaveSlot = ManualSaveSlot.Linked;
+            if (quickSaveSlot != null && GameSaveManager.Instance.HasSave(quickSaveSlot))
+            {
+                // Wide enough for the hourglass, "Quick Save · Slot 3", and trailing text breathing room.
+                if (QuickSaveButton(new Rect(x, y, 230f, Height))) action = FooterAction.QuickSave;
+                x += 230f + Gap;
+            }
+            if (skin.Button(new Rect(x, y, 104f, Height), "Save")) action = FooterAction.Save;
+            x += 104f + Gap;
+            if (skin.Button(new Rect(x, y, 108f, Height), "Quit game")) action = FooterAction.Quit;
+            x += 108f + Gap;
             DrawSaveStatus(new Rect(x + 8f, y - 2f, panel.xMax - 36f - x - 8f, Height + 4f));
             return action;
         }
 
-        private bool SaveButton(Rect rect)
+        private bool QuickSaveButton(Rect rect)
         {
             string slot = ManualSaveSlot.Linked;
-            bool clicked = skin.Button(rect, slot != null ? "Save · " + ManualSaveSlot.Label(slot) : "Save");
+            // Leave room inside the label for the hourglass at the left, plus one character of breathing room at the end.
+            string label = "   Quick Save · " + ManualSaveSlot.Label(slot) + " ";
+            bool clicked = skin.Button(rect, label);
             float lift = rect.Contains(Event.current.mousePosition) ? 2f : 0f;
             skin.DrawHourglass(new Rect(rect.x + 10f, rect.center.y - 9f - lift, 12f, 18f));
             return clicked;
@@ -362,7 +387,7 @@ namespace Lumenfall.Inventory
             if (Time.unscaledTime - saveStatusAt < 1f && saveStatus != null) return saveStatus;
             saveStatusAt = Time.unscaledTime;
             string slot = ManualSaveSlot.Linked;
-            if (slot == null) return saveStatus = ManualSaveSlot.FirstEmpty() != null ? "Save picks an empty slot" : "No save slot yet";
+            if (slot == null) return saveStatus = "Choose a slot with Save";
             string label = ManualSaveSlot.Label(slot);
             if (!GameSaveManager.Instance.TryGetSavedAt(slot, out DateTime savedAt)) return saveStatus = label + " not saved yet";
             TimeSpan age = DateTime.Now - savedAt;
@@ -375,21 +400,15 @@ namespace Lumenfall.Inventory
         }
 
         /// <summary>
-        /// Saves to the game's manual slot (the autosave is refreshed too). A game with no slot yet, such as one carried
-        /// over from before slots were linked, takes the first empty slot; if all are full it asks the player to load one.
+        /// Quick-saves to the manual slot the run was loaded from, or the slot most recently chosen in the Save dialog.
         /// </summary>
-        private void SaveNow()
+        private void QuickSave()
         {
             saveStatusAt = float.NegativeInfinity;
             if (ManualSaveSlot.Linked == null)
             {
-                string empty = ManualSaveSlot.FirstEmpty();
-                if (empty == null)
-                {
-                    saveFeedback = "Every slot is full. Load one from the main menu to save over it.";
-                    return;
-                }
-                ManualSaveSlot.Link(empty);
+                saveFeedback = "Choose a slot with Save before using Quick Save.";
+                return;
             }
             bool saved = ManualSaveSlot.SaveToLinked(out string error);
             saveFeedback = saved ? null : error ?? "Could not save. Please try again.";
@@ -458,34 +477,44 @@ namespace Lumenfall.Inventory
             {
                 if (!IsKeyItemOwned(id)) continue;
                 shown = true;
-                GUILayout.BeginVertical(skin.Entry);
-                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id, skin.EntryTitle);
-                GUILayout.EndVertical();
+                KeyItemEntry entry = KeyItemEntries.TryGetValue(id, out KeyItemEntry configured)
+                    ? configured : new KeyItemEntry(id, string.Empty, null);
+                DrawInventoryEntry(entry.Name, entry.Description, entry.IconResourcePath);
             }
             if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);
 
             GUILayout.Space(14f);
             Heading("Unlocked spells");
-            SpellCaster caster = FindAnyObjectByType<SpellCaster>();
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool spellsShown = false;
             foreach (SpellId spell in (SpellId[])Enum.GetValues(typeof(SpellId)))
             {
-                if (caster == null || !caster.IsSpellLearned(spell)) continue;
+                // The journal records permanent progression, not the current caster's optional designer allow-list.
+                // This also keeps unlocked spells visible while changing maps before a player SpellCaster is rebuilt.
+                if (runtime == null || !runtime.GetFlag("spell.unlocked." + spell)) continue;
                 spellsShown = true;
-                GUILayout.BeginHorizontal(skin.Entry);
-                Texture2D icon = Resources.Load<Texture2D>(SpellCaster.GetIconResourcePath(spell));
-                if (icon != null)
-                {
-                    GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));
-                    GUILayout.Space(12f);
-                }
-                GUILayout.BeginVertical();
-                GUILayout.Label(spell.ToString(), skin.EntryTitle);
-                GUILayout.Label(SpellDescriptions[spell], skin.Muted);
-                GUILayout.EndVertical();
-                GUILayout.EndHorizontal();
+                string description = SpellDescriptions.TryGetValue(spell, out string authoredDescription)
+                    ? authoredDescription : "A learned spell.";
+                DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIconResourcePath(spell));
             }
             if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
+        }
+
+        /// <summary>Shared journal row used by key items and spells: icon left, gold title and description right.</summary>
+        private void DrawInventoryEntry(string entryName, string description, string iconResourcePath)
+        {
+            GUILayout.BeginHorizontal(skin.Entry);
+            Texture2D icon = string.IsNullOrWhiteSpace(iconResourcePath) ? null : Resources.Load<Texture2D>(iconResourcePath);
+            if (icon != null)
+            {
+                GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));
+                GUILayout.Space(12f);
+            }
+            GUILayout.BeginVertical();
+            GUILayout.Label(entryName, skin.EntryTitle);
+            if (!string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
         }
 
         private void DrawEncyclopedia()
@@ -553,6 +582,20 @@ namespace Lumenfall.Inventory
             public CharacterEntry(string name, string description) { Name = name; Description = description; }
             public string Name { get; }
             public string Description { get; }
+        }
+
+        private readonly struct KeyItemEntry
+        {
+            public readonly string Name;
+            public readonly string Description;
+            public readonly string IconResourcePath;
+
+            public KeyItemEntry(string name, string description, string iconResourcePath)
+            {
+                Name = name;
+                Description = description;
+                IconResourcePath = iconResourcePath;
+            }
         }
     }
 }

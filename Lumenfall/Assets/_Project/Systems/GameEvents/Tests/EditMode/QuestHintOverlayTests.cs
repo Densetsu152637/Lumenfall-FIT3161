@@ -8,6 +8,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
+using Lumenfall.Story;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -33,6 +34,7 @@ namespace Lumenfall.Tests.GameEvents
             originalHintPreference = PlayerPrefs.GetInt("lumenfall.quest-hints-enabled", 1);
             runtime = GameEventManager.Instance.Runtime;
             runtime.ResetState();
+            CompleteOnboarding();
             world = WorldStateService.Instance;
             if (world == null)
             {
@@ -127,17 +129,21 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active), "The legacy placeholder cannot complete First Light.");
             for (int i = 0; i < BoardCells.Length; i++) world.SetProperty("stella.string-together.relic." + (i + 1), s => s.powered = true);
             RunMonitor(monitor);
-            Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
+            Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Is.EqualTo("Return to Stella."));
             Assert.That(placeholder, Is.Not.Null);
         }
 
         [Test]
-        public void ActiveQuestOutranksLocalAvailableQuestAndCompletedPrerequisiteUnlocksNextQuest()
+        public void OnlyAcceptedQuestsReplaceTheExploreHint()
         {
             BeginMap("B02.Ground");
             RefreshHint();
-            Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("Talk to Stella"));
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Stella").And.Contain("Cinna Cirra").And.Contain("Katrina")
+                .And.Contain("Orio").And.Contain("Rune dais"));
 
             runtime.StartQuest("orio_patch_notes");
             RefreshHint();
@@ -151,13 +157,123 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(ReadField<string>("title"), Is.EqualTo("Out of Alignment"));
 
             runtime.ResetState();
+            CompleteOnboarding();
             BeginMap("B02.Ground");
             stateEnd();
             runtime.StartQuest("stella_first_light");
             runtime.CompleteQuest("stella_first_light");
             RefreshHint();
-            Assert.That(ReadField<string>("title"), Is.EqualTo("String Them Together"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("Talk to Stella"));
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Stella"), "The next Stella quest has not been accepted yet.");
+        }
+
+        [Test]
+        public void OnboardingHintsFollowStoryProgressAndCurrentMap()
+        {
+            runtime.ResetState();
+            BeginMap(LateToOrientationScene.MapId);
+            stateEnd();
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Walk around this mysterious forest"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D"));
+
+            runtime.SetFlag(LateToOrientationScene.MetFlag, true);
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Talk to the student calling you"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("red hat").And.Contain("Press E"));
+
+            runtime.SetFlag(LayOfTheLandScene.MetFlag, true);
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Speak to Professor Bann"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("fountain").And.Contain("Green"));
+
+            runtime.SetFlag(SettlingInScene.BannMetFlag, true);
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Go to Dormitory and check your room"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Dormitory is below Kit"));
+
+            BeginMap(SettlingInScene.MapId);
+            stateEnd();
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Talk with the Receptionist"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("ginger").And.Contain("glasses"));
+
+            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+        }
+
+        [Test]
+        public void MostRecentlySpokenQuestGiverControlsHintAndCompletedPeopleLeaveExploreList()
+        {
+            BeginMap("campus");
+            stateEnd();
+            runtime.StartQuest("stella_first_light");
+            runtime.StartQuest("orio_patch_notes");
+
+            QuestHintOverlay.RecordQuestConversation(runtime, "stella");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"));
+
+            QuestHintOverlay.RecordQuestConversation(runtime, "orio");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Patch Notes"));
+
+            runtime.CompleteQuest("orio_patch_notes");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"), "Another accepted quest should take over.");
+
+            runtime.CompleteQuest("stella_first_light");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+            Assert.That(ReadField<string>("hint"), Does.Not.Contain("Orio").And.Contain("Stella"),
+                "Orio's completed quest removes his line, while Stella still has a second quest available.");
+        }
+
+        [Test]
+        public void OutOfAlignmentExplainsVisThenReturnsToCinnaAndMovesHisExploreLocation()
+        {
+            BeginMap("campus");
+            stateEnd();
+            runtime.StartQuest("cinna_out_of_alignment");
+            QuestHintOverlay.RecordQuestConversation(runtime, "cinna_cirra_orientation");
+
+            RefreshHint();
+            string instructions = ReadField<string>("hint");
+            Assert.That(instructions, Does.StartWith("Lift the relic beside Cinna Cirra"));
+            Assert.That(instructions, Does.Contain("\n1. Use Q").And.Contain("2. Select Vis")
+                .And.Contain("3. Right click or press F").And.Contain("4. Hold it").And.Contain("5. Face the stand"));
+            Assert.That(instructions, Does.Contain("lower part of the campus"));
+
+            runtime.SetFlag(SpellCaster.VisDeliveredFlagPrefix + CinnaAlignmentRelic.RelicId, true);
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Is.EqualTo("Go back to Cinna Cirra."));
+
+            runtime.CompleteQuest("cinna_out_of_alignment");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Cinna Cirra</b> now waits near the Ice Trial area")
+                .And.Contain("lower edge of campus"));
+        }
+
+        [Test]
+        public void SolvedRuneDaisTellsPlayerToReturnToOrio()
+        {
+            runtime.StartQuest(OrioRuneDiscPuzzle.QuestId);
+            runtime.SetFlag("spell.unlocked.Rotara", true);
+            QuestHintOverlay.RecordQuestConversation(runtime, "orio");
+            BeginMap(OrioRuneDiscPuzzle.PuzzleMapId);
+            foreach (string disc in OrioRuneDiscPuzzle.DiscIds)
+            {
+                RegisterTagged(disc, Vector2Int.zero, OrioRuneDiscPuzzle.DiscTag);
+                world.SetProperty(disc, item => item.rotation = OrioRuneDiscPuzzle.TargetRotation);
+            }
+            RegisterTagged(OrioRuneDiscPuzzle.AnchorId, Vector2Int.one, "rotara");
+            stateEnd();
+
+            RefreshHint();
+            Assert.That(runtime.GetQuestStatus(OrioRuneDiscPuzzle.QuestId), Is.EqualTo(QuestStatus.Active));
+            Assert.That(ReadField<string>("hint"), Is.EqualTo("Return to Orio."));
         }
 
         [Test]
@@ -220,7 +336,7 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             runtime.StartQuest("cinna_cold_feet_warm_idea");
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("portal on the campus path at (47, 45)"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Freezing Pond area").And.Not.Contain("47, 45"));
 
             BeginMap(CinnaIceTrialRoom.MapId);
             RegisterTagged(CinnaIceTrialRoom.RelicId, new Vector2Int(3, 1), "glaciate", "anchored");
@@ -317,6 +433,14 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         private void stateEnd() => world.EndMapRebuild();
+
+        private void CompleteOnboarding()
+        {
+            runtime.SetFlag(LateToOrientationScene.MetFlag, true);
+            runtime.SetFlag(LayOfTheLandScene.MetFlag, true);
+            runtime.SetFlag(SettlingInScene.BannMetFlag, true);
+            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
+        }
 
         private void RegisterFirstLightBoard()
         {

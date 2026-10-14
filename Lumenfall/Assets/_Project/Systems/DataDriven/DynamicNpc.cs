@@ -90,7 +90,14 @@ namespace Lumenfall.DataDriven
             HudSkin.PromptAbove(transform.position + Vector3.up * 1.8f, KeyBindings.GetKeyLabel(GameAction.Talk), "Talk");
         }
         public DialogueSession Interact()
-        { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return NpcIntroductions.StartConversation(Id, DialogueId, HasQuestBusiness()); }
+        {
+            if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null;
+            DialogueId = SelectDialogue();
+            if (string.IsNullOrWhiteSpace(DialogueId)) return null;
+            InventoryEncyclopediaUI.DiscoverCharacter(Id);
+            QuestHintOverlay.RecordQuestConversation(GameEventManager.Instance.Runtime, Id);
+            return NpcIntroductions.StartConversation(Id, DialogueId, HasQuestBusiness());
+        }
         private string SelectDialogue()
         {
             if (definition == null) return DialogueId;

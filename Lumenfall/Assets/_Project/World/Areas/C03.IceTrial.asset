@@ -285,7 +285,7 @@ MonoBehaviour:
       - ice-switch
       compatibleWithSpells: 0
     - id: pillar.cinna.ice.01
-      prefab: {fileID: 0}
+      prefab: {fileID: 125296859855757372, guid: db2eb4b31e922b54296d6ef9aa3ebd5b, type: 3}
       type: ice-pillar
       x: 2
       y: 7
@@ -297,7 +297,7 @@ MonoBehaviour:
       tags: []
       compatibleWithSpells: 0
     - id: pillar.cinna.ice.02
-      prefab: {fileID: 0}
+      prefab: {fileID: 125296859855757372, guid: db2eb4b31e922b54296d6ef9aa3ebd5b, type: 3}
       type: ice-pillar
       x: 9
       y: 12
@@ -309,7 +309,7 @@ MonoBehaviour:
       tags: []
       compatibleWithSpells: 0
     - id: pillar.cinna.ice.03
-      prefab: {fileID: 0}
+      prefab: {fileID: 125296859855757372, guid: db2eb4b31e922b54296d6ef9aa3ebd5b, type: 3}
       type: ice-pillar
       x: 10
       y: 7

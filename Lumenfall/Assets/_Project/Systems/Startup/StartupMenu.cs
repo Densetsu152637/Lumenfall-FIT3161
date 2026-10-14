@@ -70,9 +70,11 @@ namespace Lumenfall.Startup
 
         private static bool introPlayed;
         private static StartupMenu current;
+        private static bool openNextAsSavePicker;
 
         private Page page;
         private bool ready;
+        private bool savePickerMode;
         // New Game asks for a second START before replacing a filled slot (or the autosave); this holds the slot asked about.
         private string confirmSlot;
         // The manual slot the backdrop game belongs to, read when a slot page opens, for the Current tag.
@@ -151,6 +153,7 @@ namespace Lumenfall.Startup
             // Keeps the opening title sequence working when domain reload is disabled in the editor.
             introPlayed = false;
             current = null;
+            openNextAsSavePicker = false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -174,9 +177,19 @@ namespace Lumenfall.Startup
             new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
 
+        /// <summary>Opens the existing illustrated load-slot screen as an in-game manual save picker.</summary>
+        public static void OpenSaveSlotPicker()
+        {
+            if (FindAnyObjectByType<StartupMenu>() != null) return;
+            openNextAsSavePicker = true;
+            new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
+        }
+
         private void Awake()
         {
             current = this;
+            savePickerMode = openNextAsSavePicker;
+            openNextAsSavePicker = false;
             DontDestroyOnLoad(gameObject);
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
@@ -193,8 +206,8 @@ namespace Lumenfall.Startup
             LoadButtonTextures();
             CreateArt();
             // The title sequence plays once per launch; returning from the journal goes straight to the menu.
-            phase = introPlayed ? Phase.Menu : Phase.Intro;
-            cameFromIntro = !introPlayed;
+            phase = savePickerMode || introPlayed ? Phase.Menu : Phase.Intro;
+            cameFromIntro = !savePickerMode && !introPlayed;
             introPlayed = true;
             StartCoroutine(InitializeAfterSceneSystems());
         }
@@ -203,7 +216,13 @@ namespace Lumenfall.Startup
         {
             yield return null;
             GameSaveManager saves = GameSaveManager.Instance;
-            if (saves.HasSave(GameSaveManager.AutosaveSlot))
+            if (savePickerMode)
+            {
+                page = Page.Load;
+                backdropSlot = GameSaveManager.AutosaveSlot;
+                RefreshSlotDetails();
+            }
+            else if (saves.HasSave(GameSaveManager.AutosaveSlot))
             {
                 backdropSlot = GameSaveManager.AutosaveSlot;
                 if (!saves.Load(backdropSlot, false)) message = saves.LastError;
@@ -433,6 +452,13 @@ namespace Lumenfall.Startup
         /// <summary>Back buttons and Escape share one route so both always return to the parent page.</summary>
         private void GoBack()
         {
+            if (savePickerMode && page == Page.Load)
+            {
+                message = string.Empty;
+                confirmSlot = null;
+                BeginClosing();
+                return;
+            }
             if (page == Page.Load || page == Page.NewGame)
             {
                 message = string.Empty;
@@ -635,7 +661,7 @@ namespace Lumenfall.Startup
         private float DrawTitle(Page value, Rect panel, float now)
         {
             bool main = value == Page.Main;
-            string title = main ? GameTitle : value == Page.Load ? "Load Game" : value == Page.NewGame ? "New Game"
+            string title = main ? GameTitle : value == Page.Load ? savePickerMode ? "Save Game" : "Load Game" : value == Page.NewGame ? "New Game"
                 : value == Page.Controls ? "Controls" : "Settings";
             float height = main ? 76f : 54f;
             Rect rect = new Rect(panel.x + 24f, panel.y + 24f, panel.width - 48f, height);
@@ -862,15 +888,41 @@ namespace Lumenfall.Startup
         private void DrawLoad(Rect panel, float top)
         {
             float y = top + 4f;
-            for (int i = 0; i < Slots.Length; i++)
+            int firstSlot = savePickerMode ? 1 : 0;
+            for (int i = firstSlot; i < Slots.Length; i++)
             {
-                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), "load", "LOAD", false)) LoadSlot(Slots[i]);
+                string action = savePickerMode ? "SAVE" : "LOAD";
+                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), savePickerMode ? "save" : "load", action, savePickerMode))
+                {
+                    if (savePickerMode) SaveSlot(Slots[i]);
+                    else LoadSlot(Slots[i]);
+                }
                 y += 130f;
             }
 
             Rect back = BackRect(panel);
             DrawMessage(new Rect(panel.x + 36f, back.y - 58f, panel.width - 72f, 52f));
             if (Button("exit", back, "BACK")) GoBack();
+        }
+
+        /// <summary>Saves to a chosen manual slot. Occupied slots require pressing SAVE again after the warning.</summary>
+        private void SaveSlot(string slot)
+        {
+            GameSaveManager saves = GameSaveManager.Instance;
+            if (saves.HasSave(slot) && confirmSlot != slot)
+            {
+                confirmSlot = slot;
+                message = $"{ManualSaveSlot.Label(slot)} already contains saved progress. Press SAVE again to overwrite it.";
+                return;
+            }
+
+            if (ManualSaveSlot.SaveTo(slot, out string error))
+            {
+                confirmSlot = null;
+                message = string.Empty;
+                BeginClosing();
+            }
+            else message = error ?? "Could not save. Please try again.";
         }
 
         /// <summary>New Game: choose one of the manual slots to play in. Empty slots start straight away.</summary>
@@ -1321,6 +1373,10 @@ namespace Lumenfall.Startup
                 if (texture == null) texture = LoadEditorTexture(fileName);
                 if (texture != null) buttonTextures[key] = texture;
             }
+
+            Texture2D saveTexture = Resources.Load<Texture2D>("StartupButtons/btn_save_sheet4x");
+            if (saveTexture == null) saveTexture = LoadEditorTexture("btn_save_sheet4x");
+            if (saveTexture != null) buttonTextures["save"] = saveTexture;
         }
 
         private static Texture2D LoadEditorTexture(string fileName)

@@ -60,25 +60,43 @@
         {
           "id": "main_building",
           "speaker": "Kit",
-          "text": "The grand one is the Main Academy Building: reception, the main portal and most of the staff. Every building has a sign by its door.",
+          "text": "The grand one above the fountain is the Main Academy Building. For new students, you'll spend most of your time there for the first year.",
+          "nextNodeId": "locked"
+        },
+        {
+          "id": "locked",
+          "speaker": "Kit",
+          "text": "It's locked at the moment, but it will open once the sememster formally begins.",
+          "nextNodeId": "library"
+        },
+        {
+          "id": "library",
+          "speaker": "Kit",
+          "text": "The second place you'll spend the second-longest amount of time in is the Library below it. Students often go there for studying. Or napping between the shelves. I won't tell.",
           "nextNodeId": "workshop"
         },
         {
           "id": "workshop",
           "speaker": "Kit",
-          "text": "The Arcane Workshop is where the engineering lot tinker with relics and machines. Mind the sparks.",
-          "nextNodeId": "training_library"
+          "text": "The Arcane Workshop above us is where the engineering lot tinker with relics and machines. Mind the sparks though. Speaking from experience: some only <wave>tickle</wave>, but some really <shake>hurt</shake>!",
+          "nextNodeId": "dormitory"
         },
         {
-          "id": "training_library",
+          "id": "dormitory",
           "speaker": "Kit",
-          "text": "The Dormitory is where students live, and the Library is for studying. Or napping between the shelves. I won't tell.",
+          "text": "The Dormitory below is where students live. I recommend going there first, as a soft bed after day's study is what matters the most, right?",
           "nextNodeId": "forest"
         },
         {
           "id": "forest",
           "speaker": "Kit",
           "text": "And back through the gate is the forest. Lovely in the daytime. A bit dramatic after dark.",
+          "nextNodeId": "signs"
+        },
+        {
+          "id": "signs",
+          "speaker": "Kit",
+          "text": "In case you forgot, every building has a sign by its door. Go near and check them out if you're confused. You can always come back and ask me too!",
           "nextNodeId": "magic_school"
         },
         {

@@ -23,8 +23,9 @@ namespace Lumenfall.Quests
         public const string DiscTag = "rotara-disc";
         public const int TargetRotation = 0;
         private const string RotaraTag = "rotara";
-        private const string QuestId = "orio_patch_notes";
+        public const string QuestId = "orio_patch_notes";
         public const string CompletionEventId = "complete_orio_patch_notes";
+        public const string ReportedFlag = "orio.patch_notes.reported";
         private const int InteractionRange = 1;
         private const int StepDegrees = 90;
         private const float FlashSeconds = 0.4f;
@@ -192,7 +193,6 @@ namespace Lumenfall.Quests
         {
             if (!PuzzleMapActive(out WorldStateService state)) return;
             bool allSolved = true;
-            bool animationsSettled = true;
             for (int i = 0; i < DiscIds.Length; i++)
             {
                 if (discHolders[i] == null || !state.TryGetObject(DiscIds[i], out WorldObjectSnapshot disc)) { allSolved = false; continue; }
@@ -204,15 +204,12 @@ namespace Lumenfall.Quests
                 holder.localRotation = clearedDiscLocalRotations[i] * Quaternion.Euler(0f, displayedDiscRotations[i], 0f);
                 bool solved = RotationMatches(disc.rotation, solvedDiscStateRotations[i]);
                 allSolved &= solved;
-                animationsSettled &= Mathf.Approximately(displayedDiscRotations[i], discAnimationTargets[i]);
                 foreach (Renderer rune in runeRenderers[i]) SetColor(rune, solved ? SolvedColor : RuneColor);
                 SetColor(notchRenderers[i], solved ? SolvedColor : NotchColor);
             }
             foreach (Renderer stone in standingStoneRenderers) SetColor(stone, StandingStoneColor);
             SetColor(daisRenderer, allSolved ? DaisSolvedColor : DaisColor);
             if (allSolved) ShineSolvedMonument();
-            if (allSolved && animationsSettled)
-                GameEventManager.Instance?.Runtime?.TriggerEvent(CompletionEventId);
             DriftFireflies();
 
             for (int i = 0; i < SocketIds.Length; i++)

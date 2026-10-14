@@ -120,13 +120,13 @@ namespace Lumenfall.Quests
         /// <summary>The next Out of Alignment step for the quest hint overlay, from live progression and the held relic.</summary>
         public static string DescribeStep(WorldStateService state, SpellCaster caster)
         {
-            if (CinnaIceTrialRoom.RelicDelivered()) return "The relic is on its stand. Return to Cinna Cirra on the C02 terrace.";
-            bool inTrial = state != null && string.Equals(state.CurrentMapId, CinnaIceTrialRoom.MapId, StringComparison.OrdinalIgnoreCase);
-            if (caster != null && caster.HeldRelic == RelicId)
-                return inTrial ? "Face the empty stand beside the pool and cast Vis to set the relic on it."
-                    : $"Carry the relic to the ice-trial portal on the campus path at ({CinnaIceTrialEntrance.EntranceCell.x}, {CinnaIceTrialEntrance.EntranceCell.y}).";
-            return inTrial ? "The relic is still on campus. Lift it beside Cinna Cirra on the C02 terrace."
-                : "Lift the relic beside Cinna Cirra on the C02 terrace with Vis.";
+            if (CinnaIceTrialRoom.RelicDelivered()) return "Go back to Cinna Cirra.";
+            return "Lift the relic beside Cinna Cirra and carry it to the stand.\n" +
+                "1. Use Q to open the Spell Wheel and use the mouse to select a spell.\n" +
+                "2. Select Vis.\n" +
+                "3. Right click or press F to cast towards the relic next to Cinna Cirra.\n" +
+                "4. Hold it and carry it to the trial area at the lower part of the campus.\n" +
+                "5. Face the stand and cast again to put the relic onto the stand.";
         }
 
         private void OnDestroy()

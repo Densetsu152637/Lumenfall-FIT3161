@@ -208,6 +208,10 @@ namespace Lumenfall.Tests.GameEvents
             EditModeLifecycle.Call(monitor, "OnDestroy"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
             state.AddConnection(network[network.Count - 2], network[network.Count - 1]);
             monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "Update");
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.GetFlag("stella.string_them_together.ready_to_report"), Is.True);
+            DialogueSession report = runtime.StartDialogue("stella_string_them_together_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             state.SetProperty(Source, x => x.powered = false);
             EditModeLifecycle.Call(monitor, "OnDestroy"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);

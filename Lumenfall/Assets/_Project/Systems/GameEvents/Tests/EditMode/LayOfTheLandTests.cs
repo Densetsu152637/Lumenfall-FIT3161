@@ -155,6 +155,19 @@ namespace Lumenfall.Tests.GameEvents
             {
                 "Can you remind me of the campus buildings and areas?", "Bye!"
             }));
+
+            TextAsset arrivalAsset = Resources.Load<TextAsset>("GameEvents/campus_arrival");
+            Assert.That(GameEventCatalog.TryParseJson(arrivalAsset.text, arrivalAsset.name,
+                out GameEventDatabaseDefinition arrivalDatabase, out error), Is.True, error);
+            GameEventCatalog arrivalCatalog = new GameEventCatalog(new[] { arrivalDatabase });
+            Assert.That(arrivalCatalog.TryGetDialogue("kit_lay_of_the_land", out DialogueDefinition tour), Is.True);
+            foreach ((string reminder, string arrival) in new[]
+            {
+                ("welcome", "courtyard"), ("academy", "main_building"), ("locked", "locked"), ("library", "library"),
+                ("workshop", "workshop"), ("dormitory", "dormitory"), ("forest", "forest"), ("signs", "signs")
+            })
+                Assert.That(chat.nodes.Single(node => node.id == reminder).text.Replace("Sure! ", string.Empty),
+                    Is.EqualTo(tour.nodes.Single(node => node.id == arrival).text), reminder);
         }
     }
 }
