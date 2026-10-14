@@ -1,0 +1,7 @@
+{
+  "id": "ask_player_name",
+  "unskippable": true,
+  "steps": [
+    { "type": "name" }
+  ]
+}

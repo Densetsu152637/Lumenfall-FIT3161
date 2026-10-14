@@ -60,6 +60,33 @@ The dormitory's people are placed in `Dormitory.prefab` (`B01.Ground`) rather th
 
 Marigold and Thistle staff the reception, ready for the story's key scene. Their lines (`Resources/GameEvents/dormitory.json`) are placeholders marked as such, until that scene is written. Rowan's lines (`ambient_cast.json`) were moved from the old Training Centre to the dormitory lobby, which `B01.Ground` now is.
 
+## Meeting people
+
+`NpcIntroductions` keeps track of whom the player has met. Until someone has introduced themselves, the dialogue name ribbon and the journal show them as `???`. Their frame, colour and portrait still show.
+
+- **First conversation.** The first time the player talks to an NPC, the NPC plays their introduction before anything else. The introduction is `intro_<person>` in `Resources/GameEvents/introductions.json`. They give their name, ask the player's, and the player answers through a choice, "I'm {player}.". They then go straight on to the conversation they would otherwise have had, such as a quest offer, without the dialogue box closing.
+- **The name shows from the line where they give it.** That line's `SetFlag` sets `npc.met.<person>`, which is saved with the game. Later conversations skip the introduction and use the player's name as usual.
+- **People with several records** count as one person. The three Cinna records are all `cinna_cirra`, and the speaker name "Cinna Cirra" is matched to that person too.
+- **Scripted first meetings** set the flag in their own dialogue. Prof. Kepler is `???` while calling the player over, and is named on "I'm Professor Kepler" (`kepler_late`/`late`); the gate scene's name prompt is how the player first gives their name. Kit is `???` while shouting (`kit_call`). The tour (`kit_lay_of_the_land`) now opens with Kit's name and a question for the player's, before the lay of the land. Saves made before this existed count Kepler and Kit as met through the scenes' own flags.
+- **Prof. Bann, the headmistress,** is known to everyone from the start, and needs no introduction.
+- **General conversation once met.** After the first meeting, talking to someone opens their `chat_<person>` dialogue (`Resources/GameEvents/conversations.json`). They greet the player by name and offer "How's your day going?", "Tell me about yourself.", one topic of their own and "Bye!". Each answer returns to "Anything else?" with the same topics, until the player says goodbye. Their quest dialogue still comes first when it is what they need to say: a quest to offer (its prerequisite met), a task done but not yet handed in (its "report" choice is available), or a quest finished whose thanks the player has not heard yet (`npc.quest-thanked.<quest>`, set once any of their quest conversations ends with that quest complete). While a quest is simply under way, their chat adds "About what you asked me to do...", which hands over to the quest dialogue for a reminder. Kit keeps their own chat (`ambient_courtyard_student`). Prof. Bann keeps her story lines.
+- **An NPC with no introduction** counts as met from their first conversation, so a new NPC is never stuck as `???`.
+- **An unnamed player** (only possible on saves from before the name system) is asked for their name by the `ask_player_name` cutscene before an introduction.
+
+The introductions' and conversations' lines are placeholders, to be rewritten.
+
+## Settling in (end of Chapter 1)
+
+`SettlingInScene` runs the rest of Chapter 1, from the dormitory to the end of the chapter.
+
+1. **Room not ready.** Once Prof. Bann has spoken to the player (`story.orientation.bann_met`), talking to Marigold at the dorm reception plays `dorm_room_not_ready` instead of Marigold's usual chat, after Marigold's introduction if this is their first meeting. The player's room isn't ready, so the player should get familiar with the campus and meet the other students. It sets `story.dorm.room_not_ready`. Until then Bann keeps her orientation lines and her reminder about the dorm; from then on she chats like anyone else (`chat_prof_bann`).
+2. **Exploring.** The player explores and solves the puzzles. Nothing guides them. The first time the player talks to Rowan or Thistle, a short scene plays at the desk first (`dorm_no_rooms`, setting `story.dorm.no_rooms_scene`): Rowan pleads for a room, Thistle says tough luck, and Marigold asks Thistle not to laugh. Then whoever the player spoke to carries on as usual, introduction included. The dorm's room doors all say the devs are sleeping and to visit later.
+3. **The room should be ready.** Once every Chapter 1 puzzle is solved (the six quests in `SettlingInScene.ChapterQuestIds`) and nothing else is on screen, the cutscene `room_ready_thought` plays the player's inner voice: their dorm room should be ready by now. It sets `story.dorm.room_ready_thought`. The player then walks back themselves.
+4. **The key.** Talking to Marigold then plays `chapter1_room_ready`. Marigold hands over the key (`dorm_room_ready`, setting `story.dorm.key_received`), the player is walked to the third room door at `(17,17)`, the screen fades to black and "End of Chapter 1" appears, `story.chapter1.complete` is set, and the screen fades back on the player at their door. The game then saves and returns to the main menu.
+5. **Afterwards.** Loading that save puts the player back at their door, with no further story. Marigold's chat offers "Thanks for the room key!" in place of "When will my room be ready?".
+
+The story lines (`Resources/GameEvents/settling_in.json`) are placeholders, to be rewritten.
+
 ## Story-only characters
 
 `StoryNpc` spawns a character from their NPC catalog record (prefab, map and cell) instead of baking them into an area prefab, in the way the ice trial spawns its Cinna. Each frame, the owning scene says whether the story wants them present.

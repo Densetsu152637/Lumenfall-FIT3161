@@ -35,7 +35,20 @@
         {
           "id": "intro",
           "speaker": "Kit",
-          "text": "I'm Kit. Welcome to Lumenfall Academy! Let me give you the lay of the land before you walk into a wall.",
+          "text": "I'm Kit. Welcome to Lumenfall Academy!",
+          "onEnterActions": [ { "type": "SetFlag", "key": "npc.met.campus_student", "boolValue": true } ],
+          "nextNodeId": "ask"
+        },
+        {
+          "id": "ask",
+          "speaker": "Kit",
+          "text": "And you are?",
+          "choices": [ { "id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased" } ]
+        },
+        {
+          "id": "pleased",
+          "speaker": "Kit",
+          "text": "Nice to meet you, {player}! Let me give you the lay of the land before you walk into a wall.",
           "nextNodeId": "courtyard"
         },
         {

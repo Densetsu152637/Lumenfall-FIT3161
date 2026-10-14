@@ -48,6 +48,7 @@
           "id": "late",
           "speaker": "Prof. Kepler",
           "text": "I'm Professor Kepler, and you are already late to orientation. On your very first day, no less.",
+          "onEnterActions": [ { "type": "SetFlag", "key": "npc.met.prof_kepler", "boolValue": true } ],
           "nextNodeId": "enrolled"
         },
         {

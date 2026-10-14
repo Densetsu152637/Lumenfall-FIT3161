@@ -5,6 +5,7 @@ using Lumenfall.DataDriven;
 using Lumenfall.GridMovement;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace Lumenfall.EditorTools
 {
@@ -153,7 +154,7 @@ namespace Lumenfall.EditorTools
             AddBlocker(reception, "Reception Cabinet Blocker", new Vector2Int(13, 12), new Vector2Int(1, 1));
         }
 
-        // Resident-room fronts along row 18. Every door stays closed; the middle one says the room is not ready yet.
+        // Resident-room fronts along row 18. Every door stays closed, and checking one says to come back later.
         private static void BuildHallway(Transform architecture, Transform furnishings, Transform interactions, Material wall)
         {
             Box("Hallway Divider Left", architecture, new Vector3(8f, 1.5f, 13f), new Vector3(12f, 3f, 0.35f), wall, false);
@@ -170,7 +171,7 @@ namespace Lumenfall.EditorTools
                 AddBlocker(architecture, "Room Front Blocker " + (i + 1), new Vector2Int(Mathf.Max(1, x - 3), 18), new Vector2Int(i == 0 || i == doorX.Length - 1 ? 6 : 5, 1));
                 GameObject door = Model(DoorPath, "Room Door " + (i + 1), interactions, new Vector3(x, 0f, 17.82f), Quaternion.identity, Vector3.one);
                 if (door == null) door = Box("Room Door " + (i + 1), interactions, new Vector3(x, 1.1f, 17.82f), new Vector3(1.7f, 2.2f, 0.18f), wall, false);
-                if (i == 2) ConfigureNotReadyDoor(door);
+                ConfigureRoomDoor(door);
             }
 
             // Potted plants and vases take turns between the doors; a cushioned bench and a coat stand wait by the west end.
@@ -235,10 +236,9 @@ namespace Lumenfall.EditorTools
             Kit(furnishings, "pottedPlant", "Lounge Plant", new Vector3(30.3f, 0f, 11.6f), 45f, 1.2f);
             Place(furnishings, "Cabinet.fbx", "Lounge Cabinet", new Vector3(31.8f, 0f, 12.35f), 180f, 1.4f);
             Place(furnishings, "Bookcase_2.fbx", "Lounge Bookcase", new Vector3(27.6f, 0f, 12.4f), 180f, 2.4f);
-            AddBlocker(furnishings, "Lounge Sofa Blocker", new Vector2Int(24, 11), new Vector2Int(3, 1));
-            AddBlocker(furnishings, "Lounge Armchair West Blocker", new Vector2Int(22, 8), new Vector2Int(2, 1));
-            AddBlocker(furnishings, "Lounge Armchair East Blocker", new Vector2Int(27, 8), new Vector2Int(2, 1));
-            AddBlocker(furnishings, "Coffee Table Blocker", new Vector2Int(24, 8), new Vector2Int(3, 1));
+            // The armchairs, coffee table and sofa block as one group, gaps included: the table reaches into row 9, and a
+            // player standing between the pieces looked as if they were walking through the furniture.
+            AddBlocker(furnishings, "Lounge Seating Blocker", new Vector2Int(22, 8), new Vector2Int(7, 4));
             AddBlocker(furnishings, "Lounge Floor Lamp Blocker", new Vector2Int(21, 11), Vector2Int.one);
             AddBlocker(furnishings, "Lounge Plant Blocker", new Vector2Int(30, 11), Vector2Int.one);
             AddBlocker(furnishings, "Lounge Cabinet Blocker", new Vector2Int(31, 12), new Vector2Int(2, 1));
@@ -282,6 +282,9 @@ namespace Lumenfall.EditorTools
             Box("East Wall", parent, new Vector3(34.5f, 1.5f, 11.5f), new Vector3(0.5f, 3f, 22f), material, false);
             AddBlocker(parent, "South Wall Left Blocker", new Vector2Int(1, 1), new Vector2Int(16, 1));
             AddBlocker(parent, "South Wall Right Blocker", new Vector2Int(20, 1), new Vector2Int(15, 1));
+            // Outside the entrance gap there is nothing to walk on, and a player who stepped past the exit at (18,1) missed
+            // its prompt to leave, so the row beyond the south wall is blocked too.
+            AddBlocker(parent, "Outside Entrance Blocker", new Vector2Int(0, 0), new Vector2Int(36, 1));
             AddBlocker(parent, "North Wall Blocker", new Vector2Int(1, 22), new Vector2Int(34, 1));
             AddBlocker(parent, "West Wall Blocker", new Vector2Int(1, 1), new Vector2Int(1, 22));
             AddBlocker(parent, "East Wall Blocker", new Vector2Int(34, 1), new Vector2Int(1, 22));
@@ -440,11 +443,14 @@ namespace Lumenfall.EditorTools
             AddLamp(parent, name + " Light", position + Quaternion.Euler(0f, yaw, 0f) * Vector3.forward * 0.4f, 0.8f, 4f);
         }
 
-        private static void ConfigureNotReadyDoor(GameObject door)
+        // The rooms behind the doors are not built yet.
+        private const string RoomDoorText = "The devs are sleeping. Visit later!";
+
+        private static void ConfigureRoomDoor(GameObject door)
         {
             BuildingSignInteraction interaction = door.AddComponent<BuildingSignInteraction>();
             SerializedObject serialized = new SerializedObject(interaction);
-            serialized.FindProperty("buildingName").stringValue = "Room's not ready";
+            serialized.FindProperty("buildingName").stringValue = RoomDoorText;
             serialized.FindProperty("panelTitle").stringValue = "Dormitory Room";
             serialized.FindProperty("promptLabel").stringValue = "Check";
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -461,6 +467,13 @@ namespace Lumenfall.EditorTools
             light.intensity = intensity;
             light.range = range;
             light.shadows = castShadows ? LightShadows.Soft : LightShadows.None;
+            if (!castShadows) return;
+            // A point light renders six shadow maps. At URP's default High tier (1024) even one overflows the 2048
+            // additional-light shadow atlas, so URP shrank them and warned; at Medium (512) both shadowed lamps fit.
+            // The tier has no public setter, so it is written as the serialized field the Light inspector edits.
+            SerializedObject data = new SerializedObject(light.GetUniversalAdditionalLightData());
+            data.FindProperty("m_AdditionalLightsShadowResolutionTier").intValue = UniversalAdditionalLightData.AdditionalLightsShadowResolutionTierMedium;
+            data.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

@@ -9,6 +9,7 @@ using Lumenfall.Quests;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
 using Lumenfall.Cutscenes;
+using Lumenfall.Story;
 
 namespace Lumenfall.Inventory
 {
@@ -497,7 +498,7 @@ namespace Lumenfall.Inventory
                 if (runtime == null || !runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
                 shown = true;
                 GUILayout.BeginVertical(skin.Entry);
-                GUILayout.Label(pair.Value.Name, skin.EntryTitle);
+                GUILayout.Label(NpcIntroductions.NameFor(pair.Key, pair.Value.Name), skin.EntryTitle);
                 GUILayout.Label(pair.Value.Description, skin.Muted);
                 GUILayout.EndVertical();
             }

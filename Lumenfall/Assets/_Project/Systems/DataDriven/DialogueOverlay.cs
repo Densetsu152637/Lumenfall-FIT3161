@@ -6,6 +6,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Player;
 using Lumenfall.Quests;
+using Lumenfall.Story;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -158,7 +159,8 @@ namespace Lumenfall.DataDriven
             pageIndex = 0;
 
             Color colour = SpeakerColor(speaker);
-            view.SetSpeaker(speaker, colour, SpeakerFrame(speaker));
+            // Someone the player has not met yet is "???" on the ribbon, though their frame and portrait still show.
+            view.SetSpeaker(playerSpeaks ? speaker : NpcIntroductions.SpeakerLabel(speaker), colour, SpeakerFrame(speaker));
             Transform subject = playerSpeaks ? null : SpeakerTransform(speaker);
             Color background = Color.Lerp(colour, new Color(0.96f, 0.91f, 0.82f), 0.72f);
             bool showPortrait = subject != null && portrait.Show(subject, background);

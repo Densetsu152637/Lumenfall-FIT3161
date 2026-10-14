@@ -9,6 +9,7 @@ using Lumenfall.Controls;
 using Lumenfall.Quests;
 using Lumenfall.Cutscenes;
 using Lumenfall.Startup;
+using Lumenfall.Story;
 
 namespace Lumenfall.DataDriven
 {
@@ -89,7 +90,7 @@ namespace Lumenfall.DataDriven
             HudSkin.PromptAbove(transform.position + Vector3.up * 1.8f, KeyBindings.GetKeyLabel(GameAction.Talk), "Talk");
         }
         public DialogueSession Interact()
-        { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
+        { if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return NpcIntroductions.StartConversation(Id, DialogueId, HasQuestBusiness()); }
         private string SelectDialogue()
         {
             if (definition == null) return DialogueId;
@@ -113,6 +114,35 @@ namespace Lumenfall.DataDriven
             // completed earlier quests from competing with it in the weighted random selection.
             if (prerequisiteChoices.Count > 0) choices = prerequisiteChoices;
             return choices.Count == 0 ? null : choices[UnityEngine.Random.Range(0, choices.Count)];
+        }
+
+        /// True while this NPC's quest dialogue is what they need to say rather than general conversation: a quest to
+        /// offer (its prerequisite met), one ready to report back on, or one finished whose thanks the player has not
+        /// heard yet. While a quest is simply under way, their general conversation offers it as a topic instead.
+        private bool HasQuestBusiness()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (definition == null || runtime == null) return false;
+            foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.questId)) continue;
+                if (!string.IsNullOrWhiteSpace(item.prerequisiteQuestId) && !StatusMatches(item.prerequisiteQuestId, item.prerequisiteQuestStatus)) continue;
+                QuestStatus status = runtime.GetQuestStatus(item.questId);
+                if (status == QuestStatus.NotStarted) return true;
+                if (status == QuestStatus.Active && CanReport(runtime, item.dialogueId)) return true;
+                if (status == QuestStatus.Completed && !runtime.GetFlag(NpcIntroductions.QuestThankedFlag(item.questId))) return true;
+            }
+            return false;
+        }
+
+        // A quest dialogue offers a "report" choice once its task is done but still has to be handed in.
+        private static bool CanReport(GameEventRuntime runtime, string dialogueId)
+        {
+            if (string.IsNullOrWhiteSpace(dialogueId) || !runtime.Catalog.TryGetDialogue(dialogueId, out DialogueDefinition dialogue) ||
+                !runtime.Catalog.TryGetDialogueNode(dialogueId, dialogue.startNodeId, out DialogueNodeDefinition start)) return false;
+            foreach (DialogueChoiceDefinition choice in start.choices ?? Array.Empty<DialogueChoiceDefinition>())
+                if (choice != null && choice.id == "report" && runtime.EvaluateConditions(choice.conditions, choice.conditionMode)) return true;
+            return false;
         }
 
         private bool StatusMatches(string questId, string expectedStatus)

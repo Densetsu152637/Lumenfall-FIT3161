@@ -1,0 +1,10 @@
+{
+  "id": "room_ready_thought",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "wait", "seconds": 0.4 },
+    { "type": "dialogue", "key": "room_ready_thought" },
+    { "type": "flag", "key": "story.dorm.room_ready_thought", "value": true }
+  ]
+}

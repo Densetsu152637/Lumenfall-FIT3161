@@ -1,0 +1,17 @@
+{
+  "id": "chapter1_room_ready",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "dialogue", "key": "dorm_room_ready" },
+    { "type": "flag", "key": "story.dorm.key_received", "value": true },
+    { "type": "wait", "seconds": 0.3 },
+    { "type": "walk", "x": 17, "y": 17 },
+    { "type": "wait", "seconds": 0.5 },
+    { "type": "fade", "color": "#000000", "alpha": 1, "seconds": 1.2 },
+    { "type": "caption", "text": "End of Chapter 1", "seconds": 3.5 },
+    { "type": "flag", "key": "story.chapter1.complete", "value": true },
+    { "type": "fade", "alpha": 0, "seconds": 1.0 },
+    { "type": "wait", "seconds": 1.2 }
+  ]
+}

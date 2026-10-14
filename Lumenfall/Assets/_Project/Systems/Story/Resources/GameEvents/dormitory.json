@@ -10,7 +10,7 @@
         { "key": "placeholder", "value": "Stands in until the dormitory key scene is written." }
       ],
       "nodes": [
-        { "id": "a", "speaker": "Marigold", "text": "Welcome to the dormitory! I'm Marigold, and that's Thistle. We look after the rooms and the keys.", "nextNodeId": "b" },
+        { "id": "a", "speaker": "Marigold", "text": "Welcome to the dormitory! Thistle and I look after the rooms and the keys.", "nextNodeId": "b" },
         { "id": "b", "speaker": "Marigold", "text": "Room assignments for today's arrivals are still being sorted, I'm afraid. Bear with us a little longer.", "nextNodeId": "" }
       ]
     },
@@ -23,7 +23,7 @@
       ],
       "nodes": [
         { "id": "a", "speaker": "Thistle", "text": "Keys, keys, keys... I had the list right here a moment ago.", "nextNodeId": "b" },
-        { "id": "b", "speaker": "Thistle", "text": "Oh! Hello. Don't mind me. Marigold's the one to ask about rooms.", "nextNodeId": "" }
+        { "id": "b", "speaker": "Thistle", "text": "Sorry, don't mind me. Marigold's the one to ask about rooms.", "nextNodeId": "" }
       ]
     }
   ],
