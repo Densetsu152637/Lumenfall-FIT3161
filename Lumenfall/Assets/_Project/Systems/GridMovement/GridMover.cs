@@ -38,6 +38,13 @@ namespace Lumenfall.GridMovement
         [Header("Step Animation")]
         [SerializeField] private AnimationCurve movementCurve = null;
 
+        // The time the last step ran past its end, and the frame it ended in. A step started in that same frame (held
+        // movement chains the next cell from MoveCompleted) begins with it, so walking keeps a steady speed.
+        private float carriedTime;
+        private int carriedFrame = -1;
+        // A long hitch is not replayed as several cells at once.
+        private const float MaximumCarriedTime = 0.05f;
+
         private Coroutine moveRoutine;
         private Vector2Int currentCell;
         private Vector2Int destinationCell;
@@ -260,17 +267,25 @@ namespace Lumenfall.GridMovement
                 stepDuration *= Mathf.Sqrt(2f);
             }
 
+            float overrun = 0f;
             if (stepDuration > 0f)
             {
-                float elapsed = 0f;
-                while (elapsed < stepDuration)
+                // A chained step has already been given this frame's time by the step before it.
+                bool chained = carriedFrame == Time.frameCount;
+                float elapsed = chained ? carriedTime : 0f;
+                bool frameTimeUsed = chained;
+                carriedFrame = -1;
+                while (true)
                 {
-                    elapsed += Time.deltaTime;
-                    float normalisedTime = Mathf.Clamp01(elapsed / stepDuration);
-                    float curvedTime = movementCurve.Evaluate(normalisedTime);
-                    transform.position = Vector3.LerpUnclamped(from, to, curvedTime);
+                    if (frameTimeUsed) frameTimeUsed = false;
+                    else elapsed += Time.deltaTime;
+                    // Arriving ends the step in this frame, rather than holding still on the cell for one more frame
+                    // before the next step could start.
+                    if (elapsed >= stepDuration) break;
+                    transform.position = Vector3.LerpUnclamped(from, to, movementCurve.Evaluate(elapsed / stepDuration));
                     yield return null;
                 }
+                overrun = Mathf.Min(elapsed - stepDuration, MaximumCarriedTime);
             }
 
             transform.position = to;
@@ -287,6 +302,8 @@ namespace Lumenfall.GridMovement
             currentCell = destination;
             isMoving = false;
             moveRoutine = null;
+            carriedTime = overrun;
+            carriedFrame = Time.frameCount;
 
             GridPortal portal = world.GetPortalAt(currentCell);
             if (portal == null)

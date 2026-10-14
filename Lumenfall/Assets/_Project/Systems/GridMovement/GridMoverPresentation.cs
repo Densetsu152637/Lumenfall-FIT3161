@@ -25,6 +25,10 @@ namespace Lumenfall.GridMovement
 
         private GridMover mover;
         private Quaternion targetRotation;
+        // The turn rate for the current step: at least rotationSpeed, and fast enough to face the new way within
+        // TurnStepFraction of the step, so the character never walks sideways or backwards into a cell.
+        private float turnSpeed;
+        private const float TurnStepFraction = 0.5f;
         private float targetAnimationSpeed;
         private int speedParameterHash;
         private int groundedParameterHash;
@@ -90,7 +94,7 @@ namespace Lumenfall.GridMovement
                 facingRoot.rotation = Quaternion.RotateTowards(
                     facingRoot.rotation,
                     targetRotation,
-                    rotationSpeed * Time.deltaTime);
+                    Mathf.Max(rotationSpeed, turnSpeed) * Time.deltaTime);
             }
 
             if (CanAnimate && hasSpeedParameter)
@@ -113,6 +117,10 @@ namespace Lumenfall.GridMovement
             if (direction.sqrMagnitude > Mathf.Epsilon)
             {
                 targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+                float turnTime = movingActor.CurrentStepDuration * TurnStepFraction;
+                turnSpeed = turnTime > 0f && facingRoot != null
+                    ? Quaternion.Angle(facingRoot.rotation, targetRotation) / turnTime
+                    : 0f;
             }
 
             targetAnimationSpeed = GetMovementAnimationSpeed();

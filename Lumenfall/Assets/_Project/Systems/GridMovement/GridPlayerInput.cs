@@ -35,6 +35,10 @@ namespace Lumenfall.GridMovement
         private bool enabledMoveActionHere;
         private bool enabledSprintActionHere;
         private Vector2Int heldDirection;
+        // A direction pressed while a step was still under way, kept briefly so a quick tap is not lost.
+        private const float BufferSeconds = 0.25f;
+        private Vector2Int bufferedDirection;
+        private float bufferedUntil = float.NegativeInfinity;
         private float nextRepeatTime;
         // A finished slide needs a fresh press, so a held key cannot launch an unintended second slide.
         private bool waitForRelease;
@@ -134,6 +138,12 @@ namespace Lumenfall.GridMovement
             {
                 heldDirection = direction;
                 waitForRelease = false;
+                if (mover.IsMoving && !mover.IsMovementLocked)
+                {
+                    bufferedDirection = direction;
+                    bufferedUntil = Time.unscaledTime + BufferSeconds;
+                    return;
+                }
                 TryMoveHeldDirection();
                 return;
             }
@@ -150,6 +160,7 @@ namespace Lumenfall.GridMovement
         private void HandleSlideEnded(GridMover movingActor, Vector2Int cell)
         {
             waitForRelease = true;
+            bufferedUntil = float.NegativeInfinity;
         }
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
@@ -161,7 +172,10 @@ namespace Lumenfall.GridMovement
 
             // Start the next tile in the completion frame so held movement has no
             // stop/start frame for the follow camera to expose as visible jitter.
+            // A direction tapped during the step counts even if it has been let go.
             Vector2Int direction = QuantiseDirection(ReadMove());
+            if (direction == Vector2Int.zero && Time.unscaledTime <= bufferedUntil) direction = bufferedDirection;
+            bufferedUntil = float.NegativeInfinity;
             if (direction == Vector2Int.zero)
             {
                 heldDirection = Vector2Int.zero;

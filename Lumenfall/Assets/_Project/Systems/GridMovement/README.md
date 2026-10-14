@@ -27,9 +27,16 @@ offset is preserved while it walks across the grid.
 4. Tune Walk Move Duration and Sprint Move Duration on `GridMover`. Sprint has no stamina logic;
    it simply selects the faster whole-tile duration. Input remains locked until each step is
    complete, and the final position is snapped exactly to the target cell.
+
+   Held movement keeps a steady speed. A step ends in the frame the player arrives, and the next one starts in
+   that same frame with whatever time the last step ran past its end (at most 0.05 seconds, so a long hitch is not
+   replayed as several cells). A direction pressed while a step is still under way is kept for 0.25 seconds and used
+   when the step ends, so a quick tap to turn a corner is not lost.
 5. For a 3D character model, add `GridMoverPresentation` and assign its Animator. This optional
    component turns the model toward accepted steps and drives `Speed`, `IsGrounded`, and
    `IsFalling` parameters when they exist, while `GridMover` remains the movement authority.
+   A turn always finishes within the first half of the step, even if Rotation Speed is slower, so
+   the character never walks sideways or backwards into a cell.
 
 `GridWorld` is unbounded by default. Enable Restrict To Bounds to prevent movement outside a
 room. Prevent Diagonal Corner Cutting stops actors squeezing diagonally between two blockers.
