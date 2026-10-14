@@ -77,7 +77,6 @@ namespace Lumenfall.Quests
         private const float FallHoldSeconds = 0.25f;
         private const float FallFadeInSeconds = 0.45f;
         private static readonly Color RelicBaseColor = new Color(0.5f, 0.5f, 0.56f);
-        private static readonly Color StoneColor = new Color(0.55f, 0.55f, 0.6f);
 
         [Tooltip("Animator controller for Cinna's model, matching their campus placement.")]
         [SerializeField] private RuntimeAnimatorController cinnaAnimator;
@@ -504,9 +503,7 @@ namespace Lumenfall.Quests
 
             PortalContentAsset content = FindPortal(area, ReturnPortalId);
             if (content == null) { Debug.LogError($"Missing authored portal content '{ReturnPortalId}'.", this); return; }
-            // A GridPortal's cell is its transform position; the landing stone sits on the trial spawn cell.
-            Vector2Int landingCell = map.spawn != null ? new Vector2Int(map.spawn.x, map.spawn.y) : new Vector2Int(5, 0);
-            Part(PrimitiveType.Cylinder, "Landing Stone", world.CellToWorld(landingCell, 0.02f), new Vector3(0.9f * size, 0.02f, 0.9f * size), StoneColor);
+            // The return portal P.I.00 is authored in the area prefab with its own look, so nothing is drawn for it here.
             GridPortal portal = null;
             foreach (GridPortal candidate in GetComponentsInChildren<GridPortal>(true))
                 if (candidate.Content == content) { portal = candidate; break; }

@@ -78,7 +78,7 @@ namespace Lumenfall.EditorTools
             palette.crystal.EnableKeyword("_EMISSION");
             palette.crystal.SetColor("_EmissionColor", new Color(0.2f, 0.26f, 0.36f));
             palette.crystal.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            Material rune = SaveRune(DrawRuneTexture());
+            Material rune = SaveRune("MAT_IceTrial_Rune", DrawRuneTexture(), Color.white, Color.black);
             Material snowSurface = SaveFrostSurface("MAT_IceTrial_SnowSurface", AmbientCg("Snow013"), new Color(0.9f, 0.95f, 1f), 0.35f, 0.6f);
             Material iceSurface = SaveFrostSurface("MAT_IceTrial_IceSurface", AmbientCg("Ice002"), new Color(0.74f, 0.92f, 1f), 0.93f, 1f);
             AssetDatabase.SaveAssets();
@@ -213,6 +213,7 @@ namespace Lumenfall.EditorTools
                 BuildProbe(dressing);
                 BuildCave(NewChild("Cave", dressing), palette);
                 BuildLobby(NewChild("Lobby", dressing), palette);
+                BuildExit(NewChild("Exit", dressing), palette);
                 AddLight(coldLights, "North Chasm Glow", new Vector3(5.5f, -1.6f, 15f), new Color(0.55f, 0.8f, 1f), 10f, 2.2f);
                 AddLight(coldLights, "West Chasm Glow", new Vector3(-2.8f, -1.6f, 8f), new Color(0.55f, 0.8f, 1f), 9f, 1.8f);
                 AddLight(coldLights, "East Chasm Glow", new Vector3(13.8f, -1.6f, 8f), new Color(0.55f, 0.8f, 1f), 9f, 1.8f);
@@ -502,18 +503,20 @@ namespace Lumenfall.EditorTools
             }
         }
 
-        // Cinna's lobby: a rug down the strip in front of the pool (flat, so the walkable cells are unchanged), a desk with
-        // books and candles beyond the west end, and a bookcase and chest beyond the east end.
+        // Cinna's lobby: a runner rug from the pool entrance down to the exit gap (flat, so the walkable cells are unchanged),
+        // a desk with books and candles beyond the west end, and a bookcase and chest beyond the east end.
         // Its candle stays lit when the room freezes, so the lobby keeps a warm corner.
         private static void BuildLobby(Transform parent, Palette palette)
         {
             GameObject rug = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            rug.name = "Lobby Rug";
+            rug.name = "Lobby Runner";
             UnityEngine.Object.DestroyImmediate(rug.GetComponent<Collider>());
             rug.transform.SetParent(parent, false);
-            rug.transform.localPosition = new Vector3(5.5f, 0.006f, 0.5f);
+            Vector2Int exit = SpawnCell();
+            // From the near edge of the exit tile up to the pool entrance one row below the pool.
+            rug.transform.localPosition = new Vector3(exit.x, 0.006f, exit.y + 0.95f);
             rug.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            rug.transform.localScale = new Vector3(9.2f, 1.5f, 1f);
+            rug.transform.localScale = new Vector3(1.1f, 2.9f, 1f);
             rug.GetComponent<Renderer>().sharedMaterial = palette.rug;
 
             GameObject desk = AddModel(parent, FurniturePath + "Table_Large.fbx", "Cinna's Desk", new Vector3(-1.25f, 0f, 0.5f), 90f, 0.55f);
@@ -537,6 +540,38 @@ namespace Lumenfall.EditorTools
             block.transform.localPosition = new Vector3(area.center.x, top - 0.001f - depth * 0.5f, area.center.y);
             block.transform.localScale = new Vector3(area.width, depth, area.height);
             block.GetComponent<Renderer>().sharedMaterial = material;
+        }
+
+        // The way back to campus, laid out like the other rooms' exits: a low wall runs along the lobby's near (south) edge
+        // with a one-tile gap at the return portal P.I.00 on the spawn tile, and the lobby runner leads straight to it.
+        private static void BuildExit(Transform parent, Palette palette)
+        {
+            Vector2Int cell = SpawnCell();
+            Vector2Int size = MapSize();
+            const float height = 0.4f;
+            const float thickness = 0.2f;
+            float z = cell.y - 0.5f - thickness * 0.5f;
+            AddLowWall(parent, "Lobby Wall W", -0.5f, cell.x - 0.5f, z, height, thickness, palette.stoneWall);
+            AddLowWall(parent, "Lobby Wall E", cell.x + 0.5f, size.x - 0.5f, z, height, thickness, palette.stoneWall);
+        }
+
+        private static void AddLowWall(Transform parent, string name, float fromX, float toX, float z, float height, float thickness, Material material)
+        {
+            if (toX - fromX <= 0.01f) return;
+            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = name;
+            UnityEngine.Object.DestroyImmediate(wall.GetComponent<Collider>());
+            wall.transform.SetParent(parent, false);
+            wall.transform.localPosition = new Vector3((fromX + toX) * 0.5f, height * 0.5f, z);
+            wall.transform.localScale = new Vector3(toX - fromX, height, thickness);
+            wall.GetComponent<Renderer>().sharedMaterial = material;
+        }
+
+        private static Vector2Int SpawnCell()
+        {
+            WorldAreaAsset area = AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaAssetPath);
+            return area == null || area.definition == null || area.definition.spawn == null
+                ? new Vector2Int(5, 0) : new Vector2Int(area.definition.spawn.x, area.definition.spawn.y);
         }
 
         private static Vector2Int MapSize()
@@ -692,13 +727,13 @@ namespace Lumenfall.EditorTools
 
         // The switch rune: a cut-out ring the runtime tints and lights. Its colour and emission come from the same texture,
         // so only the rune marks glow.
-        private static Material SaveRune(Texture2D texture)
+        private static Material SaveRune(string name, Texture2D texture, Color colour, Color emission)
         {
-            Material material = LoadOrCreate("MAT_IceTrial_Rune", "Universal Render Pipeline/Lit");
+            Material material = LoadOrCreate(name, "Universal Render Pipeline/Lit");
             material.SetTexture("_BaseMap", texture);
-            material.SetColor("_BaseColor", Color.white);
+            material.SetColor("_BaseColor", colour);
             material.SetTexture("_EmissionMap", texture);
-            material.SetColor("_EmissionColor", Color.black);
+            material.SetColor("_EmissionColor", emission);
             material.EnableKeyword("_EMISSION");
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             material.SetFloat("_AlphaClip", 1f);

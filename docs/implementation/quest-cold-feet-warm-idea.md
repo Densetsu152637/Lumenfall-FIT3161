@@ -84,7 +84,8 @@ The room, the relic and the campus entrance read optional art from `Systems/Ques
   - The pool sits in a basin 0.4 below the floor, with dark stone sides. The water drifts while thawed, and the ice sheet sits just above it.
   - The walls reach down into the basin and carry a stone coping.
   - The room stands on dark cave ground, ringed by cliffs (Polytope `PT_Generic_Rock_01`) and pooled mist on the west, north and east.
-  - The south wall is a low parapet (0.4) with short posts, so the camera can see the pool row behind it. Cinna's lobby has a rug. Beyond its west end are a desk with books, a scroll and a candle that stays lit; beyond its east end are a bookcase and a chest. All of this is flat or outside the map, so no walkable cell changes.
+  - The exit back to campus (return portal `P.I.00` on the spawn tile `(5,0)`) follows the other rooms' exits: a low stone wall runs along the lobby's south edge with a one-tile gap at the portal, and a runner rug leads from the pool entrance to the gap.
+  - The south wall is a low parapet (0.4) with short posts, so the camera can see the pool row behind it. Beyond its west end are a desk with books, a scroll and a candle that stays lit; beyond its east end are a bookcase and a chest. All of this is flat or outside the map, so no walkable cell changes.
 - **Thawed and frozen looks (`CinnaIceTrialAmbience`):**
   - Until the relic is frozen, the room is a stone hall with open water, and only the brazier flames and warm lights are on.
   - A live Glaciate sends a frost front out from the pedestal at 9 cells per second. As it passes:
