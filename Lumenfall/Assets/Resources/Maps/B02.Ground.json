@@ -4,7 +4,7 @@
   "regions": [
     {
       "id": "B02",
-      "name": "B02",
+      "name": "Arcane Workshop",
       "rect": {
         "x": 1,
         "y": 1,
@@ -170,7 +170,11 @@
     {
       "id": "quest.stella.first-light",
       "objectIds": [
-        "relic.stella.power"
+        "stella.string-together.relic.1",
+        "stella.string-together.relic.2",
+        "stella.string-together.relic.3",
+        "stella.string-together.relic.4",
+        "stella.string-together.relic.5"
       ],
       "requiredPowered": true
     },
@@ -181,9 +185,21 @@
         "stella.string-together.relic.2",
         "stella.string-together.relic.3",
         "stella.string-together.relic.4",
-        "stella.string-together.relic.5"
+        "stella.string-together.relic.5",
+        "stella.circuit.relay.1",
+        "stella.circuit.relay.2",
+        "stella.circuit.relay.3",
+        "stella.circuit.relay.4",
+        "stella.circuit.relay.5",
+        "stella.circuit.relay.6",
+        "stella.circuit.relay.7",
+        "stella.circuit.relay.8",
+        "stella.circuit.relay.9",
+        "stella.circuit.relay.10",
+        "circuit.stella.link"
       ],
-      "requiredPowered": true
+      "requiredPowered": true,
+      "requiredConnected": true
     }
   ],
   "portals": [

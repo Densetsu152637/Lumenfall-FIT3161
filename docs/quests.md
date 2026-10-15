@@ -18,7 +18,7 @@ Cinna Cirra registers for an orientation duty without realising that the activit
 
 ## Cinna Cirra: Cold Feet, Warm Idea
 
-Cinna Cirra receives another orientation task: triggering a sequence of traps in the required order. They suggest freezing the ground and sliding through the area. The player learns Glaciate and uses its movement rules to solve the sequence puzzle. In the implemented version the trial is an ice-slide room: Glaciate freezes the relic the player delivered during Out of Alignment, which freezes the pool, and the player slides onto twelve switches and then into a seal.
+Cinna Cirra receives another orientation task: triggering a sequence of traps in the required order. They suggest freezing the ground and sliding through the area. The player learns Glaciate and uses its movement rules to solve the sequence puzzle. In the implemented version the trial is an ice-slide room: Glaciate freezes the relic the player delivered during Out of Alignment, which freezes the pool, and the player slides onto nine switches, around crystal pillars and snow patches and without sliding off the open edges, and then into a seal.
 
 ## Orio: Patch Notes
 
@@ -34,11 +34,7 @@ Potential side content includes restoring power to the dormitory grid and locati
 
 ## Runtime puzzle targets
 
-First Light uses five runtime toggle relics in `B02.Ground`; all five must be powered. After First Light, finishing String Them Together's lesson teaches Weave while the new quest remains Active. Its five board relics take power only through a woven chain from `relic.stella.power`, using `circuit.stella.link` and the authored relays as needed. All five must be lit for completion.
-
-Cinna's Out of Alignment teaches Vis, then requires carrying her relic from campus to its stand in `C03.IceTrial` and reporting back before she leaves for the trial. Cold Feet, Warm Idea teaches temporary Glaciate access; freeze the pool, light all twelve switches and enter the east-wall seal to complete it. Katrina's keepsake is in `C04.Recess` at `(12,9)`; reveal it with Lost Echoes, pick it up nearby, then return it to Katrina on campus.
-
-Orio's westForest mechanism is a teleport pad to `orioDaisRoom`. Finish his Rotara lesson, cast at the four sockets until all three rune discs point to their teal notches, then return to Orio to report. Completion reads the live or archived hall state and requires the learned spell; the automatic quest monitor does not complete this quest. Orio teaches Rotara only, and Gravitate stays locked. See [the implementation note](implementation/quest-orio-patch-notes.md).
+The runtime target registry maps the Stella Weave endpoints `relic.stella.power` and `circuit.stella.link` to `B02.Ground` (W02); First Light uses five additional IDs generated and registered by its runtime board. These are distinct sets of objects: String Them Together uses the two stable map-authored endpoints, while First Light uses its five generated toggle relics. Cinna’s ice-trial switches are in `C03.IceTrial`, Katrina’s keepsake is in `C04.Recess`, and Orio’s rune dais is in `deepForest`, reached through the west forest portal `P.F01` beside his F04 glade. First Light requires all five generated Stella toggle relics to be powered; String Them Together requires `relic.stella.power` to be powered and connected to `circuit.stella.link`; Cold Feet, Warm Idea requires the nine `switch.cinna.ice.*` switches and the seal `switch.cinna.ice.final` to be powered; Patch Notes requires the three rune discs of the dais to point north at rotation 0, turned only through its four sockets, and completes through Orio’s report conversation rather than a monitor (see [`quest-orio-patch-notes.md`](implementation/quest-orio-patch-notes.md)); and Something Borrowed requires `keepsake.katrina.hidden` to be revealed at grid cell `(42,60)`. Out of Alignment has no monitor target: it completes when the player reports back after the relic is on its stand and Cinna leaves for the ice trial (`CinnaTrialDeparture`). The quest-puzzle monitor evaluates its target only while that quest is Active; First Light’s custom board also emits the shared completion event when all five generated relics are powered.
 
 ## Implementation trackers
 
@@ -50,3 +46,7 @@ Detailed implementation and completion assessments are maintained separately for
 - [Cinna Cirra: Cold Feet, Warm Idea](quest-implementation/cinna-cold-feet-warm-idea.md)
 - [Orio: Patch Notes](quest-implementation/orio-patch-notes.md)
 - [Katrina: Something Borrowed](quest-implementation/katrina-something-borrowed.md)
+
+Legacy save compatibility: the retired `orioDaisRoom` and `C04.Recess` interiors remain loadable for old saves and provide an exit to the authored forest or campus. Their old entrances stay retired; current Orio progression uses the deep-forest dais and Katrina uses the three memory anchors.
+
+Integration checks preserve terminal lesson rewards and explicit Stella hand-in. The circuit target requires one connected board network; individually lit, disconnected components cannot enable reporting. Orio's quest hint uses the deep-forest route, and taught Katrina search hints keep the recovered anchors awaiting her report.

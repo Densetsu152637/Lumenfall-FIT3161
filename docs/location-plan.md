@@ -16,7 +16,7 @@ Chapter 1 designation expresses a recommendation for this layout, not an increas
 
 ## Overall arrangement
 
-North is up on the map. A walled academy campus contains separate buildings, paths, gardens, and a freely traversable commons. B01 receives arrivals, B02 holds teaching spaces, B03 contains shared facilities and administration, and B04 is the Sirius dormitory. Outdoor paths suggest navigation between buildings but are not mandatory linear passages.
+North is up on the map. A walled academy campus contains separate buildings, paths, gardens, and a freely traversable commons. B01 is the Dormitory, B02 is the Arcane Workshop, B03 is the Main Academy Building, and B04 is the Library. Outdoor paths suggest navigation between buildings but are not mandatory linear passages.
 
 The starting forest lies immediately beyond the west wall. Its trail reaches the west gate and forest threshold, making the forest a distinct neighbouring area rather than a route running through the campus. The north, south, and east gates are visible but reserved for future map expansion. There are no enclosed castle ranges or required corridors between buildings.
 
@@ -26,10 +26,10 @@ Each building is single-storey. Interiors use open halls with activity zones; Si
 
 | ID  | Building or range     | Position and orientation                                               | Function and entrances                                                                                                                   |
 | --- | --------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| B01 | Arrival building      | Southwest campus; public entrance faces the campus commons             | Reception and student services. Its doors open to A01 and the campus paths.                                                             |
-| B02 | Teaching building    | Northwest campus; classrooms face the commons                          | First-year teaching and engineering assignments in one open hall with puzzle zones. A west door opens to campus paths.         |
-| B03 | Shared facilities    | North-central campus; public doors face the commons                     | Dining, library, practice, and administration. Rooms are reached through its own internal hall.                                           |
-| B04 | Sirius dormitory     | Southeast campus; public entrance faces the commons  | Student accommodation and social space in one open common/group-living hall, with a ground-floor player sleeping room. Its lobby opens to campus paths.                    |
+| B01 | Dormitory      | Southwest campus; public entrance faces the campus commons             | Student rooms, shared common spaces, and daily campus life. Its doors open to A01 and the campus paths.                                                     |
+| B02 | Arcane Workshop    | Northwest campus; work areas face the commons                          | Stella's magical-engineering assignments, relics, circuits, and experimental machinery. A west door opens to campus paths.         |
+| B03 | Main Academy Building    | North-central campus; public doors face the commons                     | The academy's main portal, reception, and central services. Rooms are reached through its own internal hall.                                           |
+| B04 | Library     | Southeast campus; public entrance faces the commons  | Reading, study, and archive spaces associated with Katrina. Its lobby opens to campus paths.                    |
 
 These are four separate buildings inside the same academy wall. Their entrances remain independently readable, and no building-to-building corridor is required.
 
@@ -52,7 +52,7 @@ These are four separate buildings inside the same academy wall. Their entrances 
 
 C02 and C03 are adjacent outdoor zones, not buildings. Their puzzle props are proposed interpretations of Cinna Cirra's duties; the exact Vis targets and trap sequence remain undecided. C04 does not determine the identity or family significance of Katrina's missing item.
 
-## B01: South arrival range
+## B01: Dormitory
 
 | ID  | Room or circulation space | Floor and placement     | Direct connections and intended use                                                                                       | Access    |
 | --- | ------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -65,7 +65,7 @@ C02 and C03 are adjacent outdoor zones, not buildings. Their puzzle props are pr
 
 Reception remains accessible throughout Chapter 1. The initial conversation opens exploration; the later group conversation grants the residential key. Neither conversation should depend on optional facilities.
 
-## B02: West teaching range
+## B02: Arcane Workshop
 
 | ID  | Room or circulation space     | Floor and placement                                   | Direct connections and intended use                                                                          | Access    |
 | --- | ----------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------- |
@@ -83,7 +83,7 @@ Reception remains accessible throughout Chapter 1. The initial conversation open
 
 For a compact build, both Stella assignments can use W02 at different quest stages. W03 then remains closed. The second assignment is not a prerequisite for reaching Cinna Cirra unless the quest design explicitly adopts that requirement.
 
-## B03: North shared range
+## B03: Main Academy Building
 
 | ID  | Room or circulation space | Floor and placement                         | Direct connections and intended use                                                                                           | Access    |
 | --- | ------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -102,7 +102,7 @@ For a compact build, both Stella assignments can use W02 at different quest stag
 
 None of N02-N12 is required for the key quest. The cross-hall may therefore operate as a simple connection between the teaching and dormitory wings while these interiors remain unbuilt.
 
-## B04: Sirius dormitory wing
+## B04: Library
 
 The reference describes both a room shared by five students and the player's private room. This proposal reconciles them as a five-person residential suite: one shared group room with five individual bedrooms. This interpretation is a design choice to review, rather than an established detail of the source.
 

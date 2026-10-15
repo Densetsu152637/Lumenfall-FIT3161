@@ -31,10 +31,10 @@ namespace Lumenfall.Startup
             { "westForest", "West Forest" },
             { "campus", "Academy Campus" },
             { "C04.Recess", "Garden Recess" },
-            { "B01.Ground", "Arrival Building" },
-            { "B02.Ground", "Teaching Building" },
-            { "B03.Ground", "Shared Facilities" },
-            { "B04.Ground", "Sirius Dormitory" }
+            { "B01.Ground", "Dormitory" },
+            { "B02.Ground", "Arcane Workshop" },
+            { "B03.Ground", "Main Academy Building" },
+            { "B04.Ground", "Library" }
         };
 
         private readonly HashSet<string> pendingThumbnails = new HashSet<string>(StringComparer.Ordinal);
@@ -167,16 +167,20 @@ namespace Lumenfall.Startup
             try
             {
                 // URP renders off-screen through a render request; Camera.Render remains the built-in pipeline fallback.
+                // A save made while the menu hides the player still shows them in its thumbnail.
                 RenderPipeline.StandardRequest request = new RenderPipeline.StandardRequest { destination = target };
-                if (GraphicsSettings.currentRenderPipeline != null && RenderPipeline.SupportsRenderRequest(camera, request))
+                PlayerVisibility.RenderVisible(() =>
                 {
-                    RenderPipeline.SubmitRenderRequest(camera, request);
-                }
-                else
-                {
-                    camera.targetTexture = target;
-                    camera.Render();
-                }
+                    if (GraphicsSettings.currentRenderPipeline != null && RenderPipeline.SupportsRenderRequest(camera, request))
+                    {
+                        RenderPipeline.SubmitRenderRequest(camera, request);
+                    }
+                    else
+                    {
+                        camera.targetTexture = target;
+                        camera.Render();
+                    }
+                });
                 RenderTexture.active = target;
                 image = new Texture2D(ThumbnailWidth, ThumbnailHeight, TextureFormat.RGB24, false);
                 image.ReadPixels(new Rect(0f, 0f, ThumbnailWidth, ThumbnailHeight), 0, 0);

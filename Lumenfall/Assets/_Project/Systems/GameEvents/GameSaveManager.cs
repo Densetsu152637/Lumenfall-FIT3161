@@ -50,6 +50,11 @@ namespace Lumenfall.GameEvents
         public bool IsBusy { get; private set; }
         public bool AutosaveAllowed => !IsBusy && !autosaveSuspended;
         public string LastError { get; private set; }
+        /// <summary>
+        /// True while providers restore a save, so state they apply then can be shown as already settled rather than as a
+        /// live change (for example, a restored frozen pool should not replay its freeze).
+        /// </summary>
+        public bool IsRestoring { get; private set; }
         public string SaveDirectory => Application.persistentDataPath;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] private static void Bootstrap() { _ = Instance; }
         private void Awake() { if (instance != null && instance != this) { Destroy(gameObject); return; } instance = this; DontDestroyOnLoad(gameObject); }
@@ -202,11 +207,11 @@ namespace Lumenfall.GameEvents
         }
 
         /// <summary>Guards new-game/reset callbacks. Call Save only after this returns successfully.</summary>
-        public bool ResetState(Action reset)
+        public bool ResetState(Action reset, bool resumeAutosave = false)
         {
             if (reset == null || !BeginOperation()) return false;
             autosaveSuspended = true;
-            try { reset(); retainedProviders.Clear(); return true; }
+            try { reset(); retainedProviders.Clear(); autosaveSuspended = !resumeAutosave; return true; }
             catch (Exception exception) { return Fail("Could not reset game state: " + exception.Message); }
             finally { IsBusy = false; }
         }
@@ -346,6 +351,9 @@ namespace Lumenfall.GameEvents
         private static int RestorePriority(string key) => key == "data-driven-world" ? 0 : key == "spell-world-state" ? 1 : 2;
         private void RestoreProviders(ProviderState[] states)
         {
+            IsRestoring = true;
+            try
+            {
             foreach (ProviderState state in states)
                 if (providers.TryGetValue(state.key, out ISaveStateProvider provider) && provider is ISaveStateRestorePhases phased && !phased.PrepareRestoreStateJson(state.payload))
                     throw new InvalidDataException($"Provider '{state.key}' could not prepare restore.");
@@ -355,6 +363,8 @@ namespace Lumenfall.GameEvents
             foreach (ProviderState state in states)
                 if (providers.TryGetValue(state.key, out ISaveStateProvider provider) && provider is ISaveStateRestorePhases && !provider.RestoreStateJson(state.payload))
                     throw new InvalidDataException($"Provider '{state.key}' could not finalize restore.");
+            }
+            finally { IsRestoring = false; }
         }
         private bool Rollback(GameEventRuntime runtime, string events, ProviderState[] states)
         {

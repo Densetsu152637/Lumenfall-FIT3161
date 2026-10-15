@@ -5,6 +5,8 @@ using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
+using Lumenfall.Cutscenes;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Spells
 {
@@ -30,9 +32,10 @@ namespace Lumenfall.Spells
         private string promptTarget;
         private bool promptVisible;
         private Vector3 promptPosition;
-        private GUIStyle boxStyle;
-        private GUIStyle keyStyle;
-        private Texture2D keyTexture;
+        private GridPlayerInput playerInput;
+        private WorldObjectSnapshot[] cachedObjects;
+        private WorldStateService cachedState;
+        private int cachedVersion;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -60,23 +63,30 @@ namespace Lumenfall.Spells
             foreach (GameObject marker in markers.Values) if (marker != null) Destroy(marker);
             if (markerMaterial != null) Destroy(markerMaterial);
             if (glowTexture != null) Destroy(glowTexture);
-            if (keyTexture != null) Destroy(keyTexture);
         }
 
         private void Update()
         {
             promptTarget = null;
             WorldStateService state = WorldStateService.Instance;
-            GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
-            GridMover player = input == null ? null : input.GetComponent<GridMover>();
+            if (playerInput == null || !playerInput.gameObject.activeInHierarchy) playerInput = FindAnyObjectByType<GridPlayerInput>();
+            GridMover player = playerInput == null ? null : playerInput.GetComponent<GridMover>();
             GridWorld world = player == null ? null : player.World;
             if (state == null || !state.IsReady || world == null) { ClearMarkers(); return; }
 
-            WorldObjectSnapshot[] objects = state.SnapshotObjects();
+            // Cloning every world object each frame fed the GC; re-snapshot only when the world state has moved on.
+            if (cachedObjects == null || cachedState != state || cachedVersion != state.Version)
+            {
+                cachedObjects = state.SnapshotObjects();
+                cachedState = state;
+                cachedVersion = state.Version;
+            }
+            WorldObjectSnapshot[] objects = cachedObjects;
             UpdateMarkers(objects, state.CurrentMapId, world, player);
 
-            bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
-                GameEventManager.Instance?.Runtime?.ActiveDialogue != null || IsNpcInTalkRange(player.transform.position);
+            bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked || CutscenePlayer.BlocksInput ||
+                GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
+                IsNpcInTalkRange(player.transform.position);
             if (blocked) return;
             WorldObjectSnapshot nearest = NearestCollectable(objects, state.CurrentMapId, player.CurrentCell);
             promptTarget = nearest?.id;
@@ -108,7 +118,7 @@ namespace Lumenfall.Spells
         // Mirrors DynamicNpc's talk range so the talk key has exactly one meaning at a time.
         private static bool IsNpcInTalkRange(Vector3 position)
         {
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+            foreach (DynamicNpc npc in DynamicNpc.Active)
                 if (Vector3.Distance(position, npc.transform.position) <= NpcTalkRange) return true;
             return false;
         }
@@ -159,24 +169,8 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
-            if (promptTarget == null || !promptVisible || Camera.main == null) return;
-            Vector3 screen = Camera.main.WorldToScreenPoint(promptPosition + Vector3.up * 0.9f);
-            if (screen.z <= 0f) return;
-            if (boxStyle == null)
-            {
-                boxStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 14 };
-                boxStyle.normal.textColor = new Color(0.95f, 0.92f, 0.84f);
-                keyTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-                keyTexture.SetPixel(0, 0, new Color(0.93f, 0.78f, 0.36f, 1f));
-                keyTexture.Apply();
-                keyStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 13 };
-                keyStyle.normal.textColor = new Color(0.10f, 0.11f, 0.13f);
-                keyStyle.normal.background = keyTexture;
-            }
-            Rect rect = new Rect(screen.x - 62f, Screen.height - screen.y - 17f, 124f, 34f);
-            GUI.Box(rect, GUIContent.none, boxStyle);
-            GUI.Label(new Rect(rect.x + 8f, rect.y + 5f, 24f, 24f), KeyBindings.GetKeyLabel(GameAction.Talk), keyStyle);
-            GUI.Label(new Rect(rect.x + 37f, rect.y + 5f, 80f, 24f), "Pick up", boxStyle);
+            if (promptTarget == null || !promptVisible) return;
+            HudSkin.PromptAbove(promptPosition + Vector3.up * 0.9f, KeyBindings.GetKeyLabel(GameAction.Talk), "Pick up");
         }
 
         // Sprites/Default is transparent, unlit, double-sided and supports a tint, which suits a ground glow.

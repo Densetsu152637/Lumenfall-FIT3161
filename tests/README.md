@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 239 EditMode, fifteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -24,31 +24,40 @@ The integrated suite contains 239 EditMode, fifteen batch PlayMode and two graph
 | Vis carry, placement, reset and Cinna hand-off | OutOfAlignmentTests | 33 |
 | Dialogue reveal and rich text | DialogueTextRevealTests | 8 |
 | Event dispatch, dialogue and quest runtime | GameEventRuntimeTests | 7 |
-| Save slot selection policy | GameSaveSlotPolicyTests | 2 |
+| Save slot selection policy | GameSaveSlotPolicyTests | 3 |
 | Borrowed Light progression and spell rewards | KatrinaBorrowedProgressionTests | 8 |
 | Borrowed Light world state and restoration | KatrinaBorrowedWorldTests | 8 |
 | Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
-| Authored quest dialogue references | QuestDialogueContentTests | 2 |
+| Authored quest dialogue references | QuestDialogueContentTests | 3 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
-| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 8 |
+| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 10 |
 | Spell state and world save round trips | SpellWorldStateTests | 4 |
-| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 5 |
+| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 7 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
 | Audio buses and feedback | AudioFeedbackTests | 15 |
-| Transactional save recovery and rollback | GameSaveRecoveryTests | 18 |
+| Transactional save recovery and rollback | GameSaveRecoveryTests | 19 |
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
-| **Gameplay rules / EditMode** | | **239** |
-| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 6 |
+| Ambient casts and single-frame input | AmbientCastTests | 7 |
+| Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
+| Opening forest story | LateToOrientationTests | 4 |
+| Campus introduction | LayOfTheLandTests | 6 |
+| Collectible discovery | MiscCollectiblesTests | 3 |
+| NPC introductions | NpcIntroductionsTests | 7 |
+| Player name and dialogue substitution | PlayerProfileTests | 5 |
+| Player rendering visibility | PlayerVisibilityTests | 4 |
+| Dormitory onboarding | SettlingInTests | 6 |
+| **Gameplay rules / EditMode** | | **303** |
+| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
 | Settings keyboard navigation and preset isolation | OptionsPanelPlayModeTests | 2 |
 | Dialogue pointer gating, runtime replacement and owned cleanup | DialogueSettingsUiPlayModeTests | 1 |
 | Wheel casts, sibling ownership and closing-frame input consumption | SpellWheelCastingPlayModeTests | 1 |
-| **Batch PlayMode** | | **15** |
+| **Batch PlayMode** | | **16** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 | Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
 
@@ -73,8 +82,8 @@ Authored-world PlayMode cases load their own `SampleScene` additively while
 retaining the runner and an empty fixture host. Teardown unloads only that owned
 world, checks loader/listener cleanup, then restores the runner and removes the
 host. Tests wait for any startup menu to finish before establishing a fresh
-authored world. Portal expectations use fixed current prefab geometry: all three
-campus forest-gate cells and all four vertical B02 entrance cells must transfer,
+authored world. Portal expectations use fixed current prefab geometry: all authored
+campus forest-gate cells and B02 entrance cells must transfer,
 and the B02 landing must reach Stella's actual prefab position and return portal.
 
 CI uses `testMode: all` with GameCI CLI `v0.1.72` and
@@ -117,7 +126,7 @@ python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical
 ```
 
 The graphical inventory has exactly two cases; the batch inventory contains the
-other fifteen PlayMode cases. Both verifications reject any failed or skipped case.
+other sixteen PlayMode cases. Both verifications reject any failed or skipped case.
 Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.
@@ -137,3 +146,7 @@ coverage now ship with their corresponding implementations. Physical controller
 behavior, visual AA/AO quality, audio output, standalone player compatibility and
 performance still require their own acceptance evidence. Source inventory and local
 checks do not substitute for successful hosted checks on the final revision.
+
+PR #32 integration preserves transactional save restoration and adds successful New Game autosave resumption, manual-save keyboard dispatch, the authored deep-forest dais route, and save-only exits from the retired Orio hall and Katrina recess. Legacy interiors have no active replacement entrance in the new world.
+
+First Light readiness waits for Stella's report dialogue; expanded lessons are completed through bounded terminal traversal. Circuit readiness requires all powered board nodes in one graph even when no explicit cable list is authored. The disconnected-components regression covers both authored target evaluation and quest-monitor readiness.

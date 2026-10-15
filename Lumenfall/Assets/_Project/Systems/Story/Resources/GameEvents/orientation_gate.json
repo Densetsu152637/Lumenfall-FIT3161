@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "kepler_far_call",
+      "startNodeId": "shout",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "shout",
+          "speaker": "Distant voice",
+          "text": "<shake>HEY! YOU, BY THE TREES!</shake>",
+          "nextNodeId": "hurry"
+        },
+        {
+          "id": "hurry",
+          "speaker": "Distant voice",
+          "text": "Yes, you! Orientation started ages ago. Over here, quickly!",
+          "nextNodeId": "orientation"
+        },
+        {
+          "id": "orientation",
+          "speaker": "{player}",
+          "text": "<i>...Orientation? Does the afterlife have that?</i>",
+          "nextNodeId": "follow"
+        },
+        {
+          "id": "follow",
+          "speaker": "{player}",
+          "text": "<i>Well, I don't have any better ideas. Probably best to do what they say. Could be an isekai, after all.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "kepler_late",
+      "startNodeId": "there_you_are",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "there_you_are",
+          "speaker": "Prof. Kepler",
+          "text": "<wave>There</wave> you are！Do you have any idea what time it is?",
+          "nextNodeId": "late"
+        },
+        {
+          "id": "late",
+          "speaker": "Prof. Kepler",
+          "text": "I'm Professor Kepler, and you are already late to orientation. On your very first day, no less.",
+          "onEnterActions": [ { "type": "SetFlag", "key": "npc.met.prof_kepler", "boolValue": true } ],
+          "nextNodeId": "enrolled"
+        },
+        {
+          "id": "enrolled",
+          "speaker": "{player}",
+          "text": "<i>Late? If I'm dead, I don't think there should be any rush.</i>",
+          "nextNodeId": "name"
+        },
+        {
+          "id": "name",
+          "speaker": "Prof. Kepler",
+          "text": "No time for excuses. Your name, quickly, so I can mark you down.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "kepler_get_in",
+      "startNodeId": "marked",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "marked",
+          "speaker": "Prof. Kepler",
+          "text": "{player}. There, you're on the list.",
+          "nextNodeId": "get_in"
+        },
+        {
+          "id": "get_in",
+          "speaker": "Prof. Kepler",
+          "text": "Now in you get, quickly! Straight through the gate, and don't dawdle.",
+          "nextNodeId": "through"
+        },
+        {
+          "id": "through",
+          "speaker": "{player}",
+          "text": "<i>Well, it's better than standing in a forest.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ],
+  "events": []
+}

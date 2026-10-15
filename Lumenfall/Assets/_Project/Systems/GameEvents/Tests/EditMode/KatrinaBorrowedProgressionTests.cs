@@ -28,22 +28,27 @@ namespace Lumenfall.Tests.GameEvents
             session.End();
             Assert.That(runtime.GetFlag(Spell), Is.False);
             session = runtime.StartDialogue(Quest + "_dialogue");
-            session.SelectChoice("active");
-            Assert.That(session.Continue(), Is.True);
-            Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson lends Lost Echoes for the search.");
+            Assert.That(session.SelectChoice("active"), Is.True);
+            Assert.That(session.SelectChoice("library"), Is.True);
+            EditModeLifecycle.FinishDialogue(session);
+            Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson teaches Lost Echoes for the search.");
             Assert.That(runtime.GetFlag(Spell), Is.False, "Lost Echoes is only learned when the quest completes.");
             Assert.That(runtime.GetFlag(Item), Is.False, "Teaching cannot recover the item.");
         }
 
         [Test]
-        public void FindingMarksKeepsakeCarriedAndReturningItCompletesAndTeaches()
+        public void FindingAllThreeAnchorsAllowsReturningThemAndTeachesTheSpell()
         {
             GameEventRuntime runtime = AuthoredRuntime();
             runtime.StartQuest(Quest);
             DialogueSession session = runtime.StartDialogue(Quest + "_dialogue");
             Assert.That(session.AvailableChoices.Any(c => c.id == "report"), Is.False, "Nothing to return yet.");
             session.End();
-            Assert.That(runtime.TriggerEvent("found_katrina_keepsake").Succeeded, Is.True);
+            Assert.That(runtime.TriggerEvent("found_katrina_library_item").Succeeded, Is.True);
+            Assert.That(runtime.GetFlag(Item), Is.False);
+            Assert.That(runtime.TriggerEvent("found_katrina_garden_item").Succeeded, Is.True);
+            Assert.That(runtime.GetFlag(Item), Is.False);
+            Assert.That(runtime.TriggerEvent("found_katrina_stream_item").Succeeded, Is.True);
             Assert.That(runtime.GetFlag(Item), Is.True);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active), "Finding is not completion.");
             Assert.That(runtime.GetFlag(Spell), Is.False);
@@ -61,6 +66,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.StartQuest(Quest);
             int itemNotifications = 0;
             runtime.FlagChanged += (key, value) => { if (key == Item && value) itemNotifications++; };
+            runtime.SetFlag(Item, true);
             Assert.That(runtime.TriggerEvent("complete_" + Quest).Succeeded, Is.True);
             Assert.That(runtime.TriggerEvent("complete_" + Quest).Succeeded, Is.False);
             Assert.That(runtime.CompleteQuest(Quest), Is.False);
@@ -146,7 +152,7 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession lesson = runtime.StartDialogue("stella_first_light_dialogue");
             lesson.SelectChoice("accept");
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False);
-            lesson.Continue();
+            EditModeLifecycle.FinishDialogue(lesson);
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True);
         }
 

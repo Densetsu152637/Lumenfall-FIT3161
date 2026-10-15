@@ -76,13 +76,13 @@ namespace Lumenfall.Startup
             EnsureProps();
 
             Color goldTrim = MenuArt.WithAlpha(MenuArt.Gold, 0.32f);
-            Panel = Sliced(MenuArt.Rounded(64, 64, 20f, MenuArt.PanelFill, MenuArt.Gold, 2.5f), 24);
+            Panel = Sliced(MenuArt.Rounded(64, 64, 20f, MenuArt.PanelFill, MenuArt.Gold, 2f), 24);
             PanelTrim = Sliced(MenuArt.Rounded(64, 64, 15f, Color.clear, MenuArt.WithAlpha(MenuArt.Gold, 0.3f), 1f), 20);
             Card = Sliced(MenuArt.Rounded(32, 32, 12f, new Color(0.18f, 0.14f, 0.27f, 0.85f), goldTrim, 1.5f), 14);
             Entry = new GUIStyle(Card) { padding = new RectOffset(16, 16, 10, 12), margin = new RectOffset(0, 4, 0, 10) };
             Pill = Sliced(MenuArt.Rounded(20, 10, 5f, Color.white, Color.clear, 0f), 5);
 
-            Title = Text(font, 36, TextAnchor.MiddleCenter, MenuArt.Gold);
+            Title = Text(font, 18, TextAnchor.MiddleCenter, MenuArt.Gold);
             Title.fontStyle = FontStyle.Bold;
             Heading = Text(font, 15, TextAnchor.MiddleLeft, MenuArt.Gold);
             Heading.fontStyle = FontStyle.Bold;
@@ -250,11 +250,17 @@ namespace Lumenfall.Startup
         /// <summary>Gold heading with a soft pulsing lavender glow behind it.</summary>
         public void DrawTitle(Rect rect, string text, float now)
         {
+            DrawTitle(rect, text, now, Title);
+        }
+
+        /// <summary>Gold heading using a caller-provided layout style, such as a wrapped left-aligned card title.</summary>
+        public void DrawTitle(Rect rect, string text, float now, GUIStyle style)
+        {
             float pulse = 0.5f + 0.5f * Mathf.Sin(now * 1.6f);
             if (Event.current.type == EventType.Repaint)
                 Draw(Expand(rect, -rect.width * 0.3f, 2f), Glow, MenuArt.Lavender, 0.2f + 0.12f * pulse);
-            Label(new Rect(rect.x, rect.y + 2f, rect.width, rect.height), text, Title, MenuArt.Ink, 0.6f);
-            Label(rect, text, Title, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.15f * pulse));
+            Label(new Rect(rect.x, rect.y + 2f, rect.width, rect.height), text, style, MenuArt.Ink, 0.6f);
+            Label(rect, text, style, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.15f * pulse));
         }
 
         /// <summary>A soft gold rule with a gently rocking star in the middle.</summary>

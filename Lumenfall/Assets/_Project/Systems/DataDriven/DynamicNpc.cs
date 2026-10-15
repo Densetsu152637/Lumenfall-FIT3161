@@ -7,6 +7,9 @@ using Lumenfall.Inventory;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
+using Lumenfall.Startup;
+using Lumenfall.Story;
 
 namespace Lumenfall.DataDriven
 {
@@ -20,14 +23,17 @@ namespace Lumenfall.DataDriven
         public NpcDefinition Definition => definition;
         [SerializeField] private NpcDefinition definition;
         [SerializeField] private string initialDialogueId;
-        private static Texture2D interactionKeyTexture;
+        private static readonly List<DynamicNpc> active = new List<DynamicNpc>();
+        /// NPCs on active GameObjects; per-frame callers read this instead of searching the scene.
+        public static IReadOnlyList<DynamicNpc> Active => active;
         private void Awake()
         {
             // Every NPC idles with some variety and turns to face the player; see NpcAmbientBehaviour.
             if (GetComponent<NpcAmbientBehaviour>() == null) gameObject.AddComponent<NpcAmbientBehaviour>();
             ApplyDefinition();
         }
-        private void OnEnable() { ApplyDefinition(); }
+        private void OnEnable() { if (!active.Contains(this)) active.Add(this); ApplyDefinition(); }
+        private void OnDisable() { active.Remove(this); }
         private void ApplyDefinition()
         {
             if (definition == null) return;
@@ -48,17 +54,18 @@ namespace Lumenfall.DataDriven
         }
         private void Update()
         {
-            // OverlayInputGate covers the pause menu, journal, spell wheel and dialogue choices.
-            if (Time.timeScale <= 0f || OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen ||
-                DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
-                !(KeyBindings.WasPressed(GameAction.Talk) || Gamepad.current?.buttonSouth.wasPressedThisFrame == true) ||
-                GameEventManager.Instance == null || GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
+            // The departure fade runs right after a dialogue closes; a quick Talk press must not reopen it behind the fade.
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
+                CinnaTrialDeparture.InProgress || DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
+                GridPortal.IsPlayerAtInteractivePortal ||
+                !(KeyBindings.WasPressed(GameAction.Talk) || Gamepad.current?.buttonSouth.wasPressedThisFrame == true) || GameEventManager.Instance == null ||
+                GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
 
-            GridMover player = FindAnyObjectByType<GridMover>();
+            GridMover player = GridMover.FindActive();
             if (player == null) return;
             DynamicNpc nearest = null;
             float best = 2.01f;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (DynamicNpc npc in Active)
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }
@@ -68,41 +75,29 @@ namespace Lumenfall.DataDriven
 
         private void OnGUI()
         {
-            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen ||
-                DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
-            GridMover player = FindAnyObjectByType<GridMover>();
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
+                CutscenePlayer.BlocksInput || CinnaTrialDeparture.InProgress || GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
+            GridMover player = GridMover.FindActive();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
             DynamicNpc nearest = null;
             float best = 2.01f;
-            foreach (DynamicNpc npc in FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude))
+            foreach (DynamicNpc npc in Active)
             {
                 float distance = Vector3.Distance(player.transform.position, npc.transform.position);
                 if (distance <= best) { best = distance; nearest = npc; }
             }
-            if (nearest != this || Camera.main == null) return;
-            Vector3 screen = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 1.8f);
-            if (screen.z <= 0f) return;
-            GUIStyle box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 14 };
-            box.normal.textColor = new Color(0.95f, 0.92f, 0.84f);
-            GUIStyle key = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleCenter, fontSize = 13 };
-            key.normal.textColor = new Color(0.10f, 0.11f, 0.13f);
-            key.normal.background = InteractionKeyTexture();
-            Rect rect = new Rect(screen.x - 52f, Screen.height - screen.y - 17f, 104f, 34f);
-            GUI.Box(rect, GUIContent.none, box);
-            GUI.Label(new Rect(rect.x + 8f, rect.y + 5f, 24f, 24f), "E", key);
-            GUI.Label(new Rect(rect.x + 37f, rect.y + 5f, 58f, 24f), "Talk", box);
-        }
-
-        private static Texture2D InteractionKeyTexture()
-        {
-            if (interactionKeyTexture != null) return interactionKeyTexture;
-            interactionKeyTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            interactionKeyTexture.SetPixel(0, 0, new Color(0.93f, 0.78f, 0.36f, 1f));
-            interactionKeyTexture.Apply();
-            return interactionKeyTexture;
+            if (nearest != this) return;
+            HudSkin.PromptAbove(transform.position + Vector3.up * 1.8f, KeyBindings.GetKeyLabel(GameAction.Talk), "Talk");
         }
         public DialogueSession Interact()
-        { if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null; DialogueId = SelectDialogue(); if (string.IsNullOrWhiteSpace(DialogueId)) return null; InventoryEncyclopediaUI.DiscoverCharacter(Id); return GameEventManager.Instance.StartDialogue(DialogueId); }
+        {
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null;
+            DialogueId = SelectDialogue();
+            if (string.IsNullOrWhiteSpace(DialogueId)) return null;
+            InventoryEncyclopediaUI.DiscoverCharacter(Id);
+            QuestHintOverlay.RecordQuestConversation(GameEventManager.Instance.Runtime, Id);
+            return NpcIntroductions.StartConversation(Id, DialogueId, HasQuestBusiness());
+        }
         private string SelectDialogue()
         {
             if (definition == null) return DialogueId;
@@ -126,6 +121,35 @@ namespace Lumenfall.DataDriven
             // completed earlier quests from competing with it in the weighted random selection.
             if (prerequisiteChoices.Count > 0) choices = prerequisiteChoices;
             return choices.Count == 0 ? null : choices[UnityEngine.Random.Range(0, choices.Count)];
+        }
+
+        /// True while this NPC's quest dialogue is what they need to say rather than general conversation: a quest to
+        /// offer (its prerequisite met), one ready to report back on, or one finished whose thanks the player has not
+        /// heard yet. While a quest is simply under way, their general conversation offers it as a topic instead.
+        private bool HasQuestBusiness()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (definition == null || runtime == null) return false;
+            foreach (NpcDialogueDefinition item in definition.dialogue ?? Array.Empty<NpcDialogueDefinition>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.questId)) continue;
+                if (!string.IsNullOrWhiteSpace(item.prerequisiteQuestId) && !StatusMatches(item.prerequisiteQuestId, item.prerequisiteQuestStatus)) continue;
+                QuestStatus status = runtime.GetQuestStatus(item.questId);
+                if (status == QuestStatus.NotStarted) return true;
+                if (status == QuestStatus.Active && CanReport(runtime, item.dialogueId)) return true;
+                if (status == QuestStatus.Completed && !runtime.GetFlag(NpcIntroductions.QuestThankedFlag(item.questId))) return true;
+            }
+            return false;
+        }
+
+        // A quest dialogue offers a "report" choice once its task is done but still has to be handed in.
+        private static bool CanReport(GameEventRuntime runtime, string dialogueId)
+        {
+            if (string.IsNullOrWhiteSpace(dialogueId) || !runtime.Catalog.TryGetDialogue(dialogueId, out DialogueDefinition dialogue) ||
+                !runtime.Catalog.TryGetDialogueNode(dialogueId, dialogue.startNodeId, out DialogueNodeDefinition start)) return false;
+            foreach (DialogueChoiceDefinition choice in start.choices ?? Array.Empty<DialogueChoiceDefinition>())
+                if (choice != null && choice.id == "report" && runtime.EvaluateConditions(choice.conditions, choice.conditionMode)) return true;
+            return false;
         }
 
         private bool StatusMatches(string questId, string expectedStatus)

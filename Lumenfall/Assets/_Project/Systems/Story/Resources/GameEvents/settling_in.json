@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "dorm_room_not_ready",
+      "startNodeId": "sent",
+      "metadata": [
+        {"key": "npcId", "value": "marigold"},
+        {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "sent", "speaker": "Marigold", "text": "Professor Bann sent word you'd be coming. Let me just check the list...", "nextNodeId": "not_ready"},
+        {"id": "not_ready", "speaker": "Marigold", "text": "Oh dear. I'm afraid your room isn't ready yet. Today's arrivals all came at once, and we're still sorting the keys.", "onEnterActions": [{"type": "SetFlag", "key": "story.dorm.room_not_ready", "boolValue": true}], "nextNodeId": "explore"},
+        {"id": "explore", "speaker": "Marigold", "text": "Why not go and get familiar with the campus in the meantime? Meet your fellow dormmates. Most of them are out and about today.", "nextNodeId": "later"},
+        {"id": "later", "speaker": "Marigold", "text": "Come back once you've had a good look around, and I'll have your key waiting.", "nextNodeId": "exploring"},
+        {"id": "exploring", "speaker": "{player}", "text": "<i>No room yet? Guess exploring it is, then.</i>", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "room_ready_thought",
+      "startNodeId": "done",
+      "metadata": [
+        {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "done", "speaker": "{player}", "text": "<i>That's a lot of new faces and a lot of strange puzzles for one day.</i>", "nextNodeId": "ready"},
+        {"id": "ready", "speaker": "{player}", "text": "<i>My dorm room should be ready by now. I should head back to the dormitory.</i>", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "dorm_room_ready",
+      "startNodeId": "ready",
+      "metadata": [
+        {"key": "npcId", "value": "marigold"},
+        {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "ready", "speaker": "Marigold", "text": "{player}! Perfect timing. Your room is ready at last.", "nextNodeId": "key"},
+        {"id": "key", "speaker": "Marigold", "text": "Here's your key. Third door along the hall, right in the middle. You can't miss it.", "nextNodeId": "own_room"},
+        {"id": "own_room", "speaker": "{player}", "text": "<i>I really hope it's big enough for the five of us. Then again, this is a magical academy, so I feel like I don't need to worry about that.</i>", "nextNodeId": "rest"},
+        {"id": "rest", "speaker": "Marigold", "text": "Get some rest. Tomorrow your student guide will show you everything you missed.", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "dorm_no_rooms",
+      "startNodeId": "plead",
+      "metadata": [
+        {"key": "placeholder", "value": "Chapter 1 dorm scene, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "plead", "speaker": "Rowan", "text": "Please! What do you mean you don't have any rooms left?!", "onEnterActions": [{"type": "SetFlag", "key": "story.dorm.no_rooms_scene", "boolValue": true}], "nextNodeId": "tough"},
+        {"id": "tough", "speaker": "Thistle", "text": "Tough luck.", "nextNodeId": "beg"},
+        {"id": "beg", "speaker": "Rowan", "text": "<shake>PLEEEAAASE! I NEED THIIIS!</shake>", "nextNodeId": "laugh"},
+        {"id": "laugh", "speaker": "Marigold", "text": "Thistle. Please don't laugh.", "nextNodeId": ""}
+      ]
+    }
+  ],
+  "events": []
+}

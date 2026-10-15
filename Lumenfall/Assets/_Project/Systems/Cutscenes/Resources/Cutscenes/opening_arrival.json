@@ -1,0 +1,15 @@
+{
+  "id": "opening_arrival",
+  "once": true,
+  "unskippable": true,
+  "steps": [
+    { "type": "camera", "zoom": 0.85 },
+    { "type": "arrive" },
+    { "type": "fade", "color": "#FFF4DC", "alpha": 0.85, "seconds": 0.08 },
+    { "type": "reveal" },
+    { "type": "cameraRelease" },
+    { "type": "fade", "alpha": 0, "seconds": 0.9 },
+    { "type": "wait", "seconds": 0.6 },
+    { "type": "dialogue", "key": "opening_awakening" }
+  ]
+}

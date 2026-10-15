@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe192486b17ce404d8245931b0673cec, type: 3}
+  m_Name: deepForest
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.DataDriven.WorldAreaAsset
+  definition:
+    schemaVersion: 1
+    id: deepForest
+    width: 20
+    height: 20
+    tileFile: 
+    portalGlyph: 
+    spawn:
+      x: 3
+      y: 10
+    regions:
+    - id: DF00
+      name: Deep Forest
+      rect:
+        x: 0
+        y: 0
+        width: 20
+        height: 20
+      walkable: 1
+    B01:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B02:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B03:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B04:
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    B01Prefab: {fileID: 0}
+    B02Prefab: {fileID: 0}
+    B03Prefab: {fileID: 0}
+    B04Prefab: {fileID: 0}
+    objects: []
+    puzzleTargets: []
+  areaPrefab: {fileID: 175041667149955320, guid: dc41fe5f076a46c4dbdc64bf166909d0, type: 3}
+  portals:
+  - {fileID: 11400000, guid: 47e0d7dfb05adc44b940f6885c0c6951, type: 2}

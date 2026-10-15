@@ -95,35 +95,9 @@ MonoBehaviour:
     B02Prefab: {fileID: 8082043064124931519, guid: e805ed023f4741279f7d82bed361eaf7, type: 3}
     B03Prefab: {fileID: 7021467218467495116, guid: 9a27fedd4df44b74b5cd78aeaa8f96f7, type: 3}
     B04Prefab: {fileID: 7077579204381133489, guid: 26fac71aa6a845faab98f494510d1a37, type: 3}
-    objects:
-    - id: mechanism.orio.rotate
-      prefab: {fileID: 0}
-      type: mechanism
-      x: 8
-      y: 21
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 180
-      blocks: 0
-      tags:
-      - rotara
-      compatibleWithSpells: 1
-    puzzleTargets:
-    - id: quest.orio.patch-notes
-      objectIds:
-      - mechanism.orio.rotate
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 0
-      requiredFrozen: 0
-      requiredAligned: 0
-      requiredRotation: 90
-      requiredPositionX: -2147483648
-      requiredPositionY: -2147483648
-    portals: []
+    objects: []
+    puzzleTargets: []
   areaPrefab: {fileID: 5632919234203233261, guid: f54d29105f80c8242b39536dc4282947, type: 3}
   portals:
   - {fileID: 11400000, guid: 10000000000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: 5317742e7cff35f448a9640a933c9434, type: 2}

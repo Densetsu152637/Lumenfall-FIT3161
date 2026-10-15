@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
-using Lumenfall.Inventory;
 using Lumenfall.Spells;
 
 namespace Lumenfall.Quests
@@ -12,68 +10,80 @@ namespace Lumenfall.Quests
     /// <summary>
     /// Orio's Patch Notes dais: three rune discs turned through four floor sockets. Casting Rotara at a socket turns
     /// every disc it touches by one clockwise quarter turn, so the discs have to be solved together. The dais stands in
-    /// the hall built by <see cref="OrioDaisRoom"/> and is registered in code, like Stella's relic board. World state,
-    /// read live in the hall or from its archive when reporting to Orio in the forest, decides completion; the legacy
-    /// flag never does.
+    /// the deep forest, reached through the west forest portal, and is registered in code like Stella's relic board.
+    /// World state, read live in the deep forest or from its archive when reporting to Orio in the west forest, decides
+    /// completion; the legacy flag never does.
     /// </summary>
     public sealed class OrioRuneDiscPuzzle : MonoBehaviour
     {
-        public const string PuzzleMapId = OrioDaisRoom.MapId;
+        public const string PuzzleMapId = "deepForest";
         // The centre socket keeps the original mechanism id, which Orio's completion condition names.
         public const string AnchorId = "mechanism.orio.rotate";
         public const string AlignmentCondition = "OrioMechanismAligned";
         public const string DiscTag = "rotara-disc";
         public const int TargetRotation = 0;
         private const string RotaraTag = "rotara";
-        private const string QuestId = "orio_patch_notes";
-        private const string AlignedFlag = "orio.patch_notes.mechanism_aligned";
+        public const string QuestId = "orio_patch_notes";
+        public const string CompletionEventId = "complete_orio_patch_notes";
+        public const string ReportedFlag = "orio.patch_notes.reported";
         private const int InteractionRange = 1;
-        private const float TurnSpeed = 240f;
+        private const int StepDegrees = 90;
         private const float FlashSeconds = 0.4f;
-        private const float DiscRadius = 0.95f;
-        private const float SocketRadius = 0.22f;
+        private const float SolvedPulseSpeed = 2.4f;
+        private const float SolvedGlowMin = 2.2f;
+        private const float SolvedGlowMax = 4.2f;
+        private const float DiscAnimationStepDegrees = 1.8f;
+        private const float DiscAnimationStepSeconds = 0.01f;
 
         public static readonly string[] DiscIds = { "mechanism.orio.disc.northwest", "mechanism.orio.disc.northeast", "mechanism.orio.disc.south" };
         // Chosen so the intended solution is north 3, centre 2, west 2, east 1 presses; other press orders also solve it.
         public static readonly int[] DiscStartRotations = { 90, 180, 270 };
         public static readonly string[] SocketIds = { "mechanism.orio.socket.north", "mechanism.orio.socket.west", "mechanism.orio.socket.east", AnchorId };
-        private static readonly Vector2Int[] DiscOffsets = { new Vector2Int(-2, 1), new Vector2Int(2, 1), new Vector2Int(0, -2) };
-        private static readonly Vector2Int[] SocketOffsets = { new Vector2Int(0, 1), new Vector2Int(-2, -1), new Vector2Int(2, -1), Vector2Int.zero };
         private static readonly int[][] SocketLinks = { new[] { 0, 1 }, new[] { 0, 2 }, new[] { 1, 2 }, new[] { 0, 1, 2 } };
 
-        private static readonly Color DaisColor = new Color(0.17f, 0.17f, 0.22f);
-        private static readonly Color DaisRimColor = new Color(0.32f, 0.3f, 0.38f);
-        private static readonly Color DaisSolvedColor = new Color(0.16f, 0.3f, 0.3f);
-        private static readonly Color DiscBaseColor = new Color(0.27f, 0.27f, 0.33f);
-        private static readonly Color DiscFaceColor = new Color(0.4f, 0.38f, 0.46f);
-        private static readonly Color RuneColor = new Color(0.68f, 0.52f, 1f);
-        private static readonly Color NotchColor = new Color(0.2f, 0.55f, 0.48f);
-        private static readonly Color SolvedColor = new Color(0.25f, 0.92f, 0.75f);
-        private static readonly Color SocketColor = new Color(0.55f, 0.42f, 0.2f);
-        private static readonly Color SocketReadyColor = new Color(1f, 0.78f, 0.35f);
-        private static readonly Color LinkColor = new Color(0.36f, 0.3f, 0.55f);
-        private static readonly Color FlashColor = new Color(0.85f, 0.75f, 1f);
+        // A forest shrine: a moss floor in a ring of old stone, lichen-covered rune discs whose carved runes glow like
+        // fireflies, tree-stump sockets topped with firefly orbs, and vines tracing which discs each socket turns.
+        private static readonly Color DaisColor = new Color(0.2f, 0.3f, 0.17f);
+        private static readonly Color DaisSolvedColor = new Color(0.24f, 0.42f, 0.22f);
+        private static readonly Color RuneColor = new Color(1f, 0.83f, 0.42f);
+        private static readonly Color NotchColor = new Color(0.2f, 0.62f, 0.55f);
+        private static readonly Color SolvedColor = new Color(0.55f, 1f, 0.55f);
+        private static readonly Color SocketColor = new Color(0.72f, 0.6f, 0.28f);
+        private static readonly Color SocketReadyColor = new Color(1f, 0.86f, 0.42f);
+        private static readonly Color LinkColor = new Color(0.27f, 0.45f, 0.2f);
+        private static readonly Color FlashColor = new Color(0.86f, 1f, 0.78f);
+        private static readonly Color StandingStoneColor = new Color(0.4f, 0.42f, 0.36f);
+        private const float SoftGlow = 0.18f;
+        private const float BrightGlow = 1.4f;
+        private const int FireflyCount = 9;
 
         private static OrioRuneDiscPuzzle instance;
         private readonly GameObject[] discHolders = new GameObject[3];
-        private readonly Transform[] discBases = new Transform[3];
-        private readonly Transform[] discFaces = new Transform[3];
+        private readonly Vector3[] authoredDiscLocalPositions = new Vector3[3];
+        private readonly Quaternion[] clearedDiscLocalRotations = new Quaternion[3];
+        private readonly float[] solvedDiscStateRotations = new float[3];
+        private readonly float[] displayedDiscRotations = new float[3];
+        private readonly float[] discAnimationTargets = new float[3];
+        private readonly float[] nextDiscStepAt = new float[3];
+        private readonly bool[] discPresentationInitialized = new bool[3];
         private readonly List<Renderer>[] runeRenderers = new List<Renderer>[3];
         private readonly Renderer[] notchRenderers = new Renderer[3];
-        private readonly float[] displayedAngles = new float[3];
+        private readonly Renderer[] standingStoneRenderers = new Renderer[9];
         private readonly GameObject[] socketHolders = new GameObject[4];
         private readonly Renderer[] gemRenderers = new Renderer[4];
         private readonly List<Renderer>[] linkRenderers = new List<Renderer>[4];
         private readonly float[] lastSocketRotations = new float[4];
         private readonly float[] flashUntil = new float[4];
         private readonly Dictionary<Renderer, Color> appliedColors = new Dictionary<Renderer, Color>();
+        private readonly Dictionary<Renderer, float> glowStrengths = new Dictionary<Renderer, float>();
+        private readonly Transform[] fireflies = new Transform[FireflyCount];
+        private readonly Vector3[] fireflyHomes = new Vector3[FireflyCount];
         private Transform presentationRoot;
         private Renderer daisRenderer;
         private GridMover player;
-        private bool hasDisplayedAngles;
         private int highlightedSocket = -1;
 
-        /// <summary>Socket links apply only in the hall; the forest pad and campus gear share the centre id but are not sockets.</summary>
+        /// <summary>Socket links apply only in the deep forest, so the same ids elsewhere never turn the discs.</summary>
         public static bool TryGetLinkedDiscs(string mapId, string socketId, out string[] discIds)
         {
             discIds = null;
@@ -83,24 +93,15 @@ namespace Lumenfall.Quests
             return true;
         }
 
-        /// <summary>
-        /// Registers the discs and sockets around the centre cell. Call between BeginMapRebuild and EndMapRebuild: discs
-        /// start at their authored angles, then saved or archived angles are re-applied. Holders may be null when only
-        /// world state is needed, as in tests.
-        /// </summary>
-        public static void RegisterPuzzleObjects(WorldStateService state, Vector2Int anchorCell, IList<GameObject> discs = null, IList<GameObject> sockets = null)
-        {
-            if (state == null) return;
-            for (int i = 0; i < DiscIds.Length; i++)
-            {
-                // Discs can't be targeted directly; only sockets accept spells, or one disc could be turned on its own.
-                state.RegisterObject(DiscIds[i], discs?[i], anchorCell + DiscOffsets[i], Vector2Int.one, false, new[] { DiscTag });
-                int start = DiscStartRotations[i];
-                state.SetProperty(DiscIds[i], item => item.rotation = start);
-            }
-            for (int i = 0; i < SocketIds.Length; i++)
-                state.RegisterObject(SocketIds[i], sockets?[i], anchorCell + SocketOffsets[i], Vector2Int.one, true, new[] { RotaraTag });
-        }
+        public static bool RotationMatches(float angle, float required) =>
+            !float.IsNaN(angle) && !float.IsInfinity(angle) &&
+            Math.Abs(NormalizeDegrees(angle) - NormalizeDegrees(required)) < 0.001f;
+
+        /// <summary>One clockwise Rotara quarter turn, snapped to the 90-degree grid so saved angles never drift.</summary>
+        public static float NextQuarterTurn(float angle) =>
+            NormalizeDegrees((float)Math.Round(NormalizeDegrees(angle) / StepDegrees, MidpointRounding.ToEven) * StepDegrees + StepDegrees);
+
+        private static float NormalizeDegrees(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
 
         public static bool AreDiscsAligned(string mapId, IList<WorldObjectSnapshot> discs)
         {
@@ -110,12 +111,12 @@ namespace Lumenfall.Quests
                 WorldObjectSnapshot disc = discs[i];
                 if (disc == null || !string.Equals(disc.id, DiscIds[i], StringComparison.Ordinal) ||
                     !string.Equals(disc.mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) || !HasTag(disc.tags, DiscTag) ||
-                    !RotaraGearMechanism.RotationMatches(disc.rotation, TargetRotation)) return false;
+                    !RotationMatches(disc.rotation, SolvedStateRotation(i))) return false;
             }
             return true;
         }
 
-        /// <summary>Reads the hall live while the player is in it, or its archived state when reporting to Orio in the forest.</summary>
+        /// <summary>Reads the deep forest live while the player is in it, or its archived state when reporting to Orio in the west forest.</summary>
         public static bool IsQuestReady(WorldStateService state, GameEventRuntime runtime)
         {
             if (runtime == null || runtime.GetQuestStatus(QuestId) != QuestStatus.Active || !runtime.GetFlag("spell.unlocked.Rotara") ||
@@ -125,6 +126,15 @@ namespace Lumenfall.Quests
                 if (!state.TryGetObjectInMap(PuzzleMapId, DiscIds[i], out discs[i])) return false;
             return AreDiscsAligned(PuzzleMapId, discs);
         }
+
+        // Orio's dialogue and completion event use this condition; its handler is registered once a runtime exists. In the
+        // editor it is also declared after every script reload, which a reload during Play Mode needs: SubsystemRegistration
+        // only runs when Play Mode starts.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+#endif
+        private static void DeclareQuestConditions() => GameEventCatalog.DeclareCustomConditionType(AlignmentCondition);
 
         /// <summary>Registers a stateless resolver; it retains no dais, map instance or old runtime.</summary>
         public static void RegisterQuestConditions(GameEventRuntime runtime)
@@ -149,10 +159,16 @@ namespace Lumenfall.Quests
                 instance = host.AddComponent<OrioRuneDiscPuzzle>();
                 DontDestroyOnLoad(host);
             }
-            instance.Build(world, OrioDaisRoom.DaisCentre);
+            OrioRuneDiscAuthoring authored = areaRoot == null ? null : areaRoot.GetComponentInChildren<OrioRuneDiscAuthoring>(true);
+            if (authored == null)
+            {
+                Debug.LogError("Deep Forest is missing its authored Orio Rune Dais.");
+                instance.SetPresentationVisible(false);
+                return;
+            }
+            instance.BindAuthored(authored.transform);
             instance.SetPresentationVisible(true);
-            RegisterPuzzleObjects(state, OrioDaisRoom.DaisCentre, instance.discHolders, instance.socketHolders);
-            instance.hasDisplayedAngles = false;
+            instance.RegisterBoundPuzzleObjects(state, world);
             for (int i = 0; i < instance.lastSocketRotations.Length; i++) instance.lastSocketRotations[i] = float.NaN;
         }
 
@@ -171,13 +187,6 @@ namespace Lumenfall.Quests
         {
             if (!PuzzleMapActive(out WorldStateService state)) { highlightedSocket = -1; return; }
             highlightedSocket = NearestSocketInRange(state);
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (Time.timeScale <= 0f || InventoryUiState.IsOpen || runtime == null || runtime.ActiveDialogue != null ||
-                highlightedSocket < 0 || !KeyBindings.WasPressed(GameAction.Interact)) return;
-            // The dais stays inert until Orio explains it, and acceptance alone never substitutes for the Rotara lesson.
-            if (runtime.GetQuestStatus(QuestId) == QuestStatus.NotStarted || AnyLinkedDiscTurning(state, highlightedSocket)) return;
-            SpellCaster caster = player != null ? player.GetComponent<SpellCaster>() : null;
-            if (caster != null && caster.IsSpellUnlocked(SpellId.Rotara)) caster.CastSelectedAt(SocketIds[highlightedSocket]);
         }
 
         private void LateUpdate()
@@ -186,24 +195,22 @@ namespace Lumenfall.Quests
             bool allSolved = true;
             for (int i = 0; i < DiscIds.Length; i++)
             {
-                if (discFaces[i] == null || !state.TryGetObject(DiscIds[i], out WorldObjectSnapshot disc)) { allSolved = false; continue; }
-                // SyncTransform snaps the holder to the stored angle; keep the base fixed and ease the rune face clockwise.
-                discBases[i].rotation = Quaternion.identity;
-                if (!hasDisplayedAngles) displayedAngles[i] = disc.rotation;
-                else
-                {
-                    float clockwise = Mathf.Repeat(disc.rotation - displayedAngles[i], 360f);
-                    if (clockwise > 315f) displayedAngles[i] = Mathf.MoveTowardsAngle(displayedAngles[i], disc.rotation, TurnSpeed * Time.deltaTime);
-                    else displayedAngles[i] = Mathf.Repeat(displayedAngles[i] + Mathf.Min(clockwise, TurnSpeed * Time.deltaTime), 360f);
-                }
-                discFaces[i].rotation = Quaternion.Euler(0f, displayedAngles[i], 0f);
-                bool solved = RotaraGearMechanism.RotationMatches(disc.rotation, TargetRotation) && !IsTurning(i, disc);
+                if (discHolders[i] == null || !state.TryGetObject(DiscIds[i], out WorldObjectSnapshot disc)) { allSolved = false; continue; }
+                // Keep the prefab-authored placement under the rotated Rune Dais. World state stores only the
+                // quarter-turn offset; this component owns the actual local transform presentation.
+                Transform holder = discHolders[i].transform;
+                holder.localPosition = authoredDiscLocalPositions[i];
+                UpdateDiscAnimation(i, disc.rotation);
+                holder.localRotation = clearedDiscLocalRotations[i] * Quaternion.Euler(0f, displayedDiscRotations[i], 0f);
+                bool solved = RotationMatches(disc.rotation, solvedDiscStateRotations[i]);
                 allSolved &= solved;
                 foreach (Renderer rune in runeRenderers[i]) SetColor(rune, solved ? SolvedColor : RuneColor);
                 SetColor(notchRenderers[i], solved ? SolvedColor : NotchColor);
             }
-            hasDisplayedAngles = true;
+            foreach (Renderer stone in standingStoneRenderers) SetColor(stone, StandingStoneColor);
             SetColor(daisRenderer, allSolved ? DaisSolvedColor : DaisColor);
+            if (allSolved) ShineSolvedMonument();
+            DriftFireflies();
 
             for (int i = 0; i < SocketIds.Length; i++)
             {
@@ -214,15 +221,6 @@ namespace Lumenfall.Quests
                 bool flashing = Time.unscaledTime < flashUntil[i];
                 SetColor(gemRenderers[i], flashing ? FlashColor : i == highlightedSocket ? SocketReadyColor : SocketColor);
                 foreach (Renderer link in linkRenderers[i]) SetColor(link, flashing ? FlashColor : LinkColor);
-            }
-
-            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            RegisterQuestConditions(runtime);
-            // Preserve the legacy feedback flag, but never use it as completion authority.
-            if (runtime != null && runtime.GetQuestStatus(QuestId) == QuestStatus.Active)
-            {
-                bool aligned = IsQuestReady(state, runtime);
-                if (runtime.GetFlag(AlignedFlag) != aligned) runtime.SetFlag(AlignedFlag, aligned);
             }
         }
 
@@ -253,127 +251,173 @@ namespace Lumenfall.Quests
             return nearest;
         }
 
-        private bool AnyLinkedDiscTurning(WorldStateService state, int socket)
-        {
-            foreach (int disc in SocketLinks[socket])
-                if (state.TryGetObject(DiscIds[disc], out WorldObjectSnapshot snapshot) && IsTurning(disc, snapshot)) return true;
-            return false;
-        }
-
-        private bool IsTurning(int disc, WorldObjectSnapshot snapshot) =>
-            hasDisplayedAngles && Mathf.Abs(Mathf.DeltaAngle(displayedAngles[disc], snapshot.rotation)) > 0.5f;
-
         private void SetPresentationVisible(bool visible)
         {
             if (presentationRoot != null && presentationRoot.gameObject.activeSelf != visible) presentationRoot.gameObject.SetActive(visible);
         }
 
-        private void Build(GridWorld world, Vector2Int centreCell)
+        private void RegisterBoundPuzzleObjects(WorldStateService state, GridWorld world)
         {
-            if (presentationRoot != null) return;
-
-            presentationRoot = new GameObject("Rune Dais").transform;
-            presentationRoot.SetParent(transform, false);
-            Vector3 centre = world.CellToWorld(centreCell, 0f);
-            CreatePart(PrimitiveType.Cylinder, "Dais Rim", presentationRoot, centre + new Vector3(0f, 0.008f, 0f), new Vector3(7.1f, 0.005f, 7.1f), DaisRimColor);
-            daisRenderer = CreatePart(PrimitiveType.Cylinder, "Dais", presentationRoot, centre + new Vector3(0f, 0.014f, 0f), new Vector3(6.8f, 0.005f, 6.8f), DaisColor).GetComponent<Renderer>();
-
-            Vector3[] discPositions = new Vector3[DiscIds.Length];
+            if (state == null || world == null) return;
             for (int i = 0; i < DiscIds.Length; i++)
             {
-                discPositions[i] = world.CellToWorld(centreCell + DiscOffsets[i], 0f);
-                discHolders[i] = BuildDisc(i, discPositions[i]);
+                GameObject holder = discHolders[i];
+                if (holder == null) { Debug.LogError($"Deep Forest Rune Dais is missing '{DiscIds[i]}'."); continue; }
+                Vector2Int cell = world.WorldToCell(holder.transform.position);
+                state.RegisterObject(DiscIds[i], holder, cell, Vector2Int.one, false, new[] { DiscTag }, syncSceneTransform: false);
+                int start = DiscStartRotations[i];
+                state.SetProperty(DiscIds[i], item => item.rotation = start);
+                discPresentationInitialized[i] = false;
             }
-
             for (int i = 0; i < SocketIds.Length; i++)
             {
-                Vector3 socketPosition = world.CellToWorld(centreCell + SocketOffsets[i], 0f);
-                socketHolders[i] = new GameObject(SocketIds[i]);
-                socketHolders[i].transform.SetParent(presentationRoot, false);
-                socketHolders[i].transform.position = socketPosition;
-                gemRenderers[i] = BuildSocketModel(socketHolders[i].transform);
-                // Faint floor lines show which discs each socket turns, and flash when it is pressed.
-                linkRenderers[i] = new List<Renderer>();
-                foreach (int disc in SocketLinks[i])
-                {
-                    Vector3 direction = discPositions[disc] - socketPosition;
-                    direction.y = 0f;
-                    float length = direction.magnitude - DiscRadius - SocketRadius;
-                    if (length <= 0.05f) continue;
-                    Vector3 start = socketPosition + direction.normalized * SocketRadius;
-                    GameObject link = CreatePart(PrimitiveType.Cube, "Link " + SocketIds[i] + " -> " + DiscIds[disc], presentationRoot,
-                        start + direction.normalized * (length * 0.5f) + new Vector3(0f, 0.025f, 0f), new Vector3(0.06f, 0.006f, length), LinkColor);
-                    link.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-                    linkRenderers[i].Add(link.GetComponent<Renderer>());
-                }
+                GameObject holder = socketHolders[i];
+                if (holder == null) { Debug.LogError($"Deep Forest Rune Dais is missing '{SocketIds[i]}'."); continue; }
+                Vector2Int cell = world.WorldToCell(holder.transform.position);
+                state.RegisterObject(SocketIds[i], holder, cell, Vector2Int.one, true, new[] { RotaraTag }, syncSceneTransform: false);
             }
         }
 
-        private GameObject BuildDisc(int index, Vector3 position)
+        private void BindAuthored(Transform root)
         {
-            GameObject holder = new GameObject(DiscIds[index]);
-            holder.transform.SetParent(presentationRoot, false);
-            holder.transform.position = position;
-
-            discBases[index] = new GameObject("Base").transform;
-            discBases[index].SetParent(holder.transform, false);
-            CreatePart(PrimitiveType.Cylinder, "Stone", discBases[index], new Vector3(0f, 0.04f, 0f), new Vector3(DiscRadius * 2f, 0.02f, DiscRadius * 2f), DiscBaseColor);
-            // The notch is fixed on the base at the target orientation (north); the rune must point at it.
-            notchRenderers[index] = CreatePart(PrimitiveType.Cube, "Target Notch", discBases[index], new Vector3(0f, 0.065f, DiscRadius - 0.11f),
-                new Vector3(0.14f, 0.03f, 0.16f), NotchColor).GetComponent<Renderer>();
-
-            discFaces[index] = new GameObject("Face").transform;
-            discFaces[index].SetParent(holder.transform, false);
-            CreatePart(PrimitiveType.Cylinder, "Face", discFaces[index], new Vector3(0f, 0.07f, 0f), new Vector3(1.56f, 0.015f, 1.56f), DiscFaceColor);
-            // Local +Z matches the stored rotation: an arrow rune with a crossbar tail.
-            runeRenderers[index] = new List<Renderer>
+            if (root == null) return;
+            bool captureAuthoredPose = presentationRoot != root;
+            presentationRoot = root;
+            appliedColors.Clear();
+            glowStrengths.Clear();
+            daisRenderer = FindRenderer(root, "Moss Floor");
+            for (int i = 0; i < DiscIds.Length; i++)
             {
-                CreatePart(PrimitiveType.Cube, "Rune Shaft", discFaces[index], new Vector3(0f, 0.095f, -0.05f), new Vector3(0.1f, 0.02f, 0.75f), RuneColor).GetComponent<Renderer>(),
-                CreateRotatedPart("Rune Head Left", discFaces[index], new Vector3(-0.11f, 0.095f, 0.36f), new Vector3(0.08f, 0.02f, 0.34f), -38f),
-                CreateRotatedPart("Rune Head Right", discFaces[index], new Vector3(0.11f, 0.095f, 0.36f), new Vector3(0.08f, 0.02f, 0.34f), 38f),
-                CreatePart(PrimitiveType.Cube, "Rune Tail", discFaces[index], new Vector3(0f, 0.095f, -0.42f), new Vector3(0.36f, 0.02f, 0.07f), RuneColor).GetComponent<Renderer>()
-            };
-            return holder;
+                Transform holder = FindDescendant(root, DiscIds[i]);
+                discHolders[i] = holder == null ? null : holder.gameObject;
+                if (captureAuthoredPose && holder != null)
+                {
+                    authoredDiscLocalPositions[i] = holder.localPosition;
+                    clearedDiscLocalRotations[i] = holder.localRotation;
+                    // The completion rule is based on the authored disc root itself reaching local Y = 0.
+                    // Convert that into the corresponding saved quarter-turn offset for this particular disc.
+                    solvedDiscStateRotations[i] = NormalizeDegrees(Mathf.Round(-holder.localEulerAngles.y / StepDegrees) * StepDegrees);
+                }
+                Transform discBase = holder == null ? null : holder.Find("Base");
+                Transform discFace = holder == null ? null : holder.Find("Face");
+                notchRenderers[i] = discBase == null ? null : FindRenderer(discBase, "Target Notch");
+                runeRenderers[i] = new List<Renderer>();
+                if (discFace != null)
+                    foreach (Renderer renderer in discFace.GetComponentsInChildren<Renderer>(true))
+                        if (renderer.name.StartsWith("Rune ", StringComparison.Ordinal)) runeRenderers[i].Add(renderer);
+            }
+            for (int i = 0; i < standingStoneRenderers.Length; i++)
+                standingStoneRenderers[i] = FindRenderer(root, "Standing Stone " + (i + 1));
+            for (int i = 0; i < SocketIds.Length; i++)
+            {
+                Transform holder = FindDescendant(root, SocketIds[i]);
+                socketHolders[i] = holder == null ? null : holder.gameObject;
+                gemRenderers[i] = holder == null ? null : FindRenderer(holder, "Firefly Orb");
+                linkRenderers[i] = new List<Renderer>();
+                foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+                    if (renderer.name.StartsWith("Vine " + SocketIds[i] + " -> ", StringComparison.Ordinal)) linkRenderers[i].Add(renderer);
+            }
+            int firefly = 0;
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            {
+                Renderer renderer = child.GetComponent<Renderer>();
+                if (renderer != null) glowStrengths[renderer] = child.name.StartsWith("Rune ", StringComparison.Ordinal) ||
+                    child.name == "Firefly Orb" || child.name == "Firefly" ? BrightGlow : SoftGlow;
+                if (child.name != "Firefly" || firefly >= FireflyCount) continue;
+                fireflies[firefly] = child;
+                fireflyHomes[firefly] = child.position;
+                firefly++;
+            }
         }
 
-        private static Renderer CreateRotatedPart(string name, Transform parent, Vector3 localPosition, Vector3 localScale, float yaw)
+        private static Transform FindDescendant(Transform root, string objectName)
         {
-            GameObject part = CreatePart(PrimitiveType.Cube, name, parent, localPosition, localScale, RuneColor);
-            part.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
-            return part.GetComponent<Renderer>();
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+                if (string.Equals(child.name, objectName, StringComparison.Ordinal)) return child;
+            return null;
         }
 
-        private static Renderer BuildSocketModel(Transform parent)
+        private static float SolvedStateRotation(int discIndex) =>
+            instance != null && discIndex >= 0 && discIndex < instance.solvedDiscStateRotations.Length
+                ? instance.solvedDiscStateRotations[discIndex]
+                : TargetRotation;
+
+        private void UpdateDiscAnimation(int index, float stateRotation)
         {
-            CreatePart(PrimitiveType.Cylinder, "Pedestal", parent, new Vector3(0f, 0.06f, 0f), new Vector3(SocketRadius * 2f, 0.06f, SocketRadius * 2f), DiscBaseColor);
-            return CreatePart(PrimitiveType.Sphere, "Gem", parent, new Vector3(0f, 0.17f, 0f), new Vector3(0.22f, 0.22f, 0.22f), SocketColor).GetComponent<Renderer>();
+            float target = NormalizeDegrees(stateRotation);
+            if (!discPresentationInitialized[index])
+            {
+                displayedDiscRotations[index] = target;
+                discAnimationTargets[index] = target;
+                nextDiscStepAt[index] = Time.unscaledTime + DiscAnimationStepSeconds;
+                discPresentationInitialized[index] = true;
+                return;
+            }
+
+            if (!Mathf.Approximately(discAnimationTargets[index], target))
+            {
+                discAnimationTargets[index] = target;
+                nextDiscStepAt[index] = Time.unscaledTime + DiscAnimationStepSeconds;
+            }
+
+            while (!Mathf.Approximately(displayedDiscRotations[index], target) &&
+                   Time.unscaledTime >= nextDiscStepAt[index])
+            {
+                float remaining = NormalizeDegrees(target - displayedDiscRotations[index]);
+                displayedDiscRotations[index] = remaining <= DiscAnimationStepDegrees
+                    ? target
+                    : NormalizeDegrees(displayedDiscRotations[index] + DiscAnimationStepDegrees);
+                nextDiscStepAt[index] += DiscAnimationStepSeconds;
+            }
         }
 
-        private static GameObject CreatePart(PrimitiveType type, string name, Transform parent, Vector3 localPosition, Vector3 localScale, Color color)
+        private static Renderer FindRenderer(Transform root, string objectName)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
-            part.name = name;
-            part.transform.SetParent(parent, false);
-            part.transform.localPosition = localPosition;
-            part.transform.localScale = localScale;
-            Collider collider = part.GetComponent<Collider>();
-            if (collider != null) Destroy(collider);
-            ApplyColor(part.GetComponent<Renderer>(), color);
-            return part;
+            Transform found = FindDescendant(root, objectName);
+            return found == null ? null : found.GetComponent<Renderer>();
+        }
+
+        private void DriftFireflies()
+        {
+            float time = Time.time;
+            for (int i = 0; i < FireflyCount; i++)
+                if (fireflies[i] != null)
+                    fireflies[i].position = fireflyHomes[i] + new Vector3(Mathf.Sin(time * 0.6f + i * 1.7f) * 0.3f,
+                        Mathf.Sin(time * 1.3f + i) * 0.12f, Mathf.Cos(time * 0.5f + i * 2.3f) * 0.3f);
+        }
+
+        private void ShineSolvedMonument()
+        {
+            float pulse = (Mathf.Sin(Time.time * SolvedPulseSpeed) + 1f) * 0.5f;
+            Color shine = Color.Lerp(SolvedColor, Color.white, pulse * 0.45f);
+            float glow = Mathf.Lerp(SolvedGlowMin, SolvedGlowMax, pulse);
+            foreach (List<Renderer> renderers in runeRenderers)
+            {
+                if (renderers == null) continue;
+                foreach (Renderer rune in renderers) ApplyShine(rune, shine, glow);
+            }
+            foreach (Renderer stone in standingStoneRenderers) ApplyShine(stone, shine, glow);
+        }
+
+        private void ApplyShine(Renderer renderer, Color color, float glow)
+        {
+            if (renderer == null) return;
+            appliedColors[renderer] = color;
+            ApplyColor(renderer, color, glow);
         }
 
         private void SetColor(Renderer renderer, Color color)
         {
             if (renderer == null || (appliedColors.TryGetValue(renderer, out Color current) && current == color)) return;
             appliedColors[renderer] = color;
-            ApplyColor(renderer, color);
+            ApplyColor(renderer, color, glowStrengths.TryGetValue(renderer, out float glow) ? glow : SoftGlow);
         }
 
-        private static void ApplyColor(Renderer renderer, Color color)
+        private static void ApplyColor(Renderer renderer, Color color, float glow)
         {
             if (renderer == null) return;
             renderer.material.color = color;
-            renderer.material.SetColor("_EmissionColor", color * 0.18f);
+            renderer.material.SetColor("_EmissionColor", color * glow);
             renderer.material.EnableKeyword("_EMISSION");
         }
 

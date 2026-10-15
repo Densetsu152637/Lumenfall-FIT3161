@@ -16,9 +16,9 @@ namespace Lumenfall.Tests.GameEvents
         private WorldStateService previousState;
         private GridWorld grid;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
-        private const string Keepsake = "keepsake.katrina.hidden";
-        private static readonly Vector2Int Cell = new Vector2Int(12, 9);
-        private const string RecessMapId = "C04.Recess";
+        private const string Keepsake = "katrina.item.library";
+        private static readonly Vector2Int Cell = new Vector2Int(7, 24);
+        private const string LibraryMapId = "B04.Ground";
         private static readonly string[] EchoTags = { "hidden", "lost-echoes" };
         private static readonly string[] PickupTags = { "hidden", "pickup" };
 
@@ -153,7 +153,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void MonitorRejectsWrongMapPositionUnrelatedRevealAndInactiveQuestThenCompletesOnce()
+        public void MonitorRejectsWrongMapUnrelatedRevealAndInactiveQuestThenCompletesOnce()
         {
             QuestPuzzleMonitor monitor = Create("monitor").AddComponent<QuestPuzzleMonitor>();
             EditModeLifecycle.Call(monitor, "Awake");
@@ -163,17 +163,17 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             state.BeginMapRebuild("eastForest"); Register(Keepsake, Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
-            state.BeginMapRebuild(RecessMapId); Register(Keepsake, Cell + Vector2Int.right, PickupTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
+            state.BeginMapRebuild(LibraryMapId); Register(Keepsake, Cell, PickupTags); state.EndMapRebuild(); state.TryRevealObject(Keepsake, Cell, 2);
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
-            state.SetProperty(Keepsake, value => value.cell = Cell);
             Runtime.ResetState(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
             Runtime.StartQuest("katrina_something_borrowed");
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero, "A revealed keepsake still has to be picked up.");
             Assert.That(state.TryCollectObject(Keepsake, Cell + new Vector2Int(2, 0), 1), Is.False, "Pickup needs the player within one cell.");
             Assert.That(state.TryCollectObject(Keepsake, Cell, 1), Is.True);
             Assert.That(monitor.EvaluatePuzzles(), Is.EqualTo(1));
-            Assert.That(Runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
-            Assert.That(Runtime.ActiveDialogue.Definition.id, Is.EqualTo("katrina_keepsake_recovered"));
+            Assert.That(Runtime.GetFlag("inventory.keyitem.katrina-library-anchor"), Is.True);
+            Assert.That(Runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.False);
+            Assert.That(Runtime.ActiveDialogue.Definition.id, Is.EqualTo("katrina_library_item_recovered"));
             Assert.That(Runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active),
                 "Finding the keepsake leaves the return conversation pending.");
             Runtime.ActiveDialogue.Continue(); Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

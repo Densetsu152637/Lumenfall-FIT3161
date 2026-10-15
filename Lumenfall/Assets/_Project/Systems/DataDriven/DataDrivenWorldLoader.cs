@@ -5,6 +5,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
 using Lumenfall.Quests;
+using Lumenfall.Story;
 
 namespace Lumenfall.DataDriven
 {
@@ -18,12 +19,14 @@ namespace Lumenfall.DataDriven
         [SerializeField] private Transform contentRoot;
         [SerializeField] private GridWorld world;
         private readonly Dictionary<WorldAreaAsset, GameObject> areaInstances = new Dictionary<WorldAreaAsset, GameObject>();
-        private string npcStateSignature;
+        private readonly List<int> npcStateSignature = new List<int>();
         private GameSaveManager saveManager;
         private bool registeredSaveProvider;
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
+        /// The live instance of <see cref="CurrentArea"/>; a new object whenever an area is loaded or re-instantiated.
+        public GameObject CurrentAreaRoot { get; private set; }
         public string SaveKey => "data-driven-world";
 
         private void Awake()
@@ -51,24 +54,43 @@ namespace Lumenfall.DataDriven
         private void Update()
         {
             if (LoadedNpcs == null || GameEventManager.Instance == null) return;
-            System.Text.StringBuilder state = new System.Text.StringBuilder();
-            foreach (NpcDefinition n in LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>())
-                state.Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.showWhenQuestCompleted))
-                    .Append(GameEventManager.Instance.Runtime.GetQuestStatus(n.hideWhenQuestCompleted));
-            string current = state.ToString();
-            if (npcStateSignature != current)
+            // Compared in place rather than as a rebuilt string, so the per-frame check does not allocate.
+            NpcDefinition[] npcs = LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>();
+            bool changed = npcStateSignature.Count != npcs.Length * 2;
+            if (changed)
             {
-                npcStateSignature = current;
+                npcStateSignature.Clear();
+                for (int i = 0; i < npcs.Length * 2; i++) npcStateSignature.Add(-1);
+            }
+            for (int i = 0; i < npcs.Length; i++)
+            {
+                changed |= UpdateSignature(i * 2, npcs[i].showWhenQuestCompleted);
+                changed |= UpdateSignature(i * 2 + 1, npcs[i].hideWhenQuestCompleted);
+            }
+            if (changed)
+            {
                 GameObject activeArea;
                 if (CurrentArea != null && areaInstances.TryGetValue(CurrentArea, out activeArea))
                     foreach (DynamicNpc npc in activeArea.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
             }
         }
 
-        public void Load(WorldAreaAsset area, NpcCatalogAsset catalog)
+        private bool UpdateSignature(int index, string questId)
+        {
+            int status = (int)GameEventManager.Instance.Runtime.GetQuestStatus(questId);
+            if (npcStateSignature[index] == status) return false;
+            npcStateSignature[index] = status;
+            return true;
+        }
+
+        public void Load(WorldAreaAsset area, NpcCatalogAsset catalog) => Load(area, catalog, true);
+
+        // A portal or a loaded save places the player itself, so those loads skip the map's spawn point.
+        private void Load(WorldAreaAsset area, NpcCatalogAsset catalog, bool placeAtSpawn)
         {
             if (area == null || area.areaPrefab == null) { Debug.LogError("Assign an authored area prefab to this World Area asset.", this); return; }
             if (world == null) world = FindAnyObjectByType<GridWorld>();
+            LiftOffGrid(FindAnyObjectByType<GridMover>());
             if (CurrentArea != null && areaInstances.TryGetValue(CurrentArea, out GameObject previous)) previous.SetActive(false);
             CurrentArea = area;
             LoadedMap = area.definition;
@@ -85,20 +107,21 @@ namespace Lumenfall.DataDriven
                 areaInstances.Add(area, root);
             }
             root.SetActive(true);
-            RotaraGearMechanism.AttachTo(root);
+            CurrentAreaRoot = root;
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
-            ApplySpawn(LoadedMap);
+            ApplySpawn(LoadedMap, placeAtSpawn);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
-            OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
-            OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
+            OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
+            MiscCollectibles.RegisterForMap(LoadedMap.id, world, root);
+            if (LoadedMap.id == OrioDaisRoom.MapId || OrioDaisRoom.IsLegacyVisitActive) OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
         public void Clear()
         {
             foreach (GameObject item in areaInstances.Values) if (item != null) { item.SetActive(false); Destroy(item); }
-            areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null;
+            areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null; CurrentAreaRoot = null;
         }
 
         public void ResetToStartingState()
@@ -136,7 +159,7 @@ namespace Lumenfall.DataDriven
             SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
             WorldAreaAsset area = FindArea(state.mapId);
             if (world == null) world = FindAnyObjectByType<GridWorld>();
-            Load(area, npcCatalog);
+            Load(area, npcCatalog, false);
             return CurrentArea == area;
         }
 
@@ -155,17 +178,34 @@ namespace Lumenfall.DataDriven
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player == null || world == null || sourcePortal == null || sourcePortal.destination == null || sourcePortal.destination.area == null) return false;
             PortalContentAsset destinationPortal = sourcePortal.destination;
-            // FindArea also resolves code-built areas, which are not in Available Areas.
-            if (FindArea(destinationPortal.area.definition?.id) != destinationPortal.area)
+            if (Array.IndexOf(availableAreas, destinationPortal.area) < 0 && destinationPortal.area != startingArea)
             { Debug.LogError($"Portal destination area '{destinationPortal.area.name}' is not in Available Areas.", this); return false; }
             Vector2Int previousCell = player.CurrentCell;
             WorldAreaAsset previousArea = CurrentArea;
-            Load(destinationPortal.area, npcCatalog);
+            Load(destinationPortal.area, npcCatalog, false);
             GridPortal target = FindLivePortal(destinationPortal);
+            if (target == null && previousArea?.definition?.id == "C04.Recess" && LoadedMap.id == "campus" && LoadedMap.spawn != null)
+            {
+                // The recess is retained for old saves, but its campus entrance was retired with the new Katrina route.
+                Vector2Int origin = new Vector2Int(LoadedMap.spawn.x, LoadedMap.spawn.y);
+                var visited = new HashSet<Vector2Int> { origin };
+                var candidates = new Queue<Vector2Int>();
+                candidates.Enqueue(origin);
+                while (candidates.Count > 0)
+                {
+                    Vector2Int candidate = candidates.Dequeue();
+                    if (world.GetPortalAt(candidate) == null && world.IsCellAvailable(candidate) && player.TryTeleportTo(world, candidate)) return true;
+                    foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                    {
+                        Vector2Int next = candidate + step;
+                        if (next.x >= 0 && next.y >= 0 && next.x < LoadedMap.width && next.y < LoadedMap.height && visited.Add(next)) candidates.Enqueue(next);
+                    }
+                }
+            }
             if (target == null)
             {
                 Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
-                if (previousArea != null) Load(previousArea, npcCatalog);
+                if (previousArea != null) { Load(previousArea, npcCatalog, false); player.TryTeleportTo(world, previousCell); }
                 return false;
             }
             // The live destination GridPortal is authoritative for its origin and footprint.
@@ -173,7 +213,7 @@ namespace Lumenfall.DataDriven
             Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             Debug.LogWarning($"Portal '{sourcePortal.id}' could not place the player at {arrival} in '{destinationPortal.area.definition.id}'; returning to the previous area.", this);
-            if (previousArea != null) { Load(previousArea, npcCatalog); player.TryTeleportTo(world, previousCell); }
+            if (previousArea != null) { Load(previousArea, npcCatalog, false); player.TryTeleportTo(world, previousCell); }
             return false;
         }
 
@@ -190,15 +230,15 @@ namespace Lumenfall.DataDriven
             return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
         }
 
-        /// <summary>Resolves an area by map id, including code-built areas.</summary>
-        public WorldAreaAsset GetArea(string mapId) => FindArea(mapId);
+        /// <summary>Resolves authored areas and the legacy hall for saved games.</summary>
+        public WorldAreaAsset GetArea(string id) => FindArea(id);
 
         private WorldAreaAsset FindArea(string id)
         {
             id = NormalizeMapId(id);
             if (startingArea != null && startingArea.definition.id == id) return startingArea;
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
-            // Code-built areas are not scene assets, so saves made inside them resolve here.
+            // Resolve legacy saves without adding the superseded forest entrance.
             if (id == OrioDaisRoom.MapId) return OrioDaisRoom.GetOrCreateArea();
             return null;
         }
@@ -210,13 +250,25 @@ namespace Lumenfall.DataDriven
             return null;
         }
 
-        private void ApplySpawn(MapDefinition definition)
+        // The grid is shared by every area. While the next area's obstacles register, the player would still occupy their
+        // old cell and be reported as blocked by whatever stands there in the new area, so every load takes them off the
+        // grid; the spawn, the portal arrival or the saved cell then places them again.
+        private void LiftOffGrid(GridMover player)
+        {
+            if (player != null && world != null && player.World == world && !player.IsMoving) world.UnregisterMover(player);
+        }
+
+        private void ApplySpawn(MapDefinition definition, bool placeAtSpawn)
         {
             if (world == null || definition == null || definition.spawn == null) return;
             GridMover player = FindAnyObjectByType<GridMover>();
             if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>();
-            if (player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
+            if (placeAtSpawn && player != null && !player.TryTeleportTo(world, new Vector2Int(definition.spawn.x, definition.spawn.y)))
+            {
                 Debug.LogWarning($"Map '{definition.id}' spawn is unavailable; keeping player position.", this);
+                // Rejoin the grid where they stand, since the load took them off it.
+                player.TryTeleportTo(world, player.CurrentCell);
+            }
         }
     }
 }

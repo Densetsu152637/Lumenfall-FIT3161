@@ -72,7 +72,7 @@ MonoBehaviour:
         height: 50
       walkable: 1
     - id: B01
-      name: B01
+      name: Dormitory
       rect:
         x: 56
         y: 60
@@ -80,7 +80,7 @@ MonoBehaviour:
         height: 20
       walkable: 1
     - id: B02
-      name: B02
+      name: Arcane Workshop
       rect:
         x: 12
         y: 56
@@ -88,7 +88,7 @@ MonoBehaviour:
         height: 26
       walkable: 1
     - id: B03
-      name: B03
+      name: Main Academy Building
       rect:
         x: 8
         y: 22
@@ -96,7 +96,7 @@ MonoBehaviour:
         height: 30
       walkable: 1
     - id: B04
-      name: B04
+      name: Library
       rect:
         x: 48
         y: 0
@@ -172,19 +172,6 @@ MonoBehaviour:
       - vis-lift
       - vis-destination:C03.IceTrial
       compatibleWithSpells: 1
-    - id: mechanism.orio.rotate
-      prefab: {fileID: 0}
-      type: mechanism
-      x: 25
-      y: 34
-      width: 1
-      height: 1
-      elevation: 0
-      rotation: 180
-      blocks: 0
-      tags:
-      - rotara
-      compatibleWithSpells: 1
     puzzleTargets:
     - id: quest.stella.first-light
       objectIds:
@@ -212,19 +199,6 @@ MonoBehaviour:
       requiredFrozen: 0
       requiredAligned: 0
       requiredRotation: -1
-      requiredPositionX: -2147483648
-      requiredPositionY: -2147483648
-    - id: quest.orio.patch-notes
-      objectIds:
-      - mechanism.orio.rotate
-      requiredConnections: []
-      conditionMode: All
-      requiredPowered: 0
-      requiredConnected: 0
-      requiredRevealed: 0
-      requiredFrozen: 0
-      requiredAligned: 0
-      requiredRotation: 180
       requiredPositionX: -2147483648
       requiredPositionY: -2147483648
     portals: []

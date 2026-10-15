@@ -7,7 +7,6 @@ using Lumenfall.Spells;
 using Lumenfall.GridMovement;
 using Lumenfall.GameEvents;
 using Lumenfall.Quests;
-using Lumenfall.Inventory;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -91,44 +90,56 @@ namespace Lumenfall.Tests.GameEvents
                 state.BeginMapRebuild("B02.Ground");
                 RunPuzzleMonitor(monitor);
                 string[] conductor = { "weave", "circuit", WorldStateService.ConductorTag };
-                Register("relic.stella.power", new Vector2Int(1, 4), Vector2Int.one, new[] { "ampere", "weave", "circuit" });
-                Register("circuit.stella.link", new Vector2Int(4, 4), Vector2Int.one, conductor);
-                // Five board relics in a loop of three-tile hops from the workbench link.
-                Vector2Int[] board = { new Vector2Int(7, 4), new Vector2Int(10, 4), new Vector2Int(10, 7), new Vector2Int(7, 7), new Vector2Int(4, 7) };
-                for (int i = 0; i < board.Length; i++) Register("stella.string-together.relic." + (i + 1), board[i], Vector2Int.one, conductor);
+                var network = new List<string>();
+                for (int i = 0; i < 5; i++)
+                {
+                    string id = "stella.string-together.relic." + (i + 1);
+                    Register(id, new Vector2Int(i, 4), Vector2Int.one, new[] { "ampere", "weave", "circuit" });
+                    network.Add(id);
+                }
+                for (int i = 0; i < 10; i++)
+                {
+                    string id = "stella.circuit.relay." + (i + 1);
+                    Register(id, new Vector2Int(5 + i, 4), Vector2Int.one, conductor);
+                    network.Add(id);
+                }
+                Register("circuit.stella.link", new Vector2Int(15, 4), Vector2Int.one, conductor);
+                network.Add("circuit.stella.link");
                 state.EndMapRebuild();
                 SpellCaster caster = created[1].AddComponent<SpellCaster>();
                 EditModeLifecycle.Call(caster, "OnEnable");
 
                 DialogueSession firstLight = runtime.StartDialogue("stella_first_light_dialogue");
                 Assert.That(firstLight.SelectChoice("accept"), Is.True);
-                Assert.That(firstLight.Continue(), Is.True);
+                while (!firstLight.IsCompleted) Assert.That(firstLight.Continue(), Is.True);
                 Assert.That(runtime.TriggerEvent("complete_stella_first_light").Succeeded, Is.True);
+                firstLight = runtime.StartDialogue("stella_first_light_dialogue");
+                Assert.That(firstLight.SelectChoice("report"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
 
                 DialogueSession circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
                 Assert.That(circuitQuest.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
-                Assert.That(circuitQuest.Continue(), Is.True,
-                    "Finish Stella's teaching dialogue before casting puzzle spells.");
+                while (!circuitQuest.IsCompleted)
+                    Assert.That(circuitQuest.Continue(), Is.True,
+                        "Finish Stella's teaching dialogue before casting puzzle spells.");
                 Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
 
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
-                Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.right), Is.False,
-                    "Board relics only take power through Weave cables.");
-                caster.Cast(SpellId.Weave, "relic.stella.power", Vector2Int.right);
-                Assert.That(caster.Cast(SpellId.Weave, "circuit.stella.link", Vector2Int.right), Is.True);
-                for (int i = 0; i < board.Length; i++)
-                    Assert.That(caster.Cast(SpellId.Weave, "stella.string-together.relic." + (i + 1), Vector2Int.right), Is.True, "relic " + (i + 1));
+                for (int i = 0; i < 5; i++) state.SetProperty(network[i], item => item.powered = true);
+                for (int i = 1; i < network.Count - 1; i++) Assert.That(state.AddConnection(network[i - 1], network[i]), Is.True);
                 RunPuzzleMonitor(monitor);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active),
-                    "A woven board must not complete the quest while the source relic is dark.");
+                    "The quest must remain active until the magical item joins the same network.");
 
-                Assert.That(caster.Cast(SpellId.Ampere, "relic.stella.power", Vector2Int.right), Is.True);
+                Assert.That(state.AddConnection(network[network.Count - 2], network[network.Count - 1]), Is.True);
                 RunPuzzleMonitor(monitor);
-                Assert.That(state.TryGetObject("stella.string-together.relic.5", out WorldObjectSnapshot last) && last.powered, Is.True);
+                Assert.That(state.TryGetObject("circuit.stella.link", out WorldObjectSnapshot item) && item.powered, Is.True);
+                Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+                circuitQuest = runtime.StartDialogue("stella_string_them_together_dialogue");
+                Assert.That(circuitQuest.SelectChoice("report"), Is.True);
                 Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             }
             finally

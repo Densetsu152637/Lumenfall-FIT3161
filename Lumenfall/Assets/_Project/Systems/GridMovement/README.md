@@ -27,9 +27,16 @@ offset is preserved while it walks across the grid.
 4. Tune Walk Move Duration and Sprint Move Duration on `GridMover`. Sprint has no stamina logic;
    it simply selects the faster whole-tile duration. Input remains locked until each step is
    complete, and the final position is snapped exactly to the target cell.
+
+   Held movement keeps a steady speed. A step ends in the frame the player arrives, and the next one starts in
+   that same frame with whatever time the last step ran past its end (at most 0.05 seconds, so a long hitch is not
+   replayed as several cells). A direction pressed while a step is still under way is kept for 0.25 seconds and used
+   when the step ends, so a quick tap to turn a corner is not lost.
 5. For a 3D character model, add `GridMoverPresentation` and assign its Animator. This optional
    component turns the model toward accepted steps and drives `Speed`, `IsGrounded`, and
    `IsFalling` parameters when they exist, while `GridMover` remains the movement authority.
+   A turn always finishes within the first half of the step, even if Rotation Speed is slower, so
+   the character never walks sideways or backwards into a cell.
 
 `GridWorld` is unbounded by default. Enable Restrict To Bounds to prevent movement outside a
 room. Prevent Diagonal Corner Cutting stops actors squeezing diagonally between two blockers.
@@ -72,6 +79,11 @@ the destination centre and clamped to the destination portal's extensions. Arriv
 suppressed until the mover leaves, preventing linked door areas from immediately bouncing the
 player back. The purple sphere in the Scene view marks the transmission centre.
 
+A portal whose Portal Content asset is **Blocked** refuses entry with a notice. Its **Blocked Title** and **Blocked
+Message** set the notice's heading and text, defaulting to "Locked" and "The door is locked". A blocked portal with
+no destination is a door that only answers with that notice. A component on the portal that implements
+`IBlockedPortalHandler` can answer the attempt in its own way first: returning true skips the notice.
+
 Destination modes:
 
 - **Portal Reference** links two portal components in the same loaded scene. This is convenient
@@ -105,6 +117,10 @@ ends on ice is a slide, and it follows the Snowpoint Gym rules:
 The world is shared by every area, so the code that adds ice must remove it when its area
 deactivates. `CinnaIceTrialRoom` is the current user: it turns its pool into ice while the frost
 relic is frozen and clears it in `OnDisable`.
+
+## Hiding the player
+
+`PlayerVisibility.Hide(owner)` and `Show(owner)` hide the player's renderers for as long as any owner still hides them. The startup menu and the New Game arrival (see [the Cutscenes README](../Cutscenes/README.md)) both use it. Only renderers it turned off are turned back on. Owners call `Refresh()` each frame, which also hides parts switched on in the meantime. The player still moves, collides and occupies their cell while hidden. `RenderVisible(action)` shows them for one render, such as a save thumbnail.
 
 ## Useful runtime queries
 

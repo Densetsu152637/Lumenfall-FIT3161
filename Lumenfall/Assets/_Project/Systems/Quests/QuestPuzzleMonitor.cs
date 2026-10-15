@@ -47,6 +47,7 @@ namespace Lumenfall.Quests
         public string conditionMode = "All";
         public bool requiredPowered;
         public bool requiredConnected;
+        public bool requiredSameNetwork;
         public bool requiredRevealed;
         /// <summary>The object must have been picked up (see WorldPickupInteraction).</summary>
         public bool requiredCollected;
@@ -178,6 +179,7 @@ namespace Lumenfall.Quests
                         !state.IsConnected(endpoints[0], endpoints[1]) ||
                         state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
                 }
+                if (target.requiredSameNetwork && !state.AreInSameNetwork(target.objectIds)) return false;
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)

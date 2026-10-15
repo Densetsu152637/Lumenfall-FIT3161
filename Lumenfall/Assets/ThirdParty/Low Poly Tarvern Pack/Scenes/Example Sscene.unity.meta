@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 0f8a69858d6ba3142818e05a05b9b91a
+guid: 9825482148d977247a2fac7a1ddfb567
 DefaultImporter:
   externalObjects: {}
   userData: 
@@ -10,5 +10,5 @@ AssetOrigin:
   productId: 394336
   packageName: 'Stylized Cozy Tavern: Low Poly Single Material Props'
   packageVersion: 1.0
-  assetPath: Assets/Low Poly Tarvern Pack/Scenes/Example Sscene.unity
+  assetPath: Assets/ThirdParty/Low Poly Tarvern Pack/Scenes/Example Sscene.unity
   uploadId: 956216

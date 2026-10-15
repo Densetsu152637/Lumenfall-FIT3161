@@ -265,9 +265,11 @@ namespace Lumenfall.Spells
             public Glow(GameObject owner, Renderer renderer)
             {
                 this.renderer = renderer;
-                baseColor = renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty("_BaseColor")
-                    ? renderer.sharedMaterial.GetColor("_BaseColor")
-                    : renderer.sharedMaterial != null ? renderer.sharedMaterial.color : Color.white;
+                Material shared = renderer.sharedMaterial;
+                baseColor = shared == null ? Color.white
+                    : shared.HasProperty("_BaseColor") ? shared.GetColor("_BaseColor")
+                    : shared.HasProperty("_Color") ? shared.color
+                    : Color.white;
                 GameObject lightObject = new GameObject("Power Glow");
                 lightObject.transform.SetParent(owner.transform, false);
                 lightObject.transform.localPosition = Vector3.up * 0.8f;
@@ -285,7 +287,7 @@ namespace Lumenfall.Spells
                 applied = powered;
                 Material material = renderer.material;
                 Color color = powered ? Color.Lerp(baseColor, GlowColor, 0.75f) : baseColor;
-                material.color = color;
+                if (material.HasProperty("_Color")) material.color = color;
                 if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
                 if (powered) { material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", GlowColor * 1.5f); }
                 else { material.SetColor("_EmissionColor", Color.black); material.DisableKeyword("_EMISSION"); }

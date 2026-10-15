@@ -35,6 +35,18 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(AudioContextPolicy.Resolve("campus", true, true, true), Is.EqualTo(AudioContext.Sleep));
             Assert.That(AudioContextPolicy.Resolve("campus", true, true, false), Is.EqualTo(AudioContext.Dialogue));
             Assert.That(AudioContextPolicy.Resolve("campus", false, true, false), Is.EqualTo(AudioContext.Mystery));
+            Assert.That(AudioContextPolicy.Resolve("deepForest", false, false, false), Is.EqualTo(AudioContext.Forest));
+        }
+        [Test] public void MapsShareForestCampusAndDormitoryTracks()
+        {
+            Assert.That(AudioContextPolicy.MapMusicCue("westForest"), Is.EqualTo("music.forest"));
+            Assert.That(AudioContextPolicy.MapMusicCue("deepForest"), Is.EqualTo("music.forest"));
+            Assert.That(AudioContextPolicy.MapMusicCue("orioDaisRoom"), Is.EqualTo("music.forest"));
+            Assert.That(AudioContextPolicy.MapMusicCue("B01.Ground"), Is.EqualTo("music.dormitory"));
+            Assert.That(AudioContextPolicy.MapMusicCue("campus"), Is.EqualTo("music.campus"));
+            Assert.That(AudioContextPolicy.MapMusicCue("B04.Ground"), Is.EqualTo("music.campus"));
+            Assert.That(AudioContextPolicy.MapMusicCue("C03.IceTrial"), Is.EqualTo("music.campus"));
+            Assert.That(AudioContextPolicy.MapMusicCue(null), Is.Null);
         }
         [Test] public void PausedEmptyVoicesRemainAvailableForStartupUi()
         {

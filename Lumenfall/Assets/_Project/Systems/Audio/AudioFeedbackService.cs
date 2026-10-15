@@ -1,9 +1,11 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Lumenfall.Cutscenes;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Audio
 {
@@ -38,6 +40,11 @@ namespace Lumenfall.Audio
         private string ambienceCue;
         private bool applicationPaused;
         private bool gameplayPaused;
+        private bool menuMusic;
+        private bool openingSilence;
+        // The forest track waits this long after the opening's last line of dialogue closes.
+        private const float OpeningMusicDelay = 1f;
+        private float openingQuietUntil = float.NegativeInfinity;
         public static AudioFeedbackService Instance => instance;
         public AudioContext CurrentContext => signals.Context;
         public AudioClipStatus GetClipStatus(string cueId) => clips == null ? AudioClipStatus.InvalidConfiguration : clips.GetStatus(cueId);
@@ -159,8 +166,17 @@ namespace Lumenfall.Audio
         private void RefreshPlayback()
         {
             string key = signals.Context == AudioContext.Silent ? null : signals.Context.ToString().ToLowerInvariant();
-            SetLoop(music, ref musicCue, key == null ? null : "music." + key);
-            SetLoop(ambience, ref ambienceCue, key == null ? null : "ambience." + key);
+            SetLoop(music, ref musicCue, SelectMusicCue(key));
+            SetLoop(ambience, ref ambienceCue, key == null || openingSilence ? null : "ambience." + key);
+        }
+        private string SelectMusicCue(string key)
+        {
+            if (openingSilence) return null;
+            if (menuMusic) return "music.menu";
+            // Dialogue, mystery and sleep keep the map's track (ducked) until they have music of their own.
+            if (signals.Context == AudioContext.Dialogue || signals.Context == AudioContext.Mystery || signals.Context == AudioContext.Sleep)
+            { string mood = "music." + key; if (clips.GetStatus(mood) == AudioClipStatus.Ready) return mood; }
+            return AudioContextPolicy.MapMusicCue(signals.MapId);
         }
         private void SetLoop(LoopChannel[] channels, ref string current, string cue)
         {
@@ -180,6 +196,10 @@ namespace Lumenfall.Audio
         private void Update()
         {
             RefreshDependencies(); BindCaster();
+            bool menu = StartupMenu.IsMainMenu;
+            if (CutscenePlayer.OpeningInProgress) openingQuietUntil = Time.unscaledTime + OpeningMusicDelay;
+            bool opening = Time.unscaledTime < openingQuietUntil;
+            if (menu != menuMusic || opening != openingSilence) { menuMusic = menu; openingSilence = opening; RefreshPlayback(); }
             bool paused = Time.timeScale <= 0f;
             if (paused != gameplayPaused) { gameplayPaused = paused; ApplyPause(); }
             Advance(music, AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping));

@@ -15,8 +15,8 @@ namespace Lumenfall.Tests.GameEvents
         private GridWorld grid;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
         private const string Quest = "katrina_something_borrowed";
-        private const string FoundEvent = "found_katrina_keepsake";
-        private const string FoundFlag = "inventory.keyitem.katrina-keepsake";
+        private const string FoundEvent = "found_katrina_library_item";
+        private const string FoundFlag = "inventory.keyitem.katrina-library-anchor";
         private static readonly Vector2Int Cell = new Vector2Int(5, 5);
         private static readonly string[] HookTags = { "hidden", "on-reveal:" + FoundEvent };
         private static readonly string[] PickupTags = { "hidden", "pickup", "on-pickup:" + FoundEvent };

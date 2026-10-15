@@ -1,5 +1,7 @@
 using UnityEngine;
 using Lumenfall.Startup;
+using Lumenfall.Cutscenes;
+using Lumenfall.GridMovement;
 
 namespace Lumenfall.GameEvents
 {
@@ -25,6 +27,7 @@ namespace Lumenfall.GameEvents
         private string pendingManualSlot;
         private float secondsUntilSave;
         private float activeSecondsSinceLoad;
+        private GridMover player;
 
         /// <summary>True once the player has had a few seconds of real gameplay since the last load or new game.</summary>
         public static bool HasPlayedSinceLoad => instance == null || instance.activeSecondsSinceLoad >= PlayedGraceSeconds;
@@ -62,6 +65,9 @@ namespace Lumenfall.GameEvents
             activeSecondsSinceLoad += deltaTime;
             secondsUntilSave -= deltaTime;
             if (secondsUntilSave > 0f) return;
+            // A save taken mid-step fails validation, so a due save waits for the player to stand still. This runs
+            // before movement each frame, so it sees the gap between held steps.
+            if (PlayerIsMoving()) return;
             secondsUntilSave = PeriodicSaveSeconds;
             if (CanAutosave()) SaveCurrentSlot();
         }
@@ -139,15 +145,26 @@ namespace Lumenfall.GameEvents
                 initialAutosavePending = false;
                 saveManager.MarkPlayed(GameSaveManager.AutosaveSlot);
             }
-            if (pendingManualSlot == null) return;
+            // Empty, not null, after Unity reloads scripts during Play Mode, which serializes private strings.
+            if (string.IsNullOrEmpty(pendingManualSlot)) return;
             string slot = pendingManualSlot;
             pendingManualSlot = null;
             if (saveManager.Save(slot)) SaveSlotSummary.RequestThumbnailRefresh(slot);
         }
 
+        private bool PlayerIsMoving()
+        {
+            if (player == null)
+            {
+                GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
+                player = input == null ? null : input.GetComponent<GridMover>();
+            }
+            return player != null && player.IsMoving;
+        }
+
         private bool CanAutosave()
         {
-            return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible &&
+            return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible && !CutscenePlayer.IsPlaying &&
                 (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
         }
     }

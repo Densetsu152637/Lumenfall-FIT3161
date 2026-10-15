@@ -70,7 +70,7 @@
     },
     {
       "id": "B01",
-      "name": "B01",
+      "name": "Dormitory",
       "rect": {
         "x": 56,
         "y": 60,
@@ -81,7 +81,7 @@
     },
     {
       "id": "B02",
-      "name": "B02",
+      "name": "Arcane Workshop",
       "rect": {
         "x": 12,
         "y": 56,
@@ -92,7 +92,7 @@
     },
     {
       "id": "B03",
-      "name": "B03",
+      "name": "Main Academy Building",
       "rect": {
         "x": 8,
         "y": 22,
@@ -103,7 +103,7 @@
     },
     {
       "id": "B04",
-      "name": "B04",
+      "name": "Library",
       "rect": {
         "x": 48,
         "y": 0,
@@ -195,19 +195,6 @@
       "width": 1,
       "height": 1,
       "rotation": 0
-    },
-    {
-      "id": "mechanism.orio.rotate",
-      "type": "mechanism",
-      "x": 25,
-      "y": 34,
-      "blocks": false,
-      "tags": [
-        "rotara"
-      ],
-      "width": 1,
-      "height": 1,
-      "rotation": 180
     }
   ],
   "puzzleTargets": [
@@ -229,20 +216,6 @@
         "relic.stella.power|circuit.stella.link"
       ],
       "minimumEffectivePower": 0.2
-    },
-    {
-      "id": "quest.orio.patch-notes",
-      "objectIds": [
-        "mechanism.orio.rotate"
-      ],
-      "requiredRotation": 180
-    },
-    {
-      "id": "quest.katrina.something-borrowed",
-      "objectIds": [
-        "keepsake.katrina.hidden"
-      ],
-      "requiredRevealed": true
     }
   ],
   "portals": [

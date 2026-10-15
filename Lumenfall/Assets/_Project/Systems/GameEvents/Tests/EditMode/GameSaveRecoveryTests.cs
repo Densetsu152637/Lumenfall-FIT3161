@@ -215,6 +215,17 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(manager.AutosaveAllowed, Is.False); Assert.That(manager.Save(slot), Is.True);
             Assert.That(Array.Exists(JsonUtility.FromJson<Envelope>(File.ReadAllText(PathForSlot)).providers, p => p.key == "old-unknown"), Is.False);
         }
+        [Test]
+        public void ConfirmedNewRunResumesAutosaveOnlyAfterSuccessfulReset()
+        {
+            Assert.That(manager.ResetState(() => { }, resumeAutosave: true), Is.True);
+            Assert.That(manager.AutosaveAllowed, Is.True, "A deferred first autosave must be able to run.");
+            ExpectFailure();
+            Assert.That(manager.ResetState(() => throw new InvalidOperationException("reset failed"), resumeAutosave: true), Is.False);
+            Assert.That(manager.AutosaveAllowed, Is.False, "A failed reset must keep autosave suspended.");
+            Assert.That(manager.ResetState(() => { }), Is.True);
+            Assert.That(manager.AutosaveAllowed, Is.False, "Ordinary resets retain the explicit-save guard.");
+        }
         [Serializable] private sealed class Envelope { public int schemaVersion; public string savedAtUtc; public string eventStateJson; public Entry[] providers = Array.Empty<Entry>(); }
         [Serializable] private sealed class Entry { public string key; public string payload; }
         [Serializable] private sealed class ValueState { public int value; }

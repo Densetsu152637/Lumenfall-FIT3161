@@ -44,6 +44,92 @@
     opacity: 1;
 }
 
+/* Neutral NPC dialogue fills the complete lower screen edge. Its decorative caps remain fixed while only the
+   deliberately plain middle strip expands, so no painted detail is distorted on wide displays. */
+.dialogue-box--stretch {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    height: 360px;
+    translate: 0 48px;
+    background-image: none;
+}
+
+.dialogue-root--shown .dialogue-box--stretch {
+    translate: 0 0;
+}
+
+.dialogue-stretch-frame {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+}
+
+.dialogue-box--stretch .dialogue-stretch-frame {
+    display: flex;
+}
+
+.dialogue-stretch-frame__left,
+.dialogue-stretch-frame__middle,
+.dialogue-stretch-frame__right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.dialogue-stretch-frame__left {
+    left: 0;
+    width: 219px;
+}
+
+.dialogue-stretch-frame__middle {
+    left: 217px;
+    right: 291px;
+}
+
+.dialogue-stretch-frame__right {
+    right: 0;
+    width: 293px;
+}
+
+.dialogue-box--stretch .dialogue-content {
+    left: 400px;
+    right: 240px;
+    top: 114px;
+    bottom: 92px;
+    width: auto;
+    height: auto;
+}
+
+.dialogue-box--stretch .dialogue-ribbon {
+    left: 190px;
+    top: 10px;
+}
+
+.dialogue-box--stretch.dialogue-box--portrait .dialogue-ribbon {
+    left: 352px;
+}
+
+.dialogue-box--stretch .dialogue-portrait {
+    left: 117px;
+    top: 30px;
+    width: 248px;
+    height: 248px;
+    border-radius: 124px;
+    border-width: 9px;
+}
+
+.dialogue-box--stretch .dialogue-continue {
+    right: 330px;
+    bottom: 88px;
+}
+
 /* Live portrait, sitting over the frame's top-left corner. */
 .dialogue-portrait {
     position: absolute;
@@ -66,7 +152,7 @@
 /* Name ribbon on the frame's top edge, coloured per speaker. */
 .dialogue-ribbon {
     position: absolute;
-    left: 150px;
+    left: 180px;
     top: -26px;
     padding: 8px 34px 10px 30px;
     border-radius: 8px;
@@ -96,6 +182,21 @@
     overflow: hidden;
 }
 
+.dialogue-content .unity-scroller--vertical {
+    width: 18px;
+    margin-left: 10px;
+}
+
+.dialogue-content .unity-base-slider__tracker {
+    background-color: rgba(120, 90, 50, 0.18);
+    border-radius: 8px;
+}
+
+.dialogue-content .unity-base-slider__dragger {
+    background-color: rgba(120, 90, 50, 0.72);
+    border-radius: 8px;
+}
+
 .dialogue-text {
     font-size: 30px;
     white-space: normal;
@@ -103,16 +204,22 @@
     -unity-text-align: upper-left;
     margin: 0;
     padding: 0;
+    flex-shrink: 0;
 }
 
+/* Rows keep their full height; the box is sized to fit them rather than squeezing them together. */
 .dialogue-choices {
     margin-top: 10px;
+    flex-shrink: 0;
 }
 
 .dialogue-choice {
     flex-direction: row;
     align-items: center;
+    align-self: stretch;
+    flex-shrink: 0;
     margin-top: 6px;
+    margin-right: 54px;
     padding: 5px 14px 5px 8px;
     border-radius: 10px;
     border-width: 2px;
@@ -145,6 +252,14 @@
     flex-shrink: 1;
     padding: 0;
     margin: 0;
+}
+
+/* Invisible copies of the page and its choices, one per box size, measured to pick the box size. */
+.dialogue-sizer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    visibility: hidden;
 }
 
 /* "Press to continue" arrow in the frame's lower-right. */

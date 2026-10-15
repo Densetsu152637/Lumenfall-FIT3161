@@ -1,6 +1,6 @@
-------------------------------------------------------------------------
+========================================================================
 VEE-TREX | STYLIZED TAVERN PROP PACK (FREE STARTER EDITION)
-------------------------------------------------------------------------
+========================================================================
 
 Thank you for downloading the Stylized Tavern Prop Pack! This asset pack 
 is built to professional industry standards, designed specifically to 
@@ -31,4 +31,4 @@ What to expect in the full pack:
   with ready-to-trigger destruction physics to save you hours of dev time.
 
 Stay tuned to the VEE-TREX publisher profile for the upcoming launch!
-------------------------------------------------------------------------
+========================================================================

@@ -20,6 +20,8 @@ namespace Lumenfall.Quests
     /// dip and rise when lifted; a bobbing, slowly turning hover in front of the player; a float down when set down; a shudder
     /// or a bump when placement is refused; and on delivery a socket pulse and a shockwave ring. A ghost tile shows
     /// where the relic would land, green when allowed. Map loads, save restores and releases snap without animating.
+    /// The relic is the <see cref="CinnaIceTrialArt"/> model (a stone base and a crystal that takes the state colours) when
+    /// that asset has been built, and a primitive stone with a notch otherwise.
     /// </remarks>
     public sealed class CinnaAlignmentRelic : MonoBehaviour
     {
@@ -48,6 +50,7 @@ namespace Lumenfall.Quests
         private const float RingEndRadius = 1.4f;
         private const float RingWidth = 0.08f;
         private const int RingSegments = 40;
+        private const float CrystalGlow = 0.45f;
         private static readonly Color RestColor = new Color(0.45f, 0.4f, 0.62f);
         private static readonly Color NotchGlowColor = new Color(0.78f, 0.72f, 1f);
         private static readonly Color HeldColor = new Color(0.66f, 0.58f, 1f);
@@ -117,13 +120,13 @@ namespace Lumenfall.Quests
         /// <summary>The next Out of Alignment step for the quest hint overlay, from live progression and the held relic.</summary>
         public static string DescribeStep(WorldStateService state, SpellCaster caster)
         {
-            if (CinnaIceTrialRoom.RelicDelivered()) return "The relic is on its stand. Return to Cinna Cirra on the C02 terrace.";
-            bool inTrial = state != null && string.Equals(state.CurrentMapId, CinnaIceTrialRoom.MapId, StringComparison.OrdinalIgnoreCase);
-            if (caster != null && caster.HeldRelic == RelicId)
-                return inTrial ? "Face the empty stand beside the pool and cast Vis to set the relic on it."
-                    : $"Carry the relic to the ice-trial portal on the campus path at ({CinnaIceTrialEntrance.EntranceCell.x}, {CinnaIceTrialEntrance.EntranceCell.y}).";
-            return inTrial ? "The relic is still on campus. Lift it beside Cinna Cirra on the C02 terrace."
-                : "Lift the relic beside Cinna Cirra on the C02 terrace with Vis.";
+            if (CinnaIceTrialRoom.RelicDelivered()) return "Go back to Cinna Cirra.";
+            return "Lift the relic beside Cinna Cirra and carry it to the stand.\n" +
+                "1. Use Q to open the Spell Wheel and use the mouse to select a spell.\n" +
+                "2. Select Vis.\n" +
+                "3. Right click or press F to cast towards the relic next to Cinna Cirra.\n" +
+                "4. Hold it and carry it to the trial area at the lower part of the campus.\n" +
+                "5. Face the stand and cast again to put the relic onto the stand.";
         }
 
         private void OnDestroy()
@@ -174,16 +177,45 @@ namespace Lumenfall.Quests
             // The visual pivots at its base, so the idle wobble tilts it on the ground.
             relicVisual = new GameObject("Relic Visual").transform;
             relicVisual.SetParent(transform, false);
-            GameObject stone = Part(PrimitiveType.Cube, "Relic Stone", relicVisual, new Vector3(0.5f, 0.78f, 0.5f));
-            stone.transform.localPosition = new Vector3(0f, 0.39f, 0f);
-            GameObject notch = Part(PrimitiveType.Cube, "Relic Notch", relicVisual, new Vector3(0.18f, 0.18f, 0.08f));
-            notch.transform.localPosition = new Vector3(0f, 0.6f, 0.27f);
-            notchRenderer = notch.GetComponent<Renderer>();
-            relicRenderers = relicVisual.GetComponentsInChildren<Renderer>(true);
+            CinnaIceTrialArt art = CinnaIceTrialArt.Instance;
+            if (art != null && art.relic != null) BuildModel(art.relic);
+            else
+            {
+                GameObject stone = Part(PrimitiveType.Cube, "Relic Stone", relicVisual, new Vector3(0.5f, 0.78f, 0.5f));
+                stone.transform.localPosition = new Vector3(0f, 0.39f, 0f);
+                GameObject notch = Part(PrimitiveType.Cube, "Relic Notch", relicVisual, new Vector3(0.18f, 0.18f, 0.08f));
+                notch.transform.localPosition = new Vector3(0f, 0.6f, 0.27f);
+                notchRenderer = notch.GetComponent<Renderer>();
+                relicRenderers = relicVisual.GetComponentsInChildren<Renderer>(true);
+            }
 
             preview = Part(PrimitiveType.Cube, "Placement Preview", transform, new Vector3(0.92f, 0.02f, 0.92f)).transform;
             previewRenderer = preview.GetComponent<Renderer>();
             BuildRing();
+        }
+
+        // The model's stone base keeps its own material; only the crystal takes the state colours, so a textured model is
+        // not muddied by the tints. The crystal also stands in for the primitive's glowing notch.
+        private void BuildModel(GameObject model)
+        {
+            GameObject instance = Instantiate(model, relicVisual);
+            instance.name = "Relic Model";
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            foreach (Collider collider in instance.GetComponentsInChildren<Collider>(true))
+            {
+                if (Application.isPlaying) Destroy(collider);
+                else DestroyImmediate(collider);
+            }
+            relicRenderers = Array.FindAll(instance.GetComponentsInChildren<Renderer>(true), IsCrystalPart);
+            notchRenderer = relicRenderers.Length > 0 ? relicRenderers[0] : null;
+        }
+
+        private static bool IsCrystalPart(Renderer renderer)
+        {
+            for (Transform part = renderer.transform; part != null; part = part.parent)
+                if (part.name == CinnaIceTrialArt.CrystalPartName) return true;
+            return false;
         }
 
         // A flat line loop on the ground; it grows and thins out from the stand on delivery. It uses the same
@@ -489,6 +521,8 @@ namespace Lumenfall.Quests
             renderer.GetPropertyBlock(block);
             block.SetColor("_BaseColor", color);
             block.SetColor("_Color", color);
+            // Only the art model's crystal material has emission enabled; on the primitives this does nothing.
+            block.SetColor("_EmissionColor", color * CrystalGlow);
             renderer.SetPropertyBlock(block);
         }
     }

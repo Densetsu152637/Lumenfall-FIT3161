@@ -12,17 +12,17 @@ public static class OrioOffline
     public static void Main(string[] args)
     {
         foreach (var item in new[] { (180f,270f), (270f,0f), (0f,90f), (-90f,0f), (360f,90f), (450f,180f) })
-            Check(RotaraGearMechanism.NextQuarterTurn(item.Item1) == item.Item2, "quarter turn " + item.Item1);
-        foreach (float angle in new[] { 90f,450f,-270f }) Check(RotaraGearMechanism.RotationMatches(angle,90), "normalized target");
+            Check(OrioRuneDiscPuzzle.NextQuarterTurn(item.Item1) == item.Item2, "quarter turn " + item.Item1);
+        foreach (float angle in new[] { 90f,450f,-270f }) Check(OrioRuneDiscPuzzle.RotationMatches(angle,90), "normalized target");
         foreach (float angle in new[] { 0f,180f,270f,89.5f,float.NaN,float.PositiveInfinity,float.NegativeInfinity })
-            Check(!RotaraGearMechanism.RotationMatches(angle,90), "reject wrong/nonfinite angle");
+            Check(!OrioRuneDiscPuzzle.RotationMatches(angle,90), "reject wrong/nonfinite angle");
         // The rune dais: sockets turn their linked discs; all three discs must reach the target together.
         WorldObjectSnapshot[] discs = OrioRuneDiscPuzzle.DiscIds.Select((id,i)=>new WorldObjectSnapshot { id=id,mapId=OrioRuneDiscPuzzle.PuzzleMapId,
             rotation=OrioRuneDiscPuzzle.DiscStartRotations[i],tags=new[]{OrioRuneDiscPuzzle.DiscTag} }).ToArray();
         void Press(string socket)
         {
             Check(OrioRuneDiscPuzzle.TryGetLinkedDiscs(OrioRuneDiscPuzzle.PuzzleMapId,socket,out string[] linked),"socket links "+socket);
-            foreach (string id in linked) { var disc=discs[Array.IndexOf(OrioRuneDiscPuzzle.DiscIds,id)]; disc.rotation=RotaraGearMechanism.NextQuarterTurn(disc.rotation); }
+            foreach (string id in linked) { var disc=discs[Array.IndexOf(OrioRuneDiscPuzzle.DiscIds,id)]; disc.rotation=OrioRuneDiscPuzzle.NextQuarterTurn(disc.rotation); }
         }
         Check(!OrioRuneDiscPuzzle.AreDiscsAligned(OrioRuneDiscPuzzle.PuzzleMapId,discs),"authored start unsolved");
         string[] presses={"mechanism.orio.socket.north","mechanism.orio.socket.north","mechanism.orio.socket.north",OrioRuneDiscPuzzle.AnchorId,

@@ -1,5 +1,7 @@
 # Orio: Patch Notes — implementation tracker
 
+> **Superseded.** This assessment describes the original single-gear version. The quest now uses a rune dais in `deepForest`, and the gear objects were removed. See [quest-orio-patch-notes.md](../implementation/quest-orio-patch-notes.md) for the current behaviour.
+
 **Quest ID:** `orio_patch_notes`
 **Monitor:** `orio_patch_notes_monitor` → `complete_orio_patch_notes`
 **Assessment:** **Partial.** Rotara behavior, quest definition, event threshold, target object, and reward metadata exist. The authored requirement is only a quarter-turn value; the promised sequence/receiver puzzle is not modeled by the monitor.

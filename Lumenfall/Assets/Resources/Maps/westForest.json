@@ -75,28 +75,8 @@
   },
   "tileFile": "westForest.txt",
   "portalGlyph": "X",
-  "objects": [
-    {
-      "id": "mechanism.orio.rotate",
-      "type": "mechanism",
-      "x": 8,
-      "y": 21,
-      "blocks": false,
-      "tags": [
-        "rotara"
-      ],
-      "rotation": 180
-    }
-  ],
-  "puzzleTargets": [
-    {
-      "id": "quest.orio.patch-notes",
-      "objectIds": [
-        "mechanism.orio.rotate"
-      ],
-      "requiredRotation": 90
-    }
-  ],
+  "objects": [],
+  "puzzleTargets": [],
   "portals": [
     {
       "id": "P.F01.F02",

@@ -8,6 +8,8 @@ using Lumenfall.Controls;
 using Lumenfall.Quests;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
+using Lumenfall.Cutscenes;
+using Lumenfall.Story;
 
 namespace Lumenfall.Inventory
 {
@@ -29,18 +31,38 @@ namespace Lumenfall.Inventory
     {
         private const string CharacterFlagPrefix = "character.discovered.";
         private const string ItemFlagPrefix = "inventory.keyitem.";
-        private static readonly string[] KeyItemIds = { "dormitory-key", "katrina-keepsake", "optional-recovered-item" };
+        private static readonly string[] KeyItemIds =
+        {
+            "dormitory-key", "katrina-keepsake", "optional-recovered-item", "katrina-library-anchor", "katrina-garden-anchor", "katrina-stream-anchor"
+        };
+        private static readonly Dictionary<string, KeyItemEntry> KeyItemEntries =
+            new Dictionary<string, KeyItemEntry>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "katrina-keepsake", new KeyItemEntry("Katrina's keepsake", "Katrina's recovered keepsake.", null) },
+                { "optional-recovered-item", new KeyItemEntry("Recovered item (optional)", "An optional recovered item.", null) },
+                { "dormitory-key", new KeyItemEntry("Dormitory Key", "Your key to the dormitory room assigned at reception.", null) },
+                { "katrina-library-anchor", new KeyItemEntry("Brass Bookmark", "Katrina's brass bookmark, its edge covered in tiny corrections.", "KeyItemIcons/KatrinaBrassBookmark") },
+                { "katrina-garden-anchor", new KeyItemEntry("Silver Constellation Ribbon", "A silver ribbon embroidered with three slightly crooked constellations.", "KeyItemIcons/KatrinaSilverRibbon") },
+                { "katrina-stream-anchor", new KeyItemEntry("Riverglass Chime", "Katrina's riverglass chime, still humming softly in time with running water.", "KeyItemIcons/KatrinaRiverglassChime") }
+            };
         private static readonly Dictionary<string, CharacterEntry> CharacterEntries =
             new Dictionary<string, CharacterEntry>(StringComparer.OrdinalIgnoreCase)
             {
                 { "stella", new CharacterEntry("Stella", "A student working through practical relic and circuit puzzles.") },
                 { "cinna_cirra", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_orientation", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_trial", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
                 { "orio", new CharacterEntry("Orio", "A clever, reliable student who enjoys games, automation, and optimisation.") },
                 { "katrina", new CharacterEntry("Katrina", "A student searching for a keepsake while keeping its importance understated.") },
-                { "campus_student", new CharacterEntry("Campus student", "A student seen around the courtyard and commons, sharing practical campus observations.") },
-                { "forest_student", new CharacterEntry("Forest student", "A student familiar with the lantern trail and quiet forest practice spots.") }
+                { "campus_student", new CharacterEntry("Kit", "A friendly student by the campus entrance who gives newcomers the lay of the land.") },
+                { "forest_student", new CharacterEntry("Grace", "A student familiar with the lantern trail and quiet forest practice spots.") },
+                { "prof_bann", new CharacterEntry("Prof. Bann", "The headmistress of Lumenfall, found by the fountain in the courtyard.") },
+                { "prof_voltaire", new CharacterEntry("Prof. Voltaire", "A professor who keeps the Library in order, and has opinions about overdue books.") },
+                { "vex", new CharacterEntry("Vex", "A student who treats the Library's quiet as a personal responsibility.") },
+                { "luna", new CharacterEntry("Luna", "A student who spends more time looking at the sky than at the path.") },
+                { "juno", new CharacterEntry("Juno", "A student who always seems to know the latest campus news first.") },
+                { "rowan", new CharacterEntry("Rowan", "A student who has already claimed the dormitory lobby as their own.") },
+                { "marigold", new CharacterEntry("Marigold", "One of the dormitory receptionists, keeper of the room list and the key rack.") },
+                { "thistle", new CharacterEntry("Thistle", "One of the dormitory receptionists, who always seems to be mid-way through finding something.") },
+                { "moss", new CharacterEntry("Moss", "A student who goes to the forest to think, and to listen to it.") }
             };
         private static readonly Dictionary<SpellId, string> SpellDescriptions =
             new Dictionary<SpellId, string>
@@ -69,6 +91,8 @@ namespace Lumenfall.Inventory
         private float openedAt;
         private float pageChangedAt;
         private Vector2 listScroll;
+        // The Miscellaneous item whose description is open, if any.
+        private string openMiscItem;
         // The active-tab underline slides between tabs; it is stored relative to the panel so parallax does not drag it.
         private float underlineOffset;
         private float underlineWidth;
@@ -80,8 +104,9 @@ namespace Lumenfall.Inventory
         private string inkText;
         private float inkedAt;
         private float sealedAt = float.NegativeInfinity;
+        private GUIStyle wrappedSaveStatusStyle;
 
-        private enum FooterAction { None, MainMenu, Save, Quit }
+        private enum FooterAction { None, MainMenu, QuickSave, Save, Quit }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -175,7 +200,7 @@ namespace Lumenfall.Inventory
         private void Open()
         {
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
-                QuestHintOverlay.IsSettingsOpen) return;
+                QuestHintOverlay.IsSettingsOpen || CutscenePlayer.BlocksInput) return;
             InventoryUiState.IsOpen = true;
             OverlayInputGate.Acquire(this);
             openedAt = pageChangedAt = Time.unscaledTime;
@@ -273,11 +298,16 @@ namespace Lumenfall.Inventory
                 Close();
                 StartupMenu.ReturnToMainMenu();
             }
-            else if (action == FooterAction.Save) SaveNow();
+            else if (action == FooterAction.QuickSave) QuickSave();
+            else if (action == FooterAction.Save)
+            {
+                Close();
+                StartupMenu.OpenSaveSlotPicker();
+            }
             else if (action == FooterAction.Quit) QuitGame();
         }
 
-        /// <summary>Main menu, Save to the game's slot (with the hourglass) and Quit game, then the inked save status.</summary>
+        /// <summary>Main menu, quick save, manual slot selection and Quit game, then the inked save status.</summary>
         private FooterAction DrawFooter(Rect panel)
         {
             const float Height = 36f;
@@ -285,29 +315,42 @@ namespace Lumenfall.Inventory
             float y = panel.yMax - 58f;
             float x = panel.x + 36f;
             FooterAction action = FooterAction.None;
-            if (skin.Button(new Rect(x, y, 140f, Height), "Main menu")) action = FooterAction.MainMenu;
-            x += 140f + Gap;
-            if (SaveButton(new Rect(x, y, 160f, Height))) action = FooterAction.Save;
-            x += 160f + Gap;
-            if (skin.Button(new Rect(x, y, 130f, Height), "Quit game")) action = FooterAction.Quit;
-            x += 130f + Gap;
-            DrawSaveStatus(new Rect(x + 8f, y, panel.xMax - 36f - x - 8f, Height));
+            if (skin.Button(new Rect(x, y, 126f, Height), "Main menu")) action = FooterAction.MainMenu;
+            x += 126f + Gap;
+            string quickSaveSlot = ManualSaveSlot.Linked;
+            if (quickSaveSlot != null && GameSaveManager.Instance.HasSave(quickSaveSlot))
+            {
+                // Wide enough for the hourglass, "Quick Save · Slot 3", and trailing text breathing room.
+                if (QuickSaveButton(new Rect(x, y, 230f, Height))) action = FooterAction.QuickSave;
+                x += 230f + Gap;
+            }
+            if (skin.Button(new Rect(x, y, 104f, Height), "Save")) action = FooterAction.Save;
+            x += 104f + Gap;
+            if (skin.Button(new Rect(x, y, 108f, Height), "Quit game")) action = FooterAction.Quit;
+            x += 108f + Gap;
+            DrawSaveStatus(new Rect(x + 8f, y - 2f, panel.xMax - 36f - x - 8f, Height + 4f));
             return action;
         }
 
-        private bool SaveButton(Rect rect)
+        private bool QuickSaveButton(Rect rect)
         {
             string slot = ManualSaveSlot.Linked;
-            bool clicked = skin.Button(rect, slot != null ? "Save · " + ManualSaveSlot.Label(slot) : "Save");
+            // Leave room inside the label for the hourglass at the left, plus one character of breathing room at the end.
+            string label = "   Quick Save · " + ManualSaveSlot.Label(slot) + " ";
+            bool clicked = skin.Button(rect, label);
             float lift = rect.Contains(Event.current.mousePosition) ? 2f : 0f;
             skin.DrawHourglass(new Rect(rect.x + 10f, rect.center.y - 9f - lift, 12f, 18f));
             return clicked;
         }
 
-        /// <summary>Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.</summary>
+        /// <summary>
+        /// Right-aligned "Last saved 2 min ago" that writes itself in like ink, with the wax seal after a Save.
+        /// On narrow screens the status uses the full remaining footer width and wraps onto a second line.
+        /// </summary>
         private void DrawSaveStatus(Rect area)
         {
             const float SealSize = 24f;
+            const float SealGap = 8f;
             string status = SaveStatus();
             if (status != inkText)
             {
@@ -317,14 +360,49 @@ namespace Lumenfall.Inventory
             GUIStyle style = skin.Status;
             float textWidth = style.CalcSize(new GUIContent(status)).x;
             bool stamped = !float.IsNegativeInfinity(sealedAt) && saveFeedback == null;
-            float x = Mathf.Max(area.x, area.xMax - textWidth - (stamped ? SealSize + 8f : 0f));
+            float sealWidth = stamped ? SealSize + SealGap : 0f;
+            float availableTextWidth = Mathf.Max(0f, area.width - sealWidth);
+            bool wrap = textWidth > availableTextWidth;
+            if (wrap)
+            {
+                wrappedSaveStatusStyle ??= new GUIStyle(style)
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    wordWrap = true,
+                    clipping = TextClipping.Clip
+                };
+                style = wrappedSaveStatusStyle;
+                status = FitToTwoLines(status, style, availableTextWidth);
+            }
+
+            float x = wrap ? area.x : Mathf.Max(area.x, area.xMax - textWidth - sealWidth);
             if (stamped)
             {
                 skin.DrawSeal(new Rect(x, area.center.y - SealSize * 0.5f, SealSize, SealSize), sealedAt);
-                x += SealSize + 8f;
+                x += sealWidth;
             }
             skin.InkLabel(new Rect(x, area.y, Mathf.Max(0f, area.xMax - x), area.height), status, style, inkedAt,
                 saveFeedback != null ? MenuArt.Ember : MenuArt.Muted);
+        }
+
+        private static string FitToTwoLines(string text, GUIStyle style, float width)
+        {
+            if (string.IsNullOrEmpty(text) || width <= 0f) return string.Empty;
+            GUIContent content = new GUIContent(text);
+            float twoLineHeight = style.CalcHeight(new GUIContent("Ag\nAg"), width);
+            if (style.CalcHeight(content, width) <= twoLineHeight + 0.5f) return text;
+
+            const string Ellipsis = "…";
+            int low = 0;
+            int high = text.Length;
+            while (low < high)
+            {
+                int length = (low + high + 1) / 2;
+                string candidate = text.Substring(0, length).TrimEnd() + Ellipsis;
+                if (style.CalcHeight(new GUIContent(candidate), width) <= twoLineHeight + 0.5f) low = length;
+                else high = length - 1;
+            }
+            return text.Substring(0, low).TrimEnd() + Ellipsis;
         }
 
         /// <summary>"Slot 1 saved 2 min ago", from the linked slot's file time. The file is checked at most once a second.</summary>
@@ -334,7 +412,7 @@ namespace Lumenfall.Inventory
             if (Time.unscaledTime - saveStatusAt < 1f && saveStatus != null) return saveStatus;
             saveStatusAt = Time.unscaledTime;
             string slot = ManualSaveSlot.Linked;
-            if (slot == null) return saveStatus = ManualSaveSlot.FirstEmpty() != null ? "Save picks an empty slot" : "No save slot yet";
+            if (slot == null) return saveStatus = "Choose a slot with Save";
             string label = ManualSaveSlot.Label(slot);
             if (!GameSaveManager.Instance.TryGetSavedAt(slot, out DateTime savedAt)) return saveStatus = label + " not saved yet";
             TimeSpan age = DateTime.Now - savedAt;
@@ -347,21 +425,15 @@ namespace Lumenfall.Inventory
         }
 
         /// <summary>
-        /// Saves to the game's manual slot (the autosave is refreshed too). A game with no slot yet, such as one carried
-        /// over from before slots were linked, takes the first empty slot; if all are full it asks the player to load one.
+        /// Quick-saves to the manual slot the run was loaded from, or the slot most recently chosen in the Save dialog.
         /// </summary>
-        private void SaveNow()
+        private void QuickSave()
         {
             saveStatusAt = float.NegativeInfinity;
             if (ManualSaveSlot.Linked == null)
             {
-                string empty = ManualSaveSlot.FirstEmpty();
-                if (empty == null)
-                {
-                    saveFeedback = "Every slot is full. Load one from the main menu to save over it.";
-                    return;
-                }
-                ManualSaveSlot.Link(empty);
+                saveFeedback = "Choose a slot with Save before using Quick Save.";
+                return;
             }
             bool saved = ManualSaveSlot.SaveToLinked(out string error);
             saveFeedback = saved ? null : error ?? "Could not save. Please try again.";
@@ -430,34 +502,67 @@ namespace Lumenfall.Inventory
             {
                 if (!IsKeyItemOwned(id)) continue;
                 shown = true;
-                GUILayout.BeginVertical(skin.Entry);
-                GUILayout.Label(id == "dormitory-key" ? "Dormitory key" : id == "katrina-keepsake" ? "Katrina's keepsake" : id == "optional-recovered-item" ? "Recovered item (optional)" : id, skin.EntryTitle);
-                GUILayout.EndVertical();
+                KeyItemEntry entry = KeyItemEntries.TryGetValue(id, out KeyItemEntry configured)
+                    ? configured : new KeyItemEntry(id, string.Empty, null);
+                DrawInventoryEntry(entry.Name, entry.Description, entry.IconResourcePath);
             }
             if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);
 
             GUILayout.Space(14f);
+            DrawMiscellaneous();
+
+            GUILayout.Space(14f);
             Heading("Unlocked spells");
-            SpellCaster caster = FindAnyObjectByType<SpellCaster>();
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool spellsShown = false;
             foreach (SpellId spell in (SpellId[])Enum.GetValues(typeof(SpellId)))
             {
-                if (caster == null || !caster.IsSpellLearned(spell)) continue;
+                // The journal records permanent progression, not the current caster's optional designer allow-list.
+                // This also keeps unlocked spells visible while changing maps before a player SpellCaster is rebuilt.
+                if (runtime == null || !runtime.GetFlag("spell.unlocked." + spell)) continue;
                 spellsShown = true;
-                GUILayout.BeginHorizontal(skin.Entry);
-                Texture2D icon = Resources.Load<Texture2D>(SpellCaster.GetIconResourcePath(spell));
-                if (icon != null)
-                {
-                    GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));
-                    GUILayout.Space(12f);
-                }
-                GUILayout.BeginVertical();
-                GUILayout.Label(spell.ToString(), skin.EntryTitle);
-                GUILayout.Label(SpellDescriptions[spell], skin.Muted);
-                GUILayout.EndVertical();
-                GUILayout.EndHorizontal();
+                string description = SpellDescriptions.TryGetValue(spell, out string authoredDescription)
+                    ? authoredDescription : "A learned spell.";
+                DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIconResourcePath(spell));
             }
             if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
+        }
+
+        // Curios found around the maps: just their names, and clicking one shows or hides its description.
+        private void DrawMiscellaneous()
+        {
+            Heading("Miscellaneous");
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            bool shown = false;
+            foreach (MiscCollectibles.Item item in MiscCollectibles.Items)
+            {
+                if (!MiscCollectibles.IsFound(runtime, item.Key) ||
+                    !MiscCollectibles.TryGetText(runtime, item.Key, out string itemName, out string description)) continue;
+                shown = true;
+                bool open = openMiscItem == item.Key;
+                GUILayout.BeginVertical(skin.Entry);
+                if (GUILayout.Button(itemName, skin.EntryTitle)) openMiscItem = open ? null : item.Key;
+                if (open && !string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
+                GUILayout.EndVertical();
+            }
+            if (!shown) GUILayout.Label("Nothing found yet.", skin.Muted);
+        }
+
+        /// <summary>Shared journal row used by key items and spells: icon left, gold title and description right.</summary>
+        private void DrawInventoryEntry(string entryName, string description, string iconResourcePath)
+        {
+            GUILayout.BeginHorizontal(skin.Entry);
+            Texture2D icon = string.IsNullOrWhiteSpace(iconResourcePath) ? null : Resources.Load<Texture2D>(iconResourcePath);
+            if (icon != null)
+            {
+                GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));
+                GUILayout.Space(12f);
+            }
+            GUILayout.BeginVertical();
+            GUILayout.Label(entryName, skin.EntryTitle);
+            if (!string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
         }
 
         private void DrawEncyclopedia()
@@ -467,10 +572,10 @@ namespace Lumenfall.Inventory
             bool shown = false;
             foreach (KeyValuePair<string, CharacterEntry> pair in CharacterEntries)
             {
-                if (runtime == null || !runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
+                if (!AnyRecordDiscovered(runtime, pair.Key)) continue;
                 shown = true;
                 GUILayout.BeginVertical(skin.Entry);
-                GUILayout.Label(pair.Value.Name, skin.EntryTitle);
+                GUILayout.Label(NpcIntroductions.NameFor(pair.Key, pair.Value.Name), skin.EntryTitle);
                 GUILayout.Label(pair.Value.Description, skin.Muted);
                 GUILayout.EndVertical();
             }
@@ -487,10 +592,25 @@ namespace Lumenfall.Inventory
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Adds a character to the journal. Several NPC records can be one person (Cinna on campus and in the ice trial),
+        /// so the entry is the person's, whichever record was met.
+        /// </summary>
         public static void DiscoverCharacter(string id)
         {
-            if (string.IsNullOrWhiteSpace(id) || !CharacterEntries.ContainsKey(id)) return;
-            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + id, true);
+            if (string.IsNullOrWhiteSpace(id)) return;
+            string person = NpcIntroductions.PersonId(id);
+            if (!CharacterEntries.ContainsKey(person)) return;
+            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + person, true);
+        }
+
+        // Saves from before records were merged hold the flag under the record's own id.
+        private static bool AnyRecordDiscovered(GameEventRuntime runtime, string person)
+        {
+            if (runtime == null) return false;
+            foreach (string record in NpcIntroductions.RecordIdsOf(person))
+                if (runtime.GetFlag(CharacterFlagPrefix + record)) return true;
+            return false;
         }
 
         public static void GrantKeyItem(string id)
@@ -509,8 +629,9 @@ namespace Lumenfall.Inventory
 
         public static bool IsCharacterDiscovered(string id)
         {
-            return !string.IsNullOrWhiteSpace(id) && CharacterEntries.ContainsKey(id) &&
-                   GameEventManager.Instance?.Runtime?.GetFlag(CharacterFlagPrefix + id) == true;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            string person = NpcIntroductions.PersonId(id);
+            return CharacterEntries.ContainsKey(person) && AnyRecordDiscovered(GameEventManager.Instance?.Runtime, person);
         }
 
         private static string MetadataValue(GameMetadataEntry[] metadata, string key)
@@ -525,6 +646,20 @@ namespace Lumenfall.Inventory
             public CharacterEntry(string name, string description) { Name = name; Description = description; }
             public string Name { get; }
             public string Description { get; }
+        }
+
+        private readonly struct KeyItemEntry
+        {
+            public readonly string Name;
+            public readonly string Description;
+            public readonly string IconResourcePath;
+
+            public KeyItemEntry(string name, string description, string iconResourcePath)
+            {
+                Name = name;
+                Description = description;
+                IconResourcePath = iconResourcePath;
+            }
         }
     }
 }

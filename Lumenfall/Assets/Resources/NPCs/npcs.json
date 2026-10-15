@@ -194,7 +194,7 @@
     },
     {
       "id": "campus_student",
-      "displayName": "Campus student",
+      "displayName": "Kit",
       "mapId": "campus",
       "asset": "NPCs/Elara.prefab",
       "x": 32,
@@ -204,20 +204,12 @@
         {
           "dialogueId": "ambient_courtyard_student",
           "weight": 1
-        },
-        {
-          "dialogueId": "ambient_courtyard_student_2",
-          "weight": 1
-        },
-        {
-          "dialogueId": "ambient_courtyard_student_3",
-          "weight": 1
         }
       ]
     },
     {
       "id": "forest_student",
-      "displayName": "Forest student",
+      "displayName": "Grace",
       "mapId": "westForest",
       "asset": "NPCs/Elara.prefab",
       "x": 15,

@@ -41,6 +41,7 @@ namespace Lumenfall.Quests
         private static readonly Color LanternColor = new Color(1f, 0.78f, 0.45f);
 
         private static OrioDaisRoom instance;
+        public static bool IsLegacyVisitActive => instance != null;
         private static WorldAreaAsset area;
         private static PortalContentAsset forestPortalContent;
         private static PortalContentAsset hallPortalContent;
@@ -106,7 +107,8 @@ namespace Lumenfall.Quests
         {
             // The forest portal opens once Orio has explained the dais; the hall's return portal is always open.
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            bool forestOpen = IsMap(currentMapId, ForestMapId) && runtime != null && runtime.GetQuestStatus(QuestId) != QuestStatus.NotStarted;
+            // The old forest entrance is retired. A dormant destination remains only to let legacy saves exit.
+            bool forestOpen = false;
             SetActive(forestPortal, forestOpen);
             SetActive(hallPortal, IsMap(currentMapId, MapId));
         }
@@ -123,7 +125,7 @@ namespace Lumenfall.Quests
                     }
             Vector2Int orio = OrioCell();
             Vector2Int cell = ChooseForestPortalCell(world, orio);
-            forestRing = Bind(ref forestPortal, "Orio Forest Portal", forestPortalContent, world, transform, cell);
+            forestRing = Bind(ref forestPortal, "Orio Forest Portal", forestPortalContent, world, areaRoot != null ? areaRoot.transform : transform, cell);
         }
 
         /// <summary>Orio's authored forest cell from the loaded NPC catalogue, so the portal follows him if he is moved.</summary>

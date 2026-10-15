@@ -7,6 +7,8 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
+using Lumenfall.Cutscenes;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Spells
 {
@@ -21,6 +23,11 @@ namespace Lumenfall.Spells
         [SerializeField, Min(1)] private int lostEchoesRadius = 4;
         [Tooltip("Optional designer allow-list. Empty uses authored quest rewards.")]
         [SerializeField] private SpellId[] unlockedSpells = Array.Empty<SpellId>();
+        [Header("Cast Animation")]
+        [Tooltip("Optional. When empty, the first Animator below the player is used.")]
+        [SerializeField] private Animator castAnimator;
+        [Tooltip("Trigger parameter sent whenever the player attempts to cast an unlocked spell.")]
+        [SerializeField] private string castTrigger = "Cast";
         private Vector2Int lastDirection = Vector2Int.up;
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
@@ -45,7 +52,6 @@ namespace Lumenfall.Spells
         private float feedbackUntil;
         private float nextScrollAt;
         private const float ScrollCooldown = 0.06f;
-        private const float ChipClearanceOverRotaraPanel = 104f;
         private const string CircuitTag = "circuit";
         private const string AnchoredTag = "anchored";
         public event Action<SpellId, string, bool> CastCompleted;
@@ -147,7 +153,7 @@ namespace Lumenfall.Spells
         {
             // A held thread belongs to Weave on the current map; switching spells or maps drops it.
             if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
-                HeldThread = null;
+                ClearHeldThread();
             ReleaseHeldRelicOutOfReach();
             if (Time.timeScale <= 0f || InputBlockedByOverlay)
             {
@@ -182,24 +188,13 @@ namespace Lumenfall.Spells
                 }
             }
 
-            if (mouse != null && mouse.rightButton.wasPressedThisFrame)
+            bool castPressed = (mouse != null && mouse.rightButton.wasPressedThisFrame) ||
+                               KeyBindings.WasPressed(GameAction.Interact);
+            if (castPressed)
             {
-                CastSelected();
-                CloseSpellWheel();
-            }
-
-            // The interact key also casts Lost Echoes; picking up what it reveals is on the talk key (WorldPickupInteraction).
-            if (selectedSpell == SpellId.LostEchoes && KeyBindings.WasPressed(GameAction.Interact)) CastLostEchoes();
-            // F (interact) also uses Vis and Glaciate, but only on objects tagged for that spell, so it never acts on the
-            // board relics or gear that own F on their maps.
-            if (KeyBindings.WasPressed(GameAction.Interact) && (selectedSpell == SpellId.Vis || selectedSpell == SpellId.Glaciate))
-            {
-                if (selectedSpell == SpellId.Vis && HeldRelic != null) { if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell); }
-                else
-                {
-                    string target = FindNearestTarget(selectedSpell == SpellId.Vis ? "vis" : "glaciate");
-                    if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
-                }
+                // Right mouse and the interact key share one cast path, so a single press never lifts and then
+                // drops a Vis relic, or freezes and then thaws an anchored Glaciate target, in the same frame.
+                CastSelectedFromInput();
                 CloseSpellWheel();
             }
 
@@ -267,7 +262,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress ||
+        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress || CutscenePlayer.BlocksInput ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {
@@ -278,11 +273,62 @@ namespace Lumenfall.Spells
             GetComponent<GridMover>()?.SetMovementLocked(this, true);
             OverlayInputGate.Acquire(this);
         }
-        /// Casts the selected spell at a specific object, as when the player presses F at a mechanism.
+        private bool CastSelectedFromInput()
+        {
+            if (!IsSpellUnlocked(selectedSpell)) return false;
+            TriggerCastAnimation();
+            // Lost Echoes searches the area around the player, so it needs no target.
+            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes();
+            // Vis sets a held relic down on the tile ahead instead of looking for a target.
+            if (selectedSpell == SpellId.Vis && HeldRelic != null)
+                return TryGetPlacementCell(out Vector2Int cell) && TryPlaceHeldRelic(cell);
+            string target = FindNearestTarget();
+            if (!string.IsNullOrEmpty(target)) return Cast(selectedSpell, target, DirectionFromPlayer());
+            return selectedSpell == SpellId.Weave && CancelHeldThread();
+        }
+
+        /// Casts the selected spell at a specific object and plays the same animation as player input.
         public bool CastSelectedAt(string targetId)
         {
-            try { return !string.IsNullOrEmpty(targetId) && Cast(selectedSpell, targetId, DirectionFromPlayer()); }
+            try
+            {
+                if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
+                TriggerCastAnimation();
+                return Cast(selectedSpell, targetId, DirectionFromPlayer());
+            }
             finally { CloseSpellWheel(); }
+        }
+
+        /// <summary>Lets other player-control scripts request the configured cast animation.</summary>
+        public void TriggerCastAnimation()
+        {
+            if (castAnimator == null) castAnimator = GetComponentInChildren<Animator>(true);
+            if (castAnimator == null || string.IsNullOrWhiteSpace(castTrigger)) return;
+            int triggerHash = Animator.StringToHash(castTrigger);
+            foreach (AnimatorControllerParameter parameter in castAnimator.parameters)
+            {
+                if (parameter.nameHash != triggerHash || parameter.type != AnimatorControllerParameterType.Trigger) continue;
+                castAnimator.ResetTrigger(triggerHash);
+                castAnimator.SetTrigger(triggerHash);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Releases only the temporary Weave thread between the held circuit item and the player.
+        /// Completed item-to-item cables remain connected.
+        /// </summary>
+        public bool CancelHeldThread()
+        {
+            if (HeldThread == null) return false;
+            ClearHeldThread();
+            ShowFeedback("Thread released. Completed cables remain connected.");
+            return true;
+        }
+
+        private void ClearHeldThread()
+        {
+            HeldThread = null;
         }
         private void CloseSpellWheel(SpellId? picked = null)
         {
@@ -301,15 +347,13 @@ namespace Lumenfall.Spells
         private void OnGUI()
         {
             if (InputBlockedByOverlay) return;
-            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
-                GUI.Box(new Rect(Screen.width * 0.5f - 240f, Screen.height - 70f, 480f, 42f), LastCastFeedback);
+            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback)) HudSkin.Message(LastCastFeedback);
             if (Time.timeScale <= 0f) return;
             if (!wheelView.Visible)
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.
                 if (Event.current.type == EventType.Repaint && AvailableSpells.Length > 0)
-                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel),
-                        Lumenfall.Quests.RotaraGearMechanism.PanelVisible ? ChipClearanceOverRotaraPanel : 0f);
+                    wheelView.DrawChip(selectedSpell, LoadIcon, KeyBindings.GetKeyLabel(GameAction.SpellWheel));
                 return;
             }
             SpellId[] spells = AvailableSpells;
@@ -361,6 +405,12 @@ namespace Lumenfall.Spells
             {
                 case SpellId.Ampere:
                     if (WorldStateService.IsConductor(target)) { ShowFeedback("This relic holds no charge of its own. Weave it to a powered relic."); break; }
+                    if (StellaStringThemTogetherPuzzle.TryApplyAmpereResonance(targetId))
+                    {
+                        changed = true;
+                        ShowFeedback("The relic resonates with the others.");
+                        break;
+                    }
                     bool nextPower = !target.powered;
                     changed = state.SetProperty(targetId, x => x.powered = nextPower);
                     if (changed) state.QueueEffect("lightning:" + targetId + ":" + (nextPower ? "on" : "off"));
@@ -374,8 +424,8 @@ namespace Lumenfall.Spells
                     if (Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetLinkedDiscs(state.CurrentMapId, targetId, out string[] linkedDiscs))
                         foreach (string disc in linkedDiscs)
                             if (state.TryGetObject(disc, out WorldObjectSnapshot linked) && !float.IsNaN(linked.rotation) && !float.IsInfinity(linked.rotation))
-                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
-                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.RotaraGearMechanism.NextQuarterTurn(x.rotation));
+                                state.SetProperty(disc, x => x.rotation = Lumenfall.Quests.OrioRuneDiscPuzzle.NextQuarterTurn(x.rotation));
+                    changed = state.SetProperty(targetId, x => x.rotation = Lumenfall.Quests.OrioRuneDiscPuzzle.NextQuarterTurn(x.rotation));
                     break;
                 case SpellId.Glaciate:
                     changed = HasTag(target, AnchoredTag) && target.frozen ? ThawAnchored(state, targetId) : FreezeSlide(state, targetId, ClampDirection(direction));
@@ -410,10 +460,10 @@ namespace Lumenfall.Spells
                 return false;
             }
             string from = HeldThread;
-            if (from == targetId) { HeldThread = null; ShowFeedback("Thread released."); return false; }
+            if (from == targetId) { ClearHeldThread(); ShowFeedback("Thread released."); return false; }
             if (state.IsConnected(from, targetId))
             {
-                HeldThread = null;
+                ClearHeldThread();
                 ShowFeedback("Cable cut. Cast Weave on a relic to hold a new thread.");
                 return state.RemoveConnection(from, targetId);
             }

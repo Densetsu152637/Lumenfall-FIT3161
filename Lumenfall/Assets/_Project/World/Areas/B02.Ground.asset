@@ -24,7 +24,7 @@ MonoBehaviour:
       y: 2
     regions:
     - id: B02
-      name: B02
+      name: Arcane Workshop
       rect:
         x: 1
         y: 1
@@ -177,7 +177,11 @@ MonoBehaviour:
     puzzleTargets:
     - id: quest.stella.first-light
       objectIds:
-      - relic.stella.power
+      - stella.string-together.relic.1
+      - stella.string-together.relic.2
+      - stella.string-together.relic.3
+      - stella.string-together.relic.4
+      - stella.string-together.relic.5
       requiredConnections: []
       conditionMode: All
       requiredPowered: 1
@@ -195,11 +199,23 @@ MonoBehaviour:
       - stella.string-together.relic.3
       - stella.string-together.relic.4
       - stella.string-together.relic.5
+      - stella.circuit.relay.1
+      - stella.circuit.relay.2
+      - stella.circuit.relay.3
+      - stella.circuit.relay.4
+      - stella.circuit.relay.5
+      - stella.circuit.relay.6
+      - stella.circuit.relay.7
+      - stella.circuit.relay.8
+      - stella.circuit.relay.9
+      - stella.circuit.relay.10
+      - circuit.stella.link
       requiredConnections: []
       minimumEffectivePower: 0
       conditionMode: All
       requiredPowered: 1
-      requiredConnected: 0
+      requiredConnected: 1
+      requiredSameNetwork: 1
       requiredRevealed: 0
       requiredFrozen: 0
       requiredAligned: 0

@@ -38,7 +38,7 @@ namespace Lumenfall.Spells
         private Texture2D glow, disc, ring, runes, sparkle, beam, line, gear, frame;
         private GUIStyle titleStyle, bodyStyle, smallStyle, chipNameStyle, chipHintStyle, chipKeyStyle;
         private bool open, snapBeam, committing, pointerParked, parkSet, chipShown;
-        private float openedAt = -10f, closedAt = -10f, selectedAt = -10f, chipChangedAt = -10f, lastRepaint, lastChipRepaint, chipLift, beamAngle;
+        private float openedAt = -10f, closedAt = -10f, selectedAt = -10f, chipChangedAt = -10f, lastRepaint, beamAngle;
         private SpellId lastSelected, committed, chipSpell;
         private Vector2 parkedAt;
 
@@ -251,22 +251,19 @@ namespace Lumenfall.Spells
 
         /// Draws the selected spell as a small orb on a dark plate in the bottom-left corner, with the spell wheel key
         /// shown as a key-cap. It pops and sparks when the selection changes, whether from the number keys, the wheel
-        /// or a scroll, and glides up by clearance pixels to stay clear of other bottom-left panels.
-        public void DrawChip(SpellId spell, Func<SpellId, Texture2D> icon, string wheelKey, float clearance)
+        /// or a scroll.
+        public void DrawChip(SpellId spell, Func<SpellId, Texture2D> icon, string wheelKey)
         {
             if (Event.current.type != EventType.Repaint) return;
             EnsureResources();
             float now = Time.unscaledTime;
-            float dt = Mathf.Clamp(now - lastChipRepaint, 0f, 0.1f);
-            lastChipRepaint = now;
-            if (!chipShown) { chipShown = true; chipSpell = spell; chipLift = clearance; }
+            if (!chipShown) { chipShown = true; chipSpell = spell; }
             else if (spell != chipSpell) { chipSpell = spell; chipChangedAt = now; }
-            chipLift = Mathf.Lerp(chipLift, clearance, 1f - Mathf.Exp(-dt * 10f));
             float ui = UiScale();
             SetFontSizes(ui);
             float pop = Mathf.Clamp01((now - chipChangedAt) / ChipPopSeconds), kick = (1f - pop) * (1f - pop);
             float baseRadius = 26f * ui, r = baseRadius * (1f + 0.3f * kick), margin = 22f * ui;
-            Vector2 position = new Vector2(margin + baseRadius * 1.5f, Screen.height - margin - baseRadius * 1.5f - chipLift);
+            Vector2 position = new Vector2(margin + baseRadius * 1.5f, Screen.height - margin - baseRadius * 1.5f);
             Color color = ElementColor(spell);
             Color previousColor = GUI.color;
             Matrix4x4 previousMatrix = GUI.matrix;

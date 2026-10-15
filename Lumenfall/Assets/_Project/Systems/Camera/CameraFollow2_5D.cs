@@ -35,6 +35,10 @@ public class CameraFollow2_5D : MonoBehaviour
     private static Vector3 conversationFocus;
     private static float conversationZoom = 1f;
 
+    // A cutscene shake, added on top of the follow position each frame without disturbing its smoothing.
+    private static Vector3 shakeOffset;
+    private Vector3 appliedShake;
+
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
 
@@ -75,6 +79,12 @@ public class CameraFollow2_5D : MonoBehaviour
         conversationActive = false;
     }
 
+    /// <summary>Offsets the camera by <paramref name="offset"/> until it is set back to zero; used for cutscene shakes.</summary>
+    public static void SetShake(Vector3 offset)
+    {
+        shakeOffset = offset;
+    }
+
     /// <summary>
     /// Reports where the camera would rest when fully caught up with its target. Overlays such as the
     /// startup menu use this to move the camera themselves and hand it back without a jump.
@@ -110,6 +120,8 @@ public class CameraFollow2_5D : MonoBehaviour
             return;
         }
 
+        // Remove the previous shake before smoothing. Reduced motion also disables conversation zoom.
+        transform.position -= appliedShake;
         if (reducedMotion) conversationBlendVelocity = 0f;
         conversationBlend = reducedMotion ? 0f : Mathf.SmoothDamp(
             conversationBlend,
@@ -139,5 +151,8 @@ public class CameraFollow2_5D : MonoBehaviour
             anchor + focusOffset * Mathf.Lerp(1f, 0.8f, conversationBlend);
 
         transform.LookAt(focusPoint);
+
+        appliedShake = reducedMotion ? Vector3.zero : shakeOffset;
+        transform.position += appliedShake;
     }
 }
