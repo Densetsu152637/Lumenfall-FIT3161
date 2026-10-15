@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "cues": [
+    {
+      "id": "music.forest",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.forest",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.campus",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.campus",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.interior",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.interior",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.dialogue",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.dialogue",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.mystery",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.mystery",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.sleep",
+      "bus": "Music",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ambience.sleep",
+      "bus": "Ambience",
+      "loop": true,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "step.forest",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "step.campus",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "step.interior",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.ampere",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.weave",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.gravitate",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.rotara",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.glaciate",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.vis",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.lostechoes",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "spell.no-change",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "quest.complete",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ui.confirm",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ui.cancel",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ui.open",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ui.error",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "story.sleep",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "story.wake",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "",
+      "approvalStatus": "missing_approved_media"
+    }
+  ]
+}

@@ -149,8 +149,7 @@ namespace Lumenfall.GameEvents
 
         private bool CanAutosave()
         {
-            // A cutscene would be saved mid-fade with a black thumbnail, so the save waits for the next interval.
-            return saveManager != null && Time.timeScale > 0f && !StartupMenu.IsVisible && !CutscenePlayer.IsPlaying &&
+            return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible && !CutscenePlayer.IsPlaying &&
                 (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
         }
     }

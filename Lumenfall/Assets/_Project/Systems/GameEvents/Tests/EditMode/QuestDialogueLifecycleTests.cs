@@ -4,6 +4,7 @@ using System.Reflection;
 using Lumenfall.GameEvents;
 using Lumenfall.DataDriven;
 using Lumenfall.Spells;
+using Lumenfall.Quests;
 using Lumenfall.Inventory;
 using NUnit.Framework;
 using UnityEngine;
@@ -199,7 +200,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SpellRewardsAreQuestScopedAndDialogueHasNoSpellReward()
+        public void FirstLightTerminalLessonAwardsAmpereThroughSpellCaster()
         {
             GameEventRuntime runtime = GameEventManager.Instance.Runtime;
             GameObject host = new GameObject("quest-scoped-spell-reward-test");
@@ -268,6 +269,57 @@ namespace Lumenfall.Tests.GameEvents
             {
                 InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
                 Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void OrioLessonTeachesRotaraAndConfirmationDoesNotGrantGravitate()
+        {
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.ResetState();
+            WorldStateService previousState = WorldStateService.Instance;
+            GameObject worldHost = new GameObject("later-spell-world-test");
+            GameObject host = new GameObject("later-spell-progression-test");
+            try
+            {
+                WorldStateService world = worldHost.AddComponent<WorldStateService>();
+                EditModeLifecycle.SetWorldInstance(world);
+                world.BeginMapRebuild(OrioRuneDiscPuzzle.PuzzleMapId);
+                for (int i = 0; i < OrioRuneDiscPuzzle.DiscIds.Length; i++)
+                {
+                    world.RegisterObject(OrioRuneDiscPuzzle.DiscIds[i], null, new Vector2Int(i, 0), Vector2Int.one, false, new[] { OrioRuneDiscPuzzle.DiscTag });
+                    int rotation = OrioRuneDiscPuzzle.DiscStartRotations[i];
+                    world.SetProperty(OrioRuneDiscPuzzle.DiscIds[i], item => item.rotation = rotation);
+                }
+                foreach (string socket in OrioRuneDiscPuzzle.SocketIds)
+                    world.RegisterObject(socket, null, Vector2Int.one, Vector2Int.one, true, new[] { "rotara" });
+                world.EndMapRebuild();
+                SpellCaster caster = host.AddComponent<SpellCaster>();
+                EnableForTest(caster);
+                DialogueSession dialogue = runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(dialogue.SelectChoice("accept"), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
+                Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
+                Assert.That(dialogue.Continue(), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                foreach (string socket in new[] { "mechanism.orio.socket.north", "mechanism.orio.socket.north", "mechanism.orio.socket.north",
+                    OrioRuneDiscPuzzle.AnchorId, OrioRuneDiscPuzzle.AnchorId, "mechanism.orio.socket.west", "mechanism.orio.socket.west", "mechanism.orio.socket.east" })
+                    Assert.That(caster.Cast(SpellId.Rotara, socket, Vector2Int.up), Is.True);
+                DialogueSession report = runtime.StartDialogue("orio_patch_notes_dialogue");
+                Assert.That(report.SelectChoice("report"), Is.True);
+                Assert.That(runtime.GetQuestStatus("orio_patch_notes"), Is.EqualTo(QuestStatus.Completed));
+                Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Status, Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
+                Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
+                Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False, "Orio's authored reward is Rotara only.");
+            }
+            finally
+            {
+                InvokeLifecycle(host.GetComponent<SpellCaster>(), "OnDisable");
+                runtime.ActiveDialogue?.End();
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(worldHost);
+                EditModeLifecycle.SetWorldInstance(previousState);
             }
         }
 

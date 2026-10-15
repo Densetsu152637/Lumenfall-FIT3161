@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -54,6 +55,13 @@ namespace Lumenfall.Quests
 
         public static bool HintsEnabled => PlayerPrefs.GetInt(EnabledKey, 1) != 0;
         public static bool IsSettingsOpen => instance != null && instance.settingsOpen;
+        public static int SettingsClosedFrame { get; private set; } = -1;
+        public static void OpenSettings()
+        {
+            if (instance != null && !StartupMenu.IsVisible && !InventoryUiState.IsOpen) instance.SetSettingsOpen(true);
+        }
+        public static void CloseSettings() { if (instance != null) instance.SetSettingsOpen(false); }
+        private readonly UiNavigationInput settingsNavigation = new UiNavigationInput();
 
         public static void SetHintsEnabled(bool enabled)
         {
@@ -172,6 +180,20 @@ namespace Lumenfall.Quests
                     string direction = DirectionToCell(targetCell);
                     if (!string.IsNullOrEmpty(direction)) hint += "\n" + direction;
                 }
+                return;
+            }
+
+            // Orio confirms the live or archived rune dais through dialogue.
+            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
+            {
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
+                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                    hint = "The rune dais is aligned. Return to Orio and confirm the patch.";
+                else if (!string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
+                    hint = "Travel to the west forest and use the teleport pad beside Orio to enter the rune hall.";
+                else
+                    hint = "Cast Rotara at the sockets. Each turns its linked discs clockwise by 90 degrees; line up all three teal notches.";
                 return;
             }
 
@@ -642,7 +664,8 @@ namespace Lumenfall.Quests
             bool wasRebinding = options.IsRebinding;
             options.Tick(deltaTime);
             Keyboard keyboard = Keyboard.current;
-            if (!wasRebinding && keyboard != null && keyboard.escapeKey.wasPressedThisFrame) SetSettingsOpen(false);
+            settingsNavigation.Read();
+            if (!wasRebinding && settingsNavigation.Cancel) SetSettingsOpen(false);
         }
 
         /// <summary>
@@ -654,7 +677,7 @@ namespace Lumenfall.Quests
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return false;
             if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount || CutscenePlayer.BlocksInput) return false;
-            return FindAnyObjectByType<StartupMenu>() == null;
+            return !OverlayInputGate.IsBlocked && SettingsClosedFrame != Time.frameCount && FindAnyObjectByType<StartupMenu>() == null;
         }
 
         /// <summary>The Settings pop-out, styled like the startup menu: the options, then a short paused hint.</summary>
@@ -725,6 +748,7 @@ namespace Lumenfall.Quests
             settingsOpen = open;
             if (open)
             {
+                OverlayInputGate.Acquire(this);
                 settingsOpenedAt = Time.unscaledTime;
                 options.Reset();
                 skin.ResetAmbience();
@@ -736,6 +760,8 @@ namespace Lumenfall.Quests
             }
             else
             {
+                OverlayInputGate.Release(this);
+                if (wasOpen) SettingsClosedFrame = Time.frameCount;
                 options.CancelRebind();
                 skin.ShowWandCursor(false);
                 if (wasOpen)

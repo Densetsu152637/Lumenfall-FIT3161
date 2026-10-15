@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
 using Lumenfall.GameEvents;
+using Lumenfall.Accessibility;
 
 namespace Lumenfall.Startup
 {
@@ -63,7 +64,7 @@ namespace Lumenfall.Startup
         /// <summary>Creates the art and styles on first use. Styles copy GUI.skin, so this must run inside OnGUI.</summary>
         public void Ensure()
         {
-            if (IsReady) return;
+            if (IsReady) { ApplyAccessibility(); return; }
             Font font = Resources.Load<Font>("Dialogue/Nunito-Regular");
             Backdrop = Track(MenuArt.Backdrop(32));
             Glow = Track(MenuArt.Glow(64));
@@ -141,6 +142,7 @@ namespace Lumenfall.Startup
                 border = new RectOffset(5, 5, 5, 5),
                 normal = { background = Track(MenuArt.Rounded(10, 20, 5f, MenuArt.WithAlpha(MenuArt.Gold, 0.75f), Color.clear, 0f)) }
             };
+            ApplyAccessibility();
         }
 
         public void Dispose()
@@ -386,8 +388,22 @@ namespace Lumenfall.Startup
         public void Label(Rect rect, string text, GUIStyle style, Color colour, float alpha = 1f)
         {
             SetColor(Color.white, alpha);
-            style.normal.textColor = colour;
+            style.normal.textColor = AccessibilitySettings.Current.HighContrast ? Color.white : colour;
             GUI.Label(rect, text, style);
+        }
+
+        private void ApplyAccessibility()
+        {
+            float scale = AccessibilitySettings.Current.TextScale;
+            Row.fontSize = Mathf.RoundToInt(19f * scale);
+            Body.fontSize = Mathf.RoundToInt(17f * scale);
+            Small.fontSize = SmallRight.fontSize = Mathf.RoundToInt(13f * scale);
+            SmallCentre.fontSize = Mathf.RoundToInt(14f * scale);
+            Key.fontSize = Mathf.RoundToInt(16f * scale);
+            TextButton.fontSize = Mathf.RoundToInt(17f * scale);
+            bool contrast = AccessibilitySettings.Current.HighContrast;
+            TextButton.normal.textColor = contrast ? Color.white : MenuArt.Cream;
+            TextButton.hover.textColor = TextButton.active.textColor = contrast ? Color.white : MenuArt.Gold;
         }
 
         public static Rect Expand(Rect rect, float x, float y) => new Rect(rect.x - x, rect.y - y, rect.width + x * 2f, rect.height + y * 2f);

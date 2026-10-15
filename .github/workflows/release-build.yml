@@ -50,7 +50,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
+          lfs: true
           persist-credentials: false
+
+      - name: Verify materialized build assets
+        run: python3 scripts/validate_unity_project.py Lumenfall --require-lfs-assets
 
       - name: Verify Unity license secrets
         shell: bash

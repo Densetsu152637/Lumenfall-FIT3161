@@ -13,8 +13,8 @@ namespace Lumenfall.Tests.GameEvents
     {
         private readonly List<GameObject> objects = new List<GameObject>();
         private WorldStateService state;
-        private GridWorld grid;
         private WorldStateService previousState;
+        private GridWorld grid;
         private GameEventRuntime Runtime => GameEventManager.Instance.Runtime;
         private const string Keepsake = "katrina.item.library";
         private static readonly Vector2Int Cell = new Vector2Int(7, 24);
@@ -40,6 +40,7 @@ namespace Lumenfall.Tests.GameEvents
             for (int i = objects.Count - 1; i >= 0; i--)
             {
                 foreach (SpellCaster caster in objects[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                foreach (QuestPuzzleMonitor monitor in objects[i].GetComponents<QuestPuzzleMonitor>()) EditModeLifecycle.Call(monitor, "OnDisable");
                 Object.DestroyImmediate(objects[i]);
             }
             objects.Clear();
@@ -72,6 +73,7 @@ namespace Lumenfall.Tests.GameEvents
             Register("visible", new Vector2Int(1, 0), null);
             GameObject player = Create("player"); player.AddComponent<GridMover>();
             SpellCaster caster = player.AddComponent<SpellCaster>();
+            EditModeLifecycle.Call(caster, "OnEnable");
             Runtime.SetFlag("spell.unlocked.LostEchoes", true); state.EndMapRebuild();
             Assert.That(caster.Cast(SpellId.LostEchoes, Keepsake, Vector2Int.up), Is.False);
             Assert.That(caster.Cast(SpellId.LostEchoes, "visible", Vector2Int.up), Is.False);
@@ -155,6 +157,7 @@ namespace Lumenfall.Tests.GameEvents
         {
             QuestPuzzleMonitor monitor = Create("monitor").AddComponent<QuestPuzzleMonitor>();
             EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             Register("other", Cell, EchoTags); state.EndMapRebuild(); state.TryRevealObject("other", Cell, 2);
             Runtime.StartQuest("katrina_something_borrowed");
             Assert.That(monitor.EvaluatePuzzles(), Is.Zero);

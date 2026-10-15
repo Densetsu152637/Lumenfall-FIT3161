@@ -275,3 +275,16 @@
 .dialogue-box--waiting .dialogue-continue {
     display: flex;
 }
+
+/* Shared accessibility preferences retain the authored layout and make overflow reachable. */
+.dialogue-text, .dialogue-choices, .dialogue-choice { flex-shrink: 0; }
+.dialogue-high-contrast .dialogue-box { background-color: black; }
+.dialogue-high-contrast .dialogue-text,
+.dialogue-high-contrast .dialogue-name,
+.dialogue-high-contrast .dialogue-choice__text { color: white; }
+.dialogue-high-contrast .dialogue-choice { background-color: black; }
+.dialogue-high-contrast .dialogue-choice--selected { background-color: rgb(40, 40, 40); }
+.dialogue-reduced-motion .dialogue-box,
+.dialogue-reduced-motion .dialogue-dim,
+.dialogue-reduced-motion .dialogue-choice { transition-duration: 0s; }
+.dialogue-reduced-motion .dialogue-choice--selected { translate: 0 0; }

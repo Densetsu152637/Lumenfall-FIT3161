@@ -46,3 +46,5 @@ Detailed implementation and completion assessments are maintained separately for
 - [Cinna Cirra: Cold Feet, Warm Idea](quest-implementation/cinna-cold-feet-warm-idea.md)
 - [Orio: Patch Notes](quest-implementation/orio-patch-notes.md)
 - [Katrina: Something Borrowed](quest-implementation/katrina-something-borrowed.md)
+
+Legacy save compatibility: the retired `orioDaisRoom` and `C04.Recess` interiors remain loadable for old saves and provide an exit to the authored forest or campus. Their old entrances stay retired; current Orio progression uses the deep-forest dais and Katrina uses the three memory anchors.

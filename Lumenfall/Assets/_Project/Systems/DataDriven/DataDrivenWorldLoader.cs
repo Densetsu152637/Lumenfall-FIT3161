@@ -10,7 +10,7 @@ using Lumenfall.Story;
 namespace Lumenfall.DataDriven
 {
     /// <summary>Instantiates inspector-authored world area and NPC assets.</summary>
-    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider
+    public sealed class DataDrivenWorldLoader : MonoBehaviour, ISaveStateProvider, ISaveStateValidator, ISaveStateRestorePhases
     {
         public static DataDrivenWorldLoader Instance { get; private set; }
         [SerializeField] private WorldAreaAsset startingArea;
@@ -20,8 +20,8 @@ namespace Lumenfall.DataDriven
         [SerializeField] private GridWorld world;
         private readonly Dictionary<WorldAreaAsset, GameObject> areaInstances = new Dictionary<WorldAreaAsset, GameObject>();
         private readonly List<int> npcStateSignature = new List<int>();
-        private Vector2Int? pendingPlayerCell;
-        private string pendingPlayerMap;
+        private GameSaveManager saveManager;
+        private bool registeredSaveProvider;
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
@@ -33,7 +33,15 @@ namespace Lumenfall.DataDriven
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
-            if (GameSaveManager.Instance != null) GameSaveManager.Instance.RegisterProvider(this);
+            saveManager = GameSaveManager.Instance;
+            registeredSaveProvider = saveManager != null && saveManager.RegisterProvider(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            if (registeredSaveProvider && saveManager != null) saveManager.UnregisterProvider(this);
+            Instance = null;
         }
 
         private void Start()
@@ -106,6 +114,7 @@ namespace Lumenfall.DataDriven
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
             MiscCollectibles.RegisterForMap(LoadedMap.id, world, root);
+            if (LoadedMap.id == OrioDaisRoom.MapId || OrioDaisRoom.IsLegacyVisitActive) OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -129,38 +138,39 @@ namespace Lumenfall.DataDriven
                 playerX = player == null ? 0 : player.CurrentCell.x, playerY = player == null ? 0 : player.CurrentCell.y });
         }
 
-        public bool RestoreStateJson(string json)
+        public bool ValidateStateJson(string json)
         {
-            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
-            WorldAreaAsset area = FindArea(NormalizeMapId(state == null ? null : state.mapId));
-            if (area == null) return false;
-            Load(area, npcCatalog, false);
-            pendingPlayerCell = null;
-            GridMover player = FindAnyObjectByType<GridMover>();
-            if (player == null || world == null) return true;
-            Vector2Int saved = new Vector2Int(state.playerX, state.playerY);
-            if (player.TryTeleportTo(world, saved)) return true;
-            // The saved cell can be blocked only until a later provider restores the world state; a player saved on a
-            // frozen pool stands where open water blocks until the frozen relic is restored. Hold them at the spawn and
-            // place them once the whole load has finished.
-            Vector2Int spawn = area.definition.spawn == null ? player.CurrentCell : new Vector2Int(area.definition.spawn.x, area.definition.spawn.y);
-            if (!player.TryTeleportTo(world, spawn)) player.TryTeleportTo(world, player.CurrentCell);
-            pendingPlayerCell = saved;
-            pendingPlayerMap = area.definition.id;
-            GameSaveManager saves = GameSaveManager.Instance;
-            if (saves != null) { saves.LoadCompleted -= PlacePendingPlayer; saves.LoadCompleted += PlacePendingPlayer; }
-            return true;
+            try
+            {
+                if (!GameSaveManager.IsValidPayloadObject(json, "mapId", "playerX", "playerY")) return false;
+                SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+                WorldAreaAsset area = FindArea(state == null ? null : state.mapId);
+                GridMover player = FindAnyObjectByType<GridMover>();
+                GridWorld grid = world == null ? FindAnyObjectByType<GridWorld>() : world;
+                return area != null && area.areaPrefab != null && area.definition != null && player != null && !player.IsMoving && grid != null &&
+                    state.playerX >= 0 && state.playerY >= 0 && state.playerX < area.definition.width && state.playerY < area.definition.height;
+            }
+            catch { return false; }
         }
 
-        private void PlacePendingPlayer(string slot)
+        public bool PrepareRestoreStateJson(string json)
         {
-            if (GameSaveManager.Instance != null) GameSaveManager.Instance.LoadCompleted -= PlacePendingPlayer;
-            Vector2Int? cell = pendingPlayerCell;
-            pendingPlayerCell = null;
-            if (cell == null || LoadedMap == null || !string.Equals(LoadedMap.id, pendingPlayerMap, StringComparison.OrdinalIgnoreCase)) return;
+            if (!ValidateStateJson(json)) return false;
+            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (world == null) world = FindAnyObjectByType<GridWorld>();
+            Load(area, npcCatalog, false);
+            return CurrentArea == area;
+        }
+
+        public bool RestoreStateJson(string json)
+        {
+            if (!ValidateStateJson(json)) return false;
+            SavedWorldState state = JsonUtility.FromJson<SavedWorldState>(json);
+            WorldAreaAsset area = FindArea(state.mapId);
+            if (CurrentArea != area && !PrepareRestoreStateJson(json)) return false;
             GridMover player = FindAnyObjectByType<GridMover>();
-            if (player != null && world != null && !player.TryTeleportTo(world, cell.Value))
-                Debug.LogWarning($"Saved player cell {cell.Value} on '{LoadedMap.id}' is still blocked; keeping the spawn.", this);
+            return CurrentArea == area && player != null && world != null && player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)
@@ -174,6 +184,12 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset previousArea = CurrentArea;
             Load(destinationPortal.area, npcCatalog, false);
             GridPortal target = FindLivePortal(destinationPortal);
+            if (target == null && previousArea?.definition?.id == "C04.Recess" && LoadedMap.id == "campus" && LoadedMap.spawn != null)
+            {
+                // The recess is retained for old saves, but its campus entrance was retired with the new Katrina route.
+                Vector2Int safeArrival = new Vector2Int(LoadedMap.spawn.x, LoadedMap.spawn.y);
+                if (player.TryTeleportTo(world, safeArrival)) return true;
+            }
             if (target == null)
             {
                 Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
@@ -181,7 +197,7 @@ namespace Lumenfall.DataDriven
                 return false;
             }
             // The live destination GridPortal is authoritative for its origin and footprint.
-            // PortalContentAsset only supplies the connection and optional legacy offset.
+            // PortalContentAsset only supplies the connection.
             Vector2Int arrival = target.GetArrivalCell(sourceEntryOffset);
             if (player.TryTeleportTo(world, arrival, target)) return true;
             Debug.LogWarning($"Portal '{sourcePortal.id}' could not place the player at {arrival} in '{destinationPortal.area.definition.id}'; returning to the previous area.", this);
@@ -189,15 +205,29 @@ namespace Lumenfall.DataDriven
             return false;
         }
 
+        public bool TryGetMapDefinition(string id, out MapDefinition definition)
+        {
+            WorldAreaAsset area = FindArea(id);
+            definition = area == null ? null : area.definition;
+            return definition != null;
+        }
+
+        /// <summary>Saves made before the east forest was renamed still name it eastForest.</summary>
         private static string NormalizeMapId(string id)
         {
             return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
         }
 
+        /// <summary>Resolves authored areas and the legacy hall for saved games.</summary>
+        public WorldAreaAsset GetArea(string id) => FindArea(id);
+
         private WorldAreaAsset FindArea(string id)
         {
+            id = NormalizeMapId(id);
             if (startingArea != null && startingArea.definition.id == id) return startingArea;
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
+            // Resolve legacy saves without adding the superseded forest entrance.
+            if (id == OrioDaisRoom.MapId) return OrioDaisRoom.GetOrCreateArea();
             return null;
         }
         private GridPortal FindLivePortal(PortalContentAsset target)

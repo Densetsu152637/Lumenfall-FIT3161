@@ -13,6 +13,7 @@ using Lumenfall.DataDriven;
 using Lumenfall.Quests;
 using Lumenfall.Cutscenes;
 using Lumenfall.Player;
+using Lumenfall.Audio;
 
 namespace Lumenfall.Startup
 {
@@ -50,8 +51,20 @@ namespace Lumenfall.Startup
         private const int InnerRingTexture = 192;
         private const int InnerRingTick = 6;
 
-        private enum Page { Main, Load, NewGame, Settings, Controls }
+        private const float VolumeRowHeight = 66f;
+        private const float GraphicsRowHeight = 78f;
+        // Settings page focus: the volume rows, quest hints, Controls, Graphics, Back.
+        private const int SettingsFocusCount = 8;
+        // Graphics page focus: VSync, antialiasing, ambient occlusion, shading, Use recommended, Back.
+        private const int GraphicsFocusCount = 6;
+
+        private enum Page { Main, Load, NewGame, Settings, Controls, Graphics }
         private enum Phase { Intro, Menu, Closing }
+
+        private static readonly AudioBus[] VolumeBuses = { AudioBus.Master, AudioBus.Music, AudioBus.Sfx, AudioBus.Ambience };
+        private static readonly string[] VolumeLabels = { "Master volume", "Music", "Sound effects", "Ambience" };
+        private static readonly string[] AntialiasingLabels = { "Off", "FXAA", "SMAA" };
+        private static readonly string[] ShadingLabels = { "Low", "Medium", "High" };
 
         private static readonly string[] OptionKeys = { "start", "load", "options", "exit" };
         private static readonly string[] OptionLabels = { "START", "LOAD", "SETTINGS", "EXIT" };
@@ -85,6 +98,16 @@ namespace Lumenfall.Startup
         // Read once on open; the Reduce motion switch lives in the in-game options, so it cannot change while the menu is up.
         private bool reduceMotion;
         private readonly GameSettingsPanel settings = new GameSettingsPanel();
+        private readonly UiNavigationInput navigation = new UiNavigationInput();
+        private GameSaveManager subscribedSaves;
+        private int slotFocus;
+        // The focused card only glows once keys or a controller have moved the focus, so pointer users see no stray highlight.
+        private bool slotFocusShown;
+        private string recoverySlot;
+        // Keyboard/controller focus on the Settings and Graphics pages; it glows only once keys or a controller are used.
+        private int settingsFocus;
+        private bool settingsFocusShown;
+        private SaveRecoverySource[] recoveryCandidates = Array.Empty<SaveRecoverySource>();
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
@@ -114,6 +137,8 @@ namespace Lumenfall.Startup
         private float lastPanelAlpha;
         private float closingPanelAlpha = 1f;
         private float hintsKnob;
+        private float vsyncKnob;
+        private float ambientOcclusionKnob;
 
         private float pageChangedAt;
 
@@ -138,7 +163,7 @@ namespace Lumenfall.Startup
         private Texture2D backdropTexture, glowTexture, sparkleTexture, knobTexture, switchTexture, lineTexture,
             ringTexture, innerRingTexture, discTexture, wandCursor;
         private GUIStyle panelStyle, panelTrimStyle, cardStyle, thumbFrameStyle, pillStyle, letterStyle, promptStyle,
-            rowStyle, valueStyle, mutedStyle, groupStyle, smallStyle, smallCentreStyle, loadDetailStyle, loadMetaStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle,
+            rowStyle, valueStyle, mutedStyle, groupStyle, smallStyle, smallCentreStyle, choiceStyle, loadDetailStyle, loadMetaStyle, messageStyle, textButtonStyle, keyStyle, sliderStyle, thumbStyle,
             scrollbarStyle, scrollThumbStyle;
 
         public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
@@ -184,9 +209,18 @@ namespace Lumenfall.Startup
             openNextAsSavePicker = true;
             new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
+        private void OnEnable() { OverlayInputGate.Acquire(this); }
+        private void OnDisable()
+        {
+            OverlayInputGate.Release(this);
+            if (subscribedSaves != null) subscribedSaves.SaveFailed -= OnSaveFailed;
+            subscribedSaves = null;
+        }
+        private void OnSaveFailed(string error) { message = error; }
 
         private void Awake()
         {
+            if (current != null && current != this) { Destroy(gameObject); return; }
             current = this;
             savePickerMode = openNextAsSavePicker;
             openNextAsSavePicker = false;
@@ -216,6 +250,8 @@ namespace Lumenfall.Startup
         {
             yield return null;
             GameSaveManager saves = GameSaveManager.Instance;
+            subscribedSaves = saves;
+            saves.SaveFailed += OnSaveFailed;
             if (savePickerMode)
             {
                 page = Page.Load;
@@ -283,6 +319,12 @@ namespace Lumenfall.Startup
 
             UpdateRing(deltaTime);
             hintsKnob = Mathf.MoveTowards(hintsKnob, questHintsEnabled ? 1f : 0f, deltaTime * 6f);
+            GraphicsOptions graphics = GraphicsOptions.Instance;
+            if (graphics != null)
+            {
+                vsyncKnob = Mathf.MoveTowards(vsyncKnob, graphics.Preferences.VSync ? 1f : 0f, deltaTime * 6f);
+                ambientOcclusionKnob = Mathf.MoveTowards(ambientOcclusionKnob, AmbientOcclusionOn(graphics) ? 1f : 0f, deltaTime * 6f);
+            }
             // Ease between page scales so moving from a short page to a tall one does not snap.
             uiScale = Mathf.Lerp(uiScale, FitScale(), 1f - Mathf.Exp(-12f * deltaTime));
         }
@@ -297,6 +339,7 @@ namespace Lumenfall.Startup
 
         private void OnDestroy()
         {
+            if (current != this) return;
             if (current == this) current = null;
             Time.timeScale = previousTimeScale;
             SetGameplayInput(true);
@@ -378,24 +421,58 @@ namespace Lumenfall.Startup
 
         private void UpdateMenuKeys(bool wasRebinding)
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
-            if (!wasRebinding && keyboard.escapeKey.wasPressedThisFrame)
+            navigation.Read();
+            if (wasRebinding) return;
+            if (navigation.Cancel)
             {
                 if (page == Page.Main) BeginClosing();
                 else GoBack();
                 return;
             }
+            if (page == Page.Settings || page == Page.Graphics)
+            {
+                UpdateSettingsKeys();
+                return;
+            }
+            if (page == Page.Controls) return;
+            if (page == Page.Load || page == Page.NewGame)
+            {
+                if (recoverySlot != null)
+                {
+                    if (navigation.Vertical != 0) slotFocus = UiFocusIndex.Move(slotFocus, navigation.Vertical, recoveryCandidates.Length + 1);
+                    if (navigation.Submit)
+                    {
+                        if (slotFocus == recoveryCandidates.Length) { recoverySlot = null; slotFocus = 0; }
+                        else RecoverSlot(recoveryCandidates[slotFocus]);
+                    }
+                    return;
+                }
+                // Load focuses saved slots (autosave first); New Game focuses every manual slot, empty or not.
+                bool manualOnly = savePickerMode || page == Page.NewGame;
+                string[] selectableSlots = manualOnly ? GameSaveManager.ManualSlots : Slots;
+                int count = selectableSlots.Length;
+                if (navigation.Vertical != 0) slotFocusShown = true;
+                if (navigation.Vertical != 0) slotFocus = UiFocusIndex.Move(slotFocus, navigation.Vertical, count + 1,
+                    i => i == count || manualOnly || GameSaveManager.Instance.HasSave(selectableSlots[i]));
+                if (navigation.Submit)
+                {
+                    if (slotFocus == count) GoBack();
+                    else if (page == Page.Load) GameSaveSlotPolicy.SubmitSelection(selectableSlots, slotFocus, savePickerMode, SaveSlot, LoadSlot);
+                    else StartNewGame(GameSaveManager.ManualSlots[slotFocus]);
+                }
+                return;
+            }
             if (page != Page.Main) return;
-
-            int step = keyboard.downArrowKey.wasPressedThisFrame || keyboard.sKey.wasPressedThisFrame ? 1
-                : keyboard.upArrowKey.wasPressedThisFrame || keyboard.wKey.wasPressedThisFrame ? -1 : 0;
+            int step = navigation.Vertical;
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard?.sKey.wasPressedThisFrame == true) step = 1;
+            if (keyboard?.wKey.wasPressedThisFrame == true) step = -1;
             if (step != 0)
             {
                 keyboardOption = keyboardMode && keyboardOption >= 0 ? (keyboardOption + step + OptionKeys.Length) % OptionKeys.Length : step > 0 ? 0 : OptionKeys.Length - 1;
                 keyboardMode = true;
             }
-            bool confirm = keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame;
+            bool confirm = navigation.Submit || keyboard?.numpadEnterKey.wasPressedThisFrame == true;
             if (confirm && keyboardMode && keyboardOption >= 0) Activate(keyboardOption);
         }
 
@@ -444,9 +521,20 @@ namespace Lumenfall.Startup
         {
             if (next == page) return;
             page = next;
+            recoverySlot = null;
             pageChangedAt = Time.unscaledTime;
             keyboardMode = false;
-            if (next == Page.Load || next == Page.NewGame) RefreshSlotDetails();
+            if (next == Page.Settings || next == Page.Graphics)
+            {
+                settingsFocus = 0;
+                settingsFocusShown = false;
+            }
+            if (next == Page.Graphics && GraphicsOptions.Instance != null)
+            {
+                vsyncKnob = GraphicsOptions.Instance.Preferences.VSync ? 1f : 0f;
+                ambientOcclusionKnob = AmbientOcclusionOn(GraphicsOptions.Instance) ? 1f : 0f;
+            }
+            if (next == Page.Load || next == Page.NewGame) { slotFocus = 0; slotFocusShown = false; RefreshSlotDetails(); }
         }
 
         /// <summary>Back buttons and Escape share one route so both always return to the parent page.</summary>
@@ -474,6 +562,12 @@ namespace Lumenfall.Startup
                 settings.CancelRebind();
                 settings.Message = string.Empty;
                 SetPage(Page.Settings);
+                settingsFocus = VolumeBuses.Length + 1;
+            }
+            else if (page == Page.Graphics)
+            {
+                SetPage(Page.Settings);
+                settingsFocus = VolumeBuses.Length + 2;
             }
         }
 
@@ -562,7 +656,8 @@ namespace Lumenfall.Startup
                 : value == Page.Load ? new Vector2(700f, 780f)
                 : value == Page.NewGame ? new Vector2(700f, 690f)
                 : value == Page.Controls ? new Vector2(560f, Mathf.Clamp(Screen.height - 40f, 440f, 720f))
-                : new Vector2(560f, 560f);
+                : value == Page.Graphics ? new Vector2(600f, 610f)
+                : new Vector2(560f, 560f + (VolumeBuses.Length - 1) * VolumeRowHeight);
         }
 
         /// <summary>1 when the current page (or the opening title) fits with a margin; otherwise just small enough to fit.</summary>
@@ -579,6 +674,7 @@ namespace Lumenfall.Startup
             else if (value == Page.Load) DrawLoad(panel, top);
             else if (value == Page.NewGame) DrawNewGame(panel, top);
             else if (value == Page.Controls) DrawControls(panel, top);
+            else if (value == Page.Graphics) DrawGraphics(panel, top);
             else DrawSettings(panel, top);
         }
 
@@ -662,7 +758,7 @@ namespace Lumenfall.Startup
         {
             bool main = value == Page.Main;
             string title = main ? GameTitle : value == Page.Load ? savePickerMode ? "Save Game" : "Load Game" : value == Page.NewGame ? "New Game"
-                : value == Page.Controls ? "Controls" : "Settings";
+                : value == Page.Controls ? "Controls" : value == Page.Graphics ? "Graphics" : "Settings";
             float height = main ? 76f : 54f;
             Rect rect = new Rect(panel.x + 24f, panel.y + 24f, panel.width - 48f, height);
             int size = main ? MainTitleFontSize : 36;
@@ -887,12 +983,24 @@ namespace Lumenfall.Startup
 
         private void DrawLoad(Rect panel, float top)
         {
+            if (recoverySlot != null)
+            {
+                DrawMessage(new Rect(panel.x + 36f, top, panel.width - 72f, 100f));
+                for (int i = 0; i < recoveryCandidates.Length; i++)
+                {
+                    string label = recoveryCandidates[i] == SaveRecoverySource.Previous ? "Recover previous save" : "Recover interrupted save";
+                    if (GUI.Button(new Rect(panel.x + 60f, top + 120f + i * 70f, panel.width - 120f, 58f),
+                        (slotFocus == i ? "> " : "") + label, textButtonStyle)) RecoverSlot(recoveryCandidates[i]);
+                }
+                if (Button("exit", BackRect(panel), "CANCEL")) { recoverySlot = null; slotFocus = 0; }
+                return;
+            }
             float y = top + 4f;
             int firstSlot = savePickerMode ? 1 : 0;
             for (int i = firstSlot; i < Slots.Length; i++)
             {
                 string action = savePickerMode ? "SAVE" : "LOAD";
-                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), savePickerMode ? "save" : "load", action, savePickerMode))
+                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), savePickerMode ? "save" : "load", action, savePickerMode, slotFocus == i - firstSlot))
                 {
                     if (savePickerMode) SaveSlot(Slots[i]);
                     else LoadSlot(Slots[i]);
@@ -932,7 +1040,7 @@ namespace Lumenfall.Startup
             float y = top + 30f;
             for (int i = 1; i < Slots.Length; i++)
             {
-                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), "start", "START", true)) StartNewGame(Slots[i]);
+                if (DrawSlotCard(i, new Rect(panel.x + 32f, y, panel.width - 64f, 118f), "start", "START", true, slotFocus == i - 1)) StartNewGame(Slots[i]);
                 y += 130f;
             }
 
@@ -944,14 +1052,16 @@ namespace Lumenfall.Startup
         /// <summary>
         /// One save slot as a journal card: thumbnail, title with its tags, location, quest and stars, and a sprite button
         /// with the save time and playtime under it. Empty slots show the button only when <paramref name="buttonWhenEmpty"/>.
-        /// Returns true when the button was pressed.
+        /// A <paramref name="focused"/> card glows once keyboard or controller navigation has moved the focus. Returns true
+        /// when the button was pressed.
         /// </summary>
-        private bool DrawSlotCard(int i, Rect card, string buttonKey, string buttonLabel, bool buttonWhenEmpty)
+        private bool DrawSlotCard(int i, Rect card, string buttonKey, string buttonLabel, bool buttonWhenEmpty, bool focused)
         {
             GameSaveManager saves = GameSaveManager.Instance;
             string slot = Slots[i];
             bool isAutosave = i == 0;
             bool hasSave = saves.HasSave(slot);
+            if (focused && slotFocusShown) Draw(Expand(card, 14f, 10f), glowTexture, MenuArt.Lavender, 0.5f);
             Box(card, cardStyle, hasSave ? 1f : 0.55f);
 
             Rect thumb = new Rect(card.x + 14f, card.y + 14f, 160f, 90f);
@@ -1047,38 +1157,43 @@ namespace Lumenfall.Startup
 
         private void DrawSettings(Rect panel, float top)
         {
-            Rect card = new Rect(panel.x + 36f, top + 4f, panel.width - 72f, 196f);
+            int volumes = VolumeBuses.Length;
+            Rect card = new Rect(panel.x + 36f, top + 4f, panel.width - 72f, 16f + volumes * VolumeRowHeight + 98f);
             Box(card, cardStyle, 1f);
             float x = card.x + 24f;
             float width = card.width - 48f;
 
-            float masterVolume = GameSettingsPanel.MasterVolume;
-            Label(new Rect(x, card.y + 16f, width, 30f), "Master volume", rowStyle, MenuArt.Cream);
-            Label(new Rect(x, card.y + 16f, width, 30f), $"{Mathf.RoundToInt(masterVolume * 100f)}%", valueStyle, MenuArt.Gold);
-            float newVolume = Slider(new Rect(x, card.y + 54f, width, 26f), masterVolume);
-            if (!Mathf.Approximately(newVolume, masterVolume)) GameSettingsPanel.MasterVolume = newVolume;
-
-            Draw(new Rect(x, card.y + 98f, width, 4f), glowTexture, MenuArt.Gold, 0.45f);
-
-            Label(new Rect(x, card.y + 114f, width - 80f, 28f), "Show quest hints", rowStyle, MenuArt.Cream);
-            Label(new Rect(x, card.y + 142f, width - 80f, 24f), "Gentle nudges toward what to do next", mutedStyle, MenuArt.Muted);
-            DrawSwitch(new Rect(card.xMax - 24f - 60f, card.y + 124f, 60f, 30f), hintsKnob);
-            SetColor(Color.white, 1f);
-            if (GUI.Button(new Rect(x, card.y + 108f, width, 66f), GUIContent.none, GUIStyle.none))
+            float y = card.y + 16f;
+            for (int i = 0; i < volumes; i++)
             {
-                questHintsEnabled = !questHintsEnabled;
-                QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
-                PlayerPrefs.SetInt(QuestHintsEnabledKey, questHintsEnabled ? 1 : 0);
-                PlayerPrefs.Save();
+                AudioBus bus = VolumeBuses[i];
+                float volume = AudioMixSettings.GetVolume(bus);
+                FocusGlow(new Rect(x - 8f, y - 6f, width + 16f, VolumeRowHeight - 4f), i);
+                Label(new Rect(x, y, width, 30f), VolumeLabels[i], rowStyle, MenuArt.Cream);
+                Label(new Rect(x, y, width, 30f), $"{Mathf.RoundToInt(volume * 100f)}%", valueStyle, MenuArt.Gold);
+                float next = Slider(new Rect(x, y + 32f, width, 26f), volume);
+                if (!Mathf.Approximately(next, volume)) SetVolume(bus, next);
+                y += VolumeRowHeight;
             }
 
+            // The quest-hint row keeps its original offsets below the divider.
+            float hints = y - 16f;
+            Draw(new Rect(x, hints + 14f, width, 4f), glowTexture, MenuArt.Gold, 0.45f);
+            FocusGlow(new Rect(x, hints + 24f, width, 66f), volumes);
+            Label(new Rect(x, hints + 30f, width - 80f, 28f), "Show quest hints", rowStyle, MenuArt.Cream);
+            Label(new Rect(x, hints + 58f, width - 80f, 24f), "Gentle nudges toward what to do next", mutedStyle, MenuArt.Muted);
+            DrawSwitch(new Rect(card.xMax - 24f - 60f, hints + 40f, 60f, 30f), hintsKnob);
             SetColor(Color.white, 1f);
-            if (GUI.Button(new Rect(panel.center.x - 130f, card.yMax + 28f, 260f, 52f), "Controls", textButtonStyle))
-            {
-                SetPage(Page.Controls);
-                settings.Message = "Click an action, then press the key you want.";
-            }
-            if (Button("exit", BackRect(panel), "BACK")) GoBack();
+            if (GUI.Button(new Rect(x, hints + 24f, width, 66f), GUIContent.none, GUIStyle.none)) SetQuestHints(!questHintsEnabled);
+
+            SetColor(Color.white, 1f);
+            Rect controls = new Rect(panel.center.x - 218f, card.yMax + 28f, 208f, 52f);
+            Rect graphics = new Rect(panel.center.x + 10f, card.yMax + 28f, 208f, 52f);
+            FocusGlow(controls, volumes + 1);
+            FocusGlow(graphics, volumes + 2);
+            if (GUI.Button(controls, "Controls", textButtonStyle)) OpenControls();
+            if (GUI.Button(graphics, "Graphics", textButtonStyle)) SetPage(Page.Graphics);
+            if (Button("exit", BackRect(panel), "BACK", SettingsFocused(volumes + 3))) GoBack();
         }
 
         private void DrawControls(Rect panel, float top)
@@ -1105,6 +1220,209 @@ namespace Lumenfall.Startup
                 GUI.skin.verticalScrollbarThumb = previousThumb;
             }
             if (Button("exit", back, "BACK")) GoBack();
+        }
+
+        /// <summary>
+        /// The player graphics options from <see cref="GraphicsOptions"/>, in the menu's card style. Every change applies and
+        /// saves immediately; the window shrinks the whole page through <see cref="FitScale"/> rather than scrolling.
+        /// </summary>
+        private void DrawGraphics(Rect panel, float top)
+        {
+            GraphicsOptions graphics = GraphicsOptions.Instance;
+            Rect card = new Rect(panel.x + 36f, top + 4f, panel.width - 72f, GraphicsRowHeight * 4f + 8f);
+            Box(card, cardStyle, 1f);
+            float x = card.x + 24f;
+            float width = card.width - 48f;
+            if (graphics == null)
+            {
+                Label(new Rect(x, card.y + 16f, width, 30f), "Graphics options are not available.", mutedStyle, MenuArt.Muted);
+                if (Button("exit", BackRect(panel), "BACK", SettingsFocused(GraphicsFocusCount - 1))) GoBack();
+                return;
+            }
+
+            GraphicsPreferences current = graphics.Preferences;
+            bool urp = graphics.SupportsUrpOptions;
+            bool ao = graphics.SupportsAmbientOcclusion;
+            float y = card.y + 4f;
+
+            FocusGlow(new Rect(x - 8f, y + 4f, width + 16f, GraphicsRowHeight - 8f), 0);
+            if (GraphicsSwitchRow(new Rect(card.x, y, card.width, GraphicsRowHeight), "VSync",
+                    "Match the monitor's refresh rate to avoid tearing", vsyncKnob, true))
+                SetGraphicsRow(graphics, 0, 0, true);
+            GraphicsDivider(x, y += GraphicsRowHeight, width);
+
+            FocusGlow(new Rect(x - 8f, y + 4f, width + 16f, GraphicsRowHeight - 8f), 1);
+            int antialiasing = GraphicsChoiceRow(new Rect(card.x, y, card.width, GraphicsRowHeight), "Antialiasing",
+                urp ? "Smooths jagged edges" : "Not available with this renderer", (int)current.Antialiasing, AntialiasingLabels, urp);
+            if (antialiasing != (int)current.Antialiasing)
+                graphics.SetPreferences(new GraphicsPreferences(current.VSync, (GraphicsAntialiasing)antialiasing, current.AmbientOcclusion, current.Shading));
+            GraphicsDivider(x, y += GraphicsRowHeight, width);
+
+            FocusGlow(new Rect(x - 8f, y + 4f, width + 16f, GraphicsRowHeight - 8f), 2);
+            if (GraphicsSwitchRow(new Rect(card.x, y, card.width, GraphicsRowHeight), "Ambient occlusion",
+                    ao ? "Soft contact shadows where surfaces meet" : "Not available with this renderer", ambientOcclusionKnob, ao))
+                SetGraphicsRow(graphics, 2, 0, true);
+            GraphicsDivider(x, y += GraphicsRowHeight, width);
+
+            FocusGlow(new Rect(x - 8f, y + 4f, width + 16f, GraphicsRowHeight - 8f), 3);
+            int shading = GraphicsChoiceRow(new Rect(card.x, y, card.width, GraphicsRowHeight), "Shading quality",
+                urp ? "Shadow range, shadow detail and level of detail" : "Not available with this renderer", (int)current.Shading, ShadingLabels, urp);
+            if (shading != (int)current.Shading)
+                graphics.SetPreferences(new GraphicsPreferences(current.VSync, current.Antialiasing, current.AmbientOcclusion, (ShadingQuality)shading));
+
+            Rect footer = new Rect(card.x + 4f, card.yMax + 14f, card.width - 8f, 48f);
+            Label(new Rect(footer.x, footer.y, footer.width - 236f, 24f),
+                "Recommended for this PC: " + ShadingLabels[(int)graphics.RecommendedPreferences.Shading], rowStyle, MenuArt.Cream);
+            Label(new Rect(footer.x, footer.y + 24f, footer.width - 236f, 22f), "Changes are saved automatically", mutedStyle, MenuArt.Muted);
+            SetColor(Color.white, 1f);
+            Rect recommended = new Rect(footer.xMax - 220f, footer.y, 220f, 48f);
+            FocusGlow(recommended, 4);
+            if (GUI.Button(recommended, "Use recommended", textButtonStyle)) graphics.SetPreferences(graphics.RecommendedPreferences);
+
+            if (Button("exit", BackRect(panel), "BACK", SettingsFocused(GraphicsFocusCount - 1))) GoBack();
+        }
+
+        /// <summary>A titled switch row. The whole row toggles; returns true on the click that should flip the setting.</summary>
+        private bool GraphicsSwitchRow(Rect row, string title, string description, float knob, bool enabled)
+        {
+            float x = row.x + 24f;
+            float width = row.width - 48f;
+            float alpha = enabled ? 1f : 0.45f;
+            Label(new Rect(x, row.y + 10f, width - 80f, 28f), title, rowStyle, MenuArt.Cream, alpha);
+            Label(new Rect(x, row.y + 38f, width - 80f, 24f), description, mutedStyle, MenuArt.Muted, alpha);
+            float savedFade = fade;
+            fade *= alpha;
+            DrawSwitch(new Rect(row.xMax - 24f - 60f, row.y + 22f, 60f, 30f), knob);
+            fade = savedFade;
+            SetColor(Color.white, 1f);
+            return enabled && GUI.Button(new Rect(x, row.y + 4f, width, row.height - 8f), GUIContent.none, GUIStyle.none);
+        }
+
+        /// <summary>A titled row with a segmented pill picker on the right; returns the chosen index.</summary>
+        private int GraphicsChoiceRow(Rect row, string title, string description, int selected, string[] labels, bool enabled)
+        {
+            const float Gap = 6f;
+            float x = row.x + 24f;
+            float pickerWidth = 270f;
+            float alpha = enabled ? 1f : 0.45f;
+            Label(new Rect(x, row.y + 10f, row.width - 48f - pickerWidth - 12f, 28f), title, rowStyle, MenuArt.Cream, alpha);
+            Label(new Rect(x, row.y + 38f, row.width - 48f - pickerWidth - 12f, 24f), description, mutedStyle, MenuArt.Muted, alpha);
+
+            Rect picker = new Rect(row.xMax - 24f - pickerWidth, row.y + 21f, pickerWidth, 34f);
+            float segmentWidth = (picker.width - Gap * (labels.Length - 1)) / labels.Length;
+            int result = selected;
+            for (int i = 0; i < labels.Length; i++)
+            {
+                Rect segment = new Rect(picker.x + i * (segmentWidth + Gap), picker.y, segmentWidth, picker.height);
+                bool on = i == selected;
+                bool hover = enabled && interactive && !on && segment.Contains(Event.current.mousePosition);
+                if (hover) Draw(Expand(segment, 12f, 10f), glowTexture, MenuArt.Lavender, 0.35f);
+                Box(segment, pillStyle, (on ? 0.95f : 0.85f) * alpha, on ? MenuArt.Lavender : MenuArt.Ink);
+                Label(segment, labels[i], choiceStyle, on ? MenuArt.Ink : hover ? MenuArt.Gold : MenuArt.Cream, alpha);
+                SetColor(Color.white, 1f);
+                if (enabled && GUI.Button(segment, GUIContent.none, GUIStyle.none)) result = i;
+            }
+            return result;
+        }
+
+        private void GraphicsDivider(float x, float y, float width) => Draw(new Rect(x, y - 2f, width, 4f), glowTexture, MenuArt.Gold, 0.45f);
+
+        /// <summary>AO shows as off when the renderer has no SSAO feature, while the saved choice is kept for later.</summary>
+        private static bool AmbientOcclusionOn(GraphicsOptions graphics) =>
+            graphics.SupportsAmbientOcclusion && graphics.Preferences.AmbientOcclusion;
+
+        // ---- Settings and Graphics: keyboard and controller ----
+
+        /// <summary>
+        /// Up/Down move the focus; Left/Right adjust the focused volume, switch or choice; Enter toggles, cycles or presses.
+        /// Escape is handled by the caller and goes back.
+        /// </summary>
+        private void UpdateSettingsKeys()
+        {
+            int vertical = navigation.Vertical;
+            int horizontal = navigation.Horizontal;
+            bool submit = navigation.Submit;
+            if (vertical == 0 && horizontal == 0 && !submit) return;
+            settingsFocusShown = true;
+            int count = page == Page.Settings ? SettingsFocusCount : GraphicsFocusCount;
+            if (vertical != 0)
+            {
+                settingsFocus = (settingsFocus + vertical + count) % count;
+                return;
+            }
+
+            if (page == Page.Settings)
+            {
+                int volumes = VolumeBuses.Length;
+                if (settingsFocus < volumes)
+                {
+                    AudioBus bus = VolumeBuses[settingsFocus];
+                    if (horizontal != 0) SetVolume(bus, Mathf.Clamp01(AudioMixSettings.GetVolume(bus) + horizontal * 0.05f));
+                }
+                else if (settingsFocus == volumes) SetQuestHints(horizontal != 0 ? horizontal > 0 : !questHintsEnabled);
+                else if (!submit) return;
+                else if (settingsFocus == volumes + 1) OpenControls();
+                else if (settingsFocus == volumes + 2) SetPage(Page.Graphics);
+                else GoBack();
+                return;
+            }
+
+            GraphicsOptions graphics = GraphicsOptions.Instance;
+            if (settingsFocus == GraphicsFocusCount - 1 || graphics == null)
+            {
+                if (submit) GoBack();
+                return;
+            }
+            if (settingsFocus == 4)
+            {
+                if (submit) graphics.SetPreferences(graphics.RecommendedPreferences);
+                return;
+            }
+            SetGraphicsRow(graphics, settingsFocus, horizontal, submit);
+        }
+
+        /// <summary>Applies one step to a Graphics row: 0 VSync, 1 antialiasing, 2 ambient occlusion, 3 shading.</summary>
+        private static void SetGraphicsRow(GraphicsOptions graphics, int row, int horizontal, bool submit)
+        {
+            GraphicsPreferences p = graphics.Preferences;
+            if ((row == 1 || row == 3) && !graphics.SupportsUrpOptions || row == 2 && !graphics.SupportsAmbientOcclusion) return;
+            bool vSync = row == 0 ? (horizontal != 0 ? horizontal > 0 : !p.VSync) : p.VSync;
+            bool ao = row == 2 ? (horizontal != 0 ? horizontal > 0 : !p.AmbientOcclusion) : p.AmbientOcclusion;
+            GraphicsAntialiasing aa = row == 1 ? (GraphicsAntialiasing)Step((int)p.Antialiasing, AntialiasingLabels.Length, horizontal) : p.Antialiasing;
+            ShadingQuality shading = row == 3 ? (ShadingQuality)Step((int)p.Shading, ShadingLabels.Length, horizontal) : p.Shading;
+            graphics.SetPreferences(new GraphicsPreferences(vSync, aa, ao, shading));
+        }
+
+        /// <summary>Left/Right move one choice and stop at the ends; Enter cycles round.</summary>
+        private static int Step(int value, int count, int horizontal) =>
+            horizontal != 0 ? Mathf.Clamp(value + horizontal, 0, count - 1) : (value + 1) % count;
+
+        private bool SettingsFocused(int index) => settingsFocusShown && settingsFocus == index;
+
+        private void FocusGlow(Rect rect, int index)
+        {
+            if (SettingsFocused(index)) Draw(Expand(rect, 12f, 8f), glowTexture, MenuArt.Lavender, 0.45f);
+        }
+
+        private void OpenControls()
+        {
+            SetPage(Page.Controls);
+            settings.Message = "Click an action, then press the key you want.";
+        }
+
+        private void SetQuestHints(bool enabled)
+        {
+            questHintsEnabled = enabled;
+            QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
+            PlayerPrefs.SetInt(QuestHintsEnabledKey, questHintsEnabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>The master bus also drives AudioListener.volume, so it goes through GameSettingsPanel.</summary>
+        private static void SetVolume(AudioBus bus, float value)
+        {
+            if (bus == AudioBus.Master) GameSettingsPanel.MasterVolume = value;
+            else AudioMixSettings.SetVolume(bus, value);
         }
 
         private static Rect BackRect(Rect panel) => new Rect(panel.x + 80f, panel.yMax - 92f, panel.width - 160f, 60f);
@@ -1187,6 +1505,7 @@ namespace Lumenfall.Startup
         /// </summary>
         private void StartNewGame(string slot)
         {
+            if (!ready) return;
             GameSaveManager saves = GameSaveManager.Instance;
             bool replacesSlot = saves.HasSave(slot);
             if ((replacesSlot || saves.HasSave(GameSaveManager.AutosaveSlot)) && confirmSlot != slot)
@@ -1198,11 +1517,13 @@ namespace Lumenfall.Startup
                 return;
             }
 
-            GameEventManager.Instance.ReloadDefinitions();
-            DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
-            if (worldLoader != null) worldLoader.ResetToStartingState();
-            // A new character has no name until the story asks for one.
-            PlayerProfile.Forget();
+            if (!saves.ResetState(() =>
+            {
+                GameEventManager.Instance.ReloadDefinitions();
+                DataDrivenWorldLoader worldLoader = DataDrivenWorldLoader.Instance;
+                if (worldLoader != null) worldLoader.ResetToStartingState();
+                PlayerProfile.Forget();
+            }, resumeAutosave: true)) { message = saves.LastError; return; }
             ManualSaveSlot.Link(slot);
             SaveSlotSummary.BeginNewGame();
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
@@ -1217,6 +1538,7 @@ namespace Lumenfall.Startup
 
         private void LoadSlot(string slot)
         {
+            if (!ready) return;
             GameSaveManager saves = GameSaveManager.Instance;
             if (saves == null || !saves.HasSave(slot))
             {
@@ -1243,7 +1565,19 @@ namespace Lumenfall.Startup
             else
             {
                 message = saves.LastError ?? "That save could not be loaded.";
+                recoveryCandidates = saves.GetRecoveryCandidates(slot);
+                recoverySlot = recoveryCandidates.Length > 0 ? slot : null;
+                slotFocus = 0;
             }
+        }
+
+        private void RecoverSlot(SaveRecoverySource source)
+        {
+            string slot = recoverySlot;
+            if (slot == null) return;
+            if (!GameSaveManager.Instance.RecoverSave(slot, source)) { message = GameSaveManager.Instance.LastError; return; }
+            recoverySlot = null;
+            LoadSlot(slot);
         }
 
         /// <summary>
@@ -1503,6 +1837,8 @@ namespace Lumenfall.Startup
             mutedStyle = TextStyle(15, TextAnchor.MiddleLeft);
             groupStyle = TextStyle(15, TextAnchor.MiddleLeft);
             groupStyle.fontStyle = FontStyle.Bold;
+            choiceStyle = TextStyle(16, TextAnchor.MiddleCenter);
+            choiceStyle.fontStyle = FontStyle.Bold;
             mutedStyle.clipping = TextClipping.Clip;
             smallStyle = TextStyle(13, TextAnchor.MiddleLeft);
             smallStyle.clipping = TextClipping.Clip;

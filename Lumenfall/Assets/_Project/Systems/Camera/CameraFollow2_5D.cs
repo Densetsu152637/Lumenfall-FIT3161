@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lumenfall.Accessibility;
 
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
@@ -40,6 +41,22 @@ public class CameraFollow2_5D : MonoBehaviour
 
     // Stores the velocity used internally by SmoothDamp.
     private Vector3 currentVelocity;
+
+    private bool reducedMotion;
+    private void OnEnable()
+    {
+        AccessibilitySettings.Changed += OnPreferencesChanged;
+        SetReducedMotion(AccessibilitySettings.Current.ReducedMotion);
+    }
+    private void OnDisable() => AccessibilitySettings.Changed -= OnPreferencesChanged;
+    private void OnPreferencesChanged(AccessibilitySnapshot value) => SetReducedMotion(value.ReducedMotion);
+    public void SetReducedMotion(bool value)
+    {
+        if (reducedMotion == value) return;
+        reducedMotion = value;
+        currentVelocity = Vector3.zero;
+        if (target != null) transform.position = target.position + offset;
+    }
 
     // How far the camera has eased into conversation framing, from 0 to 1.
     private float conversationBlend;
@@ -103,10 +120,10 @@ public class CameraFollow2_5D : MonoBehaviour
             return;
         }
 
-        // Remove last frame's shake first, so smoothing works from the unshaken position.
+        // Remove the previous shake before smoothing. Reduced motion also disables conversation zoom.
         transform.position -= appliedShake;
-
-        conversationBlend = Mathf.SmoothDamp(
+        if (reducedMotion) conversationBlendVelocity = 0f;
+        conversationBlend = reducedMotion ? 0f : Mathf.SmoothDamp(
             conversationBlend,
             conversationActive ? 1f : 0f,
             ref conversationBlendVelocity,
@@ -122,7 +139,7 @@ public class CameraFollow2_5D : MonoBehaviour
             anchor + offset * distanceScale;
 
         // Smoothly move the camera toward its desired position.
-        transform.position = Vector3.SmoothDamp(
+        transform.position = reducedMotion ? desiredPosition : Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref currentVelocity,
@@ -135,7 +152,7 @@ public class CameraFollow2_5D : MonoBehaviour
 
         transform.LookAt(focusPoint);
 
-        appliedShake = shakeOffset;
+        appliedShake = reducedMotion ? Vector3.zero : shakeOffset;
         transform.position += appliedShake;
     }
 }

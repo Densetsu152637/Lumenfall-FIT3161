@@ -69,6 +69,7 @@ namespace Lumenfall.Tests.GameEvents
                     if (created[i] != null)
                     {
                         foreach (SpellCaster caster in created[i].GetComponents<SpellCaster>()) EditModeLifecycle.Call(caster, "OnDisable");
+                        foreach (QuestPuzzleMonitor monitor in created[i].GetComponents<QuestPuzzleMonitor>()) EditModeLifecycle.Call(monitor, "OnDisable");
                         UnityEngine.Object.DestroyImmediate(created[i]);
                     }
                 created.Clear();
@@ -124,6 +125,7 @@ namespace Lumenfall.Tests.GameEvents
                 created.Add(monitorHost);
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
                 EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             }
             RunMonitor(monitor);
             Assert.That(runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active), "The legacy placeholder cannot complete First Light.");
@@ -415,15 +417,40 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(QuestHintOverlay.IsSettingsOpen, Is.False);
             Assert.That(owned.enabled, Is.True);
             Assert.That(alreadyDisabled.enabled, Is.False);
-            Assert.That(caster.Cast(SpellId.Ampere, "hint-test-relic", Vector2Int.right), Is.True);
-            DialogueSession resumedDialogue = npc.Interact();
-            Assert.That(resumedDialogue, Is.Not.Null);
-            resumedDialogue.End();
+            Assert.That(OverlayInputGate.Owns(overlay), Is.False);
+            Assert.That(OverlayInputGate.IsBlocked, Is.True, "Closing input stays consumed for the rest of its frame.");
+            Assert.That(caster.Cast(SpellId.Ampere, "hint-test-relic", Vector2Int.right), Is.False);
+            Assert.That(npc.Interact(), Is.Null);
+            Assert.That(runtime.ActiveDialogue, Is.Null);
 
-            InvokeInstance("SetSettingsOpen", true);
-            InvokeInstance("OnDisable");
-            Assert.That(QuestHintOverlay.IsSettingsOpen, Is.False);
-            Assert.That(owned.enabled, Is.True);
+            AfterOverlayTransitionFrame(() =>
+            {
+                Assert.That(caster.Cast(SpellId.Ampere, "hint-test-relic", Vector2Int.right), Is.True);
+                DialogueSession resumedDialogue = npc.Interact();
+                Assert.That(resumedDialogue, Is.Not.Null);
+                resumedDialogue.End();
+
+                InvokeInstance("SetSettingsOpen", true);
+                InvokeInstance("OnDisable");
+                Assert.That(QuestHintOverlay.IsSettingsOpen, Is.False);
+                Assert.That(owned.enabled, Is.True);
+            });
+        }
+
+        private static void AfterOverlayTransitionFrame(Action assertions)
+        {
+            // A synchronous EditMode test cannot advance Time.frameCount. Simulate only the
+            // expired transition frame, preserving every owner and restoring the bookkeeping afterward.
+            var locks = (OverlayLockSet)typeof(OverlayInputGate)
+                .GetField("Locks", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            FieldInfo transition = typeof(OverlayLockSet).GetField("transitionFrame", BindingFlags.Instance | BindingFlags.NonPublic);
+            int originalFrame = (int)transition.GetValue(locks);
+            try
+            {
+                transition.SetValue(locks, Time.frameCount - 1);
+                assertions();
+            }
+            finally { transition.SetValue(locks, originalFrame); }
         }
 
         private void BeginMap(string mapId)

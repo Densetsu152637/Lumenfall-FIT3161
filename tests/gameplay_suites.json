@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "platforms": {
+    "editmode": {
+      "name": "Gameplay rules",
+      "fixtures": {
+        "Lumenfall.GameEvents.Tests.AccessibilityPreferencesTests": 16,
+        "Lumenfall.GameEvents.Tests.DialoguePagingTests": 6,
+        "Lumenfall.GameEvents.Tests.DialogueTextEffectsTests": 8,
+        "Lumenfall.GameEvents.Tests.DialogueTextRevealTests": 8,
+        "Lumenfall.Startup.Tests.GraphicsPreferencesTests": 13,
+        "Lumenfall.Startup.Tests.GraphicsRecommendationsTests": 17,
+        "Lumenfall.Tests.GameEvents.AmbientCastTests": 7,
+        "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 15,
+        "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
+        "Lumenfall.Tests.GameEvents.CutsceneSequenceTests": 15,
+        "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 7,
+        "Lumenfall.Tests.GameEvents.GameEventRuntimeTests": 7,
+        "Lumenfall.Tests.GameEvents.GameSaveRecoveryTests": 19,
+        "Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests": 3,
+        "Lumenfall.Tests.GameEvents.KatrinaBorrowedProgressionTests": 8,
+        "Lumenfall.Tests.GameEvents.KatrinaBorrowedWorldTests": 8,
+        "Lumenfall.Tests.GameEvents.LateToOrientationTests": 4,
+        "Lumenfall.Tests.GameEvents.LayOfTheLandTests": 6,
+        "Lumenfall.Tests.GameEvents.LostEchoesRevealEventTests": 8,
+        "Lumenfall.Tests.GameEvents.MiscCollectiblesTests": 3,
+        "Lumenfall.Tests.GameEvents.NpcIntroductionsTests": 7,
+        "Lumenfall.Tests.GameEvents.OrioPatchNotesTests": 25,
+        "Lumenfall.Tests.GameEvents.OutOfAlignmentTests": 33,
+        "Lumenfall.Tests.GameEvents.PlayerProfileTests": 5,
+        "Lumenfall.Tests.GameEvents.PlayerVisibilityTests": 4,
+        "Lumenfall.Tests.GameEvents.ProductionUiPolicyTests": 4,
+        "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 3,
+        "Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests": 9,
+        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 10,
+        "Lumenfall.Tests.GameEvents.SettlingInTests": 6,
+        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
+        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 6,
+        "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
+        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
+      }
+    },
+    "playmode": {
+      "name": "World integration",
+      "fixtures": {
+        "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
+        "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2,
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 7,
+        "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
+        "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
+        "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 1
+      }
+    }
+  },
+  "graphical": {
+    "name": "Graphical settings interaction",
+    "category": "RequiresGraphics",
+    "fixtures": {
+      "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
+      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1
+    }
+  }
+}

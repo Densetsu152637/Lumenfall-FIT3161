@@ -55,10 +55,10 @@ namespace Lumenfall.DataDriven
         private void Update()
         {
             // The departure fade runs right after a dialogue closes; a quick Talk press must not reopen it behind the fade.
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
                 CinnaTrialDeparture.InProgress || DialogueOverlay.IsNpcInteractionBlocked || BuildingSignInteraction.IsEInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal ||
-                !KeyBindings.WasPressed(GameAction.Talk) || GameEventManager.Instance == null ||
+                !(KeyBindings.WasPressed(GameAction.Talk) || Gamepad.current?.buttonSouth.wasPressedThisFrame == true) || GameEventManager.Instance == null ||
                 GameEventManager.Instance.Runtime.ActiveDialogue != null) return;
 
             GridMover player = GridMover.FindActive();
@@ -75,7 +75,7 @@ namespace Lumenfall.DataDriven
 
         private void OnGUI()
         {
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 CutscenePlayer.BlocksInput || CinnaTrialDeparture.InProgress || GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             GridMover player = GridMover.FindActive();
             if (player == null || Vector3.Distance(player.transform.position, transform.position) > 2.01f) return;
@@ -91,7 +91,7 @@ namespace Lumenfall.DataDriven
         }
         public DialogueSession Interact()
         {
-            if (QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null;
+            if (OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || GameEventManager.Instance == null || InventoryUiState.IsOpen) return null;
             DialogueId = SelectDialogue();
             if (string.IsNullOrWhiteSpace(DialogueId)) return null;
             InventoryEncyclopediaUI.DiscoverCharacter(Id);

@@ -55,6 +55,28 @@ class UnityProjectValidatorTests(unittest.TestCase):
 
         self.assertEqual([], validate_project(self.project))
 
+    def test_lfs_pointers_require_materialization_only_for_builds(self) -> None:
+        for index, suffix in enumerate((".png", ".wav", ".fbx", ".asset")):
+            with self.subTest(suffix=suffix):
+                asset = self.create_asset(f"player{suffix}", f"{index + 10:032x}")
+                newline = b"\r\n" if suffix == ".asset" else b"\n"
+                asset.write_bytes(
+                    b"version https://git-lfs.github.com/spec/v1" + newline
+                    + b"oid sha256:" + b"1" * 64 + newline + b"size 1234" + newline
+                )
+
+                self.assertEqual([], validate_project(self.project))
+                errors = validate_project(self.project, require_lfs_assets=True)
+                self.assertTrue(any(
+                    "Git LFS pointer" in error and asset.name in error for error in errors
+                ))
+
+    def test_materialized_binary_assets_pass_build_validation(self) -> None:
+        asset = self.create_asset("Textures/player.png", "b" * 32)
+        asset.write_bytes(b"\x89PNG\r\n\x1a\n\x00\xff\x80binary-content")
+
+        self.assertEqual([], validate_project(self.project, require_lfs_assets=True))
+
     def test_missing_metadata_is_reported(self) -> None:
         asset = self.create_asset("Data/config.json", "2" * 32)
         asset.with_name(f"{asset.name}.meta").unlink()
@@ -79,6 +101,26 @@ class UnityProjectValidatorTests(unittest.TestCase):
         errors = validate_project(self.project)
 
         self.assertTrue(any("Invalid JSON" in error and "broken.json" in error for error in errors))
+
+    def test_utf16_text_with_byte_order_mark_is_readable(self) -> None:
+        asset = self.create_asset("Vendor/ReadMe.txt", "5" * 32)
+        asset.write_text("Vendor notes\n", encoding="utf-16")
+
+        self.assertEqual([], validate_project(self.project))
+
+    def test_decorative_rule_is_not_a_merge_marker(self) -> None:
+        asset = self.create_asset("Vendor/README.txt", "6" * 32)
+        asset.write_text("=" * 72 + "\nTitle\n" + "=" * 72 + "\n", encoding="utf-8")
+
+        self.assertEqual([], validate_project(self.project))
+
+    def test_merge_conflict_markers_are_reported(self) -> None:
+        asset = self.create_asset("notes.txt", "7" * 32)
+        asset.write_text("<<<<<<< HEAD\nours\n=======\ntheirs\n>>>>>>> branch\n", encoding="utf-8")
+
+        errors = validate_project(self.project)
+
+        self.assertTrue(any("merge-conflict marker" in error and "notes.txt" in error for error in errors))
 
     def test_empty_folder_metadata_from_clean_checkout_is_valid(self) -> None:
         (self.assets / "Empty.meta").write_text(
