@@ -173,6 +173,7 @@ namespace Lumenfall.DataDriven
         {
             accent = colour;
             nameLabel.text = speaker;
+            ribbon.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
             ribbon.style.backgroundColor = colour;
             portrait.style.borderTopColor = portrait.style.borderBottomColor =
                 portrait.style.borderLeftColor = portrait.style.borderRightColor = colour;

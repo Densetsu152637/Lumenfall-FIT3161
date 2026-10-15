@@ -10,12 +10,14 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Stella", "text": "Oh, {player}! Careful, that bench is still warm.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you working on?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_first_light_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_string_them_together_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Stella", "text": "Productive! Only two small explosions so far, and one of them was on purpose.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Stella", "text": "I build things. Magical items, mostly. Relics are just circuits that happen to be very old and very grumpy.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Stella", "text": "Something that needs all five relics talking to each other. They're not on speaking terms yet.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Stella", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you working on?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_first_light_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_string_them_together_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Stella", "text": "See you, {player}. Don't touch anything shiny on the way out.", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Stella", "text": "{player}! Good, a sensible face. Everyone else in here touches things without asking.", "choices": [{"id": "t1", "text": "What are you building?", "nextNodeId": "t1"}, {"id": "t2", "text": "You look tired.", "nextNodeId": "t2"}, {"id": "t3", "text": "Is that a plush on your desk?", "nextNodeId": "t3"}, {"id": "t4", "text": "How are you finding the academy?", "nextNodeId": "t4"}, {"id": "t5", "text": "How's the magical item?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_first_light_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_string_them_together_dialogue"}]}, {"id": "bye", "text": "I'll let you work.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Stella", "text": "A magical item powered by five relics at once. If it works, it's my first real piece of magical engineering. If it doesn't, I start a new notebook.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Stella", "text": "I'm fine. I slept. Briefly. Possibly on the bench. Don't tell anyone.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Stella", "text": "That's Professor Fluff. He supervises. He's very strict. ...Fine. He's for emergencies.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Stella", "text": "Bigger than my old school, and louder. I'm getting used to it. I made a schedule for getting used to it.", "nextNodeId": "more"},
+        {"id": "t5", "speaker": "Stella", "text": "Running! I checked it, then checked it again, then let it run. Thank you for helping. I'm not used to asking.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Stella", "text": "Anything else? I made a list of things you might ask, so go ahead.", "choices": [{"id": "t1", "text": "What are you building?", "nextNodeId": "t1"}, {"id": "t2", "text": "You look tired.", "nextNodeId": "t2"}, {"id": "t3", "text": "Is that a plush on your desk?", "nextNodeId": "t3"}, {"id": "t4", "text": "How are you finding the academy?", "nextNodeId": "t4"}, {"id": "t5", "text": "How's the magical item?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_first_light_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "stella_string_them_together", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "stella_string_them_together_dialogue"}]}, {"id": "bye", "text": "I'll let you work.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Stella", "text": "See you, {player}. Mind the wires on the way out!", "nextNodeId": ""}
       ]
     },
     {
@@ -26,12 +28,14 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Cinna Cirra", "text": "{player}! Hello again. I remembered your name. I wrote it down.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any tips for a newcomer?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_out_of_alignment_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_cold_feet_warm_idea_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Cinna Cirra", "text": "Better, thank you. I've only got lost twice today, which is a personal best.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Cinna Cirra", "text": "I signed up for orientation duty to meet people. It turns out I'm also meant to know things.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Cinna Cirra", "text": "Read the signs by the doors. I didn't, for a week. Learn from me.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Cinna Cirra", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any tips for a newcomer?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_out_of_alignment_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_cold_feet_warm_idea_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Cinna Cirra", "text": "Bye, {player}! Good luck out there.", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Cinna Cirra", "text": "{player}! Hi! I remembered your name. I checked my notes, but I remembered.", "choices": [{"id": "t1", "text": "How's orientation duty going?", "nextNodeId": "t1"}, {"id": "t2", "text": "What do you like to do?", "nextNodeId": "t2"}, {"id": "t3", "text": "Do you like it here?", "nextNodeId": "t3"}, {"id": "t4", "text": "Any tips for a newcomer?", "nextNodeId": "t4"}, {"id": "t5", "text": "Still got cold feet?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_out_of_alignment_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_cold_feet_warm_idea_dialogue"}]}, {"id": "bye", "text": "See you around, Cinna.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Cinna Cirra", "text": "I've read every guide to this academy, and none of them said the relics would be this heavy. Practice is much harder than books.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Cinna Cirra", "text": "Watch the clouds. That one over the Library looks like a sleeping cat. ...You see it too, right?", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Cinna Cirra", "text": "I think so. I'm still working out where I fit. Somewhere between the Library and the sky, maybe.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Cinna Cirra", "text": "Read the sign by every door. I didn't, for a week, and walked into the Library looking for lunch.", "nextNodeId": "more"},
+        {"id": "t5", "speaker": "Cinna Cirra", "text": "Warm ones, now. It turns out the trick was watching each slide before I took it.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Cinna Cirra", "text": "Anything else? I've got plenty of pages left.", "choices": [{"id": "t1", "text": "How's orientation duty going?", "nextNodeId": "t1"}, {"id": "t2", "text": "What do you like to do?", "nextNodeId": "t2"}, {"id": "t3", "text": "Do you like it here?", "nextNodeId": "t3"}, {"id": "t4", "text": "Any tips for a newcomer?", "nextNodeId": "t4"}, {"id": "t5", "text": "Still got cold feet?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_out_of_alignment", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_out_of_alignment_dialogue"}]}, {"id": "task_2", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "cinna_cold_feet_warm_idea_dialogue"}]}, {"id": "bye", "text": "See you around, Cinna.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Cinna Cirra", "text": "Bye, {player}! You're going on my 'people who helped' page.", "nextNodeId": ""}
       ]
     },
     {
@@ -42,12 +46,14 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Orio", "text": "{player}. Back in the glade? Good, I could use a second opinion.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What is this place?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "orio_patch_notes_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Orio", "text": "Efficient. I automated my morning routine. Now I just need to automate getting up.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Orio", "text": "I like puzzles, games and anything that can be made to run by itself. The forest has plenty of all three.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Orio", "text": "The mechanism glade. Old runes, older gears. Someone built all of this to be solved.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Orio", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What is this place?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "orio_patch_notes_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Orio", "text": "Until next time, {player}. Mind the moving parts.", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Orio", "text": "Hey, {player}. I was going to meet you halfway, but, you know. Flip-flops.", "choices": [{"id": "t1", "text": "What is this place?", "nextNodeId": "t1"}, {"id": "t2", "text": "Ever played Spellio?", "nextNodeId": "t2"}, {"id": "t3", "text": "Aren't you late for something?", "nextNodeId": "t3"}, {"id": "t4", "text": "Why flip-flops in a forest?", "nextNodeId": "t4"}, {"id": "t5", "text": "Working on any new mechanisms?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "orio_patch_notes_dialogue"}]}, {"id": "bye", "text": "I'll let you get back to it.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Orio", "text": "The mechanism glade. Old runes, older gears. Someone built all of this to be solved, then left without explaining.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Orio", "text": "You haven't? Okay. Sit down. It's a deck builder where every card is a spell, and the optimal opening is... actually, this'll take a while. Come back with snacks.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Orio", "text": "Probably. But I've worked out that being late is just being early for the next thing.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Orio", "text": "Maximum airflow, minimum effort. The roots disagree, but the roots aren't my problem.", "nextNodeId": "more"},
+        {"id": "t5", "speaker": "Orio", "text": "One that solves itself. So far it just sits there. Very relatable.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Orio", "text": "Next question. I'm ready. Ish.", "choices": [{"id": "t1", "text": "What is this place?", "nextNodeId": "t1"}, {"id": "t2", "text": "Ever played Spellio?", "nextNodeId": "t2"}, {"id": "t3", "text": "Aren't you late for something?", "nextNodeId": "t3"}, {"id": "t4", "text": "Why flip-flops in a forest?", "nextNodeId": "t4"}, {"id": "t5", "text": "Working on any new mechanisms?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "orio_patch_notes_dialogue"}]}, {"id": "bye", "text": "I'll let you get back to it.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Orio", "text": "Later, {player}. Mind the moving parts. And the roots.", "nextNodeId": ""}
       ]
     },
     {
@@ -58,12 +64,14 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Katrina", "text": "{player}. Yes, I remember you. Don't look so surprised.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What's memory magic like?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "katrina_something_borrowed_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Katrina", "text": "Quiet. I prefer quiet. Things are harder to lose when nothing is happening.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Katrina", "text": "I study memory magic. It's less glamorous than it sounds, and I lose fewer things than people think.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Katrina", "text": "Like reading a letter someone left in a room. Most of it is mundane. Some of it isn't.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Katrina", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What's memory magic like?", "nextNodeId": "topic"}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "katrina_something_borrowed_dialogue"}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Katrina", "text": "Goodbye, {player}. Try not to forget anything important.", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Katrina", "text": "{player}. Yes, I remember you. Don't look so relieved.", "choices": [{"id": "t1", "text": "What are you working on?", "nextNodeId": "t1"}, {"id": "t2", "text": "Who's Xiubin?", "nextNodeId": "t2"}, {"id": "t3", "text": "Does your family visit?", "nextNodeId": "t3"}, {"id": "t4", "text": "What's memory magic like?", "nextNodeId": "t4"}, {"id": "t5", "text": "Have you written down where you put things?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "katrina_something_borrowed_dialogue"}]}, {"id": "bye", "text": "See you, Katrina.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Katrina", "text": "Everything. Lessons, extra lessons, and a plan. One day I'll have a wardrobe bigger than this courtyard.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Katrina", "text": "Who's Xiubin? Only the most talented idol alive. I've seen every performance twice. Some three times, for research.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Katrina", "text": "They don't really get why I'm here. That's fine. I'll show them.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Katrina", "text": "Like reading a letter someone left in an empty room. Most of it is shopping lists. Now and then, it isn't.", "nextNodeId": "more"},
+        {"id": "t5", "speaker": "Katrina", "text": "Twice, on separate pages. I've already misplaced one of the pages.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Katrina", "text": "Anything else? Make it quick. I'm listening, though.", "choices": [{"id": "t1", "text": "What are you working on?", "nextNodeId": "t1"}, {"id": "t2", "text": "Who's Xiubin?", "nextNodeId": "t2"}, {"id": "t3", "text": "Does your family visit?", "nextNodeId": "t3"}, {"id": "t4", "text": "What's memory magic like?", "nextNodeId": "t4"}, {"id": "t5", "text": "Have you written down where you put things?", "nextNodeId": "t5", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "task_1", "text": "About what you asked me to do...", "nextNodeId": "", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Active"}], "actions": [{"type": "StartDialogue", "key": "katrina_something_borrowed_dialogue"}]}, {"id": "bye", "text": "See you, Katrina.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Katrina", "text": "Goodbye, {player}. Don't tell anyone I was nice to you.", "nextNodeId": ""}
       ]
     },
     {
@@ -74,12 +82,13 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Grace", "text": "{player}! Out on the trail again?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any good spots in the forest?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Grace", "text": "Lovely. The lanterns were humming all morning. I think they like the weather.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Grace", "text": "I practise out here where it's quiet. The forest doesn't mind if a spell goes a little sideways.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Grace", "text": "Follow the lanterns to the clearing. It's the best place to practise, and the best place to sit.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Grace", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any good spots in the forest?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Grace", "text": "See you on the trail, {player}!", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Grace", "text": "{player}! Out on the trail again? Good. The lanterns like company.", "choices": [{"id": "t1", "text": "What are you practising?", "nextNodeId": "t1"}, {"id": "t2", "text": "Any good spots in the forest?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is the forest dangerous?", "nextNodeId": "t3"}, {"id": "t4", "text": "Heard anything from the deep forest?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "bye", "text": "See you on the trail.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Grace", "text": "A light spell. It's meant to float. Right now it mostly sulks on the ground.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Grace", "text": "Follow the lanterns to the clearing. It's the best place to practise, and the best place to sit and pretend you are.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Grace", "text": "Only at dusk, when every tree looks like a landmark and none of them are.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Grace", "text": "The old dais hums now. Someone fixed it. You wouldn't know anything about that, would you?", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Grace", "text": "Anything else? I'm in no hurry.", "choices": [{"id": "t1", "text": "What are you practising?", "nextNodeId": "t1"}, {"id": "t2", "text": "Any good spots in the forest?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is the forest dangerous?", "nextNodeId": "t3"}, {"id": "t4", "text": "Heard anything from the deep forest?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "bye", "text": "See you on the trail.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Grace", "text": "Bye, {player}! Follow the lanterns home.", "nextNodeId": ""}
       ]
     },
     {
@@ -90,11 +99,12 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Prof. Voltaire", "text": "Ah, {player}. Here to borrow, to return, or simply to admire the shelves?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any book recommendations?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Prof. Voltaire", "text": "Orderly, which is the highest compliment I can pay a day.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Prof. Voltaire", "text": "I have kept this Library for longer than some of its books have existed. The rest are older than I am.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Prof. Voltaire", "text": "Start with the history of the academy. Then the history of the fire. Then the history of the lightning.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Prof. Voltaire", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any book recommendations?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Prof. Voltaire", "text": "Ah, {player}. Here to borrow, to return, or merely to admire the shelves?", "choices": [{"id": "t1", "text": "Any book recommendations?", "nextNodeId": "t1"}, {"id": "t2", "text": "What happened with the lightning?", "nextNodeId": "t2"}, {"id": "t3", "text": "Have you really read every book here?", "nextNodeId": "t3"}, {"id": "t4", "text": "Noticed anything missing from the shelves?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "bye", "text": "Good day, Professor.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Prof. Voltaire", "text": "Start with the history of the academy. Then the history of the fire. Then the history of the lightning. They are, regrettably, related.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Prof. Voltaire", "text": "A student read a storm spell aloud. Indoors. We no longer read storm spells aloud indoors.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Prof. Voltaire", "text": "Twice. Some three times, to make sure they hadn't changed. One had.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Prof. Voltaire", "text": "A brass bookmark left my reference section recently, covered in corrections. I approved of it, and of whoever returned it to its owner.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Prof. Voltaire", "text": "Anything further?", "choices": [{"id": "t1", "text": "Any book recommendations?", "nextNodeId": "t1"}, {"id": "t2", "text": "What happened with the lightning?", "nextNodeId": "t2"}, {"id": "t3", "text": "Have you really read every book here?", "nextNodeId": "t3"}, {"id": "t4", "text": "Noticed anything missing from the shelves?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "bye", "text": "Good day, Professor.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Prof. Voltaire", "text": "Good day, {player}. Mind the due dates.", "nextNodeId": ""}
       ]
     },
@@ -106,11 +116,12 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Vex", "text": "{player}. Inside voice, please.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you reading?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Vex", "text": "It was fine until someone sneezed in the reference section. I'm still recovering.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Vex", "text": "I read. Mostly about wards. Circles of protection are fascinating, and they never talk back.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Vex", "text": "Warding theory, volume three. No, you can't borrow it. I'm on chapter nine.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Vex", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you reading?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Vex", "text": "{player}. Inside voice, please.", "choices": [{"id": "t1", "text": "What are you reading?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why wards?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is the Library always this quiet?", "nextNodeId": "t3"}, {"id": "t4", "text": "Hear about the missing bookmark?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "bye", "text": "(whispering) Bye, Vex.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Vex", "text": "Warding theory, volume three. No, you can't borrow it. I'm on chapter nine and it's getting good.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Vex", "text": "A good ward keeps out everything you don't want. Noise, mostly.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Vex", "text": "When I'm here, yes. When I'm not, I assume chaos.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Vex", "text": "I heard someone rummaging in the reference section. Loudly. Was that you? It was you.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Vex", "text": "Anything else? Briefly.", "choices": [{"id": "t1", "text": "What are you reading?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why wards?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is the Library always this quiet?", "nextNodeId": "t3"}, {"id": "t4", "text": "Hear about the missing bookmark?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "katrina_something_borrowed", "value": "Completed"}]}, {"id": "bye", "text": "(whispering) Bye, Vex.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Vex", "text": "Bye. Quietly.", "nextNodeId": ""}
       ]
     },
@@ -122,11 +133,12 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Luna", "text": "{player}! Oh, hi. Sorry, I was looking up again.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What's so special about the stars here?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Luna", "text": "Clear skies all day. Tonight should be perfect for stargazing.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Luna", "text": "I love the sky. I'd like to study star magic one day. For now, I just look.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Luna", "text": "They're brighter here than anywhere else. Some nights it feels like they're looking back.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Luna", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What's so special about the stars here?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Luna", "text": "{player}! Oh, hi. Sorry, I was looking up again.", "choices": [{"id": "t1", "text": "What's so special about the stars here?", "nextNodeId": "t1"}, {"id": "t2", "text": "Do you study star magic?", "nextNodeId": "t2"}, {"id": "t3", "text": "What's your favourite constellation?", "nextNodeId": "t3"}, {"id": "t4", "text": "Did you see the workshop light up?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Completed"}]}, {"id": "bye", "text": "See you, Luna.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Luna", "text": "They're brighter here than anywhere I've lived. Some nights it feels like they're looking back.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Luna", "text": "Not yet. First years aren't allowed near the observatory. So for now I just look. Very hard.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Luna", "text": "The Lantern Bearer. It's small and a bit crooked, but it always points home.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Luna", "text": "Five lights at once, all in a ring! For a moment I thought a constellation had fallen into the Arcane Workshop.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Luna", "text": "Anything else? The sky's not going anywhere.", "choices": [{"id": "t1", "text": "What's so special about the stars here?", "nextNodeId": "t1"}, {"id": "t2", "text": "Do you study star magic?", "nextNodeId": "t2"}, {"id": "t3", "text": "What's your favourite constellation?", "nextNodeId": "t3"}, {"id": "t4", "text": "Did you see the workshop light up?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "stella_first_light", "value": "Completed"}]}, {"id": "bye", "text": "See you, Luna.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Luna", "text": "Bye, {player}! Look up sometimes.", "nextNodeId": ""}
       ]
     },
@@ -138,12 +150,13 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Juno", "text": "{player}! Perfect timing. I've got news.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Heard any news?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Juno", "text": "Busy! Three new rumours before lunch, and at least one of them is true.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Juno", "text": "I like knowing what's going on. Someone has to, and everyone else is too busy studying.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Juno", "text": "Apparently the student who turned up at the gate today looked like they'd fallen out of the sky. Wild, right?", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Juno", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Heard any news?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Juno", "text": "Catch you later, {player}! I'll save you the best gossip.", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Juno", "text": "{player}! Perfect timing. I've got news.", "choices": [{"id": "t1", "text": "Heard any news?", "nextNodeId": "t1"}, {"id": "t2", "text": "How do you know everything?", "nextNodeId": "t2"}, {"id": "t3", "text": "Any rumours about me?", "nextNodeId": "t3"}, {"id": "t4", "text": "Anything new about the ice trial?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Completed"}]}, {"id": "bye", "text": "Catch you later, Juno.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Juno", "text": "Apparently the student who turned up late today looked like they'd fallen out of the sky. Wild, right?", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Juno", "text": "I listen. People forget listening is a skill. Also, I sit near the fountain.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Juno", "text": "Only good ones. Mostly. There's one about a forest and a lot of shouting, but I'm sure that's nothing.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Juno", "text": "Someone lit every switch in the ice trial and came out dry. Nobody does that. Was it you? Don't answer. It's better as a mystery.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Juno", "text": "Anything else? There's plenty more where that came from.", "choices": [{"id": "t1", "text": "Heard any news?", "nextNodeId": "t1"}, {"id": "t2", "text": "How do you know everything?", "nextNodeId": "t2"}, {"id": "t3", "text": "Any rumours about me?", "nextNodeId": "t3"}, {"id": "t4", "text": "Anything new about the ice trial?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "cinna_cold_feet_warm_idea", "value": "Completed"}]}, {"id": "bye", "text": "Catch you later, Juno.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Juno", "text": "Later, {player}! I'll save you the best gossip.", "nextNodeId": ""}
       ]
     },
     {
@@ -154,12 +167,13 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Rowan", "text": "Hey, {player}! Still here? Me too. Still waiting on my room.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any tips for the dorm?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Rowan", "text": "Long. I've moved my luggage three times and it's still in the lobby.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Rowan", "text": "First year, same as you. I came for the spellwork and stayed for the dorm food. Allegedly there's dorm food.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Rowan", "text": "Get to know the receptionists. Marigold knows everything, and Thistle can find anything. Eventually.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Rowan", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any tips for the dorm?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Rowan", "text": "See you around, {player}!", "nextNodeId": ""}
+        {"id": "hello", "speaker": "Rowan", "text": "Hey, {player}! Still here? Me too. Still waiting on my room.", "choices": [{"id": "t1", "text": "Any tips for the dorm?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why so much luggage?", "nextNodeId": "t2"}, {"id": "t3", "text": "How long have you been waiting?", "nextNodeId": "t3"}, {"id": "t4", "text": "I got my room key!", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Good luck with the room.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Rowan", "text": "Get to know the receptionists. Marigold knows everything, and Thistle can find anything. Eventually.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Rowan", "text": "I packed for every kind of weather, including a few I made up. You can never be too prepared.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Rowan", "text": "Since breakfast. I've named all the plants. That one's Gerald.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Rowan", "text": "You WHAT? How? I've been here since breakfast! ...Thistle. THISTLE.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Rowan", "text": "Anything else? I've got time. So much time.", "choices": [{"id": "t1", "text": "Any tips for the dorm?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why so much luggage?", "nextNodeId": "t2"}, {"id": "t3", "text": "How long have you been waiting?", "nextNodeId": "t3"}, {"id": "t4", "text": "I got my room key!", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Good luck with the room.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Rowan", "text": "Thanks, {player}. I'm going to need it.", "nextNodeId": ""}
       ]
     },
     {
@@ -170,11 +184,12 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Moss", "text": "...Oh. {player}. Hello.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What do you listen for?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Moss", "text": "Peaceful. The brook has been loud today, in a nice way.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Moss", "text": "I come out here to listen. Campus is wonderful, but it's never quiet.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Moss", "text": "The brook, the leaves, the lanterns. If you're very still, they almost sound like they're talking.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Moss", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What do you listen for?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Moss", "text": "...Oh. {player}. Hello.", "choices": [{"id": "t1", "text": "What do you listen for?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why come all the way out here?", "nextNodeId": "t2"}, {"id": "t3", "text": "Do the lanterns really hum?", "nextNodeId": "t3"}, {"id": "t4", "text": "Does the forest sound different lately?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "bye", "text": "I'll leave you to listen.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Moss", "text": "The brook, the leaves, the lanterns. If you're very still, they almost sound like they're talking.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Moss", "text": "Campus is wonderful, but it's never quiet. Out here, the loudest thing is me thinking.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Moss", "text": "Mm. A low note at dusk, a higher one at dawn. Nobody believes me until they hear it.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Moss", "text": "Yes. Something deep in the woods stopped grinding. It sounds relieved.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Moss", "text": "...Anything else?", "choices": [{"id": "t1", "text": "What do you listen for?", "nextNodeId": "t1"}, {"id": "t2", "text": "Why come all the way out here?", "nextNodeId": "t2"}, {"id": "t3", "text": "Do the lanterns really hum?", "nextNodeId": "t3"}, {"id": "t4", "text": "Does the forest sound different lately?", "nextNodeId": "t4", "conditions": [{"type": "QuestStatus", "key": "orio_patch_notes", "value": "Completed"}]}, {"id": "bye", "text": "I'll leave you to listen.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Moss", "text": "Bye. Walk softly.", "nextNodeId": ""}
       ]
     },
@@ -186,29 +201,14 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Marigold", "text": "Hello again, {player}! How are you settling in?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "When will my room be ready?", "nextNodeId": "topic", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": false}]}, {"id": "key", "text": "Thanks for the room key!", "nextNodeId": "key", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Marigold", "text": "Busy, but the good kind. New arrivals always mean new faces.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Marigold", "text": "I've run this reception for years. I know every room, every key, and most of the secrets.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Marigold", "text": "Soon, I promise. We're just sorting today's arrivals. I'll find you the moment it's ready.", "nextNodeId": "more"},
-        {"id": "key", "speaker": "Marigold", "text": "You're very welcome. Sleep well, {player}. Your guide will come and find you tomorrow.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Marigold", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "When will my room be ready?", "nextNodeId": "topic", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": false}]}, {"id": "key", "text": "Thanks for the room key!", "nextNodeId": "key", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Marigold", "text": "Hello again, {player}! How are you settling in?", "choices": [{"id": "t1", "text": "How's the dorm today?", "nextNodeId": "t1"}, {"id": "t2", "text": "How long have you worked here?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is Thistle all right?", "nextNodeId": "t3"}, {"id": "t4", "text": "When will my room be ready?", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": false}]}, {"id": "t5", "text": "Thanks for the room key!", "nextNodeId": "t5", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Thanks, Marigold.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Marigold", "text": "Busy, but the good kind. New arrivals always mean new faces, and lost keys.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Marigold", "text": "Long enough to know every room, every key, and most of the secrets.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Marigold", "text": "Thistle is wonderful. Thistle is also, at this very moment, looking for something Thistle is holding.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Marigold", "text": "Soon, I promise. We're just sorting today's arrivals. I'll find you the moment it's ready.", "nextNodeId": "more"},
+        {"id": "t5", "speaker": "Marigold", "text": "You're very welcome. Sleep well, {player}. Your guide will come and find you tomorrow.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Marigold", "text": "Anything else I can help with?", "choices": [{"id": "t1", "text": "How's the dorm today?", "nextNodeId": "t1"}, {"id": "t2", "text": "How long have you worked here?", "nextNodeId": "t2"}, {"id": "t3", "text": "Is Thistle all right?", "nextNodeId": "t3"}, {"id": "t4", "text": "When will my room be ready?", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": false}]}, {"id": "t5", "text": "Thanks for the room key!", "nextNodeId": "t5", "conditions": [{"type": "Flag", "key": "story.dorm.key_received", "boolValue": true}]}, {"id": "bye", "text": "Thanks, Marigold.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Marigold", "text": "Take care, {player}!", "nextNodeId": ""}
-      ]
-    },
-    {
-      "id": "chat_prof_bann",
-      "startNodeId": "hello",
-      "metadata": [
-        {"key": "npcId", "value": "prof_bann"},
-        {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
-      ],
-      "nodes": [
-        {"id": "hello", "speaker": "Prof. Bann", "text": "Ah, {player}. Finding your feet, I hope?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any advice for a newcomer?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Prof. Bann", "text": "Full, as every first day is. A headmistress's day is mostly other people's first days.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Prof. Bann", "text": "I've led Lumenfall for many years. Every student who comes through that gate becomes a little bit my responsibility.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Prof. Bann", "text": "Be curious, and be kind to the other students. Most of what this academy teaches, it teaches through them.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Prof. Bann", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "Any advice for a newcomer?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "bye", "speaker": "Prof. Bann", "text": "Off you go, {player}. Make the most of today.", "nextNodeId": ""}
       ]
     },
     {
@@ -219,12 +219,30 @@
         {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
       ],
       "nodes": [
-        {"id": "hello", "speaker": "Thistle", "text": "Oh! {player}. Hello. I was just... looking for something.", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you looking for?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
-        {"id": "day", "speaker": "Thistle", "text": "I found the spare keys, lost the spare keys, and found them again. So, fine.", "nextNodeId": "more"},
-        {"id": "self", "speaker": "Thistle", "text": "I help Marigold with the desk. Marigold remembers everything, and I find everything. Eventually.", "nextNodeId": "more"},
-        {"id": "topic", "speaker": "Thistle", "text": "The list. The other list. Not the list of lists, that one's fine.", "nextNodeId": "more"},
-        {"id": "more", "speaker": "Thistle", "text": "Anything else?", "choices": [{"id": "day", "text": "How's your day going?", "nextNodeId": "day"}, {"id": "self", "text": "Tell me about yourself.", "nextNodeId": "self"}, {"id": "topic", "text": "What are you looking for?", "nextNodeId": "topic"}, {"id": "bye", "text": "Bye!", "nextNodeId": "bye"}]},
+        {"id": "hello", "speaker": "Thistle", "text": "Oh! {player}. Hello. I was just... looking for something.", "choices": [{"id": "t1", "text": "What are you looking for?", "nextNodeId": "t1"}, {"id": "t2", "text": "How do you and Marigold work together?", "nextNodeId": "t2"}, {"id": "t3", "text": "About Rowan...", "nextNodeId": "t3", "conditions": [{"type": "Flag", "key": "story.dorm.no_rooms_scene", "boolValue": true}]}, {"id": "t4", "text": "My room's lovely, by the way.", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.chapter1.complete", "boolValue": true}]}, {"id": "bye", "text": "Good luck with the search.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Thistle", "text": "The list. The other list. Not the list of lists, that one's fine.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Thistle", "text": "Marigold remembers everything, and I find everything. Eventually. Between us we're one very good receptionist.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Thistle", "text": "Rowan will get a room. I have already found one. I'm letting the suspense build. It's fun to tease new students from time to time.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Thistle", "text": "Oh, good! I wasn't sure which key I gave Marigold. Glad it was the right one.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Thistle", "text": "Anything else? I'll try to keep track of it.", "choices": [{"id": "t1", "text": "What are you looking for?", "nextNodeId": "t1"}, {"id": "t2", "text": "How do you and Marigold work together?", "nextNodeId": "t2"}, {"id": "t3", "text": "About Rowan...", "nextNodeId": "t3", "conditions": [{"type": "Flag", "key": "story.dorm.no_rooms_scene", "boolValue": true}]}, {"id": "t4", "text": "My room's lovely, by the way.", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.chapter1.complete", "boolValue": true}]}, {"id": "bye", "text": "Good luck with the search.", "nextNodeId": "bye"}]},
         {"id": "bye", "speaker": "Thistle", "text": "Bye, {player}! If you see a blue folder, it's mine.", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "chat_prof_bann",
+      "startNodeId": "hello",
+      "metadata": [
+        {"key": "npcId", "value": "prof_bann"},
+        {"key": "placeholder", "value": "General conversation once met, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "hello", "speaker": "Prof. Bann", "text": "Ah, {player}. Finding your feet, I hope?", "choices": [{"id": "t1", "text": "How is your day going?", "nextNodeId": "t1"}, {"id": "t2", "text": "How long have you led Lumenfall?", "nextNodeId": "t2"}, {"id": "t3", "text": "Any advice for a newcomer?", "nextNodeId": "t3"}, {"id": "t4", "text": "I've settled into my room.", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.chapter1.complete", "boolValue": true}]}, {"id": "bye", "text": "Thank you, Professor.", "nextNodeId": "bye"}]},
+        {"id": "t1", "speaker": "Prof. Bann", "text": "Full, as every first day is. A headmistress's day is mostly other people's first days.", "nextNodeId": "more"},
+        {"id": "t2", "speaker": "Prof. Bann", "text": "Long enough that the portraits in the hall have started to look like me. Or I like them.", "nextNodeId": "more"},
+        {"id": "t3", "speaker": "Prof. Bann", "text": "Be curious, and be kind to the other students. Most of what this academy teaches, it teaches through them.", "nextNodeId": "more"},
+        {"id": "t4", "speaker": "Prof. Bann", "text": "Good. Rest well tonight. Tomorrow your guide will find you, and the real work begins.", "nextNodeId": "more"},
+        {"id": "more", "speaker": "Prof. Bann", "text": "Is there anything else, {player}?", "choices": [{"id": "t1", "text": "How is your day going?", "nextNodeId": "t1"}, {"id": "t2", "text": "How long have you led Lumenfall?", "nextNodeId": "t2"}, {"id": "t3", "text": "Any advice for a newcomer?", "nextNodeId": "t3"}, {"id": "t4", "text": "I've settled into my room.", "nextNodeId": "t4", "conditions": [{"type": "Flag", "key": "story.chapter1.complete", "boolValue": true}]}, {"id": "bye", "text": "Thank you, Professor.", "nextNodeId": "bye"}]},
+        {"id": "bye", "speaker": "Prof. Bann", "text": "Off you go, {player}. Make the most of today.", "nextNodeId": ""}
       ]
     }
   ],

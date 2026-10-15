@@ -30,7 +30,7 @@ namespace Lumenfall.Tests.GameEvents
             session = runtime.StartDialogue(Quest + "_dialogue");
             session.SelectChoice("active");
             Assert.That(session.Continue(), Is.True);
-            Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson lends Lost Echoes for the search.");
+            Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson teaches Lost Echoes for the search.");
             Assert.That(runtime.GetFlag(Spell), Is.False, "Lost Echoes is only learned when the quest completes.");
             Assert.That(runtime.GetFlag(Item), Is.False, "Teaching cannot recover the item.");
         }

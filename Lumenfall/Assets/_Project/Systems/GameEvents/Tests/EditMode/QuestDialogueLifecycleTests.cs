@@ -306,13 +306,16 @@ namespace Lumenfall.Tests.GameEvents
         public void EveryAuthoredNpcCanBeDiscoveredAndPersistsAsACharacterFlag()
         {
             GameEventManager.Instance.Runtime.ResetState();
-            string[] ids = { "stella", "cinna_cirra_orientation", "cinna_cirra_trial", "orio", "campus_student", "forest_student", "katrina" };
+            string[] ids = { "stella", "cinna_cirra_orientation", "orio", "campus_student", "forest_student", "katrina" };
             foreach (string id in ids)
             {
                 Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered(id), Is.False, id);
                 InventoryEncyclopediaUI.DiscoverCharacter(id);
                 Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered(id), Is.True, id);
             }
+            // Cinna on campus and Cinna in the ice trial are one person, with one journal entry.
+            Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered("cinna_cirra_trial"), Is.True);
+            Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered("cinna_cirra"), Is.True);
             Assert.That(InventoryEncyclopediaUI.IsCharacterDiscovered("unknown"), Is.False);
         }
 

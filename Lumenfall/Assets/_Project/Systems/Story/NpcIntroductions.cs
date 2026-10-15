@@ -72,6 +72,14 @@ namespace Lumenfall.Story
         public static string PersonId(string npcId) =>
             npcId != null && PersonByNpcId.TryGetValue(npcId, out string person) ? person : npcId;
 
+        /// <summary>Every catalog record id that belongs to <paramref name="person"/>, the person's own id first.</summary>
+        public static IEnumerable<string> RecordIdsOf(string person)
+        {
+            yield return person;
+            foreach (KeyValuePair<string, string> record in PersonByNpcId)
+                if (record.Value == person) yield return record.Key;
+        }
+
         public static string MetFlag(string npcId) => MetFlagPrefix + PersonId(npcId);
 
         public static string IntroDialogueId(string npcId) => IntroDialoguePrefix + PersonId(npcId);

@@ -2351,8 +2351,8 @@ MonoBehaviour:
   world: {fileID: 0}
   useTransformAsAnchor: 1
   anchorCell: {x: 0, y: 0}
-  footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 2}
+  footprintOffset: {x: -1, y: 0}
+  footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3993383991852114058
 GameObject:

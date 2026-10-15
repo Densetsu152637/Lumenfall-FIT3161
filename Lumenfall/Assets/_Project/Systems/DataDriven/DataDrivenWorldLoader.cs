@@ -5,6 +5,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
 using Lumenfall.Quests;
+using Lumenfall.Story;
 
 namespace Lumenfall.DataDriven
 {
@@ -104,6 +105,7 @@ namespace Lumenfall.DataDriven
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
+            MiscCollectibles.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
         }
 

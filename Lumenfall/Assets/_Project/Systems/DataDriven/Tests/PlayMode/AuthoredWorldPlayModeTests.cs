@@ -95,7 +95,10 @@ namespace Lumenfall.Tests.World
             foreach (WorldAreaAsset area in allAreas)
             {
                 PortalContentAsset[] activeRoutes = area.areaPrefab.GetComponentsInChildren<GridPortal>(true)
-                    .Select(portal => portal.Content).Where(content => content != null && !content.disabled).ToArray();
+                    // A blocked portal with no destination is a door that only answers with a notice, such as campus's
+                    // forgotten west door and the north gate's dog.
+                    .Select(portal => portal.Content)
+                    .Where(content => content != null && !content.disabled && !(content.blocked && content.destination == null)).ToArray();
                 foreach (PortalContentAsset route in activeRoutes)
                 {
                     Assert.That(route.destination, Is.Not.Null,

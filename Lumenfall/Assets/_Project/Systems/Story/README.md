@@ -30,7 +30,7 @@ The shout has no portrait, because Kepler is far away when it plays. Once the pl
   1. Kit introduces themselves and gives the lay of the land: the courtyard with its fountain in the middle (the place to head back to if lost), the Main Academy Building (reception, the main portal, the staff), the Arcane Workshop (relics and machines), the Dormitory (student rooms and common spaces), the Library, building signs by every door, and the forest back through the gate. The directions are landmarks rather than left and right, because the camera's diagonal makes screen directions differ from the map, and older map data disagree about which side each building is on.
   2. Kit says the player missed the orientation ceremony, and that the headmistress, Professor Bann, is still by the fountain: go and speak to her right away. The flag `story.orientation.kit_met` is set and control returns. There is no hint card or marker.
 - **Prof. Bann** is the `prof_bann` record (`Teacher_03`, campus `(26,42)`, by the fountain). She is spawned through `StoryNpc` from the moment `story.orientation.kepler_met` is set, and the player talks to her with E.
-  - Her conversation `bann_orientation`: the player has missed orientation entirely, and she will organise a student guide to go over it with them tomorrow. For now they should report to their dorm and get their room sorted. Today is for exploring and speaking to fellow students, so she suggests the room first, then whatever they please. The player's inner voice finds the afterlife weirdly organised. Her last line sets `story.orientation.bann_met`. She does not say where the dorm is; there is no hint card or marker.
+  - Her conversation `bann_orientation`: the player has missed orientation entirely, and she will organise a student guide to go over it with them tomorrow. For now they should report to their dorm and get their room sorted. Today is for exploring and speaking to fellow students, so she suggests the room first, then whatever they please. The player's inner voice decides that, for the afterlife, this isn't half bad. Her last line sets `story.orientation.bann_met`. She does not say where the dorm is; there is no hint card or marker.
   - Talking to her again gives the short `bann_reminder` ("Your dorm first, {player}…") instead. Her first node triggers the repeatable event `bann_remind_if_met`, which swaps in the reminder once the flag is set.
 - **Kit's everyday conversation** (`ambient_courtyard_student`, after the tour): "Hey, {player}! Settling in all right?", with two choices. "Can you remind me of the campus buildings and areas?" repeats the landmark tour: the fountain, the Main Academy Building, the Arcane Workshop, the Dormitory and Library, the forest back through the gate, and the building signs. "Bye!" gets "See you around!". Kit's two one-line courtyard chats (`_2`, `_3`) are unchanged, apart from the speaker now being Kit.
 
@@ -50,7 +50,7 @@ Cells were set by hand on 2026-10-14. Odette (`Student_06`) is kept back for lat
 
 ### Dormitory
 
-The dormitory's people are placed in `Dormitory.prefab` (`B01.Ground`) rather than spawned. The editor tool `DormitoryInteriorBuilder` (Lumenfall > World > Build Dormitory Interior) builds the room and places each of them from their catalog record: the record's model, name, cell and dialogue, plus a one-cell blocker. To move one, change their cell in `NpcCatalog.asset` and rebuild the interior.
+The dormitory's people are placed in `Dormitory.prefab` (`B01.Ground`) rather than spawned. Each is their catalog record's model with a `DynamicNpc` holding the record, plus a one-cell blocker. The room is edited by hand: to move someone, move them in the prefab and change their cell in `NpcCatalog.asset` to match (`AmbientCastTests` checks the two agree).
 
 | Character | Catalog id | Prefab | Cell |
 | --- | --- | --- | --- |
@@ -86,6 +86,42 @@ The introductions' and conversations' lines are placeholders, to be rewritten.
 5. **Afterwards.** Loading that save puts the player back at their door, with no further story. Marigold's chat offers "Thanks for the room key!" in place of "When will my room be ready?".
 
 The story lines (`Resources/GameEvents/settling_in.json`) are placeholders, to be rewritten.
+
+## Campus doors that go nowhere
+
+Three blocked campus portals answer with a joke instead of "The door is locked". Each one's text lives on its Portal
+Content asset in `World/Areas/Portals/CampusPortals`.
+
+| Portal | Where | Notice |
+| --- | --- | --- |
+| `P.C03` | The Main Academy Building's door | "Unfortunately, we ran out of cruxite" |
+| `P.C06` | The door in the west wall, at `(2,45)` | "Ngl, I forgot about this door lmaooo" |
+| `P.C07` | The north gate, at `(26,88)` | "A dog obstructs the way." |
+
+The north gate also has `AnnoyingDogGate`. The first time the player tries it in a save, a fake "Loading next area..."
+bar creeps through nonsense file names until `annoying_dog.exe` loads and the bar drops back to zero. Then the notice
+shows. The flag `joke.annoying_dog.seen` is saved as soon as it starts, so after that the gate only shows the notice.
+
+## Hidden curios
+
+`MiscCollectibles` hides ten curios around the maps for the player to find. Each is a hidden pickup: Lost Echoes reveals it with a gold glow, and the talk key picks it up from up to one cell away (it can also be picked up blind). Picking one up opens its found dialogue, "Found a <name>." (or "an") then its description, with no speaker name on either line, and adds it to the journal's **Miscellaneous** list, between key items and spells. There it shows by name, and clicking the name shows or hides the description.
+
+| Curio | Map | Cell |
+| --- | --- | --- |
+| Worn Bandana | Dormitory (`B01.Ground`) | `(25,6)` |
+| Straw Hat | Dormitory (`B01.Ground`) | `(4,16)` |
+| Bouncy Plush | Dormitory (`B01.Ground`) | `(3,4)` |
+| Rubber Ducky | Ice trial (`C03.IceTrial`) | `(5,6)` |
+| Ticking Pocket Watch | Arcane Workshop (`B02.Ground`) | `(23,20)` |
+| Picnic Basket | Campus | `(38,42)` |
+| Tea Set for Three | Campus | `(17,74)` |
+| Piece of Parchment | Library (`B04.Ground`) | `(2,5)` |
+| Good Witch Novel | Library (`B04.Ground`) | `(0,14)` |
+| Faded Polaroid | West forest | `(24,6)` |
+
+- **Text:** each curio's name and description live in its `found_misc_<key>` dialogue in `Resources/GameEvents/misc_items.json` (name in the `itemName` metadata, description in the `description` node). The journal reads them from there.
+- **Pickup:** the matching `found_misc_<key>` event sets `inventory.misc.<key>` and opens the dialogue.
+- **To add one:** add its map and cell to `MiscCollectibles.Items`, and its dialogue and event to `misc_items.json`. `MiscCollectiblesTests` checks the two match.
 
 ## Story-only characters
 

@@ -20,7 +20,7 @@ namespace Lumenfall.Tests.GameEvents
             return catalog;
         }
 
-        // Placed in the Dormitory prefab by the editor's DormitoryInteriorBuilder, rather than spawned by AmbientCast.
+        // Placed by hand in the Dormitory prefab, rather than spawned by AmbientCast.
         private static readonly string[] DormitoryIds = { "marigold", "thistle", "rowan" };
         private const string DormitoryPrefabPath = "Assets/_Project/World/Areas/Prefabs/Dormitory.prefab";
 
@@ -104,10 +104,10 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(record.displayName, Is.EqualTo(expected[record.id].name), record.id);
                 Assert.That(record.prefab.name, Is.EqualTo(expected[record.id].prefab), record.id);
                 DynamicNpc npc = placed.SingleOrDefault(candidate => candidate.Definition != null && candidate.Definition.id == record.id);
-                Assert.That(npc, Is.Not.Null, record.id + " is missing from the Dormitory prefab; run Lumenfall > World > Build Dormitory Interior.");
+                Assert.That(npc, Is.Not.Null, record.id + " is missing from the Dormitory prefab.");
                 Vector3 local = dormitory.transform.InverseTransformPoint(npc.transform.position);
                 Assert.That(new Vector2Int(Mathf.RoundToInt(local.x), Mathf.RoundToInt(local.z)), Is.EqualTo(new Vector2Int(record.x, record.y)),
-                    record.id + " is not on their catalog cell; rebuild the Dormitory interior.");
+                    record.id + " is not on their catalog cell; move them in Dormitory.prefab or change the cell in NpcCatalog.asset.");
                 Assert.That(npc.GetComponentInChildren<GridObstacle>(true), Is.Not.Null, record.id + " should block their cell.");
             }
         }

@@ -48,8 +48,6 @@ namespace Lumenfall.Inventory
             {
                 { "stella", new CharacterEntry("Stella", "A student working through practical relic and circuit puzzles.") },
                 { "cinna_cirra", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_orientation", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_trial", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
                 { "orio", new CharacterEntry("Orio", "A clever, reliable student who enjoys games, automation, and optimisation.") },
                 { "katrina", new CharacterEntry("Katrina", "A student searching for a keepsake while keeping its importance understated.") },
                 { "campus_student", new CharacterEntry("Kit", "A friendly student by the campus entrance who gives newcomers the lay of the land.") },
@@ -90,6 +88,8 @@ namespace Lumenfall.Inventory
         private float openedAt;
         private float pageChangedAt;
         private Vector2 listScroll;
+        // The Miscellaneous item whose description is open, if any.
+        private string openMiscItem;
         // The active-tab underline slides between tabs; it is stored relative to the panel so parallax does not drag it.
         private float underlineOffset;
         private float underlineWidth;
@@ -484,6 +484,9 @@ namespace Lumenfall.Inventory
             if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);
 
             GUILayout.Space(14f);
+            DrawMiscellaneous();
+
+            GUILayout.Space(14f);
             Heading("Unlocked spells");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool spellsShown = false;
@@ -498,6 +501,26 @@ namespace Lumenfall.Inventory
                 DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIconResourcePath(spell));
             }
             if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
+        }
+
+        // Curios found around the maps: just their names, and clicking one shows or hides its description.
+        private void DrawMiscellaneous()
+        {
+            Heading("Miscellaneous");
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            bool shown = false;
+            foreach (MiscCollectibles.Item item in MiscCollectibles.Items)
+            {
+                if (!MiscCollectibles.IsFound(runtime, item.Key) ||
+                    !MiscCollectibles.TryGetText(runtime, item.Key, out string itemName, out string description)) continue;
+                shown = true;
+                bool open = openMiscItem == item.Key;
+                GUILayout.BeginVertical(skin.Entry);
+                if (GUILayout.Button(itemName, skin.EntryTitle)) openMiscItem = open ? null : item.Key;
+                if (open && !string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
+                GUILayout.EndVertical();
+            }
+            if (!shown) GUILayout.Label("Nothing found yet.", skin.Muted);
         }
 
         /// <summary>Shared journal row used by key items and spells: icon left, gold title and description right.</summary>
@@ -524,7 +547,7 @@ namespace Lumenfall.Inventory
             bool shown = false;
             foreach (KeyValuePair<string, CharacterEntry> pair in CharacterEntries)
             {
-                if (runtime == null || !runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
+                if (!AnyRecordDiscovered(runtime, pair.Key)) continue;
                 shown = true;
                 GUILayout.BeginVertical(skin.Entry);
                 GUILayout.Label(NpcIntroductions.NameFor(pair.Key, pair.Value.Name), skin.EntryTitle);
@@ -544,10 +567,25 @@ namespace Lumenfall.Inventory
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Adds a character to the journal. Several NPC records can be one person (Cinna on campus and in the ice trial),
+        /// so the entry is the person's, whichever record was met.
+        /// </summary>
         public static void DiscoverCharacter(string id)
         {
-            if (string.IsNullOrWhiteSpace(id) || !CharacterEntries.ContainsKey(id)) return;
-            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + id, true);
+            if (string.IsNullOrWhiteSpace(id)) return;
+            string person = NpcIntroductions.PersonId(id);
+            if (!CharacterEntries.ContainsKey(person)) return;
+            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + person, true);
+        }
+
+        // Saves from before records were merged hold the flag under the record's own id.
+        private static bool AnyRecordDiscovered(GameEventRuntime runtime, string person)
+        {
+            if (runtime == null) return false;
+            foreach (string record in NpcIntroductions.RecordIdsOf(person))
+                if (runtime.GetFlag(CharacterFlagPrefix + record)) return true;
+            return false;
         }
 
         public static void GrantKeyItem(string id)
@@ -566,8 +604,9 @@ namespace Lumenfall.Inventory
 
         public static bool IsCharacterDiscovered(string id)
         {
-            return !string.IsNullOrWhiteSpace(id) && CharacterEntries.ContainsKey(id) &&
-                   GameEventManager.Instance?.Runtime?.GetFlag(CharacterFlagPrefix + id) == true;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            string person = NpcIntroductions.PersonId(id);
+            return CharacterEntries.ContainsKey(person) && AnyRecordDiscovered(GameEventManager.Instance?.Runtime, person);
         }
 
         private static string MetadataValue(GameMetadataEntry[] metadata, string key)

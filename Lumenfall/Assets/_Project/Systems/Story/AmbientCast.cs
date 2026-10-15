@@ -7,7 +7,7 @@ namespace Lumenfall.Story
     /// Background students and staff scattered across the maps so the academy feels lived in. Each is an NPC catalog
     /// record (prefab, map, cell and dialogue) spawned through <see cref="StoryNpc"/>, so they appear whenever the player
     /// is on their map and need no area prefab changes. The dormitory's people (its two receptionists and Rowan) are
-    /// placed in the Dormitory prefab instead, by the editor's DormitoryInteriorBuilder.
+    /// placed in the Dormitory prefab instead.
     /// </summary>
     public sealed class AmbientCast : MonoBehaviour
     {

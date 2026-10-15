@@ -153,15 +153,16 @@ namespace Lumenfall.DataDriven
             nodeId = node.id;
             // "{player}" is the player character: their name, or "???" until they have one, and never an NPC's portrait.
             bool playerSpeaks = PlayerProfile.IsPlayerSpeaker(node.speaker);
-            speaker = playerSpeaks ? PlayerProfile.DisplayName
-                : string.IsNullOrWhiteSpace(node.speaker) ? session.Definition.id : PlayerProfile.Substitute(node.speaker);
+            // A line with no speaker (such as a found item's description) has no name ribbon and no portrait.
+            bool unvoiced = !playerSpeaks && string.IsNullOrWhiteSpace(node.speaker);
+            speaker = playerSpeaks ? PlayerProfile.DisplayName : unvoiced ? string.Empty : PlayerProfile.Substitute(node.speaker);
             pages = DialoguePaging.Split(PlayerProfile.Substitute(node.text ?? string.Empty), MaxPageCharacters);
             pageIndex = 0;
 
             Color colour = SpeakerColor(speaker);
             // Someone the player has not met yet is "???" on the ribbon, though their frame and portrait still show.
             view.SetSpeaker(playerSpeaks ? speaker : NpcIntroductions.SpeakerLabel(speaker), colour, SpeakerFrame(speaker));
-            Transform subject = playerSpeaks ? null : SpeakerTransform(speaker);
+            Transform subject = playerSpeaks || unvoiced ? null : SpeakerTransform(speaker);
             Color background = Color.Lerp(colour, new Color(0.96f, 0.91f, 0.82f), 0.72f);
             bool showPortrait = subject != null && portrait.Show(subject, background);
             if (!showPortrait) portrait.Hide();

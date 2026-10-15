@@ -79,6 +79,11 @@ the destination centre and clamped to the destination portal's extensions. Arriv
 suppressed until the mover leaves, preventing linked door areas from immediately bouncing the
 player back. The purple sphere in the Scene view marks the transmission centre.
 
+A portal whose Portal Content asset is **Blocked** refuses entry with a notice. Its **Blocked Title** and **Blocked
+Message** set the notice's heading and text, defaulting to "Locked" and "The door is locked". A blocked portal with
+no destination is a door that only answers with that notice. A component on the portal that implements
+`IBlockedPortalHandler` can answer the attempt in its own way first: returning true skips the notice.
+
 Destination modes:
 
 - **Portal Reference** links two portal components in the same loaded scene. This is convenient

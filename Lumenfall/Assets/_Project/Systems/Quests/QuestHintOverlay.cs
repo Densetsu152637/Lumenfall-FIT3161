@@ -235,7 +235,10 @@ namespace Lumenfall.Quests
             if (!runtime.GetFlag(LateToOrientationScene.MetFlag))
             {
                 title = "Walk around this mysterious forest";
-                hint = "Press W, A, S, D to move";
+                // Read from the current bindings each time the hint refreshes, so a rebound key shows straight away.
+                hint = "Press " + KeyBindings.GetKeyLabel(GameAction.MoveUp) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveLeft) + ", " +
+                    KeyBindings.GetKeyLabel(GameAction.MoveDown) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveRight) + " to move\nPress " +
+                    KeyBindings.GetKeyLabel(GameAction.Journal) + " to open the menu";
                 return true;
             }
             if (!runtime.GetFlag(LayOfTheLandScene.MetFlag))
@@ -508,8 +511,9 @@ namespace Lumenfall.Quests
             skin.Ensure();
             if (questTitleStyle == null)
                 questTitleStyle = new GUIStyle(skin.Title) { alignment = TextAnchor.MiddleLeft, wordWrap = true };
-            if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 13 };
-            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13, richText = true };
+            // 15 rather than 13, which was hard to read on the card.
+            if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 15 };
+            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 15, richText = true };
             // The pop-out draws above dialogue and other overlays; IMGUI puts lower depths in front.
             GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))

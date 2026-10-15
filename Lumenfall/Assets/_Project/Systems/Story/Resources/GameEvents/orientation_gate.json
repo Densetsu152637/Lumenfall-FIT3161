@@ -22,13 +22,13 @@
         {
           "id": "orientation",
           "speaker": "{player}",
-          "text": "<i>...Orientation? Does the afterlife have an orientation?</i>",
+          "text": "<i>...Orientation? Does the afterlife have that?</i>",
           "nextNodeId": "follow"
         },
         {
           "id": "follow",
           "speaker": "{player}",
-          "text": "<i>Well, I don't have any better ideas. Probably best to do what they say.</i>",
+          "text": "<i>Well, I don't have any better ideas. Probably best to do what they say. Could be an isekai, after all.</i>",
           "nextNodeId": ""
         }
       ]
@@ -54,7 +54,7 @@
         {
           "id": "enrolled",
           "speaker": "{player}",
-          "text": "<i>Late? I didn't even know I was enrolled.</i>",
+          "text": "<i>Late? If I'm dead, I don't think there should be any rush.</i>",
           "nextNodeId": "name"
         },
         {
@@ -85,7 +85,7 @@
         {
           "id": "through",
           "speaker": "{player}",
-          "text": "<i>Right. Through the gate it is, then.</i>",
+          "text": "<i>Well, it's better than standing in a forest.</i>",
           "nextNodeId": ""
         }
       ]

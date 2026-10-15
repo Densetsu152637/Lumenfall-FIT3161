@@ -123,7 +123,8 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(hello.choices.Length, Is.GreaterThanOrEqualTo(3), $"{id} should offer a few things to talk about.");
 
                 Dictionary<string, DialogueNodeDefinition> nodes = chat.nodes.ToDictionary(node => node.id);
-                DialogueChoiceDefinition bye = hello.choices.Single(choice => choice.text.StartsWith("Bye", StringComparison.Ordinal));
+                // Each character says goodbye in their own words, so the goodbye is found by its id.
+                DialogueChoiceDefinition bye = hello.choices.Single(choice => choice.id == "bye");
                 // A quest topic hands over to the quest's own dialogue, and is only offered while that quest is under way.
                 foreach (DialogueChoiceDefinition task in hello.choices.Where(choice => choice.actions.Length > 0))
                 {
