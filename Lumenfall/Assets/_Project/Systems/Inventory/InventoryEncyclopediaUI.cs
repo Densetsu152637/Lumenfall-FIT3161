@@ -534,14 +534,14 @@ namespace Lumenfall.Inventory
             Heading("Miscellaneous");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool shown = false;
-            foreach (MiscCollectibles.Item item in MiscCollectibles.Items)
+            foreach (string key in MiscCollectibles.JournalKeys)
             {
-                if (!MiscCollectibles.IsFound(runtime, item.Key) ||
-                    !MiscCollectibles.TryGetText(runtime, item.Key, out string itemName, out string description)) continue;
+                if (!MiscCollectibles.IsFound(runtime, key) ||
+                    !MiscCollectibles.TryGetText(runtime, key, out string itemName, out string description)) continue;
                 shown = true;
-                bool open = openMiscItem == item.Key;
+                bool open = openMiscItem == key;
                 GUILayout.BeginVertical(skin.Entry);
-                if (GUILayout.Button(itemName, skin.EntryTitle)) openMiscItem = open ? null : item.Key;
+                if (GUILayout.Button(itemName, skin.EntryTitle)) openMiscItem = open ? null : key;
                 if (open && !string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
                 GUILayout.EndVertical();
             }

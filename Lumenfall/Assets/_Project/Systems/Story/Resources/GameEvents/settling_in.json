@@ -54,6 +54,28 @@
         {"id": "beg", "speaker": "Rowan", "text": "<shake>PLEEEAAASE! I NEED THIIIS!</shake>", "nextNodeId": "laugh"},
         {"id": "laugh", "speaker": "Marigold", "text": "Thistle. Please don't laugh.", "nextNodeId": ""}
       ]
+    },
+    {
+      "id": "dorm_rowan_homeless",
+      "startNodeId": "sad",
+      "metadata": [
+        {"key": "npcId", "value": "rowan"}
+      ],
+      "nodes": [
+        {"id": "sad", "speaker": "Rowan", "text": "They didn't have any space for me. I'm so sad. I have to sleep out here now.", "nextNodeId": "wail"},
+        {"id": "wail", "speaker": "Rowan", "text": "<shake>I'm so homeless!!!!</shake>", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "dorm_thistle_laughing",
+      "startNodeId": "look",
+      "metadata": [
+        {"key": "npcId", "value": "thistle"}
+      ],
+      "nodes": [
+        {"id": "look", "speaker": "{player}", "text": "<i>Thistle looks like he's about to burst into tears... of laughter.</i>", "nextNodeId": "scold"},
+        {"id": "scold", "speaker": "Marigold", "text": "Thistle, don't laugh. It's so disrespectful.", "nextNodeId": ""}
+      ]
     }
   ],
   "events": []

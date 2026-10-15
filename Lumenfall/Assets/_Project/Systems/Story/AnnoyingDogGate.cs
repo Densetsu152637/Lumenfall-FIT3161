@@ -1,5 +1,6 @@
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
+using Lumenfall.Spells;
 using Lumenfall.Startup;
 using UnityEngine;
 
@@ -10,11 +11,25 @@ namespace Lumenfall.Story
     /// "loading next area" bar creeps along through nonsense file names until <c>annoying_dog.exe</c> loads, the bar drops
     /// back to zero, and the gate's own locked notice says a dog is in the way. After that the gate only shows the notice.
     /// It sits on the gate's blocked portal, which supplies the notice (see <see cref="IBlockedPortalHandler"/>).
+    /// <para>
+    /// The secret past it: after <see cref="AwareAfterTries"/> more tries the dog becomes aware of the player (the notice
+    /// changes along the way, so it is worth persisting). Vis lifts it (still asleep), Rotara then spins it out of the way,
+    /// and the gate opens onto the dog's room
+    /// (<see cref="SecretRooms.DogRoomId"/>), once. Each step is a saved flag. After the visit the dog is back in the way.
+    /// </para>
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AnnoyingDogGate : MonoBehaviour, IBlockedPortalHandler
     {
         public const string SeenFlag = "joke.annoying_dog.seen";
+        public const string TriesCounter = "joke.annoying_dog.tries";
+        public const string AwareFlag = "secret.dog.aware";
+        public const string LiftedFlag = "secret.dog.lifted";
+        public const string MovedFlag = "secret.dog.moved";
+        public const int AwareAfterTries = 10;
+        public static readonly Vector2Int GateCell = new Vector2Int(26, 88);
+        private const string MapId = "campus";
+        private const string Title = "Blocked";
         private const string DogFile = "annoying_dog.exe";
 
         // Each file the bar "loads": the progress it reaches and how long that takes, in seconds.
@@ -51,11 +66,70 @@ namespace Lumenfall.Story
             if (playing) Finish(false);
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => SpellCaster.CastAttempted -= OnCastAttempted;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void Bootstrap()
+        {
+            SpellCaster.CastAttempted -= OnCastAttempted;
+            SpellCaster.CastAttempted += OnCastAttempted;
+        }
+
+        /// <summary>
+        /// What the gate says to a try once the joke has played: <c>null</c> for its usual notice, or the dog's latest
+        /// state. A try past the moved-aside dog opens the way, which <paramref name="opens"/> reports.
+        /// </summary>
+        public static string ReplyToTry(GameEventRuntime runtime, out bool opens)
+        {
+            opens = false;
+            if (SecretRooms.HasVisited(runtime, SecretRooms.DogRoomId)) return "The dog has drifted back into the way. It is fast asleep, and it is not moving again.";
+            if (runtime.GetFlag(MovedFlag)) { opens = true; return "The dog has drifted aside, still asleep. The way is open."; }
+            if (runtime.GetFlag(LiftedFlag)) return "The dog floats in the gateway, fast asleep. It is still in the way. If only it would turn aside...";
+            if (runtime.GetFlag(AwareFlag)) return "The dog is aware of you. It does not seem to care. It does look light enough to lift.";
+            int tries = runtime.GetCounter(TriesCounter) + 1;
+            runtime.SetCounter(TriesCounter, tries);
+            // The usual notice at first, then signs that persistence is getting somewhere.
+            if (tries < 4) return null;
+            if (tries < 7) return "A dog obstructs the way. One of its ears twitches.";
+            if (tries < AwareAfterTries) return "A dog obstructs the way. It is starting to stir...";
+            runtime.SetFlag(AwareFlag, true);
+            return "The dog is now aware of you. It looks light enough to lift.";
+        }
+
+        // Vis and then Rotara, cast by the gate once the dog is aware.
+        private static void OnCastAttempted(SpellCaster.CastAttempt cast)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null;
+            if (runtime == null || !string.Equals(cast.MapId, MapId, System.StringComparison.OrdinalIgnoreCase) || !runtime.GetFlag(AwareFlag) ||
+                Mathf.Max(Mathf.Abs(cast.Cell.x - GateCell.x), Mathf.Abs(cast.Cell.y - GateCell.y)) > 2) return;
+            if (cast.Spell == SpellId.Vis && !runtime.GetFlag(LiftedFlag))
+            {
+                runtime.SetFlag(LiftedFlag, true);
+                PortalBlockedPopup.Show("You lift the dog with Vis. It stays asleep, and it stays in the way. Perhaps it could be turned aside.", "Vis", 4f);
+                cast.Handled = true;
+            }
+            else if (cast.Spell == SpellId.Rotara && runtime.GetFlag(LiftedFlag) && !runtime.GetFlag(MovedFlag))
+            {
+                runtime.SetFlag(MovedFlag, true);
+                PortalBlockedPopup.Show("The dog spins gently in the air, still asleep, and drifts out of the way.", "Rotara", 4f);
+                cast.Handled = true;
+            }
+        }
+
         public bool HandleBlocked(GridPortal blockedPortal, GridMover mover)
         {
             if (playing) return true;
             GameEventRuntime runtime = GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null;
-            if (runtime == null || runtime.GetFlag(SeenFlag)) return false;
+            if (runtime == null) return false;
+            if (runtime.GetFlag(SeenFlag))
+            {
+                string reply = ReplyToTry(runtime, out bool opens);
+                if (reply == null) return false;
+                PortalBlockedPopup.Show(reply, opens ? "The north gate" : Title, 3f);
+                if (opens) SecretRooms.Enter(SecretRooms.DogRoomId);
+                return true;
+            }
             // Saved straight away, so leaving or saving partway through does not replay it.
             runtime.SetFlag(SeenFlag, true);
             portal = blockedPortal;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +28,14 @@ namespace Lumenfall.DataDriven
         [SerializeField] private string promptLabel = "Read";
         private GridMover lockedMover;
         private bool moverWasLocked;
+        // Text shown for this visit only, in place of the sign's own; see ShowInstead.
+        private string visitTitle;
+        private string visitMessage;
+
+        /// <summary>Raised when the player checks a sign, before its card is drawn.</summary>
+        public static event Action<BuildingSignInteraction> Checked;
+        /// <summary>Raised when the player closes a sign's card.</summary>
+        public static event Action<BuildingSignInteraction> Closed;
 
         public static bool IsEInteractionBlocked => activeSign != null || Time.frameCount <= inputBlockedUntilFrame;
 
@@ -98,6 +107,13 @@ namespace Lumenfall.DataDriven
             return nearestNpc == null || signDistance < nearestNpcDistance;
         }
 
+        /// <summary>Shows other text on the card for the visit now open (or about to open), such as a secret's reply.</summary>
+        public void ShowInstead(string title, string message)
+        {
+            visitTitle = title;
+            visitMessage = message;
+        }
+
         private void Open(GridMover player)
         {
             activeSign = this;
@@ -105,6 +121,8 @@ namespace Lumenfall.DataDriven
             lockedMover = player;
             moverWasLocked = lockedMover.IsMovementLocked;
             lockedMover.SetMovementLocked(true);
+            visitTitle = visitMessage = null;
+            Checked?.Invoke(this);
         }
 
         private void Close()
@@ -113,6 +131,8 @@ namespace Lumenfall.DataDriven
             inputBlockedUntilFrame = Time.frameCount + 1;
             if (lockedMover != null) lockedMover.SetMovementLocked(moverWasLocked);
             lockedMover = null;
+            visitTitle = visitMessage = null;
+            Closed?.Invoke(this);
         }
 
         private void OnEnable()
@@ -131,7 +151,8 @@ namespace Lumenfall.DataDriven
             float width = Mathf.Min(Screen.width - 40f, 560f);
             float height = Mathf.Min(Screen.height - 40f, 260f);
             Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            HudSkin.SignCard(panel, string.IsNullOrWhiteSpace(panelTitle) ? "Campus Building" : panelTitle, buildingName);
+            string title = visitTitle ?? (string.IsNullOrWhiteSpace(panelTitle) ? "Campus Building" : panelTitle);
+            HudSkin.SignCard(panel, title, visitMessage ?? buildingName);
             HudSkin.Prompt(new Vector2(panel.center.x, panel.yMax - 46f), KeyBindings.GetKeyLabel(GameAction.Talk), "Exit");
         }
     }
