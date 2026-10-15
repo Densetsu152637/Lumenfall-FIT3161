@@ -65,21 +65,24 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
             revisit = manager.Runtime.StartDialogue("stella_first_light_dialogue");
             revisit.SelectChoice("active");
-            revisit.Continue();
+            EditModeLifecycle.FinishDialogue(revisit);
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
         }
 
         [Test]
-        public void PoweredStarRelicsCompleteFirstLightAndShowSuccessOnce()
+        public void PoweredStarRelicsBecomeReadyAndReportCompletesOnlyOnce()
         {
             TeachAmpere();
             SetRelicsPowered(true);
             monitor.EvaluatePuzzles();
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            Assert.That(manager.Runtime.ActiveDialogue, Is.Null);
+            ReportFirstLight();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
-            Assert.That(manager.Runtime.ActiveDialogue.Definition.id, Is.EqualTo("stella_first_light_success"));
-            manager.Runtime.ActiveDialogue.Continue();
             monitor.EvaluatePuzzles();
             Assert.That(manager.Runtime.ActiveDialogue, Is.Null);
+            Assert.That(manager.Runtime.TriggerEvent("complete_stella_first_light").Status, Is.EqualTo(GameEventTriggerStatus.AlreadyTriggered));
         }
 
         [Test]
@@ -115,6 +118,9 @@ namespace Lumenfall.Tests.GameEvents
             monitor.enabled = true;
             Call(monitor, "OnEnable");
             monitor.EvaluatePuzzles();
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            ReportFirstLight();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
         }
 
@@ -125,30 +131,37 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession oldLesson = oldRuntime.StartDialogue("stella_first_light_dialogue");
             oldLesson.SelectChoice("accept");
             manager.ReloadDefinitions();
-            oldLesson.Continue();
+            EditModeLifecycle.FinishDialogue(oldLesson);
             Assert.That(oldRuntime.GetFlag("spell.unlocked.Ampere"), Is.True, "The old runtime owns its lesson reward; it must not affect the replacement runtime.");
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
             TeachAmpere();
             SetRelicsPowered(true);
             monitor.EvaluatePuzzles();
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            ReportFirstLight();
             Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
         }
 
         [Test]
-        public void CompletedSaveDoesNotReplaySuccessAndResetCanCompleteAgain()
+        public void CompletedSaveDoesNotReplayReportAndResetCanBecomeReadyAgain()
         {
             TeachAmpere();
             SetRelicsPowered(true);
             monitor.EvaluatePuzzles();
-            manager.Runtime.ActiveDialogue.Continue();
+            ReportFirstLight();
             string saved = manager.Runtime.ExportStateJson(false);
             Assert.That(manager.Runtime.ImportStateJson(saved), Is.True);
             monitor.EvaluatePuzzles();
             Assert.That(manager.Runtime.ActiveDialogue, Is.Null);
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
             manager.Runtime.ResetState();
             manager.Runtime.StartQuest("stella_first_light");
             monitor.EvaluatePuzzles();
-            Assert.That(manager.Runtime.ActiveDialogue.Definition.id, Is.EqualTo("stella_first_light_success"));
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Active));
+            ReportFirstLight();
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
         }
 
         [Test]
@@ -162,7 +175,7 @@ namespace Lumenfall.Tests.GameEvents
             Call(caster, "OnEnable");
             DialogueSession hint = manager.Runtime.StartDialogue("stella_first_light_dialogue");
             hint.SelectChoice("active");
-            hint.Continue();
+            EditModeLifecycle.FinishDialogue(hint);
             Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
         }
 
@@ -192,11 +205,18 @@ namespace Lumenfall.Tests.GameEvents
                 state.SetProperty("stella.string-together.relic." + i, item => item.powered = powered);
         }
 
+        private void ReportFirstLight()
+        {
+            DialogueSession report = manager.Runtime.StartDialogue("stella_first_light_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
+            EditModeLifecycle.FinishDialogue(report);
+        }
+
         private void TeachAmpere()
         {
             DialogueSession lesson = manager.Runtime.StartDialogue("stella_first_light_dialogue");
             Assert.That(lesson.SelectChoice("accept"), Is.True);
-            Assert.That(lesson.Continue(), Is.True);
+            EditModeLifecycle.FinishDialogue(lesson);
         }
     }
 }

@@ -290,10 +290,13 @@ namespace Lumenfall.Spells
         /// Casts the selected spell at a specific object and plays the same animation as player input.
         public bool CastSelectedAt(string targetId)
         {
-            CloseSpellWheel();
-            if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
-            TriggerCastAnimation();
-            return Cast(selectedSpell, targetId, DirectionFromPlayer());
+            try
+            {
+                if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
+                TriggerCastAnimation();
+                return Cast(selectedSpell, targetId, DirectionFromPlayer());
+            }
+            finally { CloseSpellWheel(); }
         }
 
         /// <summary>Lets other player-control scripts request the configured cast animation.</summary>

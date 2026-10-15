@@ -315,18 +315,22 @@ namespace Lumenfall.Tests.GameEvents
             BeginMap("B04.Ground");
             stateEnd();
             runtime.StartQuest("katrina_something_borrowed");
+            DialogueSession lesson = runtime.StartDialogue("katrina_something_borrowed_dialogue");
+            Assert.That(lesson.SelectChoice("active"), Is.True);
+            Assert.That(lesson.SelectChoice("why"), Is.True);
+            EditModeLifecycle.FinishDialogue(lesson);
             Assert.That(runtime.TriggerEvent("found_katrina_library_item").Succeeded, Is.True);
             Assert.That(runtime.TriggerEvent("found_katrina_garden_item").Succeeded, Is.True);
             Assert.That(runtime.TriggerEvent("found_katrina_stream_item").Succeeded, Is.True);
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return them to Katrina on campus"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the recovered memory anchors to Katrina on campus"));
             Assert.That(runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active));
             Assert.That(runtime.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
 
             BeginMap("campus");
             stateEnd();
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Return them to Katrina on campus"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Return the recovered memory anchors to Katrina on campus"));
         }
 
         [Test]
@@ -555,6 +559,17 @@ namespace Lumenfall.Tests.GameEvents
     // Synchronous EditMode tests do not dispatch ordinary MonoBehaviour startup callbacks.
     internal static class EditModeLifecycle
     {
+        internal static void FinishDialogue(DialogueSession session)
+        {
+            Assert.That(session, Is.Not.Null);
+            for (int step = 0; step < 64 && !session.IsCompleted; step++)
+            {
+                Assert.That(session.AvailableChoices, Is.Empty, "Choose an authored topic before finishing its terminal path.");
+                Assert.That(session.Continue(), Is.True);
+            }
+            Assert.That(session.IsCompleted, Is.True, "The terminal dialogue path must finish within 64 nodes.");
+        }
+
         // Skip the play-only DontDestroyOnLoad call while supplying the authoritative service.
         internal static void SetWorldInstance(WorldStateService world) => typeof(WorldStateService)
             .GetProperty("Instance", BindingFlags.Static | BindingFlags.Public).SetValue(null, world);

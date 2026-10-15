@@ -183,20 +183,6 @@ namespace Lumenfall.Quests
                 return;
             }
 
-            // Orio confirms the live or archived rune dais through dialogue.
-            if (string.Equals(activeQuest.id, "orio_patch_notes", StringComparison.Ordinal))
-            {
-                if (!runtime.GetFlag("spell.unlocked.Rotara"))
-                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
-                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
-                    hint = "The rune dais is aligned. Return to Orio and confirm the patch.";
-                else if (!string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
-                    hint = "Travel to the west forest and use the teleport pad beside Orio to enter the rune hall.";
-                else
-                    hint = "Cast Rotara at the sockets. Each turns its linked discs clockwise by 90 degrees; line up all three teal notches.";
-                return;
-            }
-
             if (string.Equals(activeQuest.id, CinnaTrialDeparture.QuestId, StringComparison.Ordinal))
             {
                 hint = CinnaAlignmentRelic.DescribeStep(world, FindAnyObjectByType<SpellCaster>());
@@ -213,7 +199,9 @@ namespace Lumenfall.Quests
 
             if (string.Equals(activeQuest.id, OrioRuneDiscPuzzle.QuestId, StringComparison.Ordinal))
             {
-                if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
+                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
                     hint = "Return to Orio.";
                 else if (string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
                     hint = "Put all three discs of the Rune dais in the correct position.\n" +

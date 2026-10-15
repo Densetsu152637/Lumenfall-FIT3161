@@ -91,21 +91,32 @@ namespace Lumenfall.Startup.Tests
             options.SetPreferences(new GraphicsPreferences(false, GraphicsAntialiasing.SMAA, true, ShadingQuality.High));
             cameraObject = new GameObject("Graphics options test camera");
             Camera camera = cameraObject.AddComponent<Camera>();
+            // Null-device batch runs cannot initialize URP RenderGraph textures. Exercise the same camera callback
+            // directly there; normal graphics devices retain the actual late-camera rendering path.
+            bool headless = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+            camera.enabled = !headless;
             target = new RenderTexture(64, 64, 24);
             camera.targetTexture = target;
             UniversalAdditionalCameraData data = camera.GetUniversalAdditionalCameraData();
             data.renderPostProcessing = false;
+            if (headless) ApplyCameraCallback(camera);
             yield return null;
             yield return null;
             Assert.That(data.antialiasing, Is.EqualTo(AntialiasingMode.SubpixelMorphologicalAntiAliasing));
             Assert.That(data.renderPostProcessing, Is.True);
 
             options.SetPreferences(new GraphicsPreferences(false, GraphicsAntialiasing.FXAA, true, ShadingQuality.High));
+            if (headless) ApplyCameraCallback(camera);
             Assert.That(data.antialiasing, Is.EqualTo(AntialiasingMode.FastApproximateAntialiasing));
             options.SetPreferences(new GraphicsPreferences(false, GraphicsAntialiasing.Off, true, ShadingQuality.High));
+            if (headless) ApplyCameraCallback(camera);
             Assert.That(data.antialiasing, Is.EqualTo(AntialiasingMode.None));
             Assert.That(data.renderPostProcessing, Is.False);
         }
+
+        private void ApplyCameraCallback(Camera camera) => typeof(GraphicsOptions)
+            .GetMethod("OnBeginCameraRendering", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .Invoke(options, new object[] { default(ScriptableRenderContext), camera });
 
         private static void AssertAmbientOcclusion(UniversalRenderPipelineAsset pipeline, bool expected)
         {

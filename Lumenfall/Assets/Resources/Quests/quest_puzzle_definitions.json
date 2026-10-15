@@ -5,7 +5,6 @@
       "id": "stella_first_light_monitor",
       "questId": "stella_first_light",
       "completionEventId": "complete_stella_first_light",
-      "successDialogueId": "stella_first_light_success",
       "mapId": "B02.Ground",
       "targets": [
         { "id": "all_generated_relics_lit", "objectIds": [

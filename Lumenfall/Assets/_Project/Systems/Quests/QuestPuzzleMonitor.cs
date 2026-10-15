@@ -178,8 +178,8 @@ namespace Lumenfall.Quests
                     if (endpoints.Length != 2 || string.IsNullOrWhiteSpace(endpoints[0]) || string.IsNullOrWhiteSpace(endpoints[1]) ||
                         !state.IsConnected(endpoints[0], endpoints[1]) ||
                         state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
-                if (target.requiredSameNetwork && !InSameNetwork(state, target.objectIds)) return false;
                 }
+                if (target.requiredSameNetwork && !state.AreInSameNetwork(target.objectIds)) return false;
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)
@@ -214,28 +214,6 @@ namespace Lumenfall.Quests
                 if (!string.Equals(other.id, id, StringComparison.Ordinal) && state.IsConnected(id, other.id)) return true;
             }
             return false;
-        }
-
-        private static bool InSameNetwork(WorldStateService state, string[] objectIds)
-        {
-            if (objectIds == null || objectIds.Length == 0) return false;
-            HashSet<string> required = new HashSet<string>(objectIds, StringComparer.Ordinal);
-            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal) { objectIds[0] };
-            Queue<string> pending = new Queue<string>();
-            pending.Enqueue(objectIds[0]);
-            string[] connections = state.SnapshotConnections();
-            while (pending.Count > 0)
-            {
-                string current = pending.Dequeue();
-                foreach (string connection in connections)
-                {
-                    string[] endpoints = connection.Split('|');
-                    if (endpoints.Length != 2) continue;
-                    string other = endpoints[0] == current ? endpoints[1] : endpoints[1] == current ? endpoints[0] : null;
-                    if (other != null && required.Contains(other) && reached.Add(other)) pending.Enqueue(other);
-                }
-            }
-            return reached.Count == required.Count;
         }
 
         private static float NormalizeAngle(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }

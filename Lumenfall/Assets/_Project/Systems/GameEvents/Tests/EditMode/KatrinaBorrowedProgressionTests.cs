@@ -28,8 +28,9 @@ namespace Lumenfall.Tests.GameEvents
             session.End();
             Assert.That(runtime.GetFlag(Spell), Is.False);
             session = runtime.StartDialogue(Quest + "_dialogue");
-            session.SelectChoice("active");
-            Assert.That(session.Continue(), Is.True);
+            Assert.That(session.SelectChoice("active"), Is.True);
+            Assert.That(session.SelectChoice("library"), Is.True);
+            EditModeLifecycle.FinishDialogue(session);
             Assert.That(runtime.GetFlag(Lesson), Is.True, "The lesson teaches Lost Echoes for the search.");
             Assert.That(runtime.GetFlag(Spell), Is.False, "Lost Echoes is only learned when the quest completes.");
             Assert.That(runtime.GetFlag(Item), Is.False, "Teaching cannot recover the item.");
@@ -151,7 +152,7 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession lesson = runtime.StartDialogue("stella_first_light_dialogue");
             lesson.SelectChoice("accept");
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False);
-            while (!lesson.IsCompleted) lesson.Continue();
+            EditModeLifecycle.FinishDialogue(lesson);
             Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True);
         }
 

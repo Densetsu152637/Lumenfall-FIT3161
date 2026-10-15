@@ -169,10 +169,34 @@ namespace Lumenfall.Spells
                 string[] endpoints = (requiredConnection ?? string.Empty).Split('|');
                 if (endpoints.Length != 2 || !IsConnected(endpoints[0], endpoints[1]) || GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
             }
+            if (target.requiredSameNetwork && !AreInSameNetwork(target.objectIds)) return false;
             bool any = false, all = true;
             foreach (string id in target.objectIds) { if (!TryGetObject(id, out WorldObjectSnapshot s)) { all = false; continue; } bool ok = (!target.requiredPowered || s.powered) && (!target.requiredConnected || IsConnectedToAny(id)) && (!target.requiredRevealed || s.revealed) && (!target.requiredFrozen || s.frozen) && (!target.requiredAligned || s.aligned) && (target.requiredRotation < 0 || Mathf.Approximately(NormalizeRotation(s.rotation), NormalizeRotation(target.requiredRotation))) && (target.requiredPositionX == int.MinValue || s.cell.x == target.requiredPositionX) && (target.requiredPositionY == int.MinValue || s.cell.y == target.requiredPositionY); any |= ok; all &= ok; }
             return string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase) ? any : all;
         }
+        /// <summary>Requires all named board objects to share a cable graph, without auxiliary objects as bridges.</summary>
+        public bool AreInSameNetwork(string[] objectIds)
+        {
+            if (objectIds == null || objectIds.Length == 0) return false;
+            HashSet<string> required = new HashSet<string>(objectIds, StringComparer.Ordinal);
+            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal) { objectIds[0] };
+            Queue<string> pending = new Queue<string>();
+            pending.Enqueue(objectIds[0]);
+            string[] networkConnections = SnapshotConnections();
+            while (pending.Count > 0)
+            {
+                string current = pending.Dequeue();
+                foreach (string connection in networkConnections)
+                {
+                    string[] endpoints = connection.Split('|');
+                    if (endpoints.Length != 2) continue;
+                    string other = endpoints[0] == current ? endpoints[1] : endpoints[1] == current ? endpoints[0] : null;
+                    if (other != null && required.Contains(other) && reached.Add(other)) pending.Enqueue(other);
+                }
+            }
+            return reached.Count == required.Count;
+        }
+
         public bool SetProperty(string id, Action<WorldObjectSnapshot> mutate)
         { if (!entries.TryGetValue(id ?? string.Empty, out WorldEntry entry) || mutate == null) return false; mutate(entry.state); SyncTransform(entry); NotifyChanged(); return true; }
         /// <summary>Lost Echoes is general purpose: any spell-compatible object authored with the <c>hidden</c> tag.</summary>

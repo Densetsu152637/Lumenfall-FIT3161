@@ -48,3 +48,5 @@ Detailed implementation and completion assessments are maintained separately for
 - [Katrina: Something Borrowed](quest-implementation/katrina-something-borrowed.md)
 
 Legacy save compatibility: the retired `orioDaisRoom` and `C04.Recess` interiors remain loadable for old saves and provide an exit to the authored forest or campus. Their old entrances stay retired; current Orio progression uses the deep-forest dais and Katrina uses the three memory anchors.
+
+Integration checks preserve terminal lesson rewards and explicit Stella hand-in. The circuit target requires one connected board network; individually lit, disconnected components cannot enable reporting. Orio's quest hint uses the deep-forest route, and taught Katrina search hints keep the recovered anchors awaiting her report.

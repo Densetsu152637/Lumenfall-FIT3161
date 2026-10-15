@@ -86,7 +86,7 @@ namespace Lumenfall.Tests.GameEvents
             session = runtime.StartDialogue(Quest + "_dialogue");
             Assert.That(session.SelectChoice("active"), Is.True);
             Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
-            Assert.That(session.Continue(), Is.True);
+            EditModeLifecycle.FinishDialogue(session);
             Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
             Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active));
@@ -228,7 +228,7 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession session = runtime.StartDialogue(Quest + "_dialogue");
             Assert.That(session.SelectChoice("accept"), Is.True);
             Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
-            Assert.That(session.Continue(), Is.True);
+            EditModeLifecycle.FinishDialogue(session);
             Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
         }
 

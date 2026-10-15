@@ -35,7 +35,7 @@
         "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 10,
         "Lumenfall.Tests.GameEvents.SettlingInTests": 6,
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
-        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 6,
+        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 7,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
         "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
       }

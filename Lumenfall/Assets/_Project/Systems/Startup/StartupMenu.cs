@@ -168,7 +168,7 @@ namespace Lumenfall.Startup
 
         public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
         /// True from the moment the menu is created until it closes, including the frame before it is ready.
-        public static bool IsOpen => current != null;
+        public static bool IsOpen => current != null && current.isActiveAndEnabled;
 
         private int SelectedOption => keyboardMode ? keyboardOption : hoverOption;
 

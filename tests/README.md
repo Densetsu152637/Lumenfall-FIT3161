@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 302 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -32,7 +32,7 @@ The integrated suite contains 302 EditMode, sixteen batch PlayMode and two graph
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
 | Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 10 |
 | Spell state and world save round trips | SpellWorldStateTests | 4 |
-| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 6 |
+| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 7 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
@@ -50,7 +50,7 @@ The integrated suite contains 302 EditMode, sixteen batch PlayMode and two graph
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Dormitory onboarding | SettlingInTests | 6 |
-| **Gameplay rules / EditMode** | | **302** |
+| **Gameplay rules / EditMode** | | **303** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
@@ -126,7 +126,7 @@ python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical
 ```
 
 The graphical inventory has exactly two cases; the batch inventory contains the
-other fifteen PlayMode cases. Both verifications reject any failed or skipped case.
+other sixteen PlayMode cases. Both verifications reject any failed or skipped case.
 Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.
@@ -148,3 +148,5 @@ performance still require their own acceptance evidence. Source inventory and lo
 checks do not substitute for successful hosted checks on the final revision.
 
 PR #32 integration preserves transactional save restoration and adds successful New Game autosave resumption, manual-save keyboard dispatch, the authored deep-forest dais route, and save-only exits from the retired Orio hall and Katrina recess. Legacy interiors have no active replacement entrance in the new world.
+
+First Light readiness waits for Stella's report dialogue; expanded lessons are completed through bounded terminal traversal. Circuit readiness requires all powered board nodes in one graph even when no explicit cable list is authored. The disconnected-components regression covers both authored target evaluation and quest-monitor readiness.

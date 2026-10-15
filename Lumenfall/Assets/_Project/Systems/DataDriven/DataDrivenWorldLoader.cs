@@ -187,8 +187,20 @@ namespace Lumenfall.DataDriven
             if (target == null && previousArea?.definition?.id == "C04.Recess" && LoadedMap.id == "campus" && LoadedMap.spawn != null)
             {
                 // The recess is retained for old saves, but its campus entrance was retired with the new Katrina route.
-                Vector2Int safeArrival = new Vector2Int(LoadedMap.spawn.x, LoadedMap.spawn.y);
-                if (player.TryTeleportTo(world, safeArrival)) return true;
+                Vector2Int origin = new Vector2Int(LoadedMap.spawn.x, LoadedMap.spawn.y);
+                var visited = new HashSet<Vector2Int> { origin };
+                var candidates = new Queue<Vector2Int>();
+                candidates.Enqueue(origin);
+                while (candidates.Count > 0)
+                {
+                    Vector2Int candidate = candidates.Dequeue();
+                    if (world.GetPortalAt(candidate) == null && world.IsCellAvailable(candidate) && player.TryTeleportTo(world, candidate)) return true;
+                    foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                    {
+                        Vector2Int next = candidate + step;
+                        if (next.x >= 0 && next.y >= 0 && next.x < LoadedMap.width && next.y < LoadedMap.height && visited.Add(next)) candidates.Enqueue(next);
+                    }
+                }
             }
             if (target == null)
             {

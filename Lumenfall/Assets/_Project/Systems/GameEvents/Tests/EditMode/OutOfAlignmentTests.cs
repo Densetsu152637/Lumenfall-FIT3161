@@ -628,6 +628,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(item.dialogueId, Is.EqualTo("cinna_cold_feet_warm_idea_dialogue"));
             NpcDefinition orientation = Array.Find(catalog.npcs, n => n.id == "cinna_cirra_orientation");
             Assert.That(orientation.hideWhenQuestCompleted, Is.EqualTo(Quest));
+            Lumenfall.Story.NpcIntroductions.MarkMet("cinna_cirra_trial");
             markerHost = new GameObject("trial-npc");
             DynamicNpc npc = markerHost.AddComponent<DynamicNpc>();
             npc.Configure(trial, null);

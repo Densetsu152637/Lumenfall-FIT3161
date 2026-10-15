@@ -78,6 +78,7 @@ namespace Lumenfall.Tests.GameEvents
                 }
                 else
                 {
+                    if (questId == "katrina_something_borrowed") runtime.SetFlag("inventory.keyitem.katrina-keepsake", true);
                     Assert.That(runtime.TriggerEvent("complete_" + questId).Succeeded, Is.True, questId);
                     if (questId == "stella_first_light" || questId == "stella_string_them_together")
                     {
@@ -127,6 +128,7 @@ namespace Lumenfall.Tests.GameEvents
             try
             {
                 StartAndComplete(runtime, "stella_first_light");
+                Lumenfall.Story.NpcIntroductions.MarkMet("stella");
                 DynamicNpc stella = host.AddComponent<DynamicNpc>();
                 stella.Configure(new NpcDefinition
                 {
@@ -175,10 +177,14 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(ChoiceIds(session), Does.Contain("accept"));
                 Assert.That(session.SelectChoice("accept"), Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.False);
-                while (!session.IsCompleted) Assert.That(session.Continue(), Is.True);
+                EditModeLifecycle.FinishDialogue(session);
                 Assert.That(runtime.GetFlag("spell.unlocked.Weave"), Is.True);
 
+                runtime.SetFlag(Lumenfall.Story.NpcIntroductions.QuestThankedFlag("stella_first_light"), true);
                 session = stella.Interact();
+                Assert.That(session.Definition.id, Is.EqualTo("chat_stella"));
+                Assert.That(session.SelectChoice("task_2"), Is.True);
+                session = runtime.ActiveDialogue;
                 Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
                 Assert.That(ChoiceIds(session), Does.Contain("active"));
                 session.End();
@@ -218,7 +224,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(session.SelectChoice("accept"), Is.True);
                 Assert.That(session.IsCompleted, Is.False);
                 Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.False, "Accepting the quest alone must not award Ampere.");
-                while (!session.IsCompleted) Assert.That(session.Continue(), Is.True);
+                EditModeLifecycle.FinishDialogue(session);
                 Assert.That(session.IsCompleted, Is.True);
                 Assert.That(runtime.GetFlag("spell.unlocked.Ampere"), Is.True, "Accepting the first quest teaches Ampere before its puzzle.");
             }
@@ -261,7 +267,7 @@ namespace Lumenfall.Tests.GameEvents
                 DialogueSession finished = manager.Runtime.StartDialogue("stella_first_light_dialogue");
                 Assert.That(finished.SelectChoice("accept"), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.False);
-                while (!finished.IsCompleted) Assert.That(finished.Continue(), Is.True);
+                EditModeLifecycle.FinishDialogue(finished);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Ampere), Is.True);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
             }
@@ -301,7 +307,7 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.False);
                 Assert.That(runtime.TriggerEvent("complete_orio_patch_notes").Succeeded, Is.False);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Gravitate), Is.False);
-                Assert.That(dialogue.Continue(), Is.True);
+                EditModeLifecycle.FinishDialogue(dialogue);
                 Assert.That(caster.IsSpellUnlocked(SpellId.Rotara), Is.True);
                 foreach (string socket in new[] { "mechanism.orio.socket.north", "mechanism.orio.socket.north", "mechanism.orio.socket.north",
                     OrioRuneDiscPuzzle.AnchorId, OrioRuneDiscPuzzle.AnchorId, "mechanism.orio.socket.west", "mechanism.orio.socket.west", "mechanism.orio.socket.east" })
