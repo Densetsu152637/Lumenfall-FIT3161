@@ -12,7 +12,9 @@ namespace Lumenfall.Startup
     /// In-game options in the startup menu's style, split into sections chosen from silk bookmark ribbons that hang from
     /// a spellbook spine: Gameplay (quest hints, sprint input), Audio (the four volume buses), Display (fullscreen, VSync),
     /// Graphics (antialiasing, ambient occlusion, shading quality, the recommended preset), Controls (grouped key
-    /// rebinding) and Accessibility (menu and camera motion, contrast, dialogue reveal, text size). The Settings pop-out
+    /// rebinding) and Accessibility (menu and camera motion, contrast, dialogue reveal, text size). Each section ends with
+    /// a reset that returns only that section's settings to their defaults; Controls uses the rebinding list's own reset.
+    /// The Settings pop-out
     /// and the journal's Settings tab both draw it, so the two always match. Hosts call <see cref="Reset"/> on open,
     /// <see cref="Tick"/> from Update and <see cref="Draw"/> from OnGUI.
     /// </summary>
@@ -155,21 +157,24 @@ namespace Lumenfall.Startup
                     () => QuestHintOverlay.HintsEnabled, QuestHintOverlay.SetHintsEnabled),
                 ChoiceRow("Sprint", () => "Hold the sprint key, or press it once to toggle", SprintLabels,
                     () => AccessibilitySettings.Current.HoldToSprint ? 0 : 1,
-                    choice => UpdateAccessibility(AccessibilityOption.HoldToSprint, choice == 0 ? 1f : 0f))
+                    choice => UpdateAccessibility(AccessibilityOption.HoldToSprint, choice == 0 ? 1f : 0f)),
+                ResetRow("gameplay", ResetGameplay)
             };
             sections[(int)Section.Audio] = new[]
             {
                 VolumeRow("Master volume", AudioBus.Master),
                 VolumeRow("Music", AudioBus.Music),
                 VolumeRow("Sound effects", AudioBus.Sfx),
-                VolumeRow("Ambience", AudioBus.Ambience)
+                VolumeRow("Ambience", AudioBus.Ambience),
+                ResetRow("audio", ResetAudio)
             };
             sections[(int)Section.Display] = new[]
             {
                 SwitchRow("Fullscreen", () => Application.isEditor ? "Only applies in a built game" : "Fill the whole screen",
                     () => GameSettingsPanel.Fullscreen, value => GameSettingsPanel.Fullscreen = value),
                 SwitchRow("VSync", () => "Match the monitor's refresh rate to avoid tearing",
-                    () => GameSettingsPanel.VSync, value => GameSettingsPanel.VSync = value)
+                    () => GameSettingsPanel.VSync, value => GameSettingsPanel.VSync = value),
+                ResetRow("display", ResetDisplay)
             };
             sections[(int)Section.Graphics] = new[]
             {
@@ -193,7 +198,8 @@ namespace Lumenfall.Startup
                         : ShadingLabels[(int)Graphics.RecommendedPreferences.Shading] + " preset. Changes save automatically.",
                     ButtonLabel = "Use recommended",
                     Press = () => Graphics?.SetPreferences(Graphics.RecommendedPreferences)
-                }, () => Graphics != null)
+                }, () => Graphics != null),
+                WithEnabled(ResetRow("graphics", ResetGraphics), () => Graphics != null)
             };
             sections[(int)Section.Controls] = Array.Empty<Row>();
             sections[(int)Section.Accessibility] = new[]
@@ -222,7 +228,8 @@ namespace Lumenfall.Startup
                 }, () => !AccessibilitySettings.Current.InstantReveal),
                 ChoiceRow("Text size", () => "Menu and dialogue text", TextSizeLabels,
                     () => Mathf.Clamp(Mathf.RoundToInt((AccessibilitySettings.Current.TextScale - 1f) / 0.25f), 0, TextSizeLabels.Length - 1),
-                    choice => UpdateAccessibility(AccessibilityOption.TextScale, 1f + choice * 0.25f))
+                    choice => UpdateAccessibility(AccessibilityOption.TextScale, 1f + choice * 0.25f)),
+                ResetRow("accessibility", ResetAccessibility)
             };
         }
 
@@ -555,6 +562,51 @@ namespace Lumenfall.Startup
             },
             ValueLabel = () => $"{Mathf.RoundToInt(AudioMixSettings.GetVolume(bus) * 100f)}%"
         };
+
+        private static Row ResetRow(string section, Action reset) => new Row
+        {
+            Kind = RowKind.Button,
+            Title = "Reset to defaults",
+            Description = () => $"Only the {section} settings above",
+            ButtonLabel = "Reset",
+            Press = reset
+        };
+
+        // ---- Section resets: each touches only the settings its own section shows ----
+
+        private static void ResetGameplay()
+        {
+            QuestHintOverlay.SetHintsEnabled(true);
+            UpdateAccessibility(AccessibilityOption.HoldToSprint, AccessibilitySnapshot.Defaults.HoldToSprint ? 1f : 0f);
+        }
+
+        private static void ResetAudio()
+        {
+            AudioMixSettings.ResetDefaults();
+            GameSettingsPanel.ApplySavedVolume();
+        }
+
+        private static void ResetDisplay()
+        {
+            // The project's player settings start in fullscreen window mode.
+            GameSettingsPanel.Fullscreen = true;
+            GameSettingsPanel.VSync = GraphicsPreferences.Defaults.VSync;
+        }
+
+        /// <summary>The recommended preset is the graphics default; VSync lives on the Display section, so it is kept.</summary>
+        private static void ResetGraphics()
+        {
+            if (Graphics == null) return;
+            GraphicsPreferences recommended = Graphics.RecommendedPreferences;
+            SetGraphics(p => new GraphicsPreferences(p.VSync, recommended.Antialiasing, recommended.AmbientOcclusion, recommended.Shading));
+        }
+
+        /// <summary>Sprint is stored with the accessibility preferences but shown under Gameplay, so it is kept.</summary>
+        private static void ResetAccessibility()
+        {
+            GameSettingsPanel.ReduceMotion = false;
+            AccessibilitySettings.Update(new AccessibilitySnapshot(holdToSprint: AccessibilitySettings.Current.HoldToSprint));
+        }
 
         private static Row WithEnabled(Row row, Func<bool> enabled)
         {

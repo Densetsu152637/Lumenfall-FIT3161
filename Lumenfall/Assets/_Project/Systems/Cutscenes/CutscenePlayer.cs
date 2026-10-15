@@ -55,6 +55,12 @@ namespace Lumenfall.Cutscenes
         /// <summary>The id of the cutscene playing now, or null.</summary>
         public static string CurrentId => IsPlaying ? instance.sequence.Definition.id : null;
 
+        /// <summary>
+        /// True from New Game's START until the opening has finished, including the first-thoughts dialogue it ends with.
+        /// Music and ambience stay silent for all of it.
+        /// </summary>
+        public static bool OpeningInProgress => queuedId == OpeningCutsceneId || CurrentId == OpeningCutsceneId;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {

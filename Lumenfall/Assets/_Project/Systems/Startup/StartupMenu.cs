@@ -53,9 +53,10 @@ namespace Lumenfall.Startup
 
         private const float VolumeRowHeight = 66f;
         private const float GraphicsRowHeight = 78f;
-        // Settings page focus: the volume rows, quest hints, Controls, Graphics, Back.
-        private const int SettingsFocusCount = 8;
-        // Graphics page focus: VSync, antialiasing, ambient occlusion, shading, Use recommended, Back.
+        private const float ResetRowHeight = 86f;
+        // Settings page focus: the volume rows, quest hints, Reset, Controls, Graphics, Back.
+        private const int SettingsFocusCount = 9;
+        // Graphics page focus: VSync, antialiasing, ambient occlusion, shading, Reset to defaults, Back.
         private const int GraphicsFocusCount = 6;
 
         private enum Page { Main, Load, NewGame, Settings, Controls, Graphics }
@@ -169,6 +170,8 @@ namespace Lumenfall.Startup
         public static bool IsVisible => current != null && current.isActiveAndEnabled && current.ready;
         /// True from the moment the menu is created until it closes, including the frame before it is ready.
         public static bool IsOpen => current != null && current.isActiveAndEnabled;
+        /// True while the title menu is open; the in-game save picker reuses this screen but is not the main menu.
+        public static bool IsMainMenu => IsOpen && !current.savePickerMode;
 
         private int SelectedOption => keyboardMode ? keyboardOption : hoverOption;
 
@@ -562,12 +565,12 @@ namespace Lumenfall.Startup
                 settings.CancelRebind();
                 settings.Message = string.Empty;
                 SetPage(Page.Settings);
-                settingsFocus = VolumeBuses.Length + 1;
+                settingsFocus = VolumeBuses.Length + 2;
             }
             else if (page == Page.Graphics)
             {
                 SetPage(Page.Settings);
-                settingsFocus = VolumeBuses.Length + 2;
+                settingsFocus = VolumeBuses.Length + 3;
             }
         }
 
@@ -657,7 +660,7 @@ namespace Lumenfall.Startup
                 : value == Page.NewGame ? new Vector2(700f, 690f)
                 : value == Page.Controls ? new Vector2(560f, Mathf.Clamp(Screen.height - 40f, 440f, 720f))
                 : value == Page.Graphics ? new Vector2(600f, 610f)
-                : new Vector2(560f, 560f + (VolumeBuses.Length - 1) * VolumeRowHeight);
+                : new Vector2(560f, 560f + (VolumeBuses.Length - 1) * VolumeRowHeight + ResetRowHeight);
         }
 
         /// <summary>1 when the current page (or the opening title) fits with a margin; otherwise just small enough to fit.</summary>
@@ -1158,7 +1161,7 @@ namespace Lumenfall.Startup
         private void DrawSettings(Rect panel, float top)
         {
             int volumes = VolumeBuses.Length;
-            Rect card = new Rect(panel.x + 36f, top + 4f, panel.width - 72f, 16f + volumes * VolumeRowHeight + 98f);
+            Rect card = new Rect(panel.x + 36f, top + 4f, panel.width - 72f, 16f + volumes * VolumeRowHeight + 98f + ResetRowHeight);
             Box(card, cardStyle, 1f);
             float x = card.x + 24f;
             float width = card.width - 48f;
@@ -1186,14 +1189,22 @@ namespace Lumenfall.Startup
             SetColor(Color.white, 1f);
             if (GUI.Button(new Rect(x, hints + 24f, width, 66f), GUIContent.none, GUIStyle.none)) SetQuestHints(!questHintsEnabled);
 
+            // Only the reset button itself responds, so a stray click on the row cannot undo the player's levels.
+            Draw(new Rect(x, hints + 100f, width, 4f), glowTexture, MenuArt.Gold, 0.45f);
+            FocusGlow(new Rect(x, hints + 110f, width, 66f), volumes + 1);
+            Label(new Rect(x, hints + 116f, width - 180f, 28f), "Reset to defaults", rowStyle, MenuArt.Cream);
+            Label(new Rect(x, hints + 144f, width - 180f, 24f), "Volumes and quest hints on this page", mutedStyle, MenuArt.Muted);
+            SetColor(Color.white, 1f);
+            if (GUI.Button(new Rect(card.xMax - 24f - 160f, hints + 119f, 160f, 48f), "Reset", textButtonStyle)) ResetSettingsPage();
+
             SetColor(Color.white, 1f);
             Rect controls = new Rect(panel.center.x - 218f, card.yMax + 28f, 208f, 52f);
             Rect graphics = new Rect(panel.center.x + 10f, card.yMax + 28f, 208f, 52f);
-            FocusGlow(controls, volumes + 1);
-            FocusGlow(graphics, volumes + 2);
+            FocusGlow(controls, volumes + 2);
+            FocusGlow(graphics, volumes + 3);
             if (GUI.Button(controls, "Controls", textButtonStyle)) OpenControls();
             if (GUI.Button(graphics, "Graphics", textButtonStyle)) SetPage(Page.Graphics);
-            if (Button("exit", BackRect(panel), "BACK", SettingsFocused(volumes + 3))) GoBack();
+            if (Button("exit", BackRect(panel), "BACK", SettingsFocused(volumes + 4))) GoBack();
         }
 
         private void DrawControls(Rect panel, float top)
@@ -1271,13 +1282,14 @@ namespace Lumenfall.Startup
                 graphics.SetPreferences(new GraphicsPreferences(current.VSync, current.Antialiasing, current.AmbientOcclusion, (ShadingQuality)shading));
 
             Rect footer = new Rect(card.x + 4f, card.yMax + 14f, card.width - 8f, 48f);
+            // The defaults are the preset recommended for this PC.
             Label(new Rect(footer.x, footer.y, footer.width - 236f, 24f),
-                "Recommended for this PC: " + ShadingLabels[(int)graphics.RecommendedPreferences.Shading], rowStyle, MenuArt.Cream);
+                "Default for this PC: " + ShadingLabels[(int)graphics.RecommendedPreferences.Shading], rowStyle, MenuArt.Cream);
             Label(new Rect(footer.x, footer.y + 24f, footer.width - 236f, 22f), "Changes are saved automatically", mutedStyle, MenuArt.Muted);
             SetColor(Color.white, 1f);
             Rect recommended = new Rect(footer.xMax - 220f, footer.y, 220f, 48f);
             FocusGlow(recommended, 4);
-            if (GUI.Button(recommended, "Use recommended", textButtonStyle)) graphics.SetPreferences(graphics.RecommendedPreferences);
+            if (GUI.Button(recommended, "Reset to defaults", textButtonStyle)) graphics.SetPreferences(graphics.RecommendedPreferences);
 
             if (Button("exit", BackRect(panel), "BACK", SettingsFocused(GraphicsFocusCount - 1))) GoBack();
         }
@@ -1361,8 +1373,9 @@ namespace Lumenfall.Startup
                 }
                 else if (settingsFocus == volumes) SetQuestHints(horizontal != 0 ? horizontal > 0 : !questHintsEnabled);
                 else if (!submit) return;
-                else if (settingsFocus == volumes + 1) OpenControls();
-                else if (settingsFocus == volumes + 2) SetPage(Page.Graphics);
+                else if (settingsFocus == volumes + 1) ResetSettingsPage();
+                else if (settingsFocus == volumes + 2) OpenControls();
+                else if (settingsFocus == volumes + 3) SetPage(Page.Graphics);
                 else GoBack();
                 return;
             }
@@ -1416,6 +1429,14 @@ namespace Lumenfall.Startup
             QuestHintOverlay.SetHintsEnabled(questHintsEnabled);
             PlayerPrefs.SetInt(QuestHintsEnabledKey, questHintsEnabled ? 1 : 0);
             PlayerPrefs.Save();
+        }
+
+        /// <summary>Resets only what the Settings page shows: the four volumes and quest hints.</summary>
+        private void ResetSettingsPage()
+        {
+            AudioMixSettings.ResetDefaults();
+            GameSettingsPanel.ApplySavedVolume();
+            SetQuestHints(true);
         }
 
         /// <summary>The master bus also drives AudioListener.volume, so it goes through GameSettingsPanel.</summary>

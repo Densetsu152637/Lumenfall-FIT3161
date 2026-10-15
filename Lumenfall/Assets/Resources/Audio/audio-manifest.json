@@ -5,9 +5,9 @@
       "id": "music.forest",
       "bus": "Music",
       "loop": true,
-      "gain": 1.0,
-      "resourcePath": "",
-      "approvalStatus": "missing_approved_media"
+      "gain": 0.6,
+      "resourcePath": "Audio/Music/lumenForest",
+      "approvalStatus": "approved"
     },
     {
       "id": "ambience.forest",
@@ -22,8 +22,8 @@
       "bus": "Music",
       "loop": true,
       "gain": 1.0,
-      "resourcePath": "",
-      "approvalStatus": "missing_approved_media"
+      "resourcePath": "Audio/Music/lumenCampus",
+      "approvalStatus": "approved"
     },
     {
       "id": "ambience.campus",
@@ -32,6 +32,22 @@
       "gain": 1.0,
       "resourcePath": "",
       "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "music.menu",
+      "bus": "Music",
+      "loop": true,
+      "gain": 0.3,
+      "resourcePath": "Audio/Music/Lumen_mainMenuWIP",
+      "approvalStatus": "approved"
+    },
+    {
+      "id": "music.dormitory",
+      "bus": "Music",
+      "loop": true,
+      "gain": 0.6,
+      "resourcePath": "Audio/Music/lumenDorm",
+      "approvalStatus": "approved"
     },
     {
       "id": "music.interior",

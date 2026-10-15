@@ -27,15 +27,18 @@ The menus keep their original look; the graphics, volume-bus and accessibility s
 active dialogue overlays while it is visible,
 so dialogue choices cannot be selected behind the menu.
 **Startup menu.** Settings is the original card: master, music, sound effects and ambience volume sliders, then the
-Show quest hints switch. Below it, **Controls** opens the key-rebinding page and **Graphics** opens a page in the same
+Show quest hints switch, then **Reset**, which restores only those volumes and quest hints. Below it, **Controls** opens the key-rebinding page and **Graphics** opens a page in the same
 card style with VSync (relic switch), antialiasing Off/FXAA/SMAA (lavender pills), ambient occlusion (switch), shading
-quality Low/Medium/High (pills), the recommended preset and **Use recommended**. Pages keep fixed sizes (Settings
-560×758, Graphics 600×610) and shrink through `FitScale` on small windows.
+quality Low/Medium/High (pills), the recommended preset and **Reset to defaults** (the defaults are that preset).
+Pages keep fixed sizes (Settings 560×844, Graphics 600×610) and shrink through `FitScale` on small windows.
 
 **In-game options.** The Settings pop-out (`QuestHintOverlay`) and the journal's Settings tab (`InventoryEncyclopediaUI`)
 draw the same `OptionsPanel`: silk bookmark ribbons hanging from a spellbook spine, each with a rune, relic switches,
 lantern volume sliders, and page turns in the journal. The chosen section stays selected between openings. A section
-whose rows do not fit (for example with a large text size) scrolls with the gold scrollbar.
+whose rows do not fit (for example with a large text size) scrolls with the gold scrollbar. Every section except
+Controls (which has its own reset) ends with **Reset to defaults**, which resets only that section's rows: sprint is
+stored with the accessibility preferences and VSync with the graphics preferences, but each is reset by the section
+that shows it.
 
 | Section | Options |
 | --- | --- |

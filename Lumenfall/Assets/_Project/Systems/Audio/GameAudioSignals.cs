@@ -14,6 +14,7 @@ namespace Lumenfall.Audio
         private bool wasSleeping;
         private bool wasWoke;
         public AudioContext Context { get; private set; }
+        public string MapId => mapId;
         public bool DialogueActive => runtime?.ActiveDialogue != null;
         public bool Sleeping => runtime != null && (runtime.GetFlag(SleepingFlag) ||
             (runtime.GetFlag("chapter1.sleep") && !runtime.GetFlag("chapter1.complete")));
