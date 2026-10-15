@@ -72,7 +72,9 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(broken, Is.True, "A wrong step part-way through thuds and starts over.");
             Assert.That(LanternBearerSecret.Advance(LanternBearerSecret.Steps.Length, cell, Vector2Int.up, out bool after), Is.EqualTo(0));
             Assert.That(after, Is.True, "Stepping off the finished shape breaks it too.");
-            Assert.That(LanternBearerSecret.StillSeconds, Is.EqualTo(10f));
+            Assert.That(LanternBearerSecret.StoneCells.Length, Is.EqualTo(7), "A stone to start on and one for each step.");
+            Assert.That(LanternBearerSecret.StoneCells.Last(), Is.EqualTo(cell), "The last stone is where the walk ends.");
+            Assert.That(Enumerable.Range(0, 7).Select(LanternBearerSecret.StoneId), Is.Unique);
         }
 
         [Test]
@@ -82,7 +84,7 @@ namespace Lumenfall.Tests.GameEvents
                 .Select(guid => UnityEditor.AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid)))
                 .Single(area => area != null && area.definition != null && area.definition.id == LanternBearerSecret.MapId);
             Vector2Int spawn = new Vector2Int(forest.definition.spawn.x, forest.definition.spawn.y);
-            Assert.That(LanternBearerSecret.StartCell - spawn, Is.EqualTo(new Vector2Int(-2, 4)), "Moss: a few steps up the path from where you woke, just to the left.");
+            Assert.That(LanternBearerSecret.StartCell.x, Is.LessThan(spawn.x), "The stones are near where the player wakes, a place they have already been.");
         }
 
         [Test]
@@ -91,7 +93,8 @@ namespace Lumenfall.Tests.GameEvents
             string line = Node(Events(), "chat_luna", "t3").text;
             string shape = string.Join(", ", LanternBearerSecret.Steps.Select(step => step == Vector2Int.up ? "up" : "right"));
             Assert.That(line, Does.Contain(shape));
-            Assert.That(Node(Events(), "chat_moss", "t3").text, Does.Contain("up the path from where you woke"), "Moss says where to start.");
+            Assert.That(Node(Events(), "chat_moss", "t3").text, Does.Contain("places you've already been"), "Moss hints that the stars are somewhere familiar.");
+            Assert.That(line, Does.Contain("lowest star"), "Luna says where the shape starts.");
         }
 
         [Test]
@@ -192,14 +195,49 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SolvingAPuzzleBeforeTheDormBreaksTheStory()
+        public void OnePuzzleEarlyIsFineButEveryPuzzleBeforeTheDormBreaksTheStory()
         {
             GameEventRuntime runtime = new GameEventRuntime(Events());
-            Assert.That(SequenceBreakEnding.BreaksOrder(runtime, "stella_first_light"), Is.True);
-            Assert.That(SequenceBreakEnding.BreaksOrder(runtime, "not_a_chapter_quest"), Is.False);
-            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
-            Assert.That(SequenceBreakEnding.BreaksOrder(runtime, "stella_first_light"), Is.False, "Once Marigold has spoken, puzzles are expected.");
+            runtime.StartQuest("stella_first_light");
+            runtime.CompleteQuest("stella_first_light");
+            Assert.That(SequenceBreakEnding.SolvedEverythingFirst(runtime), Is.False, "Solving one puzzle early is allowed.");
+            foreach (string quest in SettlingInScene.ChapterQuestIds)
+            {
+                if (runtime.GetQuestStatus(quest) == QuestStatus.NotStarted) runtime.StartQuest(quest);
+                if (runtime.GetQuestStatus(quest) == QuestStatus.Active) runtime.CompleteQuest(quest);
+            }
+            Assert.That(SequenceBreakEnding.SolvedEverythingFirst(runtime), Is.True, "Every puzzle, and never a step inside the dorm.");
+            runtime.SetFlag(SequenceBreakEnding.DormVisitedFlag, true);
+            Assert.That(SequenceBreakEnding.SolvedEverythingFirst(runtime), Is.False, "Having been to the dorm at all rules it out.");
             Assert.That(Events().TryGetDialogue(SequenceBreakEnding.DialogueId, out _), Is.True);
+        }
+
+        [Test]
+        public void FinishingASecretWithoutItsHintsMeansYouKnowTooMuch()
+        {
+            GameEventCatalog events = Events();
+            GameEventRuntime runtime = new GameEventRuntime(events);
+            string[] secrets = { SecretRooms.DevRoomId, SequenceBreakEnding.LanternBearerSecretId, SecretRooms.ClosetId };
+            foreach (string secret in secrets)
+            {
+                Assert.That(SequenceBreakEnding.KnowsTooMuch(runtime, secret), Is.True, secret + " without its hints.");
+                foreach (string hint in SequenceBreakEnding.HintsFor(secret)) runtime.SetFlag(hint, true);
+                Assert.That(SequenceBreakEnding.KnowsTooMuch(runtime, secret), Is.False, secret + " once every hint has been heard.");
+            }
+            Assert.That(SequenceBreakEnding.KnowsTooMuch(new GameEventRuntime(events), SecretRooms.DogRoomId), Is.False,
+                "The dog's hints are the gate's own notices.");
+            Assert.That(events.TryGetDialogue(SequenceBreakEnding.KnowledgeDialogueId, out _), Is.True);
+
+            // Each hint line records that it was heard.
+            (string dialogue, string node, string flag)[] lines =
+            {
+                ("chat_luna", "t3", "hint.heard.lantern_shape"), ("chat_moss", "t3", "hint.heard.lantern_place"),
+                ("chat_prof_voltaire", "t2", "hint.heard.closet_shelf"), ("chat_juno", "gossip_fountain", "hint.heard.closet_gossip"),
+                ("chat_juno", "gossip_table", "hint.heard.closet_gossip"), ("chat_juno", "gossip_library", "hint.heard.closet_gossip"),
+            };
+            foreach ((string dialogue, string node, string flag) in lines)
+                Assert.That(Node(events, dialogue, node).onEnterActions.Any(action => action.type == "SetFlag" && action.key == flag && action.boolValue), Is.True,
+                    dialogue + "/" + node + " should set " + flag);
         }
 
         [Test]

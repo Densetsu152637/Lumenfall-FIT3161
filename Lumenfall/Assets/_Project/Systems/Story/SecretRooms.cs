@@ -113,12 +113,21 @@ namespace Lumenfall.Story
             return true;
         }
 
-        /// <summary>Takes the player into a secret room, the one time they can go in.</summary>
+        /// <summary>
+        /// Takes the player into a secret room, the one time they can go in. Found without the hints that lead to it
+        /// (<see cref="SequenceBreakEnding.KnowsTooMuch"/>), it does not open: the story breaks instead.
+        /// </summary>
         public static bool Enter(string roomId)
         {
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             GameEventRuntime runtime = GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null;
-            if (loader == null || !TryGetRoom(roomId, out Room room) || HasVisited(runtime, room.Id) || !loader.TravelTo(room.Id, room.Arrival)) return false;
+            if (loader == null || !TryGetRoom(roomId, out Room room) || HasVisited(runtime, room.Id)) return false;
+            if (SequenceBreakEnding.KnowsTooMuch(runtime, room.Id))
+            {
+                SequenceBreakEnding.Begin(SequenceBreakEnding.Cause.Knowledge);
+                return false;
+            }
+            if (!loader.TravelTo(room.Id, room.Arrival)) return false;
             runtime?.SetFlag(VisitedFlag(room.Id), true);
             return true;
         }

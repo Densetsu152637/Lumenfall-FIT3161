@@ -18,6 +18,8 @@ namespace Lumenfall.Story
         private const string DoorPrefix = "Room Door ";
         private const string OpenedTitle = "Dormitory Room";
         private const string OpenedMessage = "A groan from behind the door. \"...Fine. FINE. It's open.\"";
+        // Knocked without having heard Stella's hint: only someone who has been here before knows the knock.
+        private const string TooSoonMessage = "Silence. Then, very quietly: \"...How do you know that knock? You aren't supposed to know about us yet.\"";
 
         private static readonly List<int> knocks = new List<int>();
         private static bool entering;
@@ -69,7 +71,7 @@ namespace Lumenfall.Story
             if (!Knock(knocks, door)) return;
             knocks.Clear();
             entering = true;
-            sign.ShowInstead(OpenedTitle, OpenedMessage);
+            sign.ShowInstead(OpenedTitle, SequenceBreakEnding.KnowsTooMuch(runtime, SecretRooms.DevRoomId) ? TooSoonMessage : OpenedMessage);
         }
 
         private static void OnClosed(BuildingSignInteraction sign)

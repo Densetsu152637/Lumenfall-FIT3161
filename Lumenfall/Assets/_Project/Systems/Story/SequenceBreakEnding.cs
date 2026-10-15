@@ -12,30 +12,49 @@ using UnityEngine;
 namespace Lumenfall.Story
 {
     /// <summary>
-    /// What happens if the player solves a Chapter 1 puzzle before Marigold has told them their room is not ready
-    /// (<see cref="SettlingInScene.NotReadyFlag"/>), out of the story's order. Once the puzzle's own wrap-up is over, a
-    /// glitching voice notices (<see cref="DialogueId"/>), then the screen cuts to black and silence and a voice that
-    /// speaks in hands spells out that this story cannot continue. The run is then reset to a new game and written over
+    /// What happens if the player breaks the story's order in one of two obscure ways (<see cref="Cause"/>): finishing a
+    /// secret without having heard the hints that lead to it (<see cref="KnowsTooMuch"/>; only someone who has played
+    /// before would know to), or solving all six Chapter 1 puzzles before ever setting foot in the dormitory
+    /// (<see cref="SolvedEverythingFirst"/>). Solving one puzzle early is fine. Once nothing else is on screen, a glitching
+    /// voice notices, then the screen cuts to black and silence and a voice that speaks in hands spells out that this
+    /// story cannot continue. The run is then reset to a new game and written over
     /// its autosave and linked manual slot, and the game returns to the main menu. Loading that file plays the opening
     /// again (<see cref="OpeningPendingFlag"/>), as if the game had never been played.
     /// </summary>
     public sealed class SequenceBreakEnding : MonoBehaviour
     {
+        /// <summary>The two ways to break the story's order.</summary>
+        public enum Cause { None, Knowledge, Everything }
+
         public const string DialogueId = "secret_sequence_break";
+        public const string KnowledgeDialogueId = "secret_sequence_break_knowledge";
+        /// <summary>Set the first time the player is in the dormitory, whatever they do there.</summary>
+        public const string DormVisitedFlag = "story.dorm.visited";
         /// <summary>Saved in the reset file: loading it starts the New Game opening.</summary>
         public const string OpeningPendingFlag = "secret.sequence_break.opening_pending";
 
-        // The black screen's lines: when each appears, in seconds, and the text. The first and last are in hands.
+        // The black screen's lines: when each appears, in seconds, and the text. The first and last are in hands; the
+        // second and third depend on how the order was broken.
         private static readonly (float at, string text, bool hands)[] Lines =
         {
             (1.5f, "☜☝✋☟ ✌☞✋☜ ☟✋✌☝", true),
             (4.5f, "THE ORDER OF EVENTS HAS BEEN BROKEN.", false),
-            (8.0f, "A TASK, FINISHED BEFORE IT WAS EVER GIVEN.", false),
-            (11.5f, "A ROOM THAT IS NOT YET READY. A STUDENT WHO IS NOT YET EXPECTED.", false),
+            (8.0f, "{0}", false),
+            (11.5f, "{1}", false),
             (15.5f, "THIS STORY CANNOT CONTINUE FROM HERE.", false),
             (19.0f, "IT WILL HAVE TO BEGIN AGAIN.", false),
             (22.0f, "...BEGIN AGAIN.", false),
             (25.0f, "✋ ☜☟☝✌ ☞✋", true),
+        };
+        private static readonly string[] KnowledgeLines =
+        {
+            "A SECRET, OPENED BEFORE IT COULD BE KNOWN.",
+            "YOU HAVE WALKED THIS PATH BEFORE. YOU REMEMBER WHAT YOU SHOULD NOT.",
+        };
+        private static readonly string[] EverythingLines =
+        {
+            "EVERY TASK, FINISHED BEFORE ANY WAS GIVEN.",
+            "A ROOM THAT WAS NEVER VISITED. A STUDENT WHO WAS NEVER EXPECTED.",
         };
         private const float LastLineFadesAt = 28.5f;
         private const float EndsAt = 31f;
@@ -44,6 +63,7 @@ namespace Lumenfall.Story
         private static SequenceBreakEnding instance;
         private GameEventRuntime subscribed;
         private bool pending;
+        private Cause cause;
         private bool glitchPlayed;
         private bool blackScreen;
         private float blackSince;
@@ -64,9 +84,52 @@ namespace Lumenfall.Story
             DontDestroyOnLoad(host);
         }
 
-        /// <summary>True when finishing <paramref name="questId"/> now would break the story's order.</summary>
-        public static bool BreaksOrder(GameEventRuntime runtime, string questId) =>
-            runtime != null && Array.IndexOf(SettlingInScene.ChapterQuestIds, questId) >= 0 && !runtime.GetFlag(SettlingInScene.NotReadyFlag);
+        /// <summary>The Lantern Bearer's id here, alongside the secret rooms' map ids.</summary>
+        public const string LanternBearerSecretId = "secret.lanternBearer";
+
+        /// <summary>
+        /// The hints a secret is found through, as the flags their lines set. Stella's knock hint is part of her
+        /// introduction, so meeting her counts. The dog's hints are the gate's own notices, so it has none.
+        /// </summary>
+        public static string[] HintsFor(string secret) => secret switch
+        {
+            SecretRooms.DevRoomId => new[] { "npc.met.stella" },
+            LanternBearerSecretId => new[] { "hint.heard.lantern_shape", "hint.heard.lantern_place" },
+            SecretRooms.ClosetId => new[] { "hint.heard.closet_gossip", "hint.heard.closet_shelf" },
+            _ => Array.Empty<string>(),
+        };
+
+        /// <summary>
+        /// True when finishing <paramref name="secret"/> now would mean knowing it from another run: the player has not
+        /// heard every hint that leads to it.
+        /// </summary>
+        public static bool KnowsTooMuch(GameEventRuntime runtime, string secret)
+        {
+            if (runtime == null) return false;
+            foreach (string hint in HintsFor(secret)) if (!runtime.GetFlag(hint)) return true;
+            return false;
+        }
+
+        /// <summary>True once the player has been in the dormitory (older saves count Marigold's or the desk's scene).</summary>
+        public static bool VisitedDorm(GameEventRuntime runtime) =>
+            runtime != null && (runtime.GetFlag(DormVisitedFlag) || runtime.GetFlag(SettlingInScene.NotReadyFlag) || runtime.GetFlag(SettlingInScene.NoRoomsFlag));
+
+        /// <summary>True when every Chapter 1 puzzle is solved and the player has never been to the dormitory.</summary>
+        public static bool SolvedEverythingFirst(GameEventRuntime runtime)
+        {
+            if (runtime == null || VisitedDorm(runtime)) return false;
+            foreach (string quest in SettlingInScene.ChapterQuestIds)
+                if (runtime.GetQuestStatus(quest) != QuestStatus.Completed) return false;
+            return true;
+        }
+
+        /// <summary>Breaks the story for <paramref name="why"/>: the glitch plays once nothing else is on screen.</summary>
+        public static void Begin(Cause why)
+        {
+            if (instance == null || why == Cause.None || instance.blackScreen || instance.pending) return;
+            instance.cause = why;
+            instance.pending = true;
+        }
 
         /// <summary>True while the black screen is up (or about to be).</summary>
         public static bool InProgress => instance != null && (instance.pending || instance.blackScreen);
@@ -96,7 +159,7 @@ namespace Lumenfall.Story
         {
             GameSaveManager saves = GameSaveManager.Instance;
             if (quest == null || current != QuestStatus.Completed || (saves != null && saves.IsRestoring) || blackScreen) return;
-            if (BreaksOrder(subscribed, quest.id)) pending = true;
+            if (Array.IndexOf(SettlingInScene.ChapterQuestIds, quest.id) >= 0 && SolvedEverythingFirst(subscribed)) Begin(Cause.Everything);
         }
 
         // A reset file opens on the New Game opening; any other file loaded afterwards does not.
@@ -127,6 +190,11 @@ namespace Lumenfall.Story
                 queuedOpening = false;
             }
 
+            // Being in the dormitory at all rules out solving everything first.
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            if (loader != null && loader.LoadedMap != null && loader.LoadedMap.id == SettlingInScene.MapId && !runtime.GetFlag(DormVisitedFlag))
+                runtime.SetFlag(DormVisitedFlag, true);
+
             if (blackScreen)
             {
                 if (Time.unscaledTime - blackSince >= EndsAt) Finish();
@@ -136,7 +204,7 @@ namespace Lumenfall.Story
             if (!glitchPlayed)
             {
                 glitchPlayed = true;
-                if (runtime.StartDialogue(DialogueId) != null) return;
+                if (runtime.StartDialogue(cause == Cause.Knowledge ? KnowledgeDialogueId : DialogueId) != null) return;
             }
             BeginBlackScreen();
         }
@@ -157,6 +225,7 @@ namespace Lumenfall.Story
             blackScreen = false;
             pending = false;
             glitchPlayed = false;
+            cause = Cause.None;
             if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
             OverlayInputGate.Release(this);
@@ -216,7 +285,8 @@ namespace Lumenfall.Story
                 float start = Lines[i].at;
                 float end = i + 1 < Lines.Length ? Lines[i + 1].at - 0.4f : LastLineFadesAt;
                 if (elapsed < start || elapsed > end) continue;
-                string text = Lines[i].text;
+                string[] causeLines = cause == Cause.Knowledge ? KnowledgeLines : EverythingLines;
+                string text = Lines[i].text == "{0}" ? causeLines[0] : Lines[i].text == "{1}" ? causeLines[1] : Lines[i].text;
                 int shown = Lines[i].hands ? text.Length : Mathf.Min(text.Length, Mathf.FloorToInt((elapsed - start) * RevealCharactersPerSecond));
                 float alpha = Mathf.Clamp01((end - elapsed) / 0.6f) * Mathf.Clamp01((elapsed - start) / 0.4f);
                 GUI.color = new Color(1f, 1f, 1f, alpha);
@@ -230,7 +300,7 @@ namespace Lumenfall.Story
 
         // Nothing else on screen, so the glitch follows the puzzle's own wrap-up rather than interrupting it.
         private static bool IsQuiet(GameEventRuntime runtime) =>
-            !CutscenePlayer.IsPlaying && !StartupMenu.IsOpen && Time.timeScale > 0f && runtime.ActiveDialogue == null &&
+            !BuildingSignInteraction.IsEInteractionBlocked && !CutscenePlayer.IsPlaying && !StartupMenu.IsOpen && Time.timeScale > 0f && runtime.ActiveDialogue == null &&
             !CinnaTrialDeparture.InProgress && !PlayerNamePrompt.IsOpen && !InventoryUiState.IsOpen &&
             DataDrivenWorldLoader.Instance != null && DataDrivenWorldLoader.Instance.CurrentAreaRoot != null;
     }
