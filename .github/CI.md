@@ -353,7 +353,7 @@ sources, not a runnable player. The repository's visibility also governs who can
 access releases; this repository is currently public.
 
 Every ZIP includes launch instructions, the repository license, and
-`build-info.json` with the source commit, triggering tag/ref, Unity version, and
+`build-info.json` with the bundle version, source commit, Unity version, and
 platform. Main builds use their `main-<workflow-run-id>` identifier as the bundle
 version. All builds check out the exact event commit, even if the
 branch advances while the workflow is queued. Player version settings are
