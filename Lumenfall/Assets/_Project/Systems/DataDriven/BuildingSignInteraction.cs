@@ -67,6 +67,11 @@ namespace Lumenfall.DataDriven
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (activeSign == this)
             {
                 DrawPopup();
@@ -148,9 +153,9 @@ namespace Lumenfall.DataDriven
 
         private void DrawPopup()
         {
-            float width = Mathf.Min(Screen.width - 40f, 560f);
-            float height = Mathf.Min(Screen.height - 40f, 260f);
-            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            float width = Mathf.Min(UiScale.Width - 40f, 560f);
+            float height = Mathf.Min(UiScale.Height - 40f, 260f);
+            Rect panel = new Rect((UiScale.Width - width) * 0.5f, (UiScale.Height - height) * 0.5f, width, height);
             string title = visitTitle ?? (string.IsNullOrWhiteSpace(panelTitle) ? "Campus Building" : panelTitle);
             HudSkin.SignCard(panel, title, visitMessage ?? buildingName);
             HudSkin.Prompt(new Vector2(panel.center.x, panel.yMax - 46f), KeyBindings.GetKeyLabel(GameAction.Talk), "Exit");

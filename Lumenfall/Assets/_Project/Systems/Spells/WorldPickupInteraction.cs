@@ -169,6 +169,11 @@ namespace Lumenfall.Spells
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (promptTarget == null || !promptVisible) return;
             HudSkin.PromptAbove(promptPosition + Vector3.up * 0.9f, KeyBindings.GetKeyLabel(GameAction.Talk), "Pick up");
         }

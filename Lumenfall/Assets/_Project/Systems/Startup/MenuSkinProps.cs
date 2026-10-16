@@ -1,4 +1,5 @@
 using UnityEngine;
+using Lumenfall.GameEvents;
 using Lumenfall.Controls;
 
 namespace Lumenfall.Startup
@@ -160,7 +161,7 @@ namespace Lumenfall.Startup
             float savedFade = Fade;
             Fade = 1f;
             float spread = (1f - amount) * 0.4f;
-            Rect rect = new Rect(-Screen.width * spread, -Screen.height * spread, Screen.width * (1f + spread * 2f), Screen.height * (1f + spread * 2f));
+            Rect rect = new Rect(-UiScale.Width * spread, -UiScale.Height * spread, UiScale.Width * (1f + spread * 2f), UiScale.Height * (1f + spread * 2f));
             Draw(rect, frost, Color.white, 0.9f * Mathf.Clamp01(amount * 1.4f));
 
             float now = Time.unscaledTime;

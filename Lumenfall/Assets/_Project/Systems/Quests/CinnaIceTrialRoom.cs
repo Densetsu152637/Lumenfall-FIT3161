@@ -405,12 +405,17 @@ namespace Lumenfall.Quests
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (fadeAlpha > 0f)
             {
                 GUI.depth = -1000;
                 Color previous = GUI.color;
                 GUI.color = new Color(0f, 0f, 0f, fadeAlpha);
-                GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(0f, 0f, UiScale.Width, UiScale.Height), Texture2D.whiteTexture);
                 GUI.color = previous;
             }
             if (geometry == null || Time.timeScale <= 0f || InventoryUiState.IsOpen) return;

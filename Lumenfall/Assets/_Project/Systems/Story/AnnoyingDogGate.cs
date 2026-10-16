@@ -186,6 +186,11 @@ namespace Lumenfall.Story
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (!playing) return;
             skin.Ensure();
             float now = Time.unscaledTime;
@@ -194,9 +199,9 @@ namespace Lumenfall.Story
             Sample(elapsed, out float progress, out string file, out bool dropped);
             bool dog = file == DogFile;
 
-            float width = Mathf.Min(Screen.width - 32f, 520f);
+            float width = Mathf.Min(UiScale.Width - 32f, 520f);
             float height = 214f;
-            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            Rect panel = new Rect((UiScale.Width - width) * 0.5f, (UiScale.Height - height) * 0.5f, width, height);
             int previousDepth = GUI.depth;
             GUI.depth = -1000;
             skin.PanelFrame(panel, now);

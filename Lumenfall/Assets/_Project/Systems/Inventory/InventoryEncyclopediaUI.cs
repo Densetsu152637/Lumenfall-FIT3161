@@ -254,6 +254,11 @@ namespace Lumenfall.Inventory
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (!InventoryUiState.IsOpen) return;
             skin.Ensure();
             skin.ShowWandCursor(true);
@@ -265,10 +270,10 @@ namespace Lumenfall.Inventory
             skin.Fade = open;
             skin.DrawBackdrop(0.85f, now);
 
-            float width = Mathf.Min(Screen.width - 48f, 920f);
-            float height = Mathf.Min(Screen.height - 48f, 640f);
-            Rect panel = new Rect((Screen.width - width) * 0.5f - skin.Parallax.x * 4f,
-                (Screen.height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
+            float width = Mathf.Min(UiScale.Width - 48f, 920f);
+            float height = Mathf.Min(UiScale.Height - 48f, 640f);
+            Rect panel = new Rect((UiScale.Width - width) * 0.5f - skin.Parallax.x * 4f,
+                (UiScale.Height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
             skin.PanelFrame(panel, now);
             skin.DrawTitle(new Rect(panel.x + 24f, panel.y + 20f, panel.width - 48f, 50f), "Journal", now);
             skin.Divider(panel.center.x, panel.y + 80f, Mathf.Min(280f, panel.width - 120f), now);

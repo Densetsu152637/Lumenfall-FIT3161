@@ -138,6 +138,11 @@ namespace Lumenfall.Quests
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             WorldStateService state = WorldStateService.Instance;
             if (state == null || !state.IsReady || InventoryUiState.IsOpen ||
                 GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
@@ -145,11 +150,11 @@ namespace Lumenfall.Quests
             string status = !GameEventManager.Instance.Runtime.GetFlag("spell.unlocked.Rotara") ? "Finish Orio's Rotara lesson before casting." :
                 "Practice mechanism; Orio's puzzle is the rune dais, through the teleport pad in the west forest glade.";
             panelDrawnAt = Time.unscaledTime;
-            GUI.Box(new Rect(16f, Screen.height - 108f, 590f, 92f), "Rotara mechanism");
-            GUI.Label(new Rect(28f, Screen.height - 84f, 566f, 24f),
+            GUI.Box(new Rect(16f, UiScale.Height - 108f, 590f, 92f), "Rotara mechanism");
+            GUI.Label(new Rect(28f, UiScale.Height - 84f, 566f, 24f),
                 $"Current: {NormalizeDegrees(snapshot.rotation):0} degrees | Target: {requiredRotation} degrees | " +
                 KeyBindings.GetKeyLabel(GameAction.Interact) + ": cast selected spell (choose Rotara on the spell wheel)");
-            GUI.Label(new Rect(28f, Screen.height - 58f, 566f, 36f), status);
+            GUI.Label(new Rect(28f, UiScale.Height - 58f, 566f, 36f), status);
         }
 
         private void BuildPresentation()

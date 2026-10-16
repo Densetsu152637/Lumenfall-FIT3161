@@ -1,3 +1,4 @@
+using Lumenfall.GameEvents;
 using Lumenfall.Startup;
 using UnityEngine;
 
@@ -67,6 +68,11 @@ namespace Lumenfall.Player
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             skin.Ensure();
             EnsureStyles();
             // Just behind the cutscene overlay, in front of the world and the other overlays.
@@ -74,15 +80,12 @@ namespace Lumenfall.Player
             float now = Time.unscaledTime;
             float open = MenuSkin.Smooth((now - openedAt) / FadeSeconds);
             Color previousColor = GUI.color;
-            Matrix4x4 previousMatrix = GUI.matrix;
             skin.Fade = open;
             skin.ShowWandCursor(true);
             skin.DrawBackdrop(0.75f * open, now);
 
-            // Laid out at a 1080p reference and scaled to the window, like the dialogue box.
-            float scale = Mathf.Clamp(Screen.height / 1080f, 0.75f, 2f);
-            GUI.matrix = previousMatrix * Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            Vector2 view = new Vector2(Screen.width, Screen.height) / scale;
+            // Laid out in UI units; OnGUI's UiScale scope scales them to the window.
+            Vector2 view = new Vector2(UiScale.Width, UiScale.Height);
             float rise = (1f - open) * 14f * skin.Motion;
             Rect panel = new Rect((view.x - PanelSize.x) / 2f, (view.y - PanelSize.y) / 2f + rise, PanelSize.x, PanelSize.y);
 
@@ -115,7 +118,6 @@ namespace Lumenfall.Player
                 $"Leave it blank to be called {PlayerProfile.DefaultName}.", skin.SmallCentre);
 
             bool confirmed = skin.Button(new Rect(panel.center.x - 90f, panel.yMax - 74f, 180f, 44f), "Confirm");
-            GUI.matrix = previousMatrix;
             skin.DrawSparks(open);
             GUI.color = previousColor;
 

@@ -267,12 +267,17 @@ namespace Lumenfall.Story
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (!blackScreen) return;
             int previousDepth = GUI.depth;
             GUI.depth = -3000;
             Color previous = GUI.color;
             GUI.color = Color.black;
-            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(0f, 0f, UiScale.Width, UiScale.Height), Texture2D.whiteTexture);
             if (lineStyle == null)
             {
                 lineStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 26, wordWrap = true };
@@ -291,7 +296,7 @@ namespace Lumenfall.Story
                 float alpha = Mathf.Clamp01((end - elapsed) / 0.6f) * Mathf.Clamp01((elapsed - start) / 0.4f);
                 GUI.color = new Color(1f, 1f, 1f, alpha);
                 Vector2 tremble = new Vector2(UnityEngine.Random.Range(-1.2f, 1.2f), UnityEngine.Random.Range(-1.2f, 1.2f));
-                Rect rect = new Rect(Screen.width * 0.1f + tremble.x, Screen.height * 0.5f - 60f + tremble.y, Screen.width * 0.8f, 120f);
+                Rect rect = new Rect(UiScale.Width * 0.1f + tremble.x, UiScale.Height * 0.5f - 60f + tremble.y, UiScale.Width * 0.8f, 120f);
                 GUI.Label(rect, text.Substring(0, shown), Lines[i].hands ? handsStyle : lineStyle);
             }
             GUI.color = previous;
