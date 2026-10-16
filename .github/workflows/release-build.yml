@@ -11,7 +11,7 @@ permissions:
 jobs:
   repository-integrity:
     name: Validate release sources
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Check out release sources
@@ -29,7 +29,7 @@ jobs:
   build-windows:
     name: Build Windows x64 player
     needs: repository-integrity
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Verify Unity license secrets
         shell: bash
@@ -73,7 +73,8 @@ jobs:
 
       - name: Build game
         id: unity-build
-        uses: game-ci/unity-builder@v4
+        # v5.0.1 is pinned to its Node 24-capable upstream release commit.
+        uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -127,7 +128,7 @@ jobs:
     name: Publish latest main bundle and remove previous bundles
     needs: build-windows
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write

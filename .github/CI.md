@@ -166,8 +166,16 @@ coverage gaps rather than represented as validation of this revision.
 player with the Unity version in `Lumenfall/ProjectSettings/ProjectVersion.txt`.
 It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 `Assets/_Project/Scenes/SampleScene.unity`) and the existing player settings.
-It requires the same three Unity secrets described above. The Windows build cache
-is separate from the EditMode cache.
+It requires the same three Unity secrets described above. Release and build-test
+jobs use the pinned `ubuntu-24.04` runner label instead of the moving
+`ubuntu-latest` label. The Unity builder is pinned to upstream GameCI v5.0.1 commit
+`adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1`: [current v4 metadata](https://raw.githubusercontent.com/game-ci/unity-builder/v4/action.yml)
+still declares Node 20, while [the pinned v5.0.1 metadata](https://raw.githubusercontent.com/game-ci/unity-builder/adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1/action.yml)
+declares Node 24. The pinned action retains the workflow's Unity version, project
+path, target platform, build name, output path, and `versioning: None` inputs. Its
+[release notes](https://github.com/game-ci/unity-builder/releases/tag/v5.0.1)
+document the `/dev/shm` setting needed for newer Unity editors. The Windows build
+cache is separate from the EditMode cache.
 
 ### Build time and cache behavior
 
@@ -187,7 +195,7 @@ updates restored state for changed inputs. An explicit save uses the original
 restore key only after the builder and player packaging validation succeed, before
 artifact uploads; an upload failure therefore does not discard a completed build's
 cache. Failed/cancelled builds never save partial Library state. GameCI's
-[Linux build script](https://github.com/game-ci/unity-builder/blob/v4/dist/platforms/ubuntu/steps/build.sh)
+[Linux build script](https://github.com/game-ci/unity-builder/blob/adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1/dist/platforms/ubuntu/steps/build.sh)
 makes the project readable to the runner before cache compression. Cache availability
 still depends on GitHub's branch scope, storage limits and eviction.
 
