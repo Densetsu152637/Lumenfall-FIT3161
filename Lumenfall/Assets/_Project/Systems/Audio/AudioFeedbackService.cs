@@ -47,6 +47,8 @@ namespace Lumenfall.Audio
         private float openingQuietUntil = float.NegativeInfinity;
         public static AudioFeedbackService Instance => instance;
         public AudioContext CurrentContext => signals.Context;
+        /// <summary>True once an ambience clip ships; until then the settings menus hide the Ambience volume.</summary>
+        public static bool HasAmbience => instance != null && instance.clips != null && instance.clips.AnyReady(AudioBus.Ambience);
         public AudioClipStatus GetClipStatus(string cueId) => clips == null ? AudioClipStatus.InvalidConfiguration : clips.GetStatus(cueId);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

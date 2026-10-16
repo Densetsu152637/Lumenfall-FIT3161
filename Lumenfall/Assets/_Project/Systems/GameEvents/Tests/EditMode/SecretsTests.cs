@@ -101,11 +101,16 @@ namespace Lumenfall.Tests.GameEvents
         public void TheDogNoticesOnTheTenthTryThenVisAndRotaraMoveIt()
         {
             GameEventRuntime runtime = new GameEventRuntime(Events());
-            for (int i = 1; i < 4; i++)
-                Assert.That(AnnoyingDogGate.ReplyToTry(runtime, out bool early), Is.Null, "The usual notice, try " + i);
-            for (int i = 4; i < AnnoyingDogGate.AwareAfterTries; i++)
-                Assert.That(AnnoyingDogGate.ReplyToTry(runtime, out bool stirring), Does.StartWith("A dog obstructs the way.").And.Not.Contain("aware"),
+            Assert.That(AnnoyingDogGate.ReplyToTry(runtime, out bool early), Is.Null, "The usual notice on the first try.");
+            HashSet<string> replies = new HashSet<string>();
+            for (int i = 2; i < AnnoyingDogGate.AwareAfterTries; i++)
+            {
+                string reply = AnnoyingDogGate.ReplyToTry(runtime, out bool stirring);
+                Assert.That(reply, Does.StartWith("A dog obstructs the way.").And.Not.Contain("aware"),
                     "The notice hints that persistence pays, try " + i);
+                Assert.That(replies.Add(reply), Is.True, "Each try builds on the last rather than repeating it, try " + i);
+            }
+            Assert.That(replies, Has.Some.Contain("lifted"), "The stirring builds towards lifting the dog.");
             Assert.That(AnnoyingDogGate.ReplyToTry(runtime, out bool opens), Does.Contain("aware").And.Contain("lift"), "Waking hints at Vis.");
             Assert.That(opens, Is.False);
             Assert.That(runtime.GetFlag(AnnoyingDogGate.AwareFlag), Is.True);
@@ -226,25 +231,38 @@ namespace Lumenfall.Tests.GameEvents
             }
             Assert.That(SequenceBreakEnding.KnowsTooMuch(new GameEventRuntime(events), SecretRooms.DogRoomId), Is.False,
                 "The dog's hints are the gate's own notices.");
+            Assert.That(SequenceBreakEnding.HintsFor(SecretRooms.ForgottenRoomId), Is.Empty, "The egg room is outside the sequence break.");
+            Assert.That(SequenceBreakEnding.KnowsTooMuch(new GameEventRuntime(events), SecretRooms.ForgottenRoomId), Is.False,
+                "Following the white dog's trail without Miki's story never ends the game.");
             Assert.That(events.TryGetDialogue(SequenceBreakEnding.KnowledgeDialogueId, out _), Is.True);
 
             // Each hint line records that it was heard.
             (string dialogue, string node, string flag)[] lines =
             {
                 ("chat_luna", "t3", "hint.heard.lantern_shape"), ("chat_moss", "t3", "hint.heard.lantern_place"),
-                ("chat_prof_voltaire", "t2", "hint.heard.closet_shelf"), ("chat_juno", "gossip_fountain", "hint.heard.closet_gossip"),
+                ("chat_juno", "gossip_library", "hint.heard.closet_shelf"), ("chat_juno", "gossip_fountain", "hint.heard.closet_gossip"),
                 ("chat_juno", "gossip_table", "hint.heard.closet_gossip"), ("chat_juno", "gossip_library", "hint.heard.closet_gossip"),
             };
             foreach ((string dialogue, string node, string flag) in lines)
                 Assert.That(Node(events, dialogue, node).onEnterActions.Any(action => action.type == "SetFlag" && action.key == flag && action.boolValue), Is.True,
                     dialogue + "/" + node + " should set " + flag);
+            // Hints can be heard again: each is a topic on the NPC's repeating "more" menu, not a one-time line.
+            foreach ((string dialogue, string node, string flag) in lines)
+                Assert.That(Node(events, dialogue, "more").choices.Any(choice => choice.nextNodeId == node), Is.True,
+                    dialogue + "/" + node + " should be askable again from the menu.");
+            Assert.That(Node(events, "chat_stella", "t6").text, Does.Contain("knocking out pi"), "Stella repeats the dorm-door hint.");
+            Assert.That(Node(events, "chat_stella", "more").choices.Any(choice => choice.nextNodeId == "t6"), Is.True);
+            Assert.That(Node(events, "chat_prof_voltaire", "t2").text, Does.Not.Contain("shelf"), "Juno gives the closet's hints now.");
+            // Prof. Bann's stubborn-dog line is only flavour: it records no hint, so it has no part in the sequence break.
+            Assert.That(Node(events, "chat_prof_bann", "t5").text, Does.Contain("stubborn"));
+            Assert.That(Node(events, "chat_prof_bann", "t5").onEnterActions ?? System.Array.Empty<GameActionDefinition>(), Is.Empty);
         }
 
         [Test]
         public void EverySecretRoomHasAWayInAWayOutAndSomewhereToReturnTo()
         {
             string[] maps = AuthoredMaps();
-            Assert.That(SecretRooms.All.Count(), Is.EqualTo(3));
+            Assert.That(SecretRooms.All.Count(), Is.EqualTo(4));
             foreach (SecretRooms.Room room in SecretRooms.All)
             {
                 RectInt bounds = new RectInt(0, 0, room.Width, room.Height);
@@ -256,11 +274,59 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheWhiteDogsTrailLeadsThroughTheGateToTheForgottenRoom()
+        {
+            GameEventRuntime runtime = new GameEventRuntime(Events());
+            void Visit(params string[] maps) { foreach (string map in maps) WhiteDogTrailSecret.OnMapLoaded(runtime, map); }
+            int Step() => runtime.GetCounter(WhiteDogTrailSecret.StepCounter);
+
+            // Miki tells the story after a few chats.
+            DialogueNodeDefinition hi = Node(Events(), "secret_dev_curls", "hi");
+            DialogueChoiceDefinition story = hi.choices.Single(choice => choice.id == "dog");
+            Assert.That(story.conditions.Single().key, Is.EqualTo("secret.miki.chats"));
+            Assert.That(hi.onEnterActions.Any(action => action.type == "AddCounter" && action.key == "secret.miki.chats"), Is.True);
+            string told = string.Join(" ", new[] { "dog1", "dog2", "dog3" }.Select(id => Node(Events(), "secret_dev_curls", id).text));
+            foreach (string place in new[] { "white dog", "forest", "ice trial", "dorm", "arcane workshop", "library", "gate" })
+                Assert.That(told, Does.Contain(place), "Miki's story mentions " + place);
+
+            // Campus is the hub and does not count; the trail is forest, ice trial, dorm, workshop, library.
+            Visit("westForest", "campus", "C03.IceTrial", "campus", "B01.Ground", "B01.Ground", "B02.Ground");
+            Assert.That(Step(), Is.EqualTo(4));
+            Visit("B03.Ground");
+            Assert.That(Step(), Is.Zero, "A wrong area loses the trail.");
+            Assert.That(WhiteDogTrailSecret.AtTheGate(runtime), Is.False);
+            Visit("C03.IceTrial");
+            Assert.That(Step(), Is.Zero, "The trail starts in the forest.");
+            Visit("deepForest", "westForest", "C03.IceTrial", "B01.Ground", "B04.Ground");
+            Assert.That(Step(), Is.Zero, "Skipping the workshop loses the trail.");
+            Visit("westForest", "C03.IceTrial", "B01.Ground", "B02.Ground", "B04.Ground", "campus");
+            Assert.That(WhiteDogTrailSecret.AtTheGate(runtime), Is.True);
+
+            runtime.SetFlag(SecretRooms.VisitedFlag(SecretRooms.ForgottenRoomId), true);
+            Assert.That(WhiteDogTrailSecret.AtTheGate(runtime), Is.False, "The room opens once.");
+            Assert.That(WhiteDogTrailSecret.TryFollowAtGate(runtime), Is.False);
+            Assert.That(SequenceBreakEnding.KnowsTooMuch(runtime, SecretRooms.ForgottenRoomId), Is.False, "It needs no hints.");
+            // The man inside is dressed as an old man and talks through his own dialogue.
+            Assert.That(DevChibis.Dressed, Does.Contain(DevChibis.OldMan));
+            Assert.That(DevChibis.OldMan.FullBeard, Is.True);
+            Assert.That(Events().TryGetDialogue(DevChibis.OldMan.DialogueId, out _), Is.True);
+            // He is baked into a prefab with saved materials, so the room does not dress him at runtime.
+            GameObject baked = SecretRoomArt.Load()?.forgottenMan;
+            Assert.That(baked, Is.Not.Null, "Open Unity once (or run Lumenfall/Secrets/Bake Forgotten Man) and commit the baked prefab.");
+            Assert.That(baked.transform.Find("Dev Dressing"), Is.Not.Null, "The baked man is already dressed.");
+            foreach (Renderer part in baked.GetComponentsInChildren<Renderer>(true))
+                foreach (Material material in part.sharedMaterials)
+                    if (material != null) Assert.That(UnityEditor.EditorUtility.IsPersistent(material), Is.True, part.name + " uses a saved material.");
+            Assert.That(SecretRooms.TryGetRoom(SecretRooms.ForgottenRoomId, out SecretRooms.Room room) && room.ReturnCell == AnnoyingDogGate.GateCell + Vector2Int.down, Is.True,
+                "Leaving the room returns the player to the north gate.");
+        }
+
+        [Test]
         public void EverySecretGiftIsACurioTheGiverHandsOverOnce()
         {
             GameEventCatalog events = Events();
             GameEventRuntime runtime = new GameEventRuntime(events);
-            string[] givers = { "secret_dev", "secret_dog", "secret_janitor", "secret_lantern_spirit" };
+            string[] givers = { "secret_dev", "secret_dog", "secret_janitor", "secret_lantern_spirit", "secret_forgotten_man" };
             List<string> given = new List<string>();
             foreach (string giver in givers)
             {

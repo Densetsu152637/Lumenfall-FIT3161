@@ -62,8 +62,19 @@ namespace Lumenfall.Startup
         private enum Page { Main, Load, NewGame, Settings, Controls, Graphics }
         private enum Phase { Intro, Menu, Closing }
 
-        private static readonly AudioBus[] VolumeBuses = { AudioBus.Master, AudioBus.Music, AudioBus.Sfx, AudioBus.Ambience };
-        private static readonly string[] VolumeLabels = { "Master volume", "Music", "Sound effects", "Ambience" };
+        private static readonly AudioBus[] AllVolumeBuses = { AudioBus.Master, AudioBus.Music, AudioBus.Sfx, AudioBus.Ambience };
+        private static readonly string[] AllVolumeLabels = { "Master volume", "Music", "Sound effects", "Ambience" };
+        // Ambience (last) only gets a slider once the game has ambience to play.
+        private static int VolumeCount => AudioFeedbackService.HasAmbience ? AllVolumeBuses.Length : AllVolumeBuses.Length - 1;
+        private static AudioBus[] VolumeBuses => FirstOf(AllVolumeBuses, VolumeCount);
+        private static string[] VolumeLabels => FirstOf(AllVolumeLabels, VolumeCount);
+        private static T[] FirstOf<T>(T[] items, int count)
+        {
+            if (count >= items.Length) return items;
+            T[] first = new T[count];
+            Array.Copy(items, first, count);
+            return first;
+        }
         private static readonly string[] AntialiasingLabels = { "Off", "FXAA", "SMAA" };
         private static readonly string[] ShadingLabels = { "Low", "Medium", "High" };
 

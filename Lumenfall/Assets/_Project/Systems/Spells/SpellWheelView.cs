@@ -296,6 +296,46 @@ namespace Lumenfall.Spells
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// A card near the top of the screen announcing a newly learned spell: its orb bursting into view, the name in its
+        /// colour and what it does. <paramref name="elapsed"/> runs from 0 to <paramref name="duration"/>; it eases in,
+        /// holds and fades.
+        /// </summary>
+        public void DrawNewSpell(SpellId spell, Func<SpellId, Texture2D> icon, float elapsed, float duration)
+        {
+            if (Event.current.type != EventType.Repaint || elapsed < 0f || elapsed > duration) return;
+            EnsureResources();
+            float now = Time.unscaledTime;
+            float ui = UiScale();
+            SetFontSizes(ui);
+            float appear = EaseOut(Mathf.Clamp01(elapsed / 0.4f));
+            float alpha = Mathf.Min(appear, Mathf.Clamp01((duration - elapsed) / 0.6f));
+            float pop = Mathf.Clamp01(elapsed / 0.8f);
+            Color color = ElementColor(spell), bright = Color.Lerp(color, Color.white, 0.55f);
+            Color previousColor = GUI.color;
+
+            string heading = "New spell learned", name = DisplayName(spell), description = Description(spell);
+            float r = 30f * ui * (0.6f + 0.4f * EaseOutBack(Mathf.Clamp01(elapsed / 0.5f)));
+            float textWidth = Mathf.Max(chipNameStyle.CalcSize(new GUIContent(name)).x, chipHintStyle.CalcSize(new GUIContent(description)).x,
+                chipHintStyle.CalcSize(new GUIContent(heading)).x);
+            float width = 30f * ui * 3.2f + textWidth + 28f * ui, height = 84f * ui;
+            Rect card = new Rect((Screen.width - width) * 0.5f, Screen.height * 0.16f - (1f - appear) * 18f * ui, width, height);
+            GUI.color = Color.white;
+            GUI.DrawTexture(card, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, WithAlpha(Plate, Plate.a * alpha), 0f, 16f * ui);
+            GUI.DrawTexture(card, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, WithAlpha(color, (0.55f + 0.35f * (1f - pop)) * alpha), 1.5f * ui, 16f * ui);
+
+            Vector2 orb = new Vector2(card.x + 30f * ui * 1.6f, card.center.y);
+            Vector2 echo = new Vector2(Mathf.Sin(now * 1.7f), Mathf.Cos(now * 1.3f)) * r * 0.3f;
+            DrawOrb(spell, orb, r, alpha, 0.5f + 0.1f * Mathf.Sin(now * 2.5f) + (1f - pop), 1f, icon(spell), echo, now, ui, 41);
+            if (pop < 1f) DrawBurst(orb, color, pop, ui, 90f);
+
+            float textLeft = card.x + 30f * ui * 3.2f;
+            Label(new Rect(textLeft, card.y + 10f * ui, textWidth, 18f * ui), heading, chipHintStyle, WithAlpha(MutedText, alpha));
+            Label(new Rect(textLeft, card.y + 30f * ui, textWidth, 22f * ui), name, chipNameStyle, WithAlpha(bright, alpha));
+            Label(new Rect(textLeft, card.y + 54f * ui, textWidth, 20f * ui), description, chipHintStyle, WithAlpha(new Color(0.94f, 0.92f, 1f, 1f), alpha));
+            GUI.color = previousColor;
+        }
+
         public void Dispose()
         {
             foreach (Texture2D texture in new[] { glow, disc, ring, runes, sparkle, beam, line, gear, frame })
@@ -327,9 +367,9 @@ namespace Lumenfall.Spells
                 case SpellId.Ampere: return "Charge a relic with power, or drain it.";
                 case SpellId.Weave: return "Spin a cable of light between relics.";
                 case SpellId.Gravitate: return "Push an object one step the way you face.";
-                case SpellId.Rotara: return "Turn a gear a quarter turn.";
+                case SpellId.Rotara: return "Turn an object to face a new way.";
                 case SpellId.Glaciate: return "Freeze an object and send it sliding.";
-                case SpellId.Vis: return "Set a crooked thing true.";
+                case SpellId.Vis: return "Lift an object and carry it somewhere new.";
                 case SpellId.LostEchoes: return "Listen for hidden things nearby.";
                 default: return string.Empty;
             }

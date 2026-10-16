@@ -126,6 +126,57 @@ namespace Lumenfall.Tests.World
             }
         }
 
+        [UnityTest]
+        public IEnumerator LearningASpellSelectsAndAnnouncesItOnce()
+        {
+            StartupMenu menu = Object.FindAnyObjectByType<StartupMenu>();
+            bool menuEnabled = menu != null && menu.enabled;
+            float previousTimeScale = Time.timeScale;
+            GameObject host = null;
+            WorldStateService state = WorldStateService.Instance;
+            try
+            {
+                if (menuEnabled) menu.enabled = false;
+                Time.timeScale = 1f;
+                GameEventManager.Instance.ReloadDefinitions();
+                GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+                runtime.SetFlag("spell.unlocked.Ampere", true);
+                state.ResetAllState();
+                state.BeginMapRebuild("spell-learn-regression");
+                host = new GameObject("Spell learning test");
+                host.SetActive(false);
+                host.AddComponent<GridWorld>();
+                var player = new GameObject("Learning player");
+                player.transform.SetParent(host.transform, false);
+                player.AddComponent<GridMover>();
+                SpellCaster caster = player.AddComponent<SpellCaster>();
+                state.EndMapRebuild();
+                host.SetActive(true);
+                yield return null;
+                Assert.That(caster.AnnouncedSpell, Is.Null, "A spell already known when play starts is not news.");
+
+                // A lesson makes the spell usable first; finishing it then unlocks the same spell.
+                runtime.SetFlag("spell.lesson.Vis", true);
+                Assert.That(caster.SelectedSpell, Is.EqualTo(SpellId.Vis), "A new spell is selected at once.");
+                Assert.That(caster.AnnouncedSpell, Is.EqualTo(SpellId.Vis));
+                runtime.SetFlag("spell.unlocked.Rotara", true);
+                Assert.That(caster.AnnouncedSpell, Is.EqualTo(SpellId.Rotara), "The latest new spell is the one announced.");
+                runtime.SetFlag("spell.unlocked.Vis", true);
+                Assert.That(caster.SelectedSpell, Is.EqualTo(SpellId.Rotara), "Unlocking a spell already learned in its lesson is not news.");
+
+                runtime.ResetState();
+                Assert.That(caster.AnnouncedSpell, Is.Null, "A new game or load drops a pending announcement.");
+            }
+            finally
+            {
+                if (host != null) Object.DestroyImmediate(host);
+                state.ResetAllState();
+                GameEventManager.Instance.ReloadDefinitions();
+                if (menu != null) menu.enabled = menuEnabled;
+                Time.timeScale = previousTimeScale;
+            }
+        }
+
         private static void OpenWheel(SpellCaster caster)
         {
             // Open is an input-only seam; casts and all effects below use the real public gameplay APIs.

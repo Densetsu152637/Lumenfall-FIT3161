@@ -265,6 +265,9 @@ namespace Lumenfall.GridMovement
             if (KeyBindings.WasPressed(GameAction.Talk)) TryEnter(player);
         }
 
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
+
         private void OnGUI()
         {
             using (UiScale.Begin()) DrawGui();
@@ -346,11 +349,20 @@ namespace Lumenfall.GridMovement
             instance.hideAt = instance.shownAt + Mathf.Max(seconds, FadeSeconds * 2f);
         }
 
+        /// <summary>Hides the notice at once, for another card (such as a building sign) taking its place.</summary>
+        public static void Dismiss()
+        {
+            if (instance != null) instance.hideAt = Mathf.Min(instance.hideAt, Time.unscaledTime);
+        }
+
         private void Update()
         {
             if (!IsVisible) return;
             skin.Tick(Time.unscaledDeltaTime);
         }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {

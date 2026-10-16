@@ -48,6 +48,8 @@ namespace Lumenfall.GameEvents
 
         private void Awake()
         {
+            // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+            useGUILayout = false;
             if (instance != null && instance != this)
             {
                 Destroy(gameObject);

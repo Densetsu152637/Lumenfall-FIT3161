@@ -246,6 +246,9 @@ namespace Lumenfall.Cutscenes
             }
         }
 
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
+
         private void OnGUI()
         {
             if (revealedAt >= 0f || sparks == null || Event.current.type != EventType.Repaint) return;

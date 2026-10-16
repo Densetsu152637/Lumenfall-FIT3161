@@ -6,14 +6,16 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Startup;
+using Lumenfall.Rendering;
 using UnityEngine;
 
 namespace Lumenfall.Story
 {
     /// <summary>
     /// The small rooms the campus secrets lead to: the developers' bedroom behind the dorm doors
-    /// (<see cref="DormKnockSecret"/>), the dog's room past the north gate (<see cref="AnnoyingDogGate"/>) and the staff
-    /// closet beside the main hall (<see cref="StaffClosetSecret"/>). Like Orio's legacy hall, each is built in code and
+    /// (<see cref="DormKnockSecret"/>), the dog's room past the north gate (<see cref="AnnoyingDogGate"/>), the staff
+    /// closet beside the main hall (<see cref="StaffClosetSecret"/>) and the forgotten room the white dog's trail leads to
+    /// (<see cref="WhiteDogTrailSecret"/>). Like Orio's legacy hall, each is built in code and
     /// resolved by the world loader through its map id, so a save made inside one restores. Each has one person to talk to
     /// (whose dialogue hands over a curio, see <see cref="MiscCollectibles.SecretRewards"/>) and a glowing ring by the
     /// door: stepping onto it takes the player back to where the secret was found. A room can be entered once: entering
@@ -25,6 +27,7 @@ namespace Lumenfall.Story
         public const string DevRoomId = "secret.devRoom";
         public const string DogRoomId = "secret.dogRoom";
         public const string ClosetId = "secret.staffCloset";
+        public const string ForgottenRoomId = "secret.forgottenRoom";
 
         private const string ExitName = "Secret Exit Ring";
         private const string SleeperName = "Zzz Anchor";
@@ -62,6 +65,12 @@ namespace Lumenfall.Story
                 Id = ClosetId, Name = "Staff closet", Width = 6, Height = 5, Arrival = new Vector2Int(2, 1), Exit = new Vector2Int(2, 0),
                 // In front of the main hall door.
                 ReturnMapId = "campus", ReturnCell = new Vector2Int(18, 44), Build = BuildCloset
+            },
+            [ForgottenRoomId] = new Room
+            {
+                Id = ForgottenRoomId, Name = "A forgotten room", Width = 5, Height = 9, Arrival = new Vector2Int(2, 1), Exit = new Vector2Int(2, 0),
+                // Just south of the campus north gate, where the white dog's trail ends.
+                ReturnMapId = "campus", ReturnCell = new Vector2Int(26, 87), Build = BuildForgottenRoom
             },
         };
 
@@ -150,12 +159,15 @@ namespace Lumenfall.Story
                     if (child.name == ExitName) instance.exitRing = child;
                     else if (child.name == SleeperName) instance.sleepers.Add(child);
                 }
-            // The developers' beards, curls and collars are fitted to the placed models.
-            if (string.Equals(mapId, DevRoomId, StringComparison.OrdinalIgnoreCase) && areaRoot != null)
+            // The developers' (and the forgotten man's) beards, curls and collars are fitted to the placed models.
+            bool dressed = string.Equals(mapId, DevRoomId, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(mapId, ForgottenRoomId, StringComparison.OrdinalIgnoreCase);
+            if (dressed && areaRoot != null)
                 foreach (DynamicNpc npc in areaRoot.GetComponentsInChildren<DynamicNpc>(true))
-                    foreach (DevChibis.Look look in DevChibis.All)
+                    foreach (DevChibis.Look look in DevChibis.Dressed)
                         if (npc.Definition != null && npc.Definition.id == look.Id) DevChibis.Dress(npc.gameObject, look);
             StaffClosetSecret.RegisterForMap(mapId, areaRoot);
+            WhiteDogTrailSecret.OnMapLoaded(GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null, mapId);
             LanternBearerSecret.RegisterForMap(mapId, world, areaRoot);
         }
 
@@ -173,6 +185,9 @@ namespace Lumenfall.Story
             GameEventManager.Instance?.Runtime?.ActiveDialogue == null && DataDrivenWorldLoader.Instance != null;
 
         // Sleepers snore: a drifting "z Z z" over each one.
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
+
         private void OnGUI()
         {
             using (UiScale.Begin()) DrawGui();
@@ -302,6 +317,43 @@ namespace Lumenfall.Story
             Person(root, art, "secret_janitor", "Janitor", "secret_janitor", new Vector2Int(2, 3), 180f);
         }
 
+        // A long, dim, empty room at the end of the white dog's trail. At the far end a man stands facing the door, beside a small
+        // stand with an egg on it, under one cold lamp. A photograph frame hangs on the wall behind him, empty.
+        private static void BuildForgottenRoom(Transform root, SecretRoomArt art)
+        {
+            Room room = Rooms[ForgottenRoomId];
+            Shell(root, room, new Color(0.16f, 0.16f, 0.19f), new Color(0.24f, 0.24f, 0.28f), 2.2f);
+            Vector2Int man = new Vector2Int(2, 7);
+            // An old man: white hair and beard, spectacles and a faded coat (DevChibis.OldMan), leaning on a stick. The
+            // baked prefab is used as it is; without it, a model is recoloured here and dressed when the room is placed.
+            GameObject oldMan = null;
+            if (art != null && art.forgottenMan != null)
+            {
+                oldMan = Instantiate(art.forgottenMan, root);
+                oldMan.name = DevChibis.OldMan.Name;
+            }
+            if (oldMan == null) oldMan = DevChibis.Create(art != null ? art.devGlasses : null, DevChibis.OldMan, root);
+            if (oldMan == null)
+                oldMan = Part(PrimitiveType.Capsule, DevChibis.OldMan.Name, root, new Vector3(0f, 0.8f, 0f), new Vector3(0.6f, 0.8f, 0.6f), DevChibis.OldMan.Outfit, 0.05f);
+            oldMan.transform.localPosition = new Vector3(man.x, oldMan.transform.localPosition.y, man.y);
+            oldMan.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Talker(oldMan, DevChibis.OldMan.Id, DevChibis.OldMan.Name, DevChibis.OldMan.DialogueId);
+            Blocker(root, man, Vector2Int.one);
+            Part(PrimitiveType.Cylinder, "Walking Stick", root, new Vector3(man.x - 0.42f, 0.5f, man.y - 0.12f), new Vector3(0.05f, 0.5f, 0.05f),
+                new Color(0.4f, 0.28f, 0.18f), 0f, Quaternion.Euler(0f, 0f, -8f));
+            Part(PrimitiveType.Sphere, "Stick Handle", root, new Vector3(man.x - 0.49f, 1.0f, man.y - 0.12f), new Vector3(0.1f, 0.08f, 0.1f),
+                new Color(0.4f, 0.28f, 0.18f), 0f);
+            // The egg on its stand, beside him.
+            Part(PrimitiveType.Cylinder, "Egg Stand", root, new Vector3(3f, 0.35f, 7f), new Vector3(0.35f, 0.35f, 0.35f), new Color(0.3f, 0.28f, 0.3f), 0.02f);
+            Part(PrimitiveType.Sphere, "Egg", root, new Vector3(3f, 0.82f, 7f), new Vector3(0.2f, 0.26f, 0.2f), new Color(0.96f, 0.93f, 0.86f), 0.25f);
+            Blocker(root, new Vector2Int(3, 7), Vector2Int.one);
+            // An empty frame where a photograph used to be.
+            Part(PrimitiveType.Cube, "Empty Frame", root, new Vector3(2f, 1.5f, 8.36f), new Vector3(0.7f, 0.5f, 0.05f), new Color(0.42f, 0.33f, 0.24f), 0f);
+            Part(PrimitiveType.Cube, "Faded Patch", root, new Vector3(2f, 1.5f, 8.33f), new Vector3(0.56f, 0.38f, 0.02f), new Color(0.62f, 0.62f, 0.66f), 0.05f);
+            Glow(root, "Cold Lamp", new Vector3(2f, 1.9f, 6.6f), new Color(0.75f, 0.82f, 1f), 4.5f, 1.1f);
+            Glow(root, "Doorway Light", new Vector3(2f, 1.2f, 1.2f), new Color(0.75f, 0.8f, 0.95f), 2.5f, 0.45f);
+        }
+
         // ---- Parts ----
 
         private static void Shell(Transform root, Room room, Color floor, Color wall, float wallHeight)
@@ -424,7 +476,7 @@ namespace Lumenfall.Story
         internal static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 localPosition, Vector3 localScale, Color colour,
             float emission, Quaternion? rotation = null)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             part.transform.SetParent(parent, false);
             part.transform.localPosition = localPosition;
@@ -434,11 +486,14 @@ namespace Lumenfall.Story
             Collider collider = part.GetComponent<Collider>();
             if (collider != null) DestroyImmediate(collider);
             Renderer renderer = part.GetComponent<Renderer>();
-            renderer.material.color = colour;
-            renderer.material.SetColor("_EmissionColor", colour * emission);
-            renderer.material.EnableKeyword("_EMISSION");
+            // In play each part gets its own copy of the material; in the editor (baking a prefab) the copy is made
+            // explicitly, since renderer.material there would leak an untracked copy into the scene.
+            Material material = Application.isPlaying ? renderer.material : (renderer.sharedMaterial = new Material(renderer.sharedMaterial));
+            material.color = colour;
+            material.SetColor("_EmissionColor", colour * emission);
+            material.EnableKeyword("_EMISSION");
             // Matte, so hair and felt read as soft rather than glossy plastic.
-            renderer.material.SetFloat("_Smoothness", 0.12f);
+            material.SetFloat("_Smoothness", 0.12f);
             return part;
         }
     }

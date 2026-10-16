@@ -35,6 +35,36 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void EveryDialoguePageBreaksBetweenSentences()
+        {
+            // A sentence longer than a page is cut between words, so a line would stop mid-sentence and finish on the
+            // next page (often the one showing the choices). Checked with the longest name a player can choose.
+            string longestName = new string('W', Lumenfall.Player.PlayerProfile.MaxNameLength);
+            int checkedNodes = 0;
+            foreach (TextAsset asset in Resources.LoadAll<TextAsset>("GameEvents"))
+            {
+                if (!GameEventCatalog.TryParseJson(asset.text, asset.name, out GameEventDatabaseDefinition database, out _) ||
+                    database.dialogues == null) continue;
+                foreach (DialogueDefinition dialogue in database.dialogues)
+                foreach (DialogueNodeDefinition node in dialogue.nodes ?? new DialogueNodeDefinition[0])
+                {
+                    if (string.IsNullOrWhiteSpace(node.text)) continue;
+                    checkedNodes++;
+                    List<string> pages = Lumenfall.DataDriven.DialoguePaging.Split(node.text.Replace("{player}", longestName),
+                        Lumenfall.DataDriven.DialogueOverlay.MaxPageCharacters);
+                    for (int i = 0; i < pages.Count - 1; i++)
+                    {
+                        string visible = System.Text.RegularExpressions.Regex.Replace(pages[i], "<[^>]+>", string.Empty).TrimEnd();
+                        char last = visible.Length > 0 ? visible[visible.Length - 1] : '.';
+                        Assert.That(".!?\"'”’)…".IndexOf(last), Is.GreaterThanOrEqualTo(0),
+                            asset.name + "/" + dialogue.id + "/" + node.id + " breaks mid-sentence after: " + visible);
+                    }
+                }
+            }
+            Assert.That(checkedNodes, Is.GreaterThan(100), "The dialogue resources should load.");
+        }
+
+        [Test]
         public void QuestDialoguePackage_PrerequisitesAndCompletionEventsFollowLifecycle()
         {
             TextAsset asset = Resources.Load<TextAsset>("GameEvents/quest_npc_dialogue");

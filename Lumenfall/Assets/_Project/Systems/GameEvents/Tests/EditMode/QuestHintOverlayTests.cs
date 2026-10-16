@@ -92,7 +92,7 @@ namespace Lumenfall.Tests.GameEvents
 
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"));
-            Assert.That(ReadField<string>("tracker"), Is.EqualTo("Relics lit: 0/5"));
+            Assert.That(ReadField<string>("tracker"), Is.EqualTo("Obelisks lit: 0/5"));
             Assert.That(ReadField<string>("hint"), Does.Contain("select Ampere"));
 
             for (int initial = 0; initial < 32; initial++)
@@ -103,7 +103,7 @@ namespace Lumenfall.Tests.GameEvents
                 while (current != 31 && steps++ < 32)
                 {
                     Assert.That(StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string instruction, out Vector2Int target), Is.True, $"board={current}");
-                    Assert.That(instruction, Does.Contain("Next: cast Ampere on relic"));
+                    Assert.That(instruction, Does.Contain("Next: cast Ampere on the stone obelisk"));
                     int switchIndex = Array.IndexOf(BoardCells, target);
                     Assert.That(switchIndex, Is.GreaterThanOrEqualTo(0), $"board={current} target={target}");
                     current ^= ToggleMasks[switchIndex];
@@ -111,7 +111,7 @@ namespace Lumenfall.Tests.GameEvents
                 }
                 Assert.That(current, Is.EqualTo(31), $"starting board={initial}");
                 Assert.That(StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string solved, out _), Is.True);
-                Assert.That(solved, Does.Contain("All five relics are lit"));
+                Assert.That(solved, Does.Contain("All five obelisks are lit"));
             }
 
             SetBoard(0);
@@ -177,7 +177,7 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Walk around this mysterious forest"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D").And.Contain("to sprint").And.Contain("speed up dialogue"));
 
             runtime.SetFlag(LateToOrientationScene.MetFlag, true);
             RefreshHint();
@@ -189,7 +189,20 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(ReadField<string>("title"), Is.EqualTo("Speak to Professor Bann"));
             Assert.That(ReadField<string>("hint"), Does.Contain("fountain").And.Contain("Green"));
 
+            // A quest taken on before meeting Prof. Bann is guided first; the Bann step returns once it is done.
+            runtime.StartQuest("orio_patch_notes");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Patch Notes"));
+            runtime.CompleteQuest("orio_patch_notes");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Speak to Professor Bann"));
+
             runtime.SetFlag(SettlingInScene.BannMetFlag, true);
+            // Marigold's first visit is still shown while a quest is active.
+            runtime.StartQuest("stella_first_light");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Go to Dormitory and check your room"));
+            runtime.CompleteQuest("stella_first_light");
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Go to Dormitory and check your room"));
             Assert.That(ReadField<string>("hint"), Does.Contain("Dormitory is below Kit"));
@@ -198,7 +211,7 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Talk with the Receptionist"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("ginger").And.Contain("glasses"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("brown hair").And.Contain("glasses"));
 
             runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
             RefreshHint();

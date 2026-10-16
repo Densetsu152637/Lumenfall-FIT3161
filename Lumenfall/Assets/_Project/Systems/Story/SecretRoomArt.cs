@@ -27,6 +27,11 @@ namespace Lumenfall.Story
         public GameObject bookcase;
         public GameObject books;
         public GameObject plant;
+        /// <summary>
+        /// The forgotten man, already dressed (white hair and beard, spectacles, coat), baked by
+        /// <c>Lumenfall/Secrets/Bake Forgotten Man</c>. When it is missing the room dresses a model at runtime instead.
+        /// </summary>
+        public GameObject forgottenMan;
 
         private static SecretRoomArt loaded;
 

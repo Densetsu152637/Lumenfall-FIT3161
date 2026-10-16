@@ -47,6 +47,13 @@ namespace Lumenfall.Audio
             }
             ConfigurationIssues = issues.AsReadOnly();
         }
+        /// <summary>True when at least one cue on <paramref name="bus"/> has a clip ready to play.</summary>
+        public bool AnyReady(AudioBus bus)
+        {
+            foreach (Entry entry in entries.Values)
+                if (entry.Status == AudioClipStatus.Ready && Enum.TryParse(entry.Definition.bus, false, out AudioBus cueBus) && cueBus == bus) return true;
+            return false;
+        }
         public AudioClipStatus GetStatus(string id) => id != null && entries.TryGetValue(id, out Entry entry) ? entry.Status : AudioClipStatus.UnknownCue;
         public bool TryGetReady(string id, out AudioCueDefinition definition, out AudioClip clip)
         {

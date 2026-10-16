@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lumenfall.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
@@ -402,6 +403,9 @@ namespace Lumenfall.Quests
             item != null && Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
 
         private void ShowFeedback(string message) { feedback = message; feedbackUntil = Time.unscaledTime + 4f; }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {
@@ -833,7 +837,7 @@ namespace Lumenfall.Quests
 
         private GameObject Part(PrimitiveType type, string name, Vector3 position, Vector3 scale, Color color, bool emissive = false)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             Collider collider = part.GetComponent<Collider>();
             if (collider != null) Destroy(collider);

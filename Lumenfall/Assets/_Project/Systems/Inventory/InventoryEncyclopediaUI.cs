@@ -70,9 +70,9 @@ namespace Lumenfall.Inventory
                 { SpellId.Ampere, "Toggle power in a compatible object." },
                 { SpellId.Weave, "Connect a compatible relic to a powered partner." },
                 { SpellId.Gravitate, "Move a compatible object across the grid." },
-                { SpellId.Rotara, "Rotate a compatible mechanism." },
+                { SpellId.Rotara, "Rotate a compatible object a quarter turn to face a new direction." },
                 { SpellId.Glaciate, "Freeze and slide a compatible object." },
-                { SpellId.Vis, "Align a compatible object, or push a relic into its socket." },
+                { SpellId.Vis, "Lift a compatible object, carry it with you, and set it down somewhere new." },
                 { SpellId.LostEchoes, "Reveal hidden points of interest." }
             };
 
