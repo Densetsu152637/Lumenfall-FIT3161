@@ -87,7 +87,9 @@ namespace Lumenfall.Controls
         /// <summary>Escape cancels rebinding and arrow keys are reserved for movement, so neither can be bound.</summary>
         public static bool IsBindable(Key key)
         {
-            if (key == Key.None || key == Key.Escape || key == Key.IMESelected) return false;
+            string keyName = Enum.GetName(typeof(Key), key);
+            // IMESelected is an obsolete dummy enum entry; the actual IME signal is a separate ButtonControl.
+            if (keyName == null || key == Key.None || key == Key.Escape || keyName == "IMESelected") return false;
             foreach (Key reserved in FixedAlternates.Values) if (key == reserved) return false;
             return true;
         }

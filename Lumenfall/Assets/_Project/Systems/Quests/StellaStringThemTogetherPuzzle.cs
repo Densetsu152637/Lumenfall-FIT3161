@@ -312,7 +312,7 @@ namespace Lumenfall.Quests
 
         private static GameObject FindInactiveObject(string objectName)
         {
-            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include))
                 if (candidate.name == objectName) return candidate.gameObject;
             return null;
         }

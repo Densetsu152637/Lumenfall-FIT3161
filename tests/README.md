@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 342 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -41,6 +41,7 @@ The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graph
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
+| Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
 | Opening forest story | LateToOrientationTests | 4 |
@@ -50,7 +51,7 @@ The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graph
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Dormitory onboarding | SettlingInTests | 6 |
-| **Gameplay rules / EditMode** | | **303** |
+| **Gameplay rules / EditMode** | | **342** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

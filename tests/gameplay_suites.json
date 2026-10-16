@@ -11,6 +11,7 @@
         "Lumenfall.Startup.Tests.GraphicsPreferencesTests": 13,
         "Lumenfall.Startup.Tests.GraphicsRecommendationsTests": 17,
         "Lumenfall.Startup.Tests.GraphicsShaderStrippingTests": 3,
+        "Lumenfall.Startup.Tests.KeyBindingsTests": 18,
         "Lumenfall.Tests.GameEvents.AmbientCastTests": 7,
         "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 16,
         "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,

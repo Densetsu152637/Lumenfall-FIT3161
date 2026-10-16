@@ -9,7 +9,6 @@ using Lumenfall.Inventory;
 using Lumenfall.Spells;
 using Lumenfall.DataDriven;
 using Lumenfall.Startup;
-using Lumenfall.Controls;
 using Lumenfall.Cutscenes;
 using Lumenfall.Story;
 
@@ -748,7 +747,7 @@ namespace Lumenfall.Quests
                 pausedTimeScale = Time.timeScale;
                 Time.timeScale = 0f;
                 pausedTime = true;
-                foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>(FindObjectsSortMode.None))
+                foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>())
                     if (input != null && input.enabled) { input.enabled = false; pausedInputs.Add(input); }
             }
             else

@@ -1656,7 +1656,7 @@ namespace Lumenfall.Startup
                 return;
             }
 
-            foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>(FindObjectsSortMode.None))
+            foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>())
             {
                 if (input != null && input.enabled)
                 {
@@ -1664,7 +1664,7 @@ namespace Lumenfall.Startup
                     disabledInputs.Add(input);
                 }
             }
-            foreach (DialogueOverlay overlay in FindObjectsByType<DialogueOverlay>(FindObjectsSortMode.None))
+            foreach (DialogueOverlay overlay in FindObjectsByType<DialogueOverlay>())
             {
                 if (overlay != null && overlay.enabled)
                 {
@@ -1672,7 +1672,7 @@ namespace Lumenfall.Startup
                     disabledDialogueOverlays.Add(overlay);
                 }
             }
-            foreach (GameSaveOverlay overlay in FindObjectsByType<GameSaveOverlay>(FindObjectsSortMode.None))
+            foreach (GameSaveOverlay overlay in FindObjectsByType<GameSaveOverlay>())
             {
                 if (overlay != null && overlay.enabled)
                 {
