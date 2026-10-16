@@ -9383,7 +9383,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1310615841210125024}
-  - {fileID: 5984621065817932298}
   - {fileID: 2197604506210482009}
   m_Father: {fileID: 7610459634833305052}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -10279,12 +10278,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5141092606682525517}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 21.5, y: 0, z: 51}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8827732554740537839}
+  m_Father: {fileID: 9045162127430858443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &5088809944836358839
 MeshFilter:
@@ -15834,6 +15833,127 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 13}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7300000000000008019
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7300000000000015938}
+  - component: {fileID: 7300000000000023857}
+  m_Layer: 0
+  m_Name: P.C06
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7300000000000015938
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300000000000008019}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -40, y: 0, z: -23}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3054605415130267019}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7300000000000023857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300000000000008019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
+  world: {fileID: 0}
+  extendPositiveX: 0
+  extendNegativeX: 1
+  extendPositiveZ: 1
+  extendNegativeZ: 1
+  legacyFootprintSize: {x: 0, y: 0}
+  content: {fileID: 11400000, guid: 100000000000000000000000000000a1, type: 2}
+  preserveEntryOffset: 0
+  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
+  gizmoFillOpacity: 0.22
+--- !u!1 &7300000000000031776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7300000000000039695}
+  - component: {fileID: 7300000000000047614}
+  - component: {fileID: 7300000000000055533}
+  m_Layer: 0
+  m_Name: P.C07
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7300000000000039695
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300000000000031776}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -83, y: 0, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3054605415130267019}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7300000000000047614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300000000000031776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
+  world: {fileID: 0}
+  extendPositiveX: 1
+  extendNegativeX: 1
+  extendPositiveZ: 0
+  extendNegativeZ: 0
+  legacyFootprintSize: {x: 0, y: 0}
+  content: {fileID: 11400000, guid: 100000000000000000000000000000a2, type: 2}
+  preserveEntryOffset: 0
+  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
+  gizmoFillOpacity: 0.22
+--- !u!114 &7300000000000055533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300000000000031776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d3e9b1c4a5f4e2b8c6d0a1f2e3b4c5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Story.AnnoyingDogGate
 --- !u!1 &7326430974252047781
 GameObject:
   m_ObjectHideFlags: 0
@@ -30193,7 +30313,10 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 5197bd3e79eddcd4d9ac7756e90c423c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 1b8590338c9047949ae5b8cf607f251d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5984621065817932298}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1b8590338c9047949ae5b8cf607f251d, type: 3}
       insertIndex: -1
@@ -30612,124 +30735,3 @@ DefaultAsset:
   m_Message: This default asset was generated because the worker process has crashed
     during last import.
   m_IsWarning: 1
---- !u!1 &7300000000000008019
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7300000000000015938}
-  - component: {fileID: 7300000000000023857}
-  m_Layer: 0
-  m_Name: P.C06
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7300000000000015938
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7300000000000008019}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -40, y: 0, z: -23}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3054605415130267019}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7300000000000023857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7300000000000008019}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
-  world: {fileID: 0}
-  extendPositiveX: 0
-  extendNegativeX: 1
-  extendPositiveZ: 1
-  extendNegativeZ: 1
-  legacyFootprintSize: {x: 0, y: 0}
-  content: {fileID: 11400000, guid: 100000000000000000000000000000a1, type: 2}
-  preserveEntryOffset: 0
-  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
-  gizmoFillOpacity: 0.22
---- !u!1 &7300000000000031776
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7300000000000039695}
-  - component: {fileID: 7300000000000047614}
-  - component: {fileID: 7300000000000055533}
-  m_Layer: 0
-  m_Name: P.C07
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7300000000000039695
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7300000000000031776}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -83, y: 0, z: 1}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3054605415130267019}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7300000000000047614
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7300000000000031776}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa10b705fa104f29a686ee12bbe92ccf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridPortal
-  world: {fileID: 0}
-  extendPositiveX: 1
-  extendNegativeX: 1
-  extendPositiveZ: 0
-  extendNegativeZ: 0
-  legacyFootprintSize: {x: 0, y: 0}
-  content: {fileID: 11400000, guid: 100000000000000000000000000000a2, type: 2}
-  preserveEntryOffset: 0
-  gizmoColour: {r: 0.75, g: 0.25, b: 1, a: 0.75}
-  gizmoFillOpacity: 0.22
---- !u!114 &7300000000000055533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7300000000000031776}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d3e9b1c4a5f4e2b8c6d0a1f2e3b4c5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Story.AnnoyingDogGate
