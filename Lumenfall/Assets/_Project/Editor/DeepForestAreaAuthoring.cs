@@ -26,9 +26,17 @@ namespace Lumenfall.EditorTools
         private static void ApplyOnceAfterImport()
         {
             if (Application.isBatchMode || SessionState.GetBool(SessionKey, false) ||
-                AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaPath) != null) return;
+                AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaPath) != null ||
+                AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return;
             SessionState.SetBool(SessionKey, true);
-            EditorApplication.delayCall += Apply;
+            EditorApplication.delayCall += () =>
+            {
+                // Asset refreshes can make an existing asset temporarily unavailable. Recheck after the delay so
+                // the legacy bootstrapper cannot overwrite the authored Deep Forest prefab when imports settle.
+                if (AssetDatabase.LoadAssetAtPath<WorldAreaAsset>(AreaPath) == null &&
+                    AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
+                    Apply();
+            };
         }
 
         [InitializeOnLoadMethod]

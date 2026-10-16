@@ -15138,7 +15138,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7880011013163449690}
   m_Layer: 0
-  m_Name: campus
+  m_Name: Campus
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
