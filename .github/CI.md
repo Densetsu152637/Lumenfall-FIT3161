@@ -315,7 +315,7 @@ keep their default metadata-only validation and do not download LFS objects.
 The FastMesh `SceneViewText` component retains its serialized toggle in players;
 its scene-view callbacks and UnityEditor references compile only with `UNITY_EDITOR`.
 
-The workflow runs automatically on every push to `main`. A successful build of the
+The release workflow runs automatically on every push to `main`. A successful build of the
 current `main` head publishes a `main-<workflow-run-id>` release with the runnable
 ZIP and checksum and marks it **Latest**. Its tag points to the exact pushed commit.
 After the assets are uploaded and the replacement is published, the workflow deletes
@@ -332,6 +332,12 @@ releases. The last successful public bundle remains available while a newer buil
 runs or fails. New releases are staged as drafts until both assets have uploaded;
 a failed or superseded upload can leave a draft that is retried by a rerun or removed
 by the next successful publication. Reruns reuse the same release and asset names.
+
+Push to `CI/build-test` to run **Build test game bundle**. It runs the same source,
+LFS, Windows player, packaging, checksum, downloadable artifact, and diagnostic steps
+as the release build, using `build-test-<workflow-run-id>` as the bundle version.
+Download its `Lumenfall-windows-x64` artifact from the run; this workflow does not
+create or modify GitHub Releases. It only runs for pushes to `CI/build-test`.
 
 Select **Actions > Release game bundle > Run workflow** to build the selected branch
 or tag and download a test bundle from the workflow's artifacts. Manual runs do not

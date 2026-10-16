@@ -1,0 +1,123 @@
+name: Build test game bundle
+
+on:
+  push:
+    branches: [CI/build-test]
+
+permissions:
+  contents: read
+
+jobs:
+  repository-integrity:
+    name: Validate release sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Test repository and bundle tooling
+        run: python3 -m unittest discover --start-directory scripts/tests --verbose
+
+      - name: Validate Unity project structure
+        run: python3 scripts/validate_unity_project.py Lumenfall
+
+  build-windows:
+    name: Build Windows x64 player
+    needs: repository-integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Unity license secrets
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -z "$UNITY_LICENSE" ]] && missing+=(UNITY_LICENSE)
+          [[ -z "$UNITY_EMAIL" ]] && missing+=(UNITY_EMAIL)
+          [[ -z "$UNITY_PASSWORD" ]] && missing+=(UNITY_PASSWORD)
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing repository secrets: ${missing[*]}. See .github/CI.md."
+            exit 1
+          fi
+
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          lfs: true
+          persist-credentials: false
+
+      - name: Free disk space for Unity
+        timeout-minutes: 6
+        run: python3 scripts/free_unity_disk_space.py
+
+      - name: Verify materialized build assets
+        run: python3 scripts/validate_unity_project.py Lumenfall --require-lfs-assets
+
+      - name: Restore Windows Unity Library cache
+        id: unity-library
+        uses: actions/cache/restore@v5
+        with:
+          path: Lumenfall/Library
+          key: unity-release-windows-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-${{ hashFiles('Lumenfall/ProjectSettings/**') }}-${{ hashFiles('Lumenfall/Assets/**') }}
+          restore-keys: |
+            unity-release-windows-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-${{ hashFiles('Lumenfall/ProjectSettings/**') }}-
+            unity-release-windows-${{ runner.os }}-${{ hashFiles('Lumenfall/ProjectSettings/ProjectVersion.txt', 'Lumenfall/Packages/**') }}-
+
+      - name: Build game
+        id: unity-build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Lumenfall
+          unityVersion: auto
+          targetPlatform: StandaloneWindows64
+          buildName: Lumenfall
+          buildsPath: build
+          versioning: None
+
+      - name: Bundle player and calculate checksum
+        id: package-player
+        shell: bash
+        env:
+          BUNDLE_VERSION: build-test-${{ github.run_id }}
+        run: |
+          python3 scripts/package_game.py build/StandaloneWindows64 dist \
+            --version "$BUNDLE_VERSION" --commit "$(git rev-parse HEAD)"
+
+      - name: Save Windows Unity Library cache
+        if: ${{ !cancelled() && steps.package-player.outcome == 'success' && steps.unity-library.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        with:
+          path: Lumenfall/Library
+          key: ${{ steps.unity-library.outputs.cache-primary-key }}
+
+      - name: Upload downloadable bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: Lumenfall-windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build diagnostics
+        if: ${{ always() && steps.unity-build.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: unity-windows-build-logs
+          path: |
+            build/**/*.log
+            Lumenfall/Logs/**
+            Lumenfall/Temp/graphics-settings-stripping.json
+            Lumenfall/Temp/shader-stripping.json
+          if-no-files-found: warn
+          retention-days: 14
