@@ -12,3 +12,7 @@ Store first-party presentation assets here, grouped by discipline:
 Create a discipline folder only when the first asset of that type is added. Keep files
 used exclusively by an imported pack inside `Assets/ThirdParty` instead of copying them
 here. Feature-specific presentation assets may use a subfolder named after their system.
+
+Extracted vendor assets under `Environment/ThirdPartyExtracted` are
+project-maintained copies. Review shader compatibility edits there against the
+vendor source and reapply them deliberately after any source-pack refresh.

@@ -319,6 +319,17 @@ hit before claiming an overall speedup. Manual runs produce workflow artifacts
 without publishing a release. Local workflow/tooling checks cannot establish
 hosted cache behavior, successful player compilation or the new build duration.
 
+### Shader API compatibility
+
+The 2026-10-16 shader audit found URP 17.4.0 deprecation warnings in
+`IceTrialFrost.shader` and five locally maintained Polytope shader copies. Those
+sources now use `_CLUSTER_LIGHT_LOOP`, `USE_CLUSTER_LIGHT_LOOP`, and
+`CLUSTER_LIGHT_LOOP_SUBTRACTIVE_LIGHT_CHECK`; the two Polytope deferred passes
+also use `GBufferOutput.hlsl` and `PackGBuffersBRDFData` while retaining their
+`UniversalGBuffer` passes. Unity compilation and visual checks in Forward,
+Forward+, and Deferred remain to be run. These API updates do not establish a
+build-time improvement.
+
 The build checkout explicitly downloads Git LFS content (`lfs: true`), including
 textures, models, audio and tracked terrain data. Before restoring the Library or
 starting Unity, `validate_unity_project.py Lumenfall --require-lfs-assets` rejects
