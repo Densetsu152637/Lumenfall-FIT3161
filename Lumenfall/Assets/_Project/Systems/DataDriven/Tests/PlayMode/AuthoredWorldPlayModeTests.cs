@@ -152,7 +152,9 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             GridMover player = Object.FindAnyObjectByType<GridPlayerInput>().GetComponent<GridMover>();
-            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y)));
+            Assert.That(player.CurrentCell, Is.Not.EqualTo(new Vector2Int(7, 1)), "The retired Recess coordinates must not be restored on campus.");
+            Assert.That(player.CurrentCell, Is.Not.EqualTo(new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y)),
+                "The blocked authored campus spawn must fall back to the nearest safe cell.");
             Assert.That(player.World.IsCellBlocked(player.CurrentCell), Is.False, "The restored player occupies walkable ground.");
             Assert.That(player.World.GetPortalAt(player.CurrentCell), Is.Null, "Legacy escape must not immediately trigger another portal.");
             GridPortal campusRoute = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude).Single(portal => portal.PortalId == "P.C02");

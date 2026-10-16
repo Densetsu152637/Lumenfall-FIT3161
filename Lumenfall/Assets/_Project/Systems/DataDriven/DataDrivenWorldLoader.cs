@@ -173,9 +173,36 @@ namespace Lumenfall.DataDriven
             GridMover player = FindAnyObjectByType<GridMover>();
             if (CurrentArea != area || player == null || world == null) return false;
             Vector2Int savedCell = new Vector2Int(state.playerX, state.playerY);
-            if (string.Equals(state.mapId, "C04.Recess", StringComparison.OrdinalIgnoreCase) && area.definition.spawn != null)
+            bool legacyRecess = string.Equals(state.mapId, "C04.Recess", StringComparison.OrdinalIgnoreCase);
+            if (legacyRecess && area.definition.spawn != null)
+            {
                 savedCell = new Vector2Int(area.definition.spawn.x, area.definition.spawn.y);
+                return TryRestoreLegacyArrival(player, savedCell);
+            }
             return player.TryTeleportTo(world, savedCell);
+        }
+
+        // The retired Recess area migrated to the campus spawn, which is authored on blocked
+        // border ground. Search outward only for this legacy migration, preserving normal saves.
+        private bool TryRestoreLegacyArrival(GridMover player, Vector2Int origin)
+        {
+            Queue<Vector2Int> candidates = new Queue<Vector2Int>();
+            HashSet<Vector2Int> visited = new HashSet<Vector2Int> { origin };
+            candidates.Enqueue(origin);
+            Vector2Int[] steps = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+            while (candidates.Count > 0)
+            {
+                Vector2Int candidate = candidates.Dequeue();
+                if (world.IsWithinBounds(candidate) && world.GetPortalAt(candidate) == null && player.TryTeleportTo(world, candidate))
+                    return true;
+                foreach (Vector2Int step in steps)
+                {
+                    Vector2Int next = candidate + step;
+                    if (!world.IsWithinBounds(next) || !visited.Add(next)) continue;
+                    candidates.Enqueue(next);
+                }
+            }
+            return false;
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)
