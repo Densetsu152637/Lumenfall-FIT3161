@@ -36,13 +36,22 @@ One job checks out the current event revision with depth one and runs `Lumenfall
 through one GameCI action, using `testMode: all` and
 `customParameters: -testCategory !RequiresGraphics`. Its checkout enables Git LFS
 so terrain and other binary assets are available to Unity. The integrated inventory
-contains 345 EditMode and sixteen batch-capable PlayMode cases. Five additional rendering
+contains 346 EditMode and sixteen batch-capable PlayMode cases. Five additional rendering
 cases are explicitly categorized `RequiresGraphics` and must run separately
 in a graphical Editor; it is never accepted as a skipped CI test. The
 [behavior inventory](../tests/gameplay_suites.json) and [graphical procedure](../tests/README.md)
-cover all 345 EditMode cases, including the three shader-stripping contracts and
-three serialized asset compatibility cases.
+cover all 346 EditMode cases, including the three shader-stripping contracts and
+four serialized asset compatibility cases.
 There are no historical source fetches or snapshot matrices.
+
+`FountainFinal.fbx` and the campus prefab depend on the decorative `diffuse_cube`
+texture. Reimporting the original IHV DDS in that chain produced an import loop.
+The FBX stores the cubemap name and its metadata remaps it by GUID and file ID; the
+native Cubemap keeps that name and identity while changing the asset extension. Its six
+serialized face payloads were verified byte-for-byte against the source DDS, with
+the original dimensions, sRGB format, sampler settings and unreadable state retained.
+The asset compatibility test force-imports the cubemap, FBX and campus prefab and
+checks that both dependency chains resolve to the native asset.
 
 The supported `cliVersion` input pins
 [GameCI CLI v0.1.72](https://github.com/game-ci/cli/releases/tag/v0.1.72).

@@ -3,6 +3,7 @@ using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 namespace Lumenfall.Tests.GameEvents
 {
@@ -73,6 +74,50 @@ namespace Lumenfall.Tests.GameEvents
                 if (createdTempRoot && AssetDatabase.IsValidFolder(tempRoot) && AssetDatabase.FindAssets(string.Empty, new[] { tempRoot }).Length == 0)
                     AssetDatabase.DeleteAsset(tempRoot);
             }
+        }
+
+        [Test]
+        public void DecorativeNativeCubemapPreservesSettingsAndDependenciesImport()
+        {
+            const string nativePath = "Assets/_Project/Art/Environment/Decorations/Textures/diffuse_cube.asset";
+            const string fbxPath = "Assets/_Project/Art/Environment/Decorations/FountainFinal.fbx";
+            const string campusPath = "Assets/_Project/World/Areas/Prefabs/campus.prefab";
+            const string expectedGuid = "efbe61d014df5634baabb44e4fa6b070";
+
+            Cubemap cube = AssetDatabase.LoadAssetAtPath<Cubemap>(nativePath);
+            Assert.That(cube, Is.Not.Null, nativePath);
+            Assert.That(cube.name, Is.EqualTo("diffuse_cube"));
+            Assert.That(cube.width, Is.EqualTo(16));
+            Assert.That(cube.height, Is.EqualTo(16));
+            Assert.That(cube.mipmapCount, Is.EqualTo(1));
+            Assert.That(cube.graphicsFormat, Is.EqualTo((GraphicsFormat)87));
+            Assert.That(cube.format, Is.EqualTo(TextureFormat.ARGB32));
+            Assert.That(GraphicsFormatUtility.IsSRGBFormat(cube.graphicsFormat), Is.True);
+            Assert.That(cube.isReadable, Is.False);
+            Assert.That(cube.filterMode, Is.EqualTo(FilterMode.Bilinear));
+            Assert.That(cube.anisoLevel, Is.EqualTo(1));
+            Assert.That(cube.wrapModeU, Is.EqualTo(TextureWrapMode.Clamp));
+            Assert.That(cube.wrapModeV, Is.EqualTo(TextureWrapMode.Clamp));
+            Assert.That(cube.wrapModeW, Is.EqualTo(TextureWrapMode.Clamp));
+            Assert.That(cube.mipMapBias, Is.Zero);
+            Assert.That(cube.streamingMipmaps, Is.False);
+            Assert.That(cube.streamingMipmapsPriority, Is.Zero);
+            AssetDatabase.TryGetGUIDAndLocalFileIdentifier(cube, out string guid, out long fileId);
+            Assert.That(guid, Is.EqualTo(expectedGuid));
+            Assert.That(fileId, Is.EqualTo(8900000));
+
+            Assert.That(AssetDatabase.GetDependencies(fbxPath, true), Does.Contain(nativePath));
+            Assert.That(AssetDatabase.GetDependencies(campusPath, true), Does.Contain(nativePath));
+
+            AssetDatabase.ImportAsset(nativePath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            AssetDatabase.ImportAsset(fbxPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            AssetDatabase.ImportAsset(campusPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+
+            cube = AssetDatabase.LoadAssetAtPath<Cubemap>(nativePath);
+            Assert.That(cube, Is.Not.Null);
+            Assert.That(cube.isReadable, Is.False);
+            Assert.That(AssetDatabase.GetDependencies(fbxPath, true), Does.Contain(nativePath));
+            Assert.That(AssetDatabase.GetDependencies(campusPath, true), Does.Contain(nativePath));
         }
 
         private static void AssertElara(GameObject root)
