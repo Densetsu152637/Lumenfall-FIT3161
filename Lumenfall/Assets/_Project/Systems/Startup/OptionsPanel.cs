@@ -160,14 +160,16 @@ namespace Lumenfall.Startup
                     choice => UpdateAccessibility(AccessibilityOption.HoldToSprint, choice == 0 ? 1f : 0f)),
                 ResetRow("gameplay", ResetGameplay)
             };
-            sections[(int)Section.Audio] = new[]
+            // Ambience only gets a slider once the game has ambience to play.
+            List<Row> audioRows = new List<Row>
             {
                 VolumeRow("Master volume", AudioBus.Master),
                 VolumeRow("Music", AudioBus.Music),
                 VolumeRow("Sound effects", AudioBus.Sfx),
-                VolumeRow("Ambience", AudioBus.Ambience),
-                ResetRow("audio", ResetAudio)
             };
+            if (AudioFeedbackService.HasAmbience) audioRows.Add(VolumeRow("Ambience", AudioBus.Ambience));
+            audioRows.Add(ResetRow("audio", ResetAudio));
+            sections[(int)Section.Audio] = audioRows.ToArray();
             sections[(int)Section.Display] = new[]
             {
                 SwitchRow("Fullscreen", () => Application.isEditor ? "Only applies in a built game" : "Fill the whole screen",

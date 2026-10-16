@@ -91,6 +91,12 @@ namespace Lumenfall.CameraEffects
                     foundOccluderRoot = true;
                     BindLibraryOccluders(transform);
                 }
+                else if (IsWorkshopWallGroup(transform.name))
+                {
+                    // The Arcane Workshop's tall walls hide the player near them, like the library's shelves did.
+                    foundOccluderRoot = true;
+                    BindRenderers(transform);
+                }
             }
 
             if (!foundOccluderRoot) RestoreGardenMaterials();
@@ -123,6 +129,12 @@ namespace Lumenfall.CameraEffects
         private static bool IsLibraryOccluder(string objectName)
         {
             return objectName.StartsWith("old_fantasy-style_library", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>The Arcane Workshop's wall groups ("Wall Group", "Wall Group (1)" and so on), which only it uses.</summary>
+        private static bool IsWorkshopWallGroup(string objectName)
+        {
+            return objectName == "Wall Group" || objectName.StartsWith("Wall Group (", StringComparison.Ordinal);
         }
 
         private static bool IsSelectedLibraryOccluder(string objectName)

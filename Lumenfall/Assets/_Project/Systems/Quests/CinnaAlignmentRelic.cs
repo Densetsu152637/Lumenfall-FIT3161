@@ -1,4 +1,5 @@
 using System;
+using Lumenfall.Rendering;
 using UnityEngine;
 using Lumenfall.DataDriven;
 using Lumenfall.GridMovement;
@@ -239,7 +240,7 @@ namespace Lumenfall.Quests
 
         private static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 scale)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             Collider collider = part.GetComponent<Collider>();
             if (collider != null)

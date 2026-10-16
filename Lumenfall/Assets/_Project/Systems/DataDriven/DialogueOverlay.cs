@@ -27,7 +27,8 @@ namespace Lumenfall.DataDriven
         private const float ConversationNpcRange = 3f;
         private const float ConversationZoom = 0.72f;
         // Roughly three lines in the full-size box; longer lines are split into pages.
-        private const int MaxPageCharacters = 130;
+        /// <summary>Visible characters per dialogue page at normal text size. Sentences longer than this are cut between words.</summary>
+        public const int MaxPageCharacters = 130;
 
         private DialogueSession session;
         private GameEventRuntime subscribedRuntime;
@@ -278,7 +279,7 @@ namespace Lumenfall.DataDriven
             if (!CanTakeInput()) return;
 
              menuInput.Poll();
-             if (menuInput.Cancel) { session.End(); return; }
+             // Escape does not end a conversation: skipping one could skip a spell lesson. Dialogues end through their choices.
              bool confirm = pointer || menuInput.Submit || KeyBindings.WasPressed(GameAction.Talk) || Pressed(Key.Space) || Pressed(Key.Enter) || Pressed(Key.NumpadEnter);
              bool fastAdvance = FastForwardHeld() && Time.unscaledTime >= nextFastForwardAdvance;
             if (!Revealed)
@@ -354,10 +355,11 @@ namespace Lumenfall.DataDriven
             return keyboard != null && keyboard[key].wasPressedThisFrame;
         }
 
+        /// <summary>Ctrl, or the player's sprint key, speeds the text up.</summary>
         private static bool FastForwardHeld()
         {
             Keyboard keyboard = Keyboard.current;
-            return keyboard != null && (keyboard[Key.LeftCtrl].isPressed || keyboard[Key.RightCtrl].isPressed);
+            return keyboard != null && (keyboard[Key.LeftCtrl].isPressed || keyboard[Key.RightCtrl].isPressed || KeyBindings.IsPressed(GameAction.Sprint));
         }
 
         /// <summary>The NPC the player just spoke to: the nearest one within talking distance.</summary>

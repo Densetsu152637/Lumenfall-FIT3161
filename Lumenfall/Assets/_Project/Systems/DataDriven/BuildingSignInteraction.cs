@@ -41,6 +41,8 @@ namespace Lumenfall.DataDriven
 
         private void Awake()
         {
+            // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+            useGUILayout = false;
             if (string.IsNullOrWhiteSpace(buildingName))
                 buildingName = gameObject.name.Replace("Sign-", "Building ");
         }
@@ -121,6 +123,8 @@ namespace Lumenfall.DataDriven
 
         private void Open(GridMover player)
         {
+            // A door's locked notice (such as the main hall's cruxite one) may still be up; the sign card replaces it.
+            PortalBlockedPopup.Dismiss();
             activeSign = this;
             inputBlockedUntilFrame = Time.frameCount + 1;
             lockedMover = player;

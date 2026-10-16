@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lumenfall.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
@@ -64,6 +65,8 @@ namespace Lumenfall.Quests
 
         private void Awake()
         {
+            // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+            useGUILayout = false;
             objectId = GetComponent<WorldObjectRegistration>().ObjectId;
             requiredRotation = ResolveRequiredRotation(objectId);
             BuildPresentation();
@@ -185,7 +188,7 @@ namespace Lumenfall.Quests
 
         private static GameObject CreatePart(PrimitiveType type, string name, Transform parent, Vector3 localPosition, Vector3 localScale, Color color)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             part.transform.SetParent(parent, false);
             part.transform.localPosition = localPosition;

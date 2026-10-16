@@ -1727,7 +1727,7 @@ Transform:
   m_GameObject: {fileID: 727687577976006945}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 19, y: 0, z: 15}
+  m_LocalPosition: {x: 19, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4234,7 +4234,7 @@ Transform:
   m_GameObject: {fileID: 1837267811572956430}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 16, y: 0, z: 15}
+  m_LocalPosition: {x: 19, y: 0, z: 14}
   m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22463,7 +22463,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0082b4c6b634fa649b7d7c409a5d1451, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 15
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0082b4c6b634fa649b7d7c409a5d1451, type: 3}
       propertyPath: m_LocalRotation.w
@@ -22537,7 +22537,7 @@ MonoBehaviour:
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
     mapId: B02.Ground
     x: 19
-    y: 14
+    y: 10
     layerSymbol: s
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 
@@ -24356,6 +24356,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b6dc935c569bc1541a9001a61246d9cf, type: 3}
       propertyPath: m_Name
       value: Teacher Table Candles
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b6dc935c569bc1541a9001a61246d9cf, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -26659,7 +26663,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 7b6fb768c8c6f2f4a80d6278de0119fd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 16.300001
+      value: 19.300001
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 7b6fb768c8c6f2f4a80d6278de0119fd, type: 3}
       propertyPath: m_LocalPosition.y
@@ -26667,7 +26671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 7b6fb768c8c6f2f4a80d6278de0119fd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 14.900001
+      value: 13.900001
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 7b6fb768c8c6f2f4a80d6278de0119fd, type: 3}
       propertyPath: m_LocalRotation.w

@@ -23,7 +23,8 @@ namespace Lumenfall.Startup
     {
         private const int ThumbnailWidth = 320;
         private const int ThumbnailHeight = 180;
-        private const float ThumbnailRefreshSeconds = 10f;
+        // Routine autosaves (every 30 seconds of play) refresh their thumbnail at most this often; explicit saves always do.
+        private const float ThumbnailRefreshSeconds = 120f;
 
         private static SaveSlotSummary instance;
         private static readonly Dictionary<string, string> MapNames = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -148,7 +149,7 @@ namespace Lumenfall.Startup
                 Debug.LogWarning($"Could not write the summary for '{slot}': {exception.Message}");
             }
 
-            // Autosave runs after most moves, so the thumbnail is refreshed at most every few seconds per slot.
+            // Routine autosaves refresh the thumbnail at most every couple of minutes per slot; an extra render each time showed as a hitch.
             bool stale = !lastThumbnailTimes.TryGetValue(slot, out float last) || Time.unscaledTime - last >= ThumbnailRefreshSeconds ||
                 !File.Exists(ThumbnailPath(slot)) || StartupMenu.IsVisible;
             if (stale) pendingThumbnails.Add(slot);
@@ -163,7 +164,7 @@ namespace Lumenfall.Startup
             RenderTexture target = RenderTexture.GetTemporary(ThumbnailWidth, ThumbnailHeight, 24);
             RenderTexture previousTarget = camera.targetTexture;
             RenderTexture previousActive = RenderTexture.active;
-            Texture2D image = null;
+            bool releaseLater = false;
             try
             {
                 // URP renders off-screen through a render request; Camera.Render remains the built-in pipeline fallback.
@@ -181,12 +182,30 @@ namespace Lumenfall.Startup
                         camera.Render();
                     }
                 });
-                RenderTexture.active = target;
-                image = new Texture2D(ThumbnailWidth, ThumbnailHeight, TextureFormat.RGB24, false);
-                image.ReadPixels(new Rect(0f, 0f, ThumbnailWidth, ThumbnailHeight), 0, 0);
-                image.Apply(false);
-                File.WriteAllBytes(path, image.EncodeToPNG());
                 lastThumbnailTimes[slot] = Time.unscaledTime;
+                if (SystemInfo.supportsAsyncGPUReadback)
+                {
+                    // Reading the pixels back synchronously stalled the frame until the GPU caught up, a hitch every
+                    // autosave. The readback arrives a frame or two later, and the PNG is encoded and written off the
+                    // main thread.
+                    releaseLater = true;
+                    AsyncGPUReadback.Request(target, 0, TextureFormat.RGB24, readback =>
+                    {
+                        RenderTexture.ReleaseTemporary(target);
+                        if (readback.hasError) { Debug.LogWarning($"Could not read back the thumbnail for '{slot}'."); return; }
+                        byte[] pixels = readback.GetData<byte>().ToArray();
+                        System.Threading.Tasks.Task.Run(() => WriteThumbnail(path, pixels));
+                    });
+                }
+                else
+                {
+                    RenderTexture.active = target;
+                    Texture2D image = new Texture2D(ThumbnailWidth, ThumbnailHeight, TextureFormat.RGB24, false);
+                    image.ReadPixels(new Rect(0f, 0f, ThumbnailWidth, ThumbnailHeight), 0, 0);
+                    image.Apply(false);
+                    WriteThumbnail(path, image.GetRawTextureData());
+                    Destroy(image);
+                }
             }
             catch (Exception exception)
             {
@@ -196,8 +215,26 @@ namespace Lumenfall.Startup
             {
                 camera.targetTexture = previousTarget;
                 RenderTexture.active = previousActive;
-                RenderTexture.ReleaseTemporary(target);
-                if (image != null) Destroy(image);
+                if (!releaseLater) RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
+        // Encodes raw RGB24 pixels and swaps the file into place, so the Load page never reads a half-written image.
+        // Safe off the main thread: it touches no Unity objects.
+        private static void WriteThumbnail(string path, byte[] rgb)
+        {
+            try
+            {
+                byte[] png = ImageConversion.EncodeArrayToPNG(rgb, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8_UNorm,
+                    ThumbnailWidth, ThumbnailHeight);
+                string temporary = path + ".tmp";
+                File.WriteAllBytes(temporary, png);
+                if (File.Exists(path)) File.Replace(temporary, path, null);
+                else File.Move(temporary, path);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"Could not write the thumbnail '{path}': {exception.Message}");
             }
         }
 

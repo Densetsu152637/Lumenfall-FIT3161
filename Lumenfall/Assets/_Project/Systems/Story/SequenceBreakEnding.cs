@@ -89,13 +89,17 @@ namespace Lumenfall.Story
 
         /// <summary>
         /// The hints a secret is found through, as the flags their lines set. Stella's knock hint is part of her
-        /// introduction, so meeting her counts. The dog's hints are the gate's own notices, so it has none.
+        /// introduction, so meeting her counts. The dog's hints are the gate's own notices, so it has none. The forgotten
+        /// (egg) room is deliberately outside the sequence break: Miki's white-dog story is only a loose hint, and stumbling
+        /// onto the trail by chance must never end the game.
         /// </summary>
         public static string[] HintsFor(string secret) => secret switch
         {
             SecretRooms.DevRoomId => new[] { "npc.met.stella" },
             LanternBearerSecretId => new[] { "hint.heard.lantern_shape", "hint.heard.lantern_place" },
             SecretRooms.ClosetId => new[] { "hint.heard.closet_gossip", "hint.heard.closet_shelf" },
+            SecretRooms.DogRoomId => Array.Empty<string>(),
+            SecretRooms.ForgottenRoomId => Array.Empty<string>(),
             _ => Array.Empty<string>(),
         };
 
@@ -264,6 +268,9 @@ namespace Lumenfall.Story
             // Nothing has been played since this fresh start, so returning to the menu does not save again.
             GameAutosave.RestartTimer();
         }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {

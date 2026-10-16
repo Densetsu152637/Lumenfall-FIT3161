@@ -28,6 +28,8 @@ namespace Lumenfall.DataDriven
         public static IReadOnlyList<DynamicNpc> Active => active;
         private void Awake()
         {
+            // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+            useGUILayout = false;
             // Every NPC idles with some variety and turns to face the player; see NpcAmbientBehaviour.
             if (GetComponent<NpcAmbientBehaviour>() == null) gameObject.AddComponent<NpcAmbientBehaviour>();
             ApplyDefinition();
