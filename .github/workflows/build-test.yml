@@ -184,6 +184,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"version={match.group(1)}\n")
           PY
+          echo "runner-owner=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"
           if [[ -e Lumenfall/Library || -L Lumenfall/Library ]]; then
             echo "::error::Lumenfall/Library already exists; refusing to claim a cold import."
             exit 1
@@ -204,6 +205,7 @@ jobs:
           projectPath: Lumenfall
           unityVersion: auto
           cliVersion: v0.1.72
+          chownFilesTo: ${{ steps.unity-version.outputs.runner-owner }}
           customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-windows-mono-3
           testMode: editmode
           customParameters: -buildTarget win64 -testFilter Lumenfall.Tests.GameEvents.SerializedAssetImportTests
