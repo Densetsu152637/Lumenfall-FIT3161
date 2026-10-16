@@ -164,6 +164,59 @@ It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 It requires the same three Unity secrets described above. The Windows build cache
 is separate from the EditMode cache.
 
+### Build time and cache behavior
+
+The build job has no explicit workflow timeout. Removing the former 60-minute
+limit allows a cold build to finish and populate its cache; GitHub-hosted jobs
+still have a [six-hour execution limit](https://docs.github.com/en/actions/reference/limits#existing-system-limits).
+License secrets are checked before the LFS checkout. Cleanup reuses
+`scripts/free_unity_disk_space.py`: below 30 GiB free it removes unrelated SDKs
+until sufficient space is available, with a six-minute cleanup step limit.
+It leaves Docker images intact and skips deletion when space is sufficient.
+
+The Library key includes runner OS, Unity version, packages, project settings and
+asset content instead of the commit SHA, so documentation-only commits reuse an
+exact cache. Restore first tries compatible project settings, then the previous
+Unity/package prefix, including existing caches from the old key format. Unity
+updates restored state for changed inputs. An explicit save uses the original
+restore key only after the builder and player packaging validation succeed, before
+artifact uploads; an upload failure therefore does not discard a completed build's
+cache. Failed/cancelled builds never save partial Library state. GameCI's
+[Linux build script](https://github.com/game-ci/unity-builder/blob/v4/dist/platforms/ubuntu/steps/build.sh)
+makes the project readable to the runner before cache compression. Cache availability
+still depends on GitHub's branch scope, storage limits and eviction.
+
+Investigation on 2026-10-16 found the dominant delay inside Unity shader compilation:
+
+- [Run 38828490133, build job 116741521728](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38828490133/job/116741521728)
+  at `113d818` spent 1m58s cleaning a runner that already had 86 GiB free,
+  49s checking out LFS assets, and 57m11s in the builder before the 60-minute
+  job limit cancelled it. The Library cache missed. The image pull took 2m41s
+  and the main asset refresh 658s. `ClusterDeferred` took about 12 minutes,
+  terrain `BillboardWavingDoublePass` about 7m42s, and the `FinalPost` fragment
+  pass compiled 1,280 variants in 693s with zero local cache hits. `FinalPostXR`
+  was still compiling when the job was cancelled, preventing a cache save.
+- [Run 38262584442, build job 114856680632](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38262584442/job/114856680632)
+  restored a 1,881 MB Library in 35s and its main asset refresh took 50s, but
+  still hit the job limit while compiling `FinalPost`. Repository integrity
+  took nine seconds in each run and remains required. The cache did not remove
+  the shader bottleneck for those changed settings/assets.
+
+The active [URP shader stripping settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset)
+disable `m_StripUnusedVariants`; [PC renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset)
+uses deferred rendering and ambient occlusion. Windows selects PC quality and
+excludes Mobile quality. Shader variants therefore remain a follow-up optimisation
+candidate, not a measured speedup from this workflow change. Enabling
+[unused-variant stripping](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/shader-stripping.html)
+requires checking every enabled URP asset and runtime changes to ambient occlusion,
+antialiasing and shading presets; those settings remain unchanged. Diagnostics also
+retain exported shader-stripping JSON from `Lumenfall/Temp` when available.
+
+Measure the next successful manual branch build and a repeat with an exact cache
+hit before claiming an overall speedup. Manual runs produce workflow artifacts
+without publishing a release. Local workflow/tooling checks cannot establish
+hosted cache behavior, successful player compilation or the new build duration.
+
 The build checkout explicitly downloads Git LFS content (`lfs: true`), including
 textures, models, audio and tracked terrain data. Before restoring the Library or
 starting Unity, `validate_unity_project.py Lumenfall --require-lfs-assets` rejects
