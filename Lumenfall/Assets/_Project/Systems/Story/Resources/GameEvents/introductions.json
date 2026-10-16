@@ -13,7 +13,7 @@
         {"id": "name", "speaker": "Stella", "text": "Oh! Hi. Sorry, I've been staring at this circuit since sunrise. I'm Stella.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.stella", "boolValue": true}], "nextNodeId": "ask"},
         {"id": "ask", "speaker": "Stella", "text": "You're new here too, aren't you? What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
         {"id": "pleased", "speaker": "Stella", "text": "{player}. Nice to meet you. Please don't touch the bench, it's mid-experiment. Wouldn't want your first day to be that memorable.", "nextNodeId": "dormmates"},
-        {"id": "dormmates", "speaker": "Stella", "text": "Wait, you're the new arrival for our dormitory? Then we're dormmates. Quiet hours start at ten, and my plushies are not decorations. I'll write the rest of the rules down for you.", "nextNodeId": ""}
+        {"id": "dormmates", "speaker": "Stella", "text": "Wait, you're the new arrival for our dormitory? Then we're dormmates. Quiet hours start at ten, and my plushies are not decorations. And whoever keeps knocking out pi on the room doors at night: please stop.", "nextNodeId": ""}
       ]
     },
     {

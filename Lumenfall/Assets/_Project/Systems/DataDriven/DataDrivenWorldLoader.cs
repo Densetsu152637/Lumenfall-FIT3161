@@ -115,6 +115,7 @@ namespace Lumenfall.DataDriven
             OrioRuneDiscPuzzle.RegisterForMap(LoadedMap.id, world, root);
             MiscCollectibles.RegisterForMap(LoadedMap.id, world, root);
             if (LoadedMap.id == OrioDaisRoom.MapId || OrioDaisRoom.IsLegacyVisitActive) OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
+            SecretRooms.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
         }
 
@@ -217,6 +218,27 @@ namespace Lumenfall.DataDriven
             return false;
         }
 
+        /// <summary>
+        /// Takes the player straight to <paramref name="cell"/> on another map, without a portal: into a secret room, or
+        /// back out of one. Falls back to the map's spawn, and stays put if neither cell is free.
+        /// </summary>
+        public bool TravelTo(string mapId, Vector2Int cell)
+        {
+            GridMover player = FindAnyObjectByType<GridMover>();
+            WorldAreaAsset area = FindArea(mapId);
+            if (world == null) world = FindAnyObjectByType<GridWorld>();
+            if (player == null || world == null || area == null || player.IsMoving) return false;
+            Vector2Int previousCell = player.CurrentCell;
+            WorldAreaAsset previousArea = CurrentArea;
+            Load(area, npcCatalog, false);
+            if (player.TryTeleportTo(world, cell)) return true;
+            SpawnDefinition spawn = area.definition.spawn;
+            if (spawn != null && player.TryTeleportTo(world, new Vector2Int(spawn.x, spawn.y))) return true;
+            Debug.LogWarning($"Could not place the player at {cell} in '{mapId}'; returning to the previous area.", this);
+            if (previousArea != null) { Load(previousArea, npcCatalog, false); player.TryTeleportTo(world, previousCell); }
+            return false;
+        }
+
         public bool TryGetMapDefinition(string id, out MapDefinition definition)
         {
             WorldAreaAsset area = FindArea(id);
@@ -240,6 +262,8 @@ namespace Lumenfall.DataDriven
             foreach (WorldAreaAsset area in availableAreas) if (area != null && area.definition.id == id) return area;
             // Resolve legacy saves without adding the superseded forest entrance.
             if (id == OrioDaisRoom.MapId) return OrioDaisRoom.GetOrCreateArea();
+            // Secret rooms are built in code, like the legacy hall, so a save made in one restores.
+            if (SecretRooms.TryGetArea(id, out WorldAreaAsset secret)) return secret;
             return null;
         }
         private GridPortal FindLivePortal(PortalContentAsset target)

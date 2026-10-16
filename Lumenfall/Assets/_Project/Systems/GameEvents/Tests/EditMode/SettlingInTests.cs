@@ -76,7 +76,30 @@ namespace Lumenfall.Tests.GameEvents
             runtime.SetFlag(SettlingInScene.KeyFlag, true);
             runtime.SetFlag(SettlingInScene.CompleteFlag, true);
             Assert.That(Turn(runtime, SettlingInScene.ReceptionistNpcId).turn, Is.False, "No further story once the chapter is over.");
-            Assert.That(Turn(runtime, "rowan").turn, Is.False);
+            Assert.That(Turn(runtime, "rowan"), Is.EqualTo((true, SettlingInScene.RowanHomelessDialogueId, (string)null)),
+                "Rowan still has no room after the chapter.");
+        }
+
+        [Test]
+        public void OnceThePuzzlesAreDoneRowanIsHomelessAndThistleTriesNotToLaugh()
+        {
+            GameEventRuntime runtime = new GameEventRuntime(Events());
+            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
+            Assert.That(Turn(runtime, SettlingInScene.RowanNpcId).turn, Is.False, "Before then, Rowan chats as usual.");
+            Assert.That(Turn(runtime, SettlingInScene.ThistleNpcId).turn, Is.False);
+
+            runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
+            Assert.That(Turn(runtime, SettlingInScene.RowanNpcId), Is.EqualTo((true, SettlingInScene.RowanHomelessDialogueId, (string)null)));
+            Assert.That(Turn(runtime, SettlingInScene.ThistleNpcId), Is.EqualTo((true, SettlingInScene.ThistleLaughingDialogueId, (string)null)));
+            Assert.That(SettlingInScene.TryGetPrelude(runtime, SettlingInScene.RowanNpcId, out _), Is.False, "The desk argument is over by then.");
+
+            GameEventCatalog events = Events();
+            Assert.That(events.TryGetDialogue(SettlingInScene.RowanHomelessDialogueId, out DialogueDefinition rowan), Is.True);
+            Assert.That(rowan.nodes.Select(node => node.speaker), Is.All.EqualTo("Rowan"));
+            Assert.That(rowan.nodes.Last().text, Does.Contain("homeless"));
+            Assert.That(events.TryGetDialogue(SettlingInScene.ThistleLaughingDialogueId, out DialogueDefinition thistle), Is.True);
+            Assert.That(thistle.nodes.Select(node => node.speaker), Is.EqualTo(new[] { "{player}", "Marigold" }),
+                "Thistle says nothing: the player only thinks about him, and Marigold tells him off.");
         }
 
         [Test]
