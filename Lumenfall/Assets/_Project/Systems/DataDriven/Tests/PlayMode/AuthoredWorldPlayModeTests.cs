@@ -18,6 +18,10 @@ namespace Lumenfall.Tests.World
 {
     public sealed class AuthoredWorldPlayModeTests
     {
+        // Where Cinna stands on the C02 terrace and in the ice trial lobby (their NPC catalog cells).
+        private static readonly Vector2Int TerraceCinnaCell = new Vector2Int(22, 51);
+        private static readonly Vector2Int TrialCinnaCell = new Vector2Int(8, 1);
+
         private Scene runnerScene;
         private Scene hostScene;
         private Scene worldScene;
@@ -402,6 +406,10 @@ namespace Lumenfall.Tests.World
             Assert.That(events.GetFlag(SpellCaster.VisDeliveredFlagPrefix + CinnaAlignmentRelic.RelicId), Is.True);
             Assert.That(WorldStateService.Instance.TryGetObject(CinnaIceTrialRoom.RelicId, out WorldObjectSnapshot frost) && frost.spellCompatible, Is.True,
                 "The delivered relic takes Glaciate.");
+            DynamicNpc hiddenTrialCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
+                .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_trial");
+            Assert.That(hiddenTrialCinna.gameObject.activeSelf, Is.False, "Cinna has not reached the trial yet.");
+            Assert.That(world.IsCellBlocked(TrialCinnaCell), Is.False, "A hidden Cinna leaves no blocker in the trial lobby.");
 
             loader.Load(campus, catalog);
             yield return null;
@@ -409,6 +417,7 @@ namespace Lumenfall.Tests.World
             DynamicNpc terraceCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
                 .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_orientation");
             Assert.That(terraceCinna.gameObject.activeSelf, Is.True);
+            Assert.That(world.IsCellBlocked(TerraceCinnaCell), Is.True, "Cinna blocks their terrace tile while they stand on it.");
             Vector2Int reportedFrom = player.CurrentCell;
             DialogueSession report = events.StartDialogue("cinna_out_of_alignment_dialogue");
             Assert.That(report.SelectChoice("report"), Is.True);
@@ -423,6 +432,7 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"), "Only Cinna goes; the player stays on campus.");
             Assert.That(player.CurrentCell, Is.EqualTo(reportedFrom));
             Assert.That(terraceCinna.gameObject.activeSelf, Is.False, "Cinna has left the terrace.");
+            Assert.That(world.IsCellBlocked(TerraceCinnaCell), Is.False, "Cinna's terrace tile is free once they leave.");
 
             GridPortal trialPortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Single(portal => portal.Content != null && portal.Content.id == CinnaIceTrialEntrance.PortalId);
@@ -431,6 +441,7 @@ namespace Lumenfall.Tests.World
             DynamicNpc trialCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
                 .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_trial");
             Assert.That(trialCinna.gameObject.activeSelf, Is.True, "Cinna is waiting in the trial lobby.");
+            Assert.That(world.IsCellBlocked(TrialCinnaCell), Is.True, "Cinna blocks their tile in the trial lobby.");
         }
 
         [UnityTest]

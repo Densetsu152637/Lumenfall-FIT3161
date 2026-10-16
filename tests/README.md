@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 346 EditMode, sixteen batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 348 EditMode, sixteen batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -36,7 +36,7 @@ The integrated suite contains 346 EditMode, sixteen batch PlayMode and five grap
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
-| Audio buses and feedback | AudioFeedbackTests | 15 |
+| Audio buses and feedback | AudioFeedbackTests | 18 |
 | Transactional save recovery and rollback | GameSaveRecoveryTests | 19 |
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
@@ -52,7 +52,7 @@ The integrated suite contains 346 EditMode, sixteen batch PlayMode and five grap
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding | SettlingInTests | 7 |
-| **Gameplay rules / EditMode** | | **346** |
+| **Gameplay rules / EditMode** | | **348** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
