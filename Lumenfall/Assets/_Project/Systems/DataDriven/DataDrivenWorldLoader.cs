@@ -171,7 +171,11 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset area = FindArea(state.mapId);
             if (CurrentArea != area && !PrepareRestoreStateJson(json)) return false;
             GridMover player = FindAnyObjectByType<GridMover>();
-            return CurrentArea == area && player != null && world != null && player.TryTeleportTo(world, new Vector2Int(state.playerX, state.playerY));
+            if (CurrentArea != area || player == null || world == null) return false;
+            Vector2Int savedCell = new Vector2Int(state.playerX, state.playerY);
+            if (string.Equals(state.mapId, "C04.Recess", StringComparison.OrdinalIgnoreCase) && area.definition.spawn != null)
+                savedCell = new Vector2Int(area.definition.spawn.x, area.definition.spawn.y);
+            return player.TryTeleportTo(world, savedCell);
         }
 
         public bool SwitchArea(PortalContentAsset sourcePortal, Vector2Int sourceEntryOffset)
@@ -185,24 +189,6 @@ namespace Lumenfall.DataDriven
             WorldAreaAsset previousArea = CurrentArea;
             Load(destinationPortal.area, npcCatalog, false);
             GridPortal target = FindLivePortal(destinationPortal);
-            if (target == null && previousArea?.definition?.id == "C04.Recess" && LoadedMap.id == "campus" && LoadedMap.spawn != null)
-            {
-                // The recess is retained for old saves, but its campus entrance was retired with the new Katrina route.
-                Vector2Int origin = new Vector2Int(LoadedMap.spawn.x, LoadedMap.spawn.y);
-                var visited = new HashSet<Vector2Int> { origin };
-                var candidates = new Queue<Vector2Int>();
-                candidates.Enqueue(origin);
-                while (candidates.Count > 0)
-                {
-                    Vector2Int candidate = candidates.Dequeue();
-                    if (world.GetPortalAt(candidate) == null && world.IsCellAvailable(candidate) && player.TryTeleportTo(world, candidate)) return true;
-                    foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
-                    {
-                        Vector2Int next = candidate + step;
-                        if (next.x >= 0 && next.y >= 0 && next.x < LoadedMap.width && next.y < LoadedMap.height && visited.Add(next)) candidates.Enqueue(next);
-                    }
-                }
-            }
             if (target == null)
             {
                 Debug.LogError($"Destination portal '{destinationPortal.id}' is not present in area '{destinationPortal.area.name}'.", this);
@@ -246,10 +232,12 @@ namespace Lumenfall.DataDriven
             return definition != null;
         }
 
-        /// <summary>Saves made before the east forest was renamed still name it eastForest.</summary>
+        /// <summary>Normalizes area ids retained by older saves.</summary>
         private static string NormalizeMapId(string id)
         {
-            return string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase) ? "westForest" : id;
+            if (string.Equals(id, "eastForest", StringComparison.OrdinalIgnoreCase)) return "westForest";
+            if (string.Equals(id, "C04.Recess", StringComparison.OrdinalIgnoreCase)) return "campus";
+            return id;
         }
 
         /// <summary>Resolves authored areas and the legacy hall for saved games.</summary>

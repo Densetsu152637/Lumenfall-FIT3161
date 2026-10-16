@@ -106,6 +106,5 @@ MonoBehaviour:
       compatibleWithSpells: 0
     puzzleTargets: []
     portals: []
-  areaPrefab: {fileID: 4252721467926123666, guid: 1147a7632c714765a99d9561ca68854b, type: 3}
-  portals:
-  - {fileID: 11400000, guid: 42f1409a7873441491c207fcaa1f0f1f, type: 2}
+  areaPrefab: {fileID: 0}
+  portals: []

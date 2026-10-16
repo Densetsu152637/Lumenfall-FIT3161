@@ -288,7 +288,7 @@ GameObject:
   - component: {fileID: 3920296561595622351}
   - component: {fileID: 406850689939646093}
   m_Layer: 0
-  m_Name: C03.IceTrial
+  m_Name: Ice Trial
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

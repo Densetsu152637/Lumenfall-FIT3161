@@ -137,7 +137,7 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
-        public IEnumerator LegacyKatrinaRecessSaveLoadsAndExitsWithoutRestoringItsCampusEntrance()
+        public IEnumerator LegacyKatrinaRecessSaveMigratesToCampus()
         {
             yield return DismissStartupMenu();
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
@@ -145,11 +145,10 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.ValidateStateJson(legacyRecess), Is.True);
             Assert.That(loader.PrepareRestoreStateJson(legacyRecess), Is.True);
             Assert.That(loader.RestoreStateJson(legacyRecess), Is.True);
-            GridPortal exit = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
-                .Single(portal => portal.Content?.destination?.area?.definition?.id == "campus");
-            Assert.That(loader.SwitchArea(exit.Content, Vector2Int.zero), Is.True);
             Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
+            Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             GridMover player = Object.FindAnyObjectByType<GridPlayerInput>().GetComponent<GridMover>();
+            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y)));
             Assert.That(player.World.IsCellBlocked(player.CurrentCell), Is.False, "The restored player occupies walkable ground.");
             Assert.That(player.World.GetPortalAt(player.CurrentCell), Is.Null, "Legacy escape must not immediately trigger another portal.");
             GridPortal campusRoute = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude).Single(portal => portal.PortalId == "P.C02");
