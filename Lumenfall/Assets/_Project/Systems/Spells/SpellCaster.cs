@@ -369,7 +369,9 @@ namespace Lumenfall.Spells
         private void OnGUI()
         {
             if (InputBlockedByOverlay) return;
-            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback)) HudSkin.Message(LastCastFeedback);
+            // The wheel and chip scale themselves (SpellWheelView.UiScale); only the shared HUD message uses the UiScale scope.
+            if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
+                using (UiScale.Begin()) HudSkin.Message(LastCastFeedback);
             if (Time.timeScale <= 0f) return;
             if (!wheelView.Visible)
             {

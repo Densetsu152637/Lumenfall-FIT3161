@@ -117,11 +117,13 @@ namespace Lumenfall.Startup
             TextButton.focused.background = TextButton.normal.background;
             TextButton.focused.textColor = MenuArt.Cream;
             Key = new GUIStyle(TextButton) { fontSize = 16 };
+            // Tabs are sized to their text with CalcSize, so wrapping must stay off or rounding can break a word onto two lines.
             Tab = new GUIStyle(GUI.skin.label)
             {
                 font = font,
                 fontSize = 18,
                 alignment = TextAnchor.MiddleCenter,
+                wordWrap = false,
                 padding = new RectOffset(14, 14, 4, 4)
             };
 
@@ -182,14 +184,15 @@ namespace Lumenfall.Startup
                 return;
             }
             Vector2 raw = mouse.position.ReadValue();
-            Vector2 position = new Vector2(raw.x, Screen.height - raw.y);
+            // Sparks are drawn inside the hosts' UiScale scope, so track the pointer in UI units.
+            Vector2 position = new Vector2(raw.x, Screen.height - raw.y) / UiScale.Factor;
             if (!pointerKnown)
             {
                 lastTrail = position;
                 pointerKnown = true;
             }
-            Vector2 target = new Vector2(Mathf.Clamp(position.x / Mathf.Max(1f, Screen.width) * 2f - 1f, -1f, 1f),
-                Mathf.Clamp(position.y / Mathf.Max(1f, Screen.height) * 2f - 1f, -1f, 1f));
+            Vector2 target = new Vector2(Mathf.Clamp(raw.x / Mathf.Max(1f, Screen.width) * 2f - 1f, -1f, 1f),
+                Mathf.Clamp((Screen.height - raw.y) / Mathf.Max(1f, Screen.height) * 2f - 1f, -1f, 1f));
             Parallax = Vector2.Lerp(Parallax, target, 1f - Mathf.Exp(-2.5f * deltaTime));
 
             float moved = Vector2.Distance(position, lastTrail);
@@ -218,7 +221,7 @@ namespace Lumenfall.Startup
         public void DrawBackdrop(float alpha, float now)
         {
             if (Event.current.type != EventType.Repaint || !IsReady) return;
-            Draw(new Rect(0f, 0f, Screen.width, Screen.height), Backdrop, Color.white, alpha);
+            Draw(new Rect(0f, 0f, UiScale.Width, UiScale.Height), Backdrop, Color.white, alpha);
             if (Motion > 0f) sparks.DrawMotes(now, alpha * Fade, Parallax, Glow, Sparkle);
         }
 
@@ -275,7 +278,7 @@ namespace Lumenfall.Startup
             }
             Rect star = new Rect(centreX - 12f, y - 12f, 24f, 24f);
             Matrix4x4 matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Sin(now * 0.8f) * 12f * Motion, star.center);
+            UiScale.RotateAroundPivot(Mathf.Sin(now * 0.8f) * 12f * Motion, star.center);
             Draw(Expand(star, 10f, 10f), Glow, MenuArt.Gold, 0.5f);
             Draw(star, Sparkle, MenuArt.Gold, 1f);
             GUI.matrix = matrix;
@@ -388,7 +391,8 @@ namespace Lumenfall.Startup
         public void Label(Rect rect, string text, GUIStyle style, Color colour, float alpha = 1f)
         {
             SetColor(Color.white, alpha);
-            style.normal.textColor = AccessibilitySettings.Current.HighContrast ? Color.white : colour;
+            // Hover too, so labels under the pointer keep this colour instead of the default skin's hover white.
+            style.normal.textColor = style.hover.textColor = AccessibilitySettings.Current.HighContrast ? Color.white : colour;
             GUI.Label(rect, text, style);
         }
 

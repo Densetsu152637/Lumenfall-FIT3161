@@ -152,6 +152,8 @@ namespace Lumenfall.Startup
         private readonly float[] runeLight = new float[OptionKeys.Length];
         private readonly Rect[] optionRects = new Rect[OptionKeys.Length];
         private readonly Vector2[] runePositions = new Vector2[OptionKeys.Length];
+        // How lit each title letter is by the pointer, eased so it brightens and fades rather than flicking.
+        private readonly float[] titleHover = new float[16];
 
         private Vector2 pointer;
         private Vector2 lastTrail;
@@ -667,7 +669,8 @@ namespace Lumenfall.Startup
         private float FitScale()
         {
             Vector2 needed = phase == Phase.Intro ? new Vector2(808f, 330f) : PageSize(page) + new Vector2(48f, 24f);
-            return Mathf.Min(1f, Screen.width / needed.x, Screen.height / needed.y);
+            // Grows with the window like the in-game overlays (UiScale), and shrinks when the page would not fit.
+            return Mathf.Min(UiScale.Factor, Screen.width / needed.x, Screen.height / needed.y);
         }
 
         private void DrawPage(Page value, Rect panel, float now)
@@ -745,11 +748,23 @@ namespace Lumenfall.Startup
                 string letter = text[i].ToString();
                 Rect glyph = new Rect(left - letterStyle.padding.left, y, width + padding + fontSize * 0.2f, letterHeight);
 
+                // A letter under the pointer flares to white once the title is fully lit.
+                float hover = 0f;
+                if (i < titleHover.Length)
+                {
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        float target = progress >= 1f && glyph.Contains(Event.current.mousePosition) ? 1f : 0f;
+                        titleHover[i] = Mathf.MoveTowards(titleHover[i], target, Time.unscaledDeltaTime * (target > 0f ? 10f : 4f));
+                    }
+                    hover = Smooth(titleHover[i]);
+                }
+
                 Draw(new Rect(centre - fontSize * 0.55f, rect.center.y - fontSize * 0.6f, fontSize * 1.1f, fontSize * 1.2f),
-                    glowTexture, MenuArt.Gold, 0.16f * flicker * lit + 0.45f * flare);
+                    glowTexture, Color.Lerp(MenuArt.Gold, MenuArt.Cream, hover), 0.16f * flicker * lit + 0.45f * flare + 0.35f * hover);
                 Label(new Rect(glyph.x, glyph.y + fontSize * 0.05f, glyph.width, glyph.height), letter, letterStyle, MenuArt.Ink, 0.75f);
-                Color colour = Color.Lerp(MenuArt.Dusk, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.35f * flare), lit);
-                float brightness = Mathf.Lerp(1f, flicker, lit);
+                Color colour = Color.Lerp(Color.Lerp(MenuArt.Dusk, Color.Lerp(MenuArt.Gold, MenuArt.Cream, 0.35f * flare), lit), Color.white, 0.85f * hover);
+                float brightness = Mathf.Lerp(Mathf.Lerp(1f, flicker, lit), 1f, hover);
                 Label(glyph, letter, letterStyle, new Color(colour.r * brightness, colour.g * brightness, colour.b * brightness), Mathf.Lerp(0.75f, 1f, lit));
             }
 
@@ -1808,7 +1823,9 @@ namespace Lumenfall.Startup
         private void Label(Rect rect, string text, GUIStyle style, Color colour, float alpha = 1f)
         {
             SetColor(Color.white, alpha);
-            style.normal.textColor = colour;
+            // Set hover too: the editor draws labels in their hover state under the pointer, which would otherwise
+            // show the default skin's white instead of this colour.
+            style.normal.textColor = style.hover.textColor = colour;
             GUI.Label(rect, text, style);
         }
 

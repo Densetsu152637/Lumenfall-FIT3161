@@ -401,6 +401,11 @@ namespace Lumenfall.Story
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (Time.unscaledTime < messageUntil && !string.IsNullOrEmpty(message) && !StartupMenu.IsOpen) HudSkin.Message(message);
         }
     }

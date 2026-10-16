@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Lumenfall.GameEvents;
 
 namespace Lumenfall.Startup
 {
@@ -111,7 +112,7 @@ namespace Lumenfall.Startup
         public void DrawMotes(float now, float alpha, Vector2 parallax, Texture glow, Texture star)
         {
             if (alpha <= 0f) return;
-            float scale = Mathf.Max(0.6f, Screen.height / 1080f);
+            float scale = Mathf.Max(0.6f, UiScale.Height / 1080f);
             for (int i = 0; i < motes.Length; i++)
             {
                 Mote mote = motes[i];
@@ -120,7 +121,7 @@ namespace Lumenfall.Startup
                 float twinkle = 0.45f + 0.55f * (0.5f + 0.5f * Mathf.Sin(now * (1.2f + mote.speed * 25f) + mote.phase));
                 float edge = Mathf.Clamp01(y / 0.25f) * Mathf.Clamp01((1.05f - y) / 0.2f);
                 float size = mote.size * scale;
-                Vector2 centre = new Vector2(x * Screen.width, y * Screen.height) - parallax * (6f + 26f * mote.depth);
+                Vector2 centre = new Vector2(x * UiScale.Width, y * UiScale.Height) - parallax * (6f + 26f * mote.depth);
                 Color colour = mote.gold ? MenuArt.Gold : MenuArt.Lavender;
                 float a = alpha * twinkle * edge;
                 Draw(new Rect(centre.x - size * 1.5f, centre.y - size * 1.5f, size * 3f, size * 3f), glow, colour, 0.35f * a);

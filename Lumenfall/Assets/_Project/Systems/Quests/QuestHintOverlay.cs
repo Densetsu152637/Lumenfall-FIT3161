@@ -517,6 +517,11 @@ namespace Lumenfall.Quests
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (StartupMenu.IsVisible || CutscenePlayer.IsPlaying) return;
             skin.Ensure();
             if (questTitleStyle == null)
@@ -528,7 +533,7 @@ namespace Lumenfall.Quests
             GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))
             {
-                float width = Mathf.Min(360f, Screen.width - 32f);
+                float width = Mathf.Min(360f, UiScale.Width - 32f);
                 float innerWidth = width - 28f;
                 float indentedWidth = innerWidth - 16f;
                 string questTitle = title ?? "Quest";
@@ -579,7 +584,7 @@ namespace Lumenfall.Quests
             if (settingsOpen) DrawSettingsPanel();
             skin.Fade = 1f;
             if (!settingsOpen) skin.DrawFrost(ThawAmount());
-            if (SettingsButton(new Rect(Screen.width - 156f, 16f, 140f, 36f))) SetSettingsOpen(!settingsOpen);
+            if (SettingsButton(new Rect(UiScale.Width - 156f, 16f, 140f, 36f))) SetSettingsOpen(!settingsOpen);
             if (settingsOpen) skin.DrawSparks(1f);
             GUI.color = previousColor;
         }
@@ -678,10 +683,10 @@ namespace Lumenfall.Quests
             skin.DrawBackdrop(0.85f, now);
             skin.DrawFrost(FrostAmount());
 
-            float width = Mathf.Min(Screen.width - 48f, 860f);
-            float height = Mathf.Min(Screen.height - 48f, 620f);
-            Rect panel = new Rect((Screen.width - width) * 0.5f - skin.Parallax.x * 4f,
-                (Screen.height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
+            float width = Mathf.Min(UiScale.Width - 48f, 860f);
+            float height = Mathf.Min(UiScale.Height - 48f, 620f);
+            Rect panel = new Rect((UiScale.Width - width) * 0.5f - skin.Parallax.x * 4f,
+                (UiScale.Height - height) * 0.5f + (1f - open) * 18f * skin.Motion - skin.Parallax.y * 3f, width, height);
             skin.PanelFrame(panel, now);
             skin.DrawTitle(new Rect(panel.x + 24f, panel.y + 22f, panel.width - 48f, 50f), "Settings", now);
             skin.Divider(panel.center.x, panel.y + 84f, Mathf.Min(280f, panel.width - 120f), now);

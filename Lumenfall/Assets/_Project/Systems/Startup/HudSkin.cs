@@ -1,3 +1,4 @@
+using Lumenfall.GameEvents;
 using UnityEngine;
 
 namespace Lumenfall.Startup
@@ -63,7 +64,7 @@ namespace Lumenfall.Startup
             if (view == null) return;
             Vector3 screen = view.WorldToScreenPoint(worldPosition);
             if (screen.z <= 0f) return;
-            Prompt(new Vector2(screen.x, Screen.height - screen.y), key, action);
+            Prompt(UiScale.FromScreenPoint(screen), key, action);
         }
 
         /// <summary>The height a side panel needs for <paramref name="body"/> at <paramref name="width"/>.</summary>
@@ -100,8 +101,8 @@ namespace Lumenfall.Startup
         /// <summary>A side panel in the top-right corner, below the Settings button, sized to its text.</summary>
         public static void SidePanel(string title, string body)
         {
-            float width = Mathf.Min(SidePanelWidth, Screen.width - 32f);
-            Panel(new Rect(Screen.width - width - 16f, SidePanelTop, width, PanelHeight(body, width)), title, body);
+            float width = Mathf.Min(SidePanelWidth, UiScale.Width - 32f);
+            Panel(new Rect(UiScale.Width - width - 16f, SidePanelTop, width, PanelHeight(body, width)), title, body);
         }
 
         /// <summary>A short message in a slim plum card, centred horizontally with its bottom edge <paramref name="bottomOffset"/> above the screen's.</summary>
@@ -109,9 +110,9 @@ namespace Lumenfall.Startup
         {
             if (string.IsNullOrEmpty(text)) return;
             MenuSkin s = Skin;
-            float width = Mathf.Min(Screen.width - 32f, Mathf.Max(260f, messageText.CalcSize(new GUIContent(text)).x + 44f));
+            float width = Mathf.Min(UiScale.Width - 32f, Mathf.Max(260f, messageText.CalcSize(new GUIContent(text)).x + 44f));
             float height = Mathf.Max(42f, messageText.CalcHeight(new GUIContent(text), width - 36f) + 18f);
-            Rect card = new Rect((Screen.width - width) * 0.5f, Screen.height - bottomOffset - height, width, height);
+            Rect card = new Rect((UiScale.Width - width) * 0.5f, UiScale.Height - bottomOffset - height, width, height);
             Color previous = GUI.color;
             s.Box(card, s.Card, 0.97f);
             s.Label(new Rect(card.x + 18f, card.y, card.width - 36f, card.height), text, messageText, MenuArt.Cream);

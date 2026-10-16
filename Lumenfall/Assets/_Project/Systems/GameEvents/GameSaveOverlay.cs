@@ -99,6 +99,11 @@ namespace Lumenfall.GameEvents
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (phase == Phase.Hidden) return;
             GameEventManager manager = FindAnyObjectByType<GameEventManager>();
             if (manager != null && manager.Runtime != null && manager.Runtime.ActiveDialogue != null) return;
@@ -108,7 +113,7 @@ namespace Lumenfall.GameEvents
 
             float t = Elapsed;
             float alpha = phase == Phase.Saving ? Mathf.Clamp01(t / 0.15f) : 1f - Mathf.Clamp01((t - SavedSeconds) / FadeSeconds);
-            Rect area = new Rect(Screen.width - 168f, Screen.height - 54f, 152f, 38f);
+            Rect area = new Rect(UiScale.Width - 168f, UiScale.Height - 54f, 152f, 38f);
             Rect icon = new Rect(area.x + 6f, area.y + 4f, 30f, 30f);
             Color previousColor = GUI.color;
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -121,7 +126,7 @@ namespace Lumenfall.GameEvents
             {
                 // A spinning, colour-shifting star with three motes orbiting it while the save is in progress.
                 Color tint = Color.Lerp(SavingColorA, SavingColorB, 0.5f + 0.5f * Mathf.Sin(t * 4f));
-                GUIUtility.RotateAroundPivot(t * 180f, icon.center);
+                UiScale.RotateAroundPivot(t * 180f, icon.center);
                 DrawSparkle(Scale(icon, 1f + 0.12f * Mathf.Sin(t * 6f)), tint, alpha);
                 GUI.matrix = previousMatrix;
                 for (int i = 0; i < 3; i++)

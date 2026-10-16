@@ -175,6 +175,11 @@ namespace Lumenfall.Story
         // Sleepers snore: a drifting "z Z z" over each one.
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (sleepers.Count == 0 || Camera.main == null || StartupMenu.IsOpen) return;
             if (zzzStyle == null) zzzStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             Color previous = GUI.color;
@@ -186,7 +191,8 @@ namespace Lumenfall.Story
                 Vector3 screen = Camera.main.WorldToScreenPoint(anchor.position + Vector3.up * (phase * 0.6f));
                 if (screen.z <= 0f) continue;
                 GUI.color = new Color(0.85f, 0.9f, 1f, Mathf.Sin(phase * Mathf.PI));
-                GUI.Label(new Rect(screen.x - 40f + phase * 14f, Screen.height - screen.y - 14f, 80f, 28f), phase < 0.5f ? "z Z" : "Z z Z", zzzStyle);
+                Vector2 point = UiScale.FromScreenPoint(screen);
+                GUI.Label(new Rect(point.x - 40f + phase * 14f, point.y - 14f, 80f, 28f), phase < 0.5f ? "z Z" : "Z z Z", zzzStyle);
             }
             GUI.color = previous;
         }

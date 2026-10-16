@@ -267,6 +267,11 @@ namespace Lumenfall.GridMovement
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (InputBlocked() || Camera.main == null) return;
             GridMover player = GridMover.FindActive();
             if (!CanOfferInteraction(player)) return;
@@ -349,6 +354,11 @@ namespace Lumenfall.GridMovement
 
         private void OnGUI()
         {
+            using (UiScale.Begin()) DrawGui();
+        }
+
+        private void DrawGui()
+        {
             if (!IsVisible) return;
             skin.Ensure();
 
@@ -357,7 +367,7 @@ namespace Lumenfall.GridMovement
             float fadeOut = Mathf.Clamp01((hideAt - now) / FadeSeconds);
             skin.Fade = Mathf.Min(fadeIn, fadeOut);
 
-            float width = Mathf.Min(Screen.width - 32f, 460f);
+            float width = Mathf.Min(UiScale.Width - 32f, 460f);
             GUIStyle messageStyle = new GUIStyle(skin.Body)
             {
                 alignment = TextAnchor.MiddleCenter,
@@ -367,7 +377,7 @@ namespace Lumenfall.GridMovement
             // A longer message (such as a secret's) makes the card taller rather than spilling out of it.
             float messageHeight = Mathf.Max(44f, messageStyle.CalcHeight(new GUIContent(message), width - 60f));
             float height = 126f + messageHeight;
-            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            Rect panel = new Rect((UiScale.Width - width) * 0.5f, (UiScale.Height - height) * 0.5f, width, height);
             int previousDepth = GUI.depth;
             GUI.depth = -1000;
             skin.PanelFrame(panel, now);

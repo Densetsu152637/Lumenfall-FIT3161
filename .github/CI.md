@@ -33,10 +33,11 @@ One job checks out the current event revision with depth one and runs `Lumenfall
 through one GameCI action, using `testMode: all` and
 `customParameters: -testCategory !RequiresGraphics`. Its checkout enables Git LFS
 so terrain and other binary assets are available to Unity. The integrated inventory
-contains 303 EditMode and sixteen batch-capable PlayMode cases. Two additional rendering
+contains 324 EditMode and sixteen batch-capable PlayMode cases. Two additional rendering
 cases are explicitly categorized `RequiresGraphics` and must run separately
 in a graphical Editor; it is never accepted as a skipped CI test. The
-[behavior inventory and graphical procedure](../tests/README.md) cover all 321 cases.
+[behavior inventory](../tests/gameplay_suites.json) and [graphical procedure](../tests/README.md)
+cover all 324 EditMode cases, including the three shader-stripping contracts.
 There are no historical source fetches or snapshot matrices.
 
 The supported `cliVersion` input pins
@@ -163,6 +164,148 @@ It uses the enabled scenes in `EditorBuildSettings.asset` (currently
 `Assets/_Project/Scenes/SampleScene.unity`) and the existing player settings.
 It requires the same three Unity secrets described above. The Windows build cache
 is separate from the EditMode cache.
+
+### Build time and cache behavior
+
+The build job has no explicit workflow timeout. Removing the former 60-minute
+limit allows a cold build to finish and populate its cache; GitHub-hosted jobs
+still have a [six-hour execution limit](https://docs.github.com/en/actions/reference/limits#existing-system-limits).
+License secrets are checked before the LFS checkout. Cleanup reuses
+`scripts/free_unity_disk_space.py`: below 30 GiB free it removes unrelated SDKs
+until sufficient space is available, with a six-minute cleanup step limit.
+It leaves Docker images intact and skips deletion when space is sufficient.
+
+The Library key includes runner OS, Unity version, packages, project settings and
+asset content instead of the commit SHA, so documentation-only commits reuse an
+exact cache. Restore first tries compatible project settings, then the previous
+Unity/package prefix, including existing caches from the old key format. Unity
+updates restored state for changed inputs. An explicit save uses the original
+restore key only after the builder and player packaging validation succeed, before
+artifact uploads; an upload failure therefore does not discard a completed build's
+cache. Failed/cancelled builds never save partial Library state. GameCI's
+[Linux build script](https://github.com/game-ci/unity-builder/blob/v4/dist/platforms/ubuntu/steps/build.sh)
+makes the project readable to the runner before cache compression. Cache availability
+still depends on GitHub's branch scope, storage limits and eviction.
+
+Investigation on 2026-10-16 found the dominant delay inside Unity shader compilation:
+
+- [Run 38828490133, build job 116741521728](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38828490133/job/116741521728)
+  at `113d818` spent 1m58s cleaning a runner that already had 86 GiB free,
+  49s checking out LFS assets, and 57m11s in the builder before the 60-minute
+  job limit cancelled it. The Library cache missed. The image pull took 2m41s
+  and the main asset refresh 658s. `ClusterDeferred` took about 12 minutes,
+  terrain `BillboardWavingDoublePass` about 7m42s, and the `FinalPost` fragment
+  pass compiled 1,280 variants in 693s with zero local cache hits. `FinalPostXR`
+  was still compiling when the job was cancelled, preventing a cache save.
+- [Run 38262584442, build job 114856680632](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38262584442/job/114856680632)
+  restored a 1,881 MB Library in 35s and its main asset refresh took 50s, but
+  still hit the job limit while compiling `FinalPost`. Repository integrity
+  took nine seconds in each run and remains required. The cache did not remove
+  the shader bottleneck for those changed settings/assets.
+
+The main-branch regression coincides with [graphics-options merge e68b601](https://github.com/Densetsu152637/Lumenfall-FIT3161/commit/e68b601420073928cf31a0c9c08850d75e44ed09):
+relative to its first parent `cf55a024`, it changed all three stored general
+unused-variant flags from 1 to 0, while keeping post-processing stripping enabled.
+The PC pipeline, PC renderer and quality settings did not change across that merge.
+The preceding [cf55a024 release build](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38252685910/job/114822818699)
+completed its builder step in 22m43s; the following `e68b601` build hit the one-hour
+limit. Together with the package behavior below, this is strong evidence that
+disabled general stripping contributed to the regression. The timings are not a
+controlled comparison: the merge also changed gameplay/UI source and assets.
+
+Both **Strip Unused Post Processing Variants** and **Strip Unused Variants** are now
+enabled in the active Unity 6000.4.10f1 / URP 17.4.0 API and
+[serialized settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset).
+Simply enabling the general flag with the original renderer list would be unsafe:
+[PC_Renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset) has active SSAO
+before opaque rendering (`AfterOpaque: 0`), and URP's
+`Editor/ShaderBuildPreprocessor.cs`, lines 1109-1118, removes the SSAO-off variant
+when every included renderer has SSAO.
+[GraphicsOptions](../Lumenfall/Assets/_Project/Systems/Startup/GraphicsOptions.cs)
+toggles SSAO at runtime; Mobile quality is excluded from Standalone and cannot
+supply that missing state. The PC pipeline therefore also includes
+[PC_Renderer_AOOffVariants](../Lumenfall/Assets/_Project/Settings/PC_Renderer_AOOffVariants.asset),
+an equivalent ForwardPlus renderer with an empty feature list. The original remains
+the default renderer at index 0. URP collects both feature sets and retains a variant
+if either needs it (`ShaderBuildPreprocessor.cs`, 638-659;
+`ShaderScriptableStripper.cs`, 1253-1278), preserving both AO states while pruning
+unrelated features. Quality presets and graphics APIs are unchanged. URP eagerly
+initializes the extra renderer, adding some initialization/allocation cost; cameras
+continue to render once with the original default renderer.
+See Unity's [stripping guidance](https://docs.unity3d.com/6000.4/Documentation/Manual/urp/shader-stripping-features.html).
+Diagnostics retain exported shader-stripping JSON from `Lumenfall/Temp` when available.
+
+With general stripping off, URP 17.4.0's build preprocessor uses permissive feature
+and prefilter masks and does not remove unused XR shader passes, even without an XR
+loader. Post-processing stripping works independently: it tests component presence
+in every `VolumeProfile` under `Assets`, without filtering by scene use or component
+activity. The project's `DefaultVolumeProfile` already contains all of the effect
+types tested by that collector. Removing only the third-party example profile would
+therefore not resolve the broad variant set. The observed UberPost fragment passes
+still retain 13,824 variants each after scriptable stripping, down from 23,040 after
+settings filtering; enabled post-processing stripping alone does not make this a
+small shader build.
+
+The native Windows diagnostic build at `99f784b` was **cancelled by the user after
+97m57.3s**, still compiling UberPostXR (last log: 11,251/13,824 variants ready).
+No executable or completed BuildReport was produced. Existing local Library state
+was retained and refreshed; this was neither a clean-cache benchmark nor a completed
+warm-cache run. The first sandboxed license-start attempt (57.6s) is excluded.
+
+The initial asset refresh took 326.256s, and the three successful Tundra script-build
+steps logged 9.70s, 2.01s and 7.57s. Shader compilation dominated: terrain ForwardLit
+compiled 6,912 variants with zero local hits in 1,615.86s; UberPost compiled 13,822
+variants with two local hits in 1,625.53s. Their raw variant spaces were 35,389,440
+and 92,160 respectively; Unity filtered these before compiling. UberPostXR retained
+another 13,824 variants, with no final cache-hit/compile summary before cancellation.
+On the i7-13700KF (16 cores/24 threads), one five-second sample showed 24 shader
+workers consuming the equivalent of 18.38 busy logical cores, about 33 GiB of free
+RAM and 3.74% total disk activity. This supports CPU-heavy shader compilation as the
+delay, rather than a stalled C# compiler or license check. Native Windows timings do
+not establish the duration of the Ubuntu-hosted build. Partial logs, API inputs,
+activity sample and cancellation evidence remain locally under
+`artifacts/unity-stripping-20261016/`; temporary probe and generated source changes
+were removed/restored. The later optimization validation below was separately authorized.
+
+The optimized native Windows probe retained that Library and the same shipping
+scene, Mono backend, ForwardPlus path and graphics APIs. Its actual build collector
+confirmed two feature sets differing only in SSAO, AO prefilter `Select` (ON and OFF),
+and unused-XR stripping enabled. Three focused EditMode contracts exercise the
+installed URP collector, including a negative control showing that removing the
+alternate renderer loses the AO-off state; all three passed. The four existing
+`GraphicsOptionsPlayModeTests` also passed on the RTX 5080 with D3D11, covering
+repeated shading/AO changes and later-camera antialiasing. The Python harness
+passed all 62 tests. Original graphics preferences and incidental Editor settings
+were restored, and the temporary build probes were removed. The observed fragment
+counts (d3d11) were:
+
+| Shader/pass | General stripping off | Optimized | Optimized cache/compile evidence |
+| --- | ---: | ---: | --- |
+| Terrain `WavingDoublePass` / ForwardLit | 6,912 | 16 | 16 new, zero hits; 6.11s vs baseline 1,615.86s |
+| UberPost / UberPost | 13,824 | 432 | 432 local hits, zero new; 3.85s |
+| UberPost / UberPostXR | 13,824 | 0 | Pass stripped |
+
+All `ClusterDeferred` passes and the unused `FinalPostXR` passes were also stripped;
+the original ForwardPlus renderer remains selected. Terrain's raw fragment space
+was unchanged at 35,389,440; settings filtering reduced it to 6,144, built-in
+stripping to 48, and scriptable stripping to 16. UberPost's raw 92,160 became 960
+after settings filtering and 432 after scriptable stripping (0.01s preparation).
+These counts establish reduced build work. The retained cache explains UberPost's
+short time and the initial refresh of 21.719s; the timings are not a clean-cache
+comparison or a hosted-build estimate. Evidence is retained locally under
+`artifacts/unity-stripping-optimisation-20261016/`.
+
+The improved probe was stopped at the agreed profiling checkpoint after **15m16.3s**,
+still compiling URP/Lit ForwardLit (126/1,344 fragment variants ready in the last
+progress message). No executable or final BuildReport was produced. Cold third-party
+material shaders remain a cost: glTF-pbrMetallicRoughness's Forward fragment pass
+compiled 288 new variants with no hits in 157.28s. A complete optimized player build,
+strict shader-variant matching and standalone visual checks remain unverified.
+
+Measure the next successful manual branch build and a repeat with an exact cache
+hit before claiming an overall speedup. Manual runs produce workflow artifacts
+without publishing a release. Local workflow/tooling checks cannot establish
+hosted cache behavior, successful player compilation or the new build duration.
 
 The build checkout explicitly downloads Git LFS content (`lfs: true`), including
 textures, models, audio and tracked terrain data. Before restoring the Library or
