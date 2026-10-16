@@ -520,10 +520,10 @@ namespace Lumenfall.Tests.World
             Assert.That(b02Exit.Content.destination, Is.SameAs(b02Entrance.Content));
             DynamicNpc stella = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude)
                 .Single(npc => npc.Id == "stella");
-            Assert.That(b02Exit.World.WorldToCell(stella.transform.position), Is.EqualTo(new Vector2Int(19, 15)),
+            Assert.That(b02Exit.World.WorldToCell(stella.transform.position), Is.EqualTo(new Vector2Int(19, 10)),
                 "Stella's authored prefab position, rather than the legacy catalog coordinates, defines her interaction side.");
             Vector2Int[] interactionCells = new[]
-                { new Vector2Int(19, 14), new Vector2Int(18, 15), new Vector2Int(20, 15), new Vector2Int(19, 16) }
+                { new Vector2Int(19, 9), new Vector2Int(18, 10), new Vector2Int(20, 10), new Vector2Int(19, 11) }
                 .Where(cell => !b02Exit.World.IsCellBlocked(cell) && CanReach(b02Exit.World, player.CurrentCell, cell) &&
                     Vector3.Distance(b02Exit.World.CellToWorld(cell), stella.transform.position) <= 2.01f).ToArray();
             Assert.That(interactionCells, Is.Not.Empty, "The B02 landing must reach a walkable cell beside Stella within talk range.");
