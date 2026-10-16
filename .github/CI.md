@@ -202,15 +202,66 @@ Investigation on 2026-10-16 found the dominant delay inside Unity shader compila
   took nine seconds in each run and remains required. The cache did not remove
   the shader bottleneck for those changed settings/assets.
 
-The active [URP shader stripping settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset)
-disable `m_StripUnusedVariants`; [PC renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset)
-uses deferred rendering and ambient occlusion. Windows selects PC quality and
-excludes Mobile quality. Shader variants therefore remain a follow-up optimisation
-candidate, not a measured speedup from this workflow change. Enabling
-[unused-variant stripping](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/shader-stripping.html)
-requires checking every enabled URP asset and runtime changes to ambient occlusion,
-antialiasing and shading presets; those settings remain unchanged. Diagnostics also
-retain exported shader-stripping JSON from `Lumenfall/Temp` when available.
+The main-branch regression coincides with [graphics-options merge e68b601](https://github.com/Densetsu152637/Lumenfall-FIT3161/commit/e68b601420073928cf31a0c9c08850d75e44ed09):
+relative to its first parent `cf55a024`, it changed all three stored general
+unused-variant flags from 1 to 0, while keeping post-processing stripping enabled.
+The PC pipeline, PC renderer and quality settings did not change across that merge.
+The preceding [cf55a024 release build](https://github.com/Densetsu152637/Lumenfall-FIT3161/actions/runs/38252685910/job/114822818699)
+completed its builder step in 22m43s; the following `e68b601` build hit the one-hour
+limit. Together with the package behavior below, this is strong evidence that
+disabled general stripping contributed to the regression. The timings are not a
+controlled comparison: the merge also changed gameplay/UI source and assets.
+
+Unity 6000.4.10f1 with URP 17.4.0 confirms through the active
+`GraphicsSettings.TryGetRenderPipelineSettings<URPShaderStrippingSetting>` API that
+**Strip Unused Post Processing Variants is already enabled** and **Strip Unused
+Variants is disabled**, matching the [serialized settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset).
+The latter remains disabled for a specific runtime compatibility reason: Windows
+uses only [PC_Renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset), whose
+SSAO feature is active and runs before opaque rendering (`AfterOpaque: 0`). URP
+17.4.0's `Editor/ShaderBuildPreprocessor.cs`, lines 1109-1118, strips the SSAO-off
+variant when every included renderer has SSAO and unused-variant stripping is on.
+[GraphicsOptions](../Lumenfall/Assets/_Project/Systems/Startup/GraphicsOptions.cs)
+toggles that feature at runtime, so enabling the flag would remove a variant needed
+by the player's AO Off option. Mobile quality is excluded from Standalone and cannot
+supply the missing state. A possible follow-up is to include a second PC renderer
+without SSAO, retain both AO states, then enable general stripping and validate with
+strict shader-variant matching in a player. That renderer change is not part of this
+baseline. This is a missing-variant compatibility risk, not a deliberate reduction
+in rendering quality. See Unity's [stripping guidance](https://docs.unity3d.com/6000.4/Documentation/Manual/urp/shader-stripping-features.html).
+Diagnostics retain exported shader-stripping JSON from `Lumenfall/Temp` when available.
+
+With general stripping off, URP 17.4.0's build preprocessor uses permissive feature
+and prefilter masks and does not remove unused XR shader passes, even without an XR
+loader. Post-processing stripping works independently: it tests component presence
+in every `VolumeProfile` under `Assets`, without filtering by scene use or component
+activity. The project's `DefaultVolumeProfile` already contains all of the effect
+types tested by that collector. Removing only the third-party example profile would
+therefore not resolve the broad variant set. The observed UberPost fragment passes
+still retain 13,824 variants each after scriptable stripping, down from 23,040 after
+settings filtering; enabled post-processing stripping alone does not make this a
+small shader build.
+
+The native Windows diagnostic build at `99f784b` was **cancelled by the user after
+97m57.3s**, still compiling UberPostXR (last log: 11,251/13,824 variants ready).
+No executable or completed BuildReport was produced. Existing local Library state
+was retained and refreshed; this was neither a clean-cache benchmark nor a completed
+warm-cache run. The first sandboxed license-start attempt (57.6s) is excluded.
+
+The initial asset refresh took 326.256s, and the three successful Tundra script-build
+steps logged 9.70s, 2.01s and 7.57s. Shader compilation dominated: terrain ForwardLit
+compiled 6,912 variants with zero local hits in 1,615.86s; UberPost compiled 13,822
+variants with two local hits in 1,625.53s. Their raw variant spaces were 35,389,440
+and 92,160 respectively; Unity filtered these before compiling. UberPostXR retained
+another 13,824 variants, with no final cache-hit/compile summary before cancellation.
+On the i7-13700KF (16 cores/24 threads), one five-second sample showed 24 shader
+workers consuming the equivalent of 18.38 busy logical cores, about 33 GiB of free
+RAM and 3.74% total disk activity. This supports CPU-heavy shader compilation as the
+delay, rather than a stalled C# compiler or license check. Native Windows timings do
+not establish the duration of the Ubuntu-hosted build. Partial logs, API inputs,
+activity sample and cancellation evidence remain locally under
+`artifacts/unity-stripping-20261016/`; temporary probe and generated source changes
+were removed/restored. No new build or runtime test was run after the stop request.
 
 Measure the next successful manual branch build and a repeat with an exact cache
 hit before claiming an overall speedup. Manual runs produce workflow artifacts
