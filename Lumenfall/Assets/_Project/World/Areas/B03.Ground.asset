@@ -155,5 +155,6 @@ MonoBehaviour:
     puzzleTargets: []
     portals: []
   areaPrefab: {fileID: 7944633704773725778, guid: 597f6dce0f02cc14cb855e9a69f2fb40, type: 3}
+  audioProfile: {fileID: 11400000, guid: 2e8da5e99567477f936a7d10b2d9b00d, type: 2}
   portals:
   - {fileID: 11400000, guid: 10000000000000000000000000000008, type: 2}

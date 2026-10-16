@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ac004dc727045388cba6d1042f58211, type: 3}
+  m_Name: Interior
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Audio.AreaAudioProfile
+  music: {fileID: 0}
+  musicVolume: 0.5
+  musicMixerGroup: {fileID: 0}
+  ambience: {fileID: 8300000, guid: fb72d0c833f64e5ca8d0c2281f5f8849, type: 3}
+  ambienceVolume: 0.25
+  ambienceMixerGroup: {fileID: 0}
+  fadeDuration: 1.5

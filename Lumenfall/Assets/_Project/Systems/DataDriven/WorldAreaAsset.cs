@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Lumenfall.Audio;
 
 namespace Lumenfall.DataDriven
 {
@@ -8,6 +9,7 @@ namespace Lumenfall.DataDriven
     {
         public MapDefinition definition = new MapDefinition();
         public GameObject areaPrefab;
+        public AreaAudioProfile audioProfile;
         public PortalContentAsset[] portals = Array.Empty<PortalContentAsset>();
     }
 }

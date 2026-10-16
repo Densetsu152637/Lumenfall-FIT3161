@@ -16,6 +16,7 @@ Open [Lumenfall](Lumenfall) as the Unity project root with Unity `6000.4.10f1`. 
 - [Grid movement guide](Lumenfall/Assets/_Project/Systems/GridMovement/README.md) documents the implemented tile-grid movement system.
 - [Game events guide](Lumenfall/Assets/_Project/Systems/GameEvents/README.md) documents the implemented event, dialogue, and quest-state system.
 - [Startup menu guide](Lumenfall/Assets/_Project/Systems/Startup/README.md) documents save-slot selection, backdrop restoration, settings, and input gating.
+- [Area audio guide](Lumenfall/Assets/_Project/Systems/Audio/README.md) documents area profiles, looping ambience, transitions, and authoring.
 - Run `powershell -ExecutionPolicy Bypass -File scripts/compile_runtime.ps1` followed by `scripts/compile_editmode_tests.ps1` for licensed-editor-independent runtime and EditMode test assembly compilation.
 - [Gameplay test suites](tests/README.md) validate the current project with 156 EditMode regression cases and 6 PlayMode world integration cases in one Unity job.
 

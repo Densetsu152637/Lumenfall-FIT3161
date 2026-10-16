@@ -98,6 +98,7 @@ MonoBehaviour:
     objects: []
     puzzleTargets: []
   areaPrefab: {fileID: 5632919234203233261, guid: f54d29105f80c8242b39536dc4282947, type: 3}
+  audioProfile: {fileID: 11400000, guid: 2725759c7cc7451cb2143f5d0dd1cde3, type: 2}
   portals:
   - {fileID: 11400000, guid: 10000000000000000000000000000000, type: 2}
   - {fileID: 11400000, guid: 5317742e7cff35f448a9640a933c9434, type: 2}

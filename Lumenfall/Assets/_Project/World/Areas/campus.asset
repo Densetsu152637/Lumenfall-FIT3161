@@ -203,6 +203,7 @@ MonoBehaviour:
       requiredPositionY: -2147483648
     portals: []
   areaPrefab: {fileID: 7035163530281894877, guid: edab88b9e67aceb42962756885b25787, type: 3}
+  audioProfile: {fileID: 11400000, guid: 207ac13907f64d6a89bd2a8f769e39b7, type: 2}
   portals:
   - {fileID: 11400000, guid: 10000000000000000000000000000001, type: 2}
   - {fileID: 11400000, guid: 10000000000000000000000000000002, type: 2}

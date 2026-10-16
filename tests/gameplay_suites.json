@@ -37,7 +37,8 @@
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
         "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 7,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
-        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
+        "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1,
+        "Lumenfall.Tests.Audio.AreaAudioContentTests": 7
       }
     },
     "playmode": {
@@ -46,6 +47,7 @@
         "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
         "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2,
         "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 7,
+        "Lumenfall.Tests.Audio.AreaAudioPlayModeTests": 10,
         "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
         "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 1

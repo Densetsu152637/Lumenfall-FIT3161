@@ -25,6 +25,7 @@ namespace Lumenfall.DataDriven
         public MapDefinition LoadedMap { get; private set; }
         public NpcDatabaseDefinition LoadedNpcs { get; private set; }
         public WorldAreaAsset CurrentArea { get; private set; }
+        public event Action<WorldAreaAsset> AreaChanged;
         /// The live instance of <see cref="CurrentArea"/>; a new object whenever an area is loaded or re-instantiated.
         public GameObject CurrentAreaRoot { get; private set; }
         public string SaveKey => "data-driven-world";
@@ -41,6 +42,11 @@ namespace Lumenfall.DataDriven
         {
             if (Instance != this) return;
             if (registeredSaveProvider && saveManager != null) saveManager.UnregisterProvider(this);
+            else if (registeredSaveProvider)
+            {
+                GameSaveManager saves = FindAnyObjectByType<GameSaveManager>();
+                if (saves != null) saves.UnregisterProvider(SaveKey);
+            }
             Instance = null;
         }
 
@@ -116,12 +122,14 @@ namespace Lumenfall.DataDriven
             MiscCollectibles.RegisterForMap(LoadedMap.id, world, root);
             if (LoadedMap.id == OrioDaisRoom.MapId || OrioDaisRoom.IsLegacyVisitActive) OrioDaisRoom.RegisterForMap(LoadedMap.id, world, root);
             WorldStateService.Instance?.EndMapRebuild();
+            AreaChanged?.Invoke(CurrentArea);
         }
 
         public void Clear()
         {
             foreach (GameObject item in areaInstances.Values) if (item != null) { item.SetActive(false); Destroy(item); }
             areaInstances.Clear(); LoadedMap = null; LoadedNpcs = null; CurrentArea = null; CurrentAreaRoot = null;
+            AreaChanged?.Invoke(null);
         }
 
         public void ResetToStartingState()

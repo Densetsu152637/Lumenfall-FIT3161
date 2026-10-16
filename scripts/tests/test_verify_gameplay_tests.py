@@ -230,8 +230,9 @@ class GameplayContractTests(unittest.TestCase):
                 destination = graphical if is_graphical else actual[platform]
                 destination[identity] = destination.get(identity, 0) + cases
         self.assertEqual(seen, {"Lumenfall.GameEvents.Tests", "Lumenfall.Startup.Tests",
-                                "Lumenfall.World.PlayModeTests", "Lumenfall.Startup.PlayModeTests"})
-        for platform, expected_total in [("editmode", 304), ("playmode", 16)]:
+                                "Lumenfall.World.PlayModeTests", "Lumenfall.Startup.PlayModeTests",
+                                "Lumenfall.Audio.EditModeTests", "Lumenfall.Audio.PlayModeTests"})
+        for platform, expected_total in [("editmode", 311), ("playmode", 26)]:
             self.assertEqual(actual[platform], platforms[platform]["fixtures"])
             self.assertEqual(sum(actual[platform].values()), expected_total)
         self.assertEqual(graphical, gameplay.read_manifest(graphical=True)["playmode"]["fixtures"])

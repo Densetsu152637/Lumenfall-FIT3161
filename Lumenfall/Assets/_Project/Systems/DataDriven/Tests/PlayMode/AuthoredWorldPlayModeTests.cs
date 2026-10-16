@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lumenfall.DataDriven;
+using Lumenfall.Audio;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Quests;
@@ -246,6 +247,7 @@ namespace Lumenfall.Tests.World
                     Assert.That(loader.SwitchArea(route, Vector2Int.zero), Is.True,
                         area.definition.id + "/" + route.id + " should reach " + route.destination.area.definition.id + ".");
                     Assert.That(loader.CurrentArea, Is.EqualTo(route.destination.area));
+                    Assert.That(audio.CurrentProfile, Is.SameAs(loader.CurrentArea.audioProfile));
                     activeRouteCount++;
                 }
             }

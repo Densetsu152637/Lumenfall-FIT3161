@@ -42,11 +42,16 @@ namespace Lumenfall.Audio
         private bool gameplayPaused;
         private bool menuMusic;
         private bool openingSilence;
+        private bool areaAmbienceOwnedByController;
         // The forest track waits this long after the opening's last line of dialogue closes.
         private const float OpeningMusicDelay = 1f;
         private float openingQuietUntil = float.NegativeInfinity;
         public static AudioFeedbackService Instance => instance;
         public AudioContext CurrentContext => signals.Context;
+        public bool AreaAmbiencePaused => applicationPaused || gameplayPaused;
+        public bool AreaAmbienceSuppressed => menuMusic || openingSilence;
+        public float AreaAmbienceContextGain => AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping);
+        public event Action AreaAmbiencePolicyChanged;
         public AudioClipStatus GetClipStatus(string cueId) => clips == null ? AudioClipStatus.InvalidConfiguration : clips.GetStatus(cueId);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -103,6 +108,7 @@ namespace Lumenfall.Audio
         { if (channel == null) return; channel.Source.Stop(); channel.Source.clip = null; channel.Gain = channel.Target = 0f; }
         private void OnDestroy() { if (instance == this) instance = null; }
         private void OnSceneLoaded(Scene _, LoadSceneMode __) { RefreshDependencies(); BindPlayer(); }
+        internal void RefreshAreaAmbienceOwnership() => RefreshPlayback();
         private void RefreshDependencies()
         {
             GameEventManager next = GameEventManager.Instance;
@@ -122,8 +128,10 @@ namespace Lumenfall.Audio
             }
         }
         private void UnbindWorld() { if (world != null) world.MapRebuilt -= OnMapRebuilt; world = null; }
-        private void OnRuntimeChanged(GameEventRuntime next) { signals.Bind(next); RefreshPlayback(); ApplyVolumes(); }
-        private void OnMapRebuilt(MapRebuildEvent rebuilt) { signals.SetMap(rebuilt.MapId); BindPlayer(); RefreshPlayback(); }
+        private void OnRuntimeChanged(GameEventRuntime next)
+        { signals.Bind(next); RefreshPlayback(); ApplyVolumes(); AreaAmbiencePolicyChanged?.Invoke(); }
+        private void OnMapRebuilt(MapRebuildEvent rebuilt)
+        { signals.SetMap(rebuilt.MapId); BindPlayer(); RefreshPlayback(); AreaAmbiencePolicyChanged?.Invoke(); }
         private void BindPlayer()
         {
             UnbindPlayer(); GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
@@ -146,7 +154,8 @@ namespace Lumenfall.Audio
         }
         private void OnCast(SpellId spell, string _, bool changed)
         { PlayCue(changed ? "spell." + spell.ToString().ToLowerInvariant() : "spell.no-change", false, player == null ? transform.position : player.transform.position); }
-        private void OnContextChanged(AudioContext _) { RefreshPlayback(); ApplyVolumes(); }
+        private void OnContextChanged(AudioContext _)
+        { RefreshPlayback(); ApplyVolumes(); AreaAmbiencePolicyChanged?.Invoke(); }
         private void OnCueRequested(string cue) { PlayCue(cue, cue.StartsWith("ui.", StringComparison.Ordinal), transform.position); }
         public static void PlayUi(AudioUiCue cue)
         { if (instance != null && instance.isActiveAndEnabled) instance.PlayCue("ui." + cue.ToString().ToLowerInvariant(), true, instance.transform.position); }
@@ -167,7 +176,8 @@ namespace Lumenfall.Audio
         {
             string key = signals.Context == AudioContext.Silent ? null : signals.Context.ToString().ToLowerInvariant();
             SetLoop(music, ref musicCue, SelectMusicCue(key));
-            SetLoop(ambience, ref ambienceCue, key == null || openingSilence ? null : "ambience." + key);
+            areaAmbienceOwnedByController = AreaAudioController.Instance != null && AreaAudioController.Instance.isActiveAndEnabled;
+            SetLoop(ambience, ref ambienceCue, key == null || openingSilence || areaAmbienceOwnedByController ? null : "ambience." + key);
         }
         private string SelectMusicCue(string key)
         {
@@ -199,9 +209,11 @@ namespace Lumenfall.Audio
             bool menu = StartupMenu.IsMainMenu;
             if (CutscenePlayer.OpeningInProgress) openingQuietUntil = Time.unscaledTime + OpeningMusicDelay;
             bool opening = Time.unscaledTime < openingQuietUntil;
-            if (menu != menuMusic || opening != openingSilence) { menuMusic = menu; openingSilence = opening; RefreshPlayback(); }
+            bool ambiencePolicyChanged = menu != menuMusic || opening != openingSilence;
+            if (ambiencePolicyChanged) { menuMusic = menu; openingSilence = opening; RefreshPlayback(); }
             bool paused = Time.timeScale <= 0f;
-            if (paused != gameplayPaused) { gameplayPaused = paused; ApplyPause(); }
+            if (paused != gameplayPaused) { gameplayPaused = paused; ApplyPause(); ambiencePolicyChanged = true; }
+            if (ambiencePolicyChanged) AreaAmbiencePolicyChanged?.Invoke();
             Advance(music, AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping));
             Advance(ambience, AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping));
         }
@@ -222,7 +234,8 @@ namespace Lumenfall.Audio
             foreach (LoopChannel channel in ambience) if (channel != null) channel.Source.volume = channel.Gain * AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping);
             foreach (Voice voice in voices) if (voice != null) voice.Source.volume = voice.Gain * AudioMixSettings.Sfx;
         }
-        private void OnApplicationPause(bool paused) { applicationPaused = paused; ApplyPause(); }
+        private void OnApplicationPause(bool paused)
+        { applicationPaused = paused; ApplyPause(); AreaAmbiencePolicyChanged?.Invoke(); }
         private void ApplyPause()
         {
             foreach (LoopChannel channel in music) { if (applicationPaused) channel.Source.Pause(); else channel.Source.UnPause(); }

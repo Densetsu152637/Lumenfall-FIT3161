@@ -1,0 +1,13 @@
+{
+    "name": "Lumenfall.Audio.EditModeTests",
+    "rootNamespace": "Lumenfall.Tests.Audio",
+    "references": [
+        "Lumenfall.Runtime"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

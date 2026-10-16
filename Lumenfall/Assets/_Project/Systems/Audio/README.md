@@ -17,3 +17,11 @@ Map rebuild, runtime replacement, scene reload, and disable/re-enable capture an
 Music and ambience use two loop sources each with a 0.6 second unscaled fade. Dialogue ducks music to 0.4, ambience to 0.6; sleep ducks both to 0.3. These gains are provisional until approved media can be listened to. The eight-source transient pool drops excess concurrent cues; no per-event objects are instantiated. Loops and UI cues are 2D; gameplay one-shots use provisional spatialBlend 0.2 at the player position, with Unity default attenuation. No visual animation or reduced-motion preference is introduced.
 
 Gameplay pause keeps music and UI feedback available, pauses ambience and existing gameplay voices, and rejects new gameplay cues. Application pause pauses all channels. Empty voices never become owned paused voices, leaving startup UI capacity available. Fades use unscaled time; no AudioListener.pause or Time.timeScale mutations occur. Audible/spatial/device/render acceptance remains pending. Dependency pointer/GetComponent checks run per frame; player searches occur only on scene/map/world replacement.
+
+`AreaAudioController` follows `DataDrivenWorldLoader` area changes and fades profile ambience
+through the Ambience bus, while `AudioFeedbackService` remains the authority for approved
+map, menu, and context music. The `westForest` and `deepForest` areas use the Forest ambience
+profile; campus and B01-B04 use Campus and Interior profiles respectively. Keep profile music
+unset while the manifest supplies music for that map, so both systems do not play competing
+tracks. The supplied `lumenForest.wav` is already the approved forest music cue; the Forest
+ambience profile uses the distinct synthetic starter loop.
