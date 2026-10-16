@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Audio;
 using Lumenfall.Controls;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -289,6 +290,7 @@ namespace Lumenfall.Spells
             if (spellWheelOpen || InputBlockedByOverlay || AvailableSpells.Length == 0) return;
             spellWheelOpen = true;
             wheelView.Open();
+            AudioFeedbackService.PlayUi(AudioUiCue.SpellWheelOpen);
             wheelMovementLockOwned = true;
             GetComponent<GridMover>()?.SetMovementLocked(this, true);
             OverlayInputGate.Acquire(this);
@@ -352,18 +354,20 @@ namespace Lumenfall.Spells
         {
             HeldThread = null;
         }
-        private void CloseSpellWheel(SpellId? picked = null)
+        private void CloseSpellWheel(SpellId? picked = null, bool silent = false)
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
             wheelView.Close(picked);
+            if (!silent) AudioFeedbackService.PlayUi(AudioUiCue.SpellWheelClose);
             // The wheel holds its own movement lock, so the journal's or dialogue's locks are left untouched.
             if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
             OverlayInputGate.Release(this);
             wheelMovementLockOwned = false;
         }
+        // Silent: the player did not close the wheel themselves when it is disabled (an area or scene change).
         private void OnDisable()
-        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
+        { CloseSpellWheel(silent: true); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
         private void OnDestroy() { wheelView.Dispose(); }
 
         private void OnGUI()

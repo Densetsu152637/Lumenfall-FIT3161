@@ -21,7 +21,7 @@
       "id": "music.campus",
       "bus": "Music",
       "loop": true,
-      "gain": 1.0,
+      "gain": 0.4,
       "resourcePath": "Audio/Music/lumenCampus",
       "approvalStatus": "approved"
     },
@@ -174,8 +174,8 @@
       "bus": "Sfx",
       "loop": false,
       "gain": 1.0,
-      "resourcePath": "",
-      "approvalStatus": "missing_approved_media"
+      "resourcePath": "Audio/SoundEffects/omgsocoldbrrrrr",
+      "approvalStatus": "approved"
     },
     {
       "id": "spell.vis",
@@ -240,6 +240,22 @@
       "gain": 1.0,
       "resourcePath": "",
       "approvalStatus": "missing_approved_media"
+    },
+    {
+      "id": "ui.spellwheelopen",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "Audio/SoundEffects/magicmenuOPEN",
+      "approvalStatus": "approved"
+    },
+    {
+      "id": "ui.spellwheelclose",
+      "bus": "Sfx",
+      "loop": false,
+      "gain": 1.0,
+      "resourcePath": "Audio/SoundEffects/magicmenuCLOSE",
+      "approvalStatus": "approved"
     },
     {
       "id": "story.sleep",
