@@ -30,6 +30,7 @@ jobs:
     name: Build Windows x64 player
     needs: repository-integrity
     runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
       - name: Verify Unity license secrets
         shell: bash

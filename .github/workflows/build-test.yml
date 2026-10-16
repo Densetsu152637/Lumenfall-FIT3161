@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   repository-integrity:
     name: Validate release sources
@@ -29,6 +33,7 @@ jobs:
     name: Build Windows x64 player
     needs: repository-integrity
     runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
       - name: Verify Unity license secrets
         shell: bash
@@ -120,5 +125,109 @@ jobs:
             Lumenfall/Logs/**
             Lumenfall/Temp/graphics-settings-stripping.json
             Lumenfall/Temp/shader-stripping.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  fresh-import-audit:
+    name: Fresh Unity asset import audit
+    if: ${{ contains(github.event.head_commit.message, '[fresh-import-audit]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Verify Unity license secrets
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -z "$UNITY_LICENSE" ]] && missing+=(UNITY_LICENSE)
+          [[ -z "$UNITY_EMAIL" ]] && missing+=(UNITY_EMAIL)
+          [[ -z "$UNITY_PASSWORD" ]] && missing+=(UNITY_PASSWORD)
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing repository secrets: ${missing[*]}. See .github/CI.md."
+            exit 1
+          fi
+
+      - name: Check out release sources
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          lfs: true
+          persist-credentials: false
+
+      - name: Free disk space for Unity
+        timeout-minutes: 6
+        run: python3 scripts/free_unity_disk_space.py
+
+      - name: Validate materialized build assets
+        run: python3 scripts/validate_unity_project.py Lumenfall --require-lfs-assets
+
+      - name: Read Unity version and verify fresh artifacts
+        id: unity-version
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = [line for line in Path("Lumenfall/ProjectSettings/ProjectVersion.txt").read_text(encoding="utf-8").splitlines()
+                   if line.startswith("m_EditorVersion:")]
+          match = re.fullmatch(r"m_EditorVersion:\s*(\d+\.\d+\.\d+[abfp]\d+)\s*", lines[0]) if len(lines) == 1 else None
+          if match is None:
+              print("::error::ProjectVersion.txt must contain exactly one valid m_EditorVersion.")
+              sys.exit(1)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"version={match.group(1)}\n")
+          PY
+          if [[ -e Lumenfall/Library || -L Lumenfall/Library ]]; then
+            echo "::error::Lumenfall/Library already exists; refusing to claim a cold import."
+            exit 1
+          fi
+          if [[ -e artifacts/fresh-import-audit || -L artifacts/fresh-import-audit ]]; then
+            echo "::error::Fresh import artifact directory already exists; refusing stale results."
+            exit 1
+          fi
+
+      - name: Run asset import fixture on a cold Library
+        id: unity-tests
+        uses: game-ci/unity-test-runner@32e57712352b500e17974b245a6dce9e11a73213
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Lumenfall
+          unityVersion: auto
+          cliVersion: v0.1.72
+          customImage: unityci/editor:ubuntu-${{ steps.unity-version.outputs.version }}-windows-mono-3
+          testMode: editmode
+          customParameters: -buildTarget win64 -testFilter Lumenfall.Tests.GameEvents.SerializedAssetImportTests
+          artifactsPath: artifacts/fresh-import-audit
+          githubToken: ""
+
+      - name: Verify fresh import fixture and diagnostics
+        id: verify-fresh-import
+        if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
+        env:
+          UNITY_OUTCOME: ${{ steps.unity-tests.outcome }}
+          EXPECTED_REVISION: ${{ github.sha }}
+        run: |
+          python3 scripts/verify_fresh_import.py \
+            --artifacts artifacts/fresh-import-audit \
+            --outcome "$UNITY_OUTCOME" --expected-revision "$EXPECTED_REVISION"
+
+      - name: Upload fresh import results and diagnostics
+        if: ${{ always() && steps.unity-tests.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: fresh-import-audit
+          path: |
+            artifacts/fresh-import-audit/
+            Lumenfall/Logs/**
           if-no-files-found: warn
           retention-days: 14

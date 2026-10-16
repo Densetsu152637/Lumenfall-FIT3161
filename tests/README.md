@@ -51,7 +51,7 @@ The integrated suite contains 346 EditMode, sixteen batch PlayMode and five grap
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
-| Dormitory onboarding | SettlingInTests | 6 |
+| Dormitory onboarding | SettlingInTests | 7 |
 | **Gameplay rules / EditMode** | | **346** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
@@ -69,8 +69,8 @@ Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tes
 `Lumenfall.Startup.Tests`, `Lumenfall.World.PlayModeTests` and
 `Lumenfall.Startup.PlayModeTests`. The source inventory discovers all C# files owned
 by test assembly definitions, including nested helpers and files with other names.
-No test uses Ignore or Explicit. Both rendering tests have the explicit
-`RequiresGraphics` category and fails if accidentally selected in batch mode.
+No test uses Ignore or Explicit. All five graphical tests have the explicit
+`RequiresGraphics` category and fail if accidentally selected in batch mode.
 
 ## Running and verifying
 
@@ -102,6 +102,13 @@ unsuccessful action outcomes and a checkout revision mismatch. It writes
 `gameplay-test-results` for 14 days, including after test failures. The Library is
 saved only after both modes pass strict verification.
 
+The push-only `CI/build-test` workflow also supports an optional cold-import audit
+when the head commit message contains `[fresh-import-audit]`. It uses a fresh hosted
+runner with no Library cache, targets Windows Mono, runs only
+`SerializedAssetImportTests`, and verifies its expected case count from the live
+manifest. The job uploads its Editor log and NUnit XML even when the test action
+fails; ordinary branch pushes do not pay for this import-only run.
+
 For equivalent GameCI-generated results, run from the repository root after the
 Unity action has completed (supply its actual outcome and checked-out commit):
 
@@ -130,12 +137,17 @@ python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical
 ```
 
 The graphical inventory has exactly five cases; the batch inventory contains the
-other sixteen PlayMode cases. The shader fixtures use the five referenced Polytope
-materials for additional-light pixel deltas in Forward and ForwardPlus, and Rock
-plus Opaque for the Deferred configuration. Frost Ice/Snow are checked for main
-directional-light response in the two forward modes; they are forward-only and are
-not claimed as deferred or additional-light coverage. Both verifications reject
-any failed or skipped case.
+other sixteen PlayMode cases. The shader fixtures render into 128-by-128 targets
+and compare the captured central 80-by-80 pixel region. The five referenced
+Polytope materials are checked for additional-light pixel deltas in configured
+Forward and ForwardPlus pipelines;
+Rock and Opaque also render through a configured Deferred renderer with a GBuffer
+pass. Frost Ice/Snow are checked for main directional-light response in the two
+forward modes; they are forward-only and are not claimed as deferred or
+additional-light coverage. The five graphical cases passed in a non-batch Windows
+Editor run on an NVIDIA GeForce RTX 5080 using Direct3D 12. The Deferred test asserts
+the configured renderer and GBuffer path; it does not observe URP's internal actual
+render mode. Both verifications reject any failed or skipped case.
 Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.

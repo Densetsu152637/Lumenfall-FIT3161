@@ -189,9 +189,10 @@ cache is separate from the EditMode cache.
 
 ### Build time and cache behavior
 
-The build job has no explicit workflow timeout. Removing the former 60-minute
-limit allows a cold build to finish and populate its cache; GitHub-hosted jobs
-still have a [six-hour execution limit](https://docs.github.com/en/actions/reference/limits#existing-system-limits).
+The Windows build jobs in the release and build-test workflows have a 120-minute
+timeout. This leaves about 25 minutes beyond the 95-minute cold main build observed
+on 2026-10-16 while preventing an unbounded six-hour run. The timeout applies only
+to player builds; the release publisher keeps its separate serialized queue.
 License secrets are checked before the LFS checkout. Cleanup reuses
 `scripts/free_unity_disk_space.py`: below 30 GiB free it removes unrelated SDKs
 until sufficient space is available, with a six-minute cleanup step limit.
@@ -336,9 +337,34 @@ The 2026-10-16 shader audit found URP 17.4.0 deprecation warnings in
 sources now use `_CLUSTER_LIGHT_LOOP`, `USE_CLUSTER_LIGHT_LOOP`, and
 `CLUSTER_LIGHT_LOOP_SUBTRACTIVE_LIGHT_CHECK`; the two Polytope deferred passes
 also use `GBufferOutput.hlsl` and `PackGBuffersBRDFData` while retaining their
-`UniversalGBuffer` passes. Unity compilation and visual checks in Forward,
-Forward+, and Deferred remain to be run. These API updates do not establish a
-build-time improvement.
+`UniversalGBuffer` passes. Five non-batch graphical tests passed on an NVIDIA
+GeForce RTX 5080 with Direct3D 12. The shader cases render into 128-by-128 targets
+and compare the central 80-by-80 pixels while exercising configured Forward, ForwardPlus and Deferred
+renderer paths. Deferred assertions cover the configured renderer and GBuffer
+pass;
+they do not observe URP's internal actual render mode. Frost is checked for its
+main-light response only in Forward and ForwardPlus. These API updates do not
+establish a build-time improvement.
+
+The initial main build also emitted 5,475 warning annotations. The largest
+remaining content families were 4,747 self-intersecting polygons discarded across
+four FBXs, 100 obsolete external-material-location notices across 16 tree FBXs,
+24 tree shader/renderer compatibility warnings, and 23 FBX rig/animation import
+warnings. These are asset-specific content and rendering risks; no broad geometry
+rewrite, material migration, or warning suppression is included. Review affected
+models and materials in the Editor before claiming visual correction.
+
+Package diagnostics included 460 unsupported Sentis transpose variants, 33 other
+Sentis shader messages, 46 unsupported ray-tracing variants, and 2,806 backend
+diagnostic records in compiler logs. Those records do not represent 2,806 failed
+shaders; the successful build log has no corresponding `ok=0` failure count.
+Sentis resources and unsupported platform variants are not broadly stripped based
+on these messages. The initial eight project-owned URP deprecation warnings and
+32 C# warnings were addressed in source; later branch results reported no old
+project C# or shader deprecations. One Node 20 warning came from the former
+unity-builder v4 reference; the build workflows now pin its Node 24-capable v5.0.1
+commit. This taxonomy describes the captured initial main run, not a claim that
+every third-party warning has been eliminated.
 
 The build checkout explicitly downloads Git LFS content (`lfs: true`), including
 textures, models, audio and tracked terrain data. Before restoring the Library or
@@ -371,6 +397,24 @@ LFS, Windows player, packaging, checksum, downloadable artifact, and diagnostic 
 as the release build, using `build-test-<workflow-run-id>` as the bundle version.
 Download its `Lumenfall-windows-x64` artifact from the run; this workflow does not
 create or modify GitHub Releases. It only runs for pushes to `CI/build-test`.
+The Windows build job is capped at 120 minutes. New pushes to this branch cancel
+obsolete runs of this workflow; the release workflow's publication queue is
+independent.
+
+To run a one-time cold asset-import audit on a pushed branch head, include
+`[fresh-import-audit]` in that commit's message. This adds a Linux EditMode run
+against an uncached Library using the Unity version from `ProjectVersion.txt` and
+the Ubuntu Windows-Mono editor image. It first checks license secrets, checks out
+LFS, frees disk space, validates materialized assets, and refuses an existing
+Library. The test runner is pinned to GameCI's Node 24 v4.4.0 commit and CLI
+v0.1.72; `-buildTarget win64` and the `SerializedAssetImportTests` filter limit the
+job to the four current terrain, prefab and cubemap cases without a player build.
+The strict verifier derives the case count from the live manifest, requires the
+current checkout SHA and successful action, rejects the four known native import
+error signatures, and requires nonempty NUnit XML and Editor log files. Results
+and available Unity logs are uploaded on success or failure. This marker-gated job
+does not run on ordinary pushes, and a marked commit still runs the normal
+nonpublishing player build on the same head.
 
 Select **Actions > Release game bundle > Run workflow** to build the selected branch
 or tag and download a test bundle from the workflow's artifacts. Manual runs do not
