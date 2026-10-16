@@ -2,6 +2,7 @@ using System;
 using Lumenfall.Cutscenes;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
+using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Player;
 using Lumenfall.Quests;
@@ -40,6 +41,18 @@ namespace Lumenfall.Story
         public const string NoRoomsFlag = "story.dorm.no_rooms_scene";
         public static readonly string[] NoRoomsPeople = { "rowan", "thistle" };
 
+        /// <summary>
+        /// The joke's payoff. From the room-ready thought on, Rowan, still without a room, has moved onto the lounge floor
+        /// (<see cref="RowanHomelessCell"/>) and says so (<see cref="RowanHomelessDialogueId"/>); Thistle, asked, only
+        /// gives the player a thought about how hard he is trying not to laugh, and Marigold tells him off
+        /// (<see cref="ThistleLaughingDialogueId"/>).
+        /// </summary>
+        public const string RowanNpcId = "rowan";
+        public const string ThistleNpcId = "thistle";
+        public const string RowanHomelessDialogueId = "dorm_rowan_homeless";
+        public const string ThistleLaughingDialogueId = "dorm_thistle_laughing";
+        public static readonly Vector2Int RowanHomelessCell = new Vector2Int(27, 7);
+
         /// <summary>The room door the ending walks to.</summary>
         public const string RoomDoorName = "Room Door 3";
 
@@ -53,6 +66,7 @@ namespace Lumenfall.Story
         private static SettlingInScene instance;
         private bool endingWasPlaying;
         private bool thoughtFailed;
+        private GameObject rowanMovedIn;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => instance = null;
@@ -83,6 +97,9 @@ namespace Lumenfall.Story
             }
             // The headmistress keeps her orientation lines and the reminder to visit the dorm until the player has.
             if (person == HeadmistressNpcId) return !runtime.GetFlag(NotReadyFlag);
+            // Rowan never did get a room.
+            if (person == RowanNpcId && runtime.GetFlag(ThoughtFlag)) { dialogueId = RowanHomelessDialogueId; return true; }
+            if (person == ThistleNpcId && runtime.GetFlag(ThoughtFlag)) { dialogueId = ThistleLaughingDialogueId; return true; }
             return false;
         }
 
@@ -90,7 +107,8 @@ namespace Lumenfall.Story
         public static bool TryGetPrelude(GameEventRuntime runtime, string person, out string dialogueId)
         {
             dialogueId = null;
-            if (runtime == null || runtime.GetFlag(NoRoomsFlag) || Array.IndexOf(NoRoomsPeople, person) < 0) return false;
+            // The desk argument is over once Rowan has been left without a room.
+            if (runtime == null || runtime.GetFlag(NoRoomsFlag) || runtime.GetFlag(ThoughtFlag) || Array.IndexOf(NoRoomsPeople, person) < 0) return false;
             dialogueId = NoRoomsDialogueId;
             return true;
         }
@@ -116,6 +134,27 @@ namespace Lumenfall.Story
 
             // A missing or broken cutscene would otherwise be retried every frame.
             if (!thoughtFailed && ShouldThinkRoomIsReady(runtime) && IsQuiet(runtime)) thoughtFailed = !CutscenePlayer.Play(ThoughtCutsceneId);
+            if (runtime.GetFlag(ThoughtFlag)) MoveRowanToTheLounge();
+        }
+
+        // Rowan is baked into the dorm, so each time it is placed after the thought he is moved, with the obstacle he carries.
+        private void MoveRowanToTheLounge()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            GameObject area = loader != null && loader.LoadedMap != null && loader.LoadedMap.id == MapId ? loader.CurrentAreaRoot : null;
+            if (area == null || area == rowanMovedIn) return;
+            GridMover player = GridMover.FindActive();
+            GridWorld world = player != null ? player.World : FindAnyObjectByType<GridWorld>();
+            // Not onto the player: he waits until they step off his spot.
+            if (world == null || (player != null && (player.CurrentCell == RowanHomelessCell || player.DestinationCell == RowanHomelessCell))) return;
+            foreach (DynamicNpc npc in area.GetComponentsInChildren<DynamicNpc>(true))
+            {
+                if (npc.Definition == null || npc.Definition.id != RowanNpcId) continue;
+                Vector3 spot = world.CellToWorld(RowanHomelessCell);
+                npc.transform.position = new Vector3(spot.x, npc.transform.position.y, spot.z);
+                foreach (GridObstacle obstacle in npc.GetComponentsInChildren<GridObstacle>(true)) obstacle.RefreshFootprint();
+            }
+            rowanMovedIn = area;
         }
 
         // Nothing else on screen, so the thought follows the last puzzle's own wrap-up rather than interrupting it.

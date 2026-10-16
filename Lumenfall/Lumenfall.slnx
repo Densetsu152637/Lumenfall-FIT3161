@@ -1,8 +1,10 @@
 ﻿<Solution>
   <Project Path="Lumenfall.Runtime.csproj" />
   <Project Path="Lumenfall.GameEvents.Tests.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="Lumenfall.World.PlayModeTests.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Lumenfall.Startup.PlayModeTests.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Lumenfall.GameEvents.csproj" />
+  <Project Path="Lumenfall.World.PlayModeTests.csproj" />
+  <Project Path="Lumenfall.Startup.Tests.csproj" />
 </Solution>

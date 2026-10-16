@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
+using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -75,6 +76,23 @@ namespace Lumenfall.Spells
         public event Action<string, Vector2Int, bool> VisPlaceRefused;
         /// A held relic was let go without being placed (area change, reset); it stays at its last safe placement.
         public event Action<string> VisHoldReleased;
+
+        /// <summary>A spell the player has just cast from input, before it looks for a target.</summary>
+        public sealed class CastAttempt
+        {
+            public SpellId Spell { get; }
+            public string MapId { get; }
+            public Vector2Int Cell { get; }
+            /// <summary>Set by a handler that answered the cast. The spell then does nothing else, except Lost Echoes,
+            /// which still searches.</summary>
+            public bool Handled { get; set; }
+            public CastAttempt(SpellId spell, string mapId, Vector2Int cell) { Spell = spell; MapId = mapId; Cell = cell; }
+        }
+        /// <summary>
+        /// Raised for each cast from input (not for a mechanism that casts at its own object), so a place with no spell
+        /// target, such as a secret, can answer a spell cast there.
+        /// </summary>
+        public static event Action<CastAttempt> CastAttempted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
@@ -214,12 +232,14 @@ namespace Lumenfall.Spells
         /// so it needs no target.
         private void CastSelected()
         {
+            bool answered = !(selectedSpell == SpellId.Vis && HeldRelic != null) && RaiseCastAttempted(selectedSpell);
             if (selectedSpell == SpellId.LostEchoes) { CastLostEchoes(); return; }
             if (selectedSpell == SpellId.Vis && HeldRelic != null)
             {
                 if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell);
                 return;
             }
+            if (answered) return;
             string target = FindNearestTarget();
             if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
         }
@@ -277,11 +297,13 @@ namespace Lumenfall.Spells
         {
             if (!IsSpellUnlocked(selectedSpell)) return false;
             TriggerCastAnimation();
+            bool answered = !(selectedSpell == SpellId.Vis && HeldRelic != null) && RaiseCastAttempted(selectedSpell);
             // Lost Echoes searches the area around the player, so it needs no target.
-            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes();
+            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes() || answered;
             // Vis sets a held relic down on the tile ahead instead of looking for a target.
             if (selectedSpell == SpellId.Vis && HeldRelic != null)
                 return TryGetPlacementCell(out Vector2Int cell) && TryPlaceHeldRelic(cell);
+            if (answered) return true;
             string target = FindNearestTarget();
             if (!string.IsNullOrEmpty(target)) return Cast(selectedSpell, target, DirectionFromPlayer());
             return selectedSpell == SpellId.Weave && CancelHeldThread();
@@ -391,6 +413,17 @@ namespace Lumenfall.Spells
             int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, lostEchoesRadius, revealed);
             if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, lostEchoesRadius, found);
             return found;
+        }
+        // A secret or other place with no spell target can answer the cast; see CastAttempted.
+        private bool RaiseCastAttempted(SpellId spell)
+        {
+            if (CastAttempted == null) return false;
+            GridMover player = GetComponent<GridMover>();
+            string mapId = DataDrivenWorldLoader.Instance?.LoadedMap?.id;
+            if (player == null || string.IsNullOrEmpty(mapId)) return false;
+            CastAttempt attempt = new CastAttempt(spell, mapId, player.CurrentCell);
+            CastAttempted.Invoke(attempt);
+            return attempt.Handled;
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)

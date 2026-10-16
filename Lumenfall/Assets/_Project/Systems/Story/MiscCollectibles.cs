@@ -49,6 +49,25 @@ namespace Lumenfall.Story
             new Item("faded_polaroid", "westForest", 24, 6),
         };
 
+        /// <summary>
+        /// Curios a secret hands over rather than hides (see <see cref="SecretRooms"/>). They have no map or cell; the
+        /// giver's dialogue triggers the same <c>found_misc_&lt;key&gt;</c> event, so the journal lists them like the rest.
+        /// </summary>
+        public static readonly string[] SecretRewards =
+        {
+            "cold_cup_of_coffee", "slightly_warm_pebble", "annoying_dog_exe", "mop_for_your_troubles",
+        };
+
+        /// <summary>Every curio key, in the order the journal lists them: the hidden ones, then the secrets' rewards.</summary>
+        public static System.Collections.Generic.IEnumerable<string> JournalKeys
+        {
+            get
+            {
+                foreach (Item item in Items) yield return item.Key;
+                foreach (string key in SecretRewards) yield return key;
+            }
+        }
+
         public static string FlagFor(string key) => FlagPrefix + key;
         public static string FoundId(string key) => FoundPrefix + key;
 
