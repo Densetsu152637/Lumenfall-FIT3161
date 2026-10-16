@@ -1,4 +1,5 @@
 using System;
+using Lumenfall.Accessibility;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
@@ -48,6 +49,8 @@ namespace Lumenfall.DataDriven
         private readonly ScrollView content;
         private readonly Label text;
         private readonly VisualElement choices;
+        private AccessibilitySnapshot accessibility;
+        private Texture2D speakerFrame;
         private readonly DialogueTriangle continueArrow;
         private readonly List<VisualElement> choiceRows = new List<VisualElement>();
         private readonly List<FontAsset> fontAssets = new List<FontAsset>();
@@ -172,13 +175,15 @@ namespace Lumenfall.DataDriven
         public void SetSpeaker(string speaker, Color colour, Texture2D frame)
         {
             accent = colour;
+            speakerFrame = frame;
             nameLabel.text = speaker;
-            ribbon.style.backgroundColor = colour;
+            ribbon.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
+            ribbon.style.backgroundColor = accessibility?.HighContrast == true ? Color.black : colour;
             portrait.style.borderTopColor = portrait.style.borderBottomColor =
                 portrait.style.borderLeftColor = portrait.style.borderRightColor = colour;
-            usesStretchFrame = frame != null && SetStretchFrame(frame.name);
+            usesStretchFrame = accessibility?.HighContrast != true && frame != null && SetStretchFrame(frame.name);
             box.EnableInClassList(StretchFrame, usesStretchFrame);
-            box.style.backgroundImage = !usesStretchFrame && frame != null
+            box.style.backgroundImage = accessibility?.HighContrast != true && !usesStretchFrame && frame != null
                 ? new StyleBackground(frame)
                 : new StyleBackground(StyleKeyword.None);
             if (usesStretchFrame)
@@ -187,9 +192,40 @@ namespace Lumenfall.DataDriven
                 box.style.height = StyleKeyword.Null;
                 fitPending = false;
             }
-            continueArrow.Fill = colour;
+            continueArrow.Fill = accessibility?.HighContrast == true ? Color.white : colour;
             foreach (VisualElement row in choiceRows) Recolour(row);
         }
+
+        /// <summary>Applies shared preferences to the actual Toolkit elements, including existing choice rows.</summary>
+        public void SetAccessibility(AccessibilitySnapshot value)
+        {
+            accessibility = value;
+            root.EnableInClassList("dialogue-high-contrast", value.HighContrast);
+            root.EnableInClassList("dialogue-reduced-motion", value.ReducedMotion);
+            nameLabel.style.fontSize = 30f * value.TextScale;
+            foreach (Label sizer in sizerTexts) sizer.style.fontSize = 30f * value.TextScale;
+            text.style.fontSize = 30f * value.TextScale;
+            foreach (VisualElement row in choiceRows)
+            {
+                row.Q<Label>().style.fontSize = 27f * value.TextScale;
+                Recolour(row);
+            }
+            ribbon.style.backgroundColor = value.HighContrast ? Color.black : accent;
+            continueArrow.Fill = value.HighContrast ? Color.white : accent;
+            ApplySpeakerFrame();
+            fitPending = true;
+            text.MarkDirtyRepaint();
+        }
+
+        private void ApplySpeakerFrame()
+        {
+            usesStretchFrame = accessibility?.HighContrast != true && speakerFrame != null && SetStretchFrame(speakerFrame.name);
+            box.EnableInClassList(StretchFrame, usesStretchFrame);
+            box.style.backgroundImage = accessibility?.HighContrast != true && !usesStretchFrame && speakerFrame != null
+                ? new StyleBackground(speakerFrame) : new StyleBackground(StyleKeyword.None);
+        }
+
+        public void SetContinuePrompt(string value) => continueArrow.tooltip = value;
 
         public void SetPortrait(Texture texture)
         {
@@ -309,6 +345,7 @@ namespace Lumenfall.DataDriven
             {
                 int index = i;
                 VisualElement row = CreateRow(labels[i]);
+                row.Q<Label>().style.fontSize = 27f * (accessibility?.TextScale ?? 1f);
                 row.RegisterCallback<PointerEnterEvent>(_ => ChoiceHovered?.Invoke(index));
                 row.RegisterCallback<PointerDownEvent>(e => { e.StopPropagation(); ChoiceClicked?.Invoke(index); });
                 Recolour(row);
@@ -343,28 +380,29 @@ namespace Lumenfall.DataDriven
                 choiceRows[i].EnableInClassList(Selected, i == index);
                 Recolour(choiceRows[i]);
             }
+            if (index >= 0 && index < choiceRows.Count) content.ScrollTo(choiceRows[index]);
         }
 
         /// <summary>Per-frame animation: the continue arrow bobs, and text with effects is redrawn.</summary>
         public void Tick()
         {
             TryFit();
-            continueArrow.style.translate = new Translate(0, Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4.2f)) * -7f);
-            if (animatedText) text.MarkDirtyRepaint();
+            continueArrow.style.translate = new Translate(0, accessibility?.ReducedMotion == true ? 0f : Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4.2f)) * -7f);
+            if (animatedText && accessibility?.ReducedMotion != true) text.MarkDirtyRepaint();
         }
 
         private void Recolour(VisualElement row)
         {
             bool selected = row.ClassListContains(Selected);
-            Color border = selected ? accent : new Color(0.47f, 0.35f, 0.2f, 0.3f);
+            Color border = accessibility?.HighContrast == true ? (selected ? Color.yellow : Color.white) : selected ? accent : new Color(0.47f, 0.35f, 0.2f, 0.3f);
             row.style.borderTopColor = row.style.borderBottomColor = row.style.borderLeftColor = row.style.borderRightColor = border;
-            if (row.ElementAt(0) is DialogueTriangle arrow) arrow.Fill = accent;
+            if (row.ElementAt(0) is DialogueTriangle arrow) arrow.Fill = accessibility?.HighContrast == true ? Color.yellow : accent;
         }
 
         /// <summary>Offsets glyphs that carry a wave or shake effect. Glyphs arrive in visible-character order.</summary>
         private void AnimateGlyphs(TextElement.GlyphsEnumerable glyphs)
         {
-            if (!animatedText) return;
+            if (!animatedText || accessibility?.ReducedMotion == true) return;
             float time = Time.unscaledTime;
             int index = 0;
             foreach (TextElement.Glyph glyph in glyphs)

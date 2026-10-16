@@ -161,23 +161,7 @@ namespace Lumenfall.Quests
             List<string> required = new List<string> { WorkbenchLinkId };
             for (int i = 0; i < RelicCount; i++) required.Add(ObjectId(i));
             for (int i = 0; i < RelayCount; i++) required.Add(RelayId(i));
-            HashSet<string> requiredSet = new HashSet<string>(required, StringComparer.Ordinal);
-            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal) { required[0] };
-            Queue<string> pending = new Queue<string>();
-            pending.Enqueue(required[0]);
-            string[] connections = worldState.SnapshotConnections();
-            while (pending.Count > 0)
-            {
-                string current = pending.Dequeue();
-                foreach (string connection in connections)
-                {
-                    string[] endpoints = connection.Split('|');
-                    if (endpoints.Length != 2) continue;
-                    string other = endpoints[0] == current ? endpoints[1] : endpoints[1] == current ? endpoints[0] : null;
-                    if (other != null && requiredSet.Contains(other) && reached.Add(other)) pending.Enqueue(other);
-                }
-            }
-            return reached.Count == required.Count;
+            return worldState.AreInSameNetwork(required.ToArray());
         }
 
         private static bool CircuitMode()

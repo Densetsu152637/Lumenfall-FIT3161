@@ -43,7 +43,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.ResetState();
         }
 
-        [Test] public void LessonRequiresPrerequisiteAcceptanceAndTerminalContinuation()
+        [Test] public void AcceptanceRequiresPrerequisiteAndTerminalLessonTeachesWeaveWithoutCompletingQuest()
         {
             DialogueSession blocked = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(blocked.SelectChoice("accept"), Is.False); blocked.End();
@@ -51,12 +51,15 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession session = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
             Assert.That(session.SelectChoice("accept"), Is.True);
-            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
+            Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False, "Accepting without finishing the lesson does not teach Weave.");
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+            Assert.That(runtime.HasEventTriggered("complete_stella_string_them_together"), Is.False);
             session.End();
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("leave");
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.False);
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             session = runtime.StartDialogue("stella_string_them_together_dialogue"); session.SelectChoice("active");
-            while (!session.IsCompleted) session.Continue();
+            EditModeLifecycle.FinishDialogue(session);
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
             string save = runtime.ExportStateJson(false); runtime.ResetState(); runtime.ImportStateJson(save);
             Assert.That(caster.IsSpellUnlocked(SpellId.Weave), Is.True);
@@ -121,7 +124,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(caster.HeldThread, Is.EqualTo("relay.a"), "The next targeted cast starts a fresh thread from that node.");
         }
 
-        [Test] public void AuthoredRingCanBeWovenToEveryRelicByFollowingTheHint()
+        [Test] public void AuthoredHintsChargeTheBoardAndManualRingCompletesTheSingleNetwork()
         {
             WorldAreaAsset area = UnityEditor.AssetDatabase.LoadAssetAtPath<WorldAreaAsset>("Assets/_Project/World/Areas/B02.Ground.asset");
             Assert.That(area, Is.Not.Null);
@@ -150,10 +153,10 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(first, Does.StartWith("Weave from"));
 
             int cables = 0;
-            while (!state.EvaluatePuzzleTarget(target) && cables < 20)
+            while (cables < 20)
             {
                 Assert.That(StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string instruction, out Vector2Int cell), Is.True);
-                Assert.That(instruction, Does.StartWith("Weave from"));
+                if (!instruction.StartsWith("Weave from", System.StringComparison.Ordinal)) break;
                 WorldObjectSnapshot next = null, lit = null;
                 foreach (WorldObjectSnapshot node in state.SnapshotObjects())
                 {
@@ -165,7 +168,18 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(state.AddConnection(lit.id, next.id), Is.True, lit.id + " -> " + next.id + " must be within reach.");
                 cables++;
             }
-            Assert.That(state.EvaluatePuzzleTarget(target), Is.True, "Every relic and the magical item are connected and powered.");
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.False, "Powered islands are not a complete circuit.");
+            Assert.That(StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string ringHint, out _), Is.True);
+            Assert.That(ringHint, Does.Contain("ring"));
+            var nodes = new List<WorldObjectSnapshot>();
+            foreach (WorldObjectSnapshot node in state.SnapshotObjects())
+                if (System.Array.IndexOf(target.objectIds, node.id) >= 0) nodes.Add(node);
+            foreach (WorldObjectSnapshot firstNode in nodes)
+                foreach (WorldObjectSnapshot secondNode in nodes)
+                    if (firstNode.id != secondNode.id && Vector2Int.Distance(firstNode.cell, secondNode.cell) <= 4f)
+                        state.AddConnection(firstNode.id, secondNode.id);
+            Assert.That(state.AreInSameNetwork(target.objectIds), Is.True);
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.True, "Every relic and the magical item are connected and powered in one graph.");
             Assert.That(StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string done, out _), Is.True);
             Assert.That(done, Does.Contain("magical item is moving"));
         }
@@ -176,11 +190,16 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(catalog, Is.Not.Null);
             NpcDefinition stella = null; foreach (NpcDefinition definition in catalog.npcs) if (definition.id == "stella") stella = definition;
             Assert.That(stella, Is.Not.Null);
+            Lumenfall.Story.NpcIntroductions.MarkMet("stella");
             DynamicNpc npc = Host("Stella").AddComponent<DynamicNpc>(); npc.Configure(stella, null);
             runtime.StartQuest("stella_first_light"); runtime.CompleteQuest("stella_first_light");
             for (int i = 0; i < 20; i++) { DialogueSession session = npc.Interact(); Assert.That(session.Definition.id, Is.EqualTo("stella_string_them_together_dialogue")); session.End(); }
+            runtime.SetFlag(Lumenfall.Story.NpcIntroductions.QuestThankedFlag("stella_first_light"), true);
             runtime.StartQuest("stella_string_them_together");
-            Assert.That(npc.Interact().Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
+            DialogueSession chat = npc.Interact();
+            Assert.That(chat.Definition.id, Is.EqualTo("chat_stella"));
+            Assert.That(chat.SelectChoice("task_2"), Is.True);
+            Assert.That(runtime.ActiveDialogue.Definition.id, Is.EqualTo("stella_string_them_together_dialogue"));
         }
 
         [Test] public void MonitorCompletesOnlyOnceAllFiveBoardRelicsAreLit()
@@ -203,21 +222,49 @@ namespace Lumenfall.Tests.GameEvents
             network.Add(Link);
             runtime.StartQuest("stella_first_light"); runtime.CompleteQuest("stella_first_light"); runtime.StartQuest("stella_string_them_together");
             for (int i = 1; i < network.Count - 1; i++) state.AddConnection(network[i - 1], network[i]);
-            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "Update");
+            QuestPuzzleMonitor monitor = Host("monitor").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active), "The disconnected magical item must not complete the quest.");
             EditModeLifecycle.Call(monitor, "OnDestroy"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
             state.AddConnection(network[network.Count - 2], network[network.Count - 1]);
-            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "Update");
+            monitor = Host("monitor-lit").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
             Assert.That(runtime.GetFlag("stella.string_them_together.ready_to_report"), Is.True);
             DialogueSession report = runtime.StartDialogue("stella_string_them_together_dialogue");
             Assert.That(report.SelectChoice("report"), Is.True);
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             state.SetProperty(Source, x => x.powered = false);
-            EditModeLifecycle.Call(monitor, "OnDestroy"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
-            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "Update");
+            EditModeLifecycle.Call(monitor, "OnDisable"); Object.DestroyImmediate(monitor.gameObject); hosts.RemoveAt(hosts.Count - 1);
+            monitor = Host("monitor-completed").AddComponent<QuestPuzzleMonitor>(); EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
             Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed), "Completion remains durable after the source goes dark.");
         }
+        [Test]
+        public void PoweredDisconnectedComponentsCannotCompleteUntilTheBoardIsJoined()
+        {
+            var ids = new List<string>();
+            for (int i = 0; i < 5; i++) ids.Add("stella.string-together.relic." + (i + 1));
+            for (int i = 0; i < 10; i++) ids.Add("stella.circuit.relay." + (i + 1));
+            ids.Add(Link);
+            for (int i = 0; i < ids.Count; i++)
+            {
+                state.RegisterObject(ids[i], null, new Vector2Int(i % 4, i / 4), Vector2Int.one, true, new[] { "ampere", "weave", "circuit" });
+                state.SetProperty(ids[i], item => item.powered = true);
+            }
+            for (int i = 1; i < ids.Count; i++) if (i != 8) state.AddConnection(ids[i - 1], ids[i]);
+            var target = new PuzzleTargetDefinition { objectIds = ids.ToArray(), requiredPowered = true, requiredConnected = true, requiredSameNetwork = true };
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.False);
+            runtime.StartQuest("stella_first_light"); runtime.CompleteQuest("stella_first_light"); runtime.StartQuest("stella_string_them_together");
+            QuestPuzzleMonitor monitor = Host("disconnected-monitor").AddComponent<QuestPuzzleMonitor>();
+            EditModeLifecycle.Call(monitor, "Awake"); EditModeLifecycle.Call(monitor, "OnEnable"); monitor.EvaluatePuzzles();
+            Assert.That(runtime.GetFlag("stella.string_them_together.ready_to_report"), Is.False);
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+            state.AddConnection(ids[7], ids[8]);
+            Assert.That(state.EvaluatePuzzleTarget(target), Is.True);
+            monitor.EvaluatePuzzles();
+            Assert.That(runtime.GetFlag("stella.string_them_together.ready_to_report"), Is.True);
+            Assert.That(runtime.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Active));
+            EditModeLifecycle.Call(monitor, "OnDisable");
+        }
+
         private bool Powered(string id) => state.TryGetObject(id, out WorldObjectSnapshot item) && item.powered;
         private static string[] BoardIds() => new[] { "stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5" };
         private GameObject Host(string name) { GameObject go = new GameObject(name); hosts.Add(go); return go; }

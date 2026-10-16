@@ -115,7 +115,10 @@ namespace Lumenfall.GridMovement
 
             if (content != null && content.blocked)
             {
-                PortalBlockedPopup.Show("The door is locked");
+                // Something on the portal may answer the attempt in its own way first, such as a joke played once.
+                foreach (IBlockedPortalHandler handler in GetComponents<IBlockedPortalHandler>())
+                    if (handler.HandleBlocked(this, mover)) return false;
+                PortalBlockedPopup.Show(content.blockedMessage, content.blockedTitle);
                 return false;
             }
 
@@ -288,6 +291,15 @@ namespace Lumenfall.GridMovement
 
     }
 
+    /// <summary>
+    /// A component on a blocked portal that answers the player's attempt to use it in its own way. Returning true means
+    /// it has done so, and the portal's usual locked notice is not shown.
+    /// </summary>
+    public interface IBlockedPortalHandler
+    {
+        bool HandleBlocked(GridPortal portal, GridMover mover);
+    }
+
     /// <summary>A brief portal-entry notice using the same generated skin as the menu and options UI.</summary>
     [DisallowMultipleComponent]
     public sealed class PortalBlockedPopup : MonoBehaviour
@@ -298,13 +310,19 @@ namespace Lumenfall.GridMovement
 
         private readonly MenuSkin skin = new MenuSkin();
         private string message = string.Empty;
+        private string heading = DefaultHeading;
+        private const string DefaultHeading = "Locked";
         private float shownAt;
         private float hideAt;
 
         public static event Action<string> Shown;
         public static bool IsVisible => instance != null && Time.unscaledTime < instance.hideAt;
 
-        public static void Show(string value)
+        /// <summary>
+        /// Shows <paramref name="value"/> under <paramref name="title"/>; empty ones show the default locked notice. A longer
+        /// message can stay up for more <paramref name="seconds"/>.
+        /// </summary>
+        public static void Show(string value, string title = null, float seconds = VisibleSeconds)
         {
             string text = string.IsNullOrWhiteSpace(value) ? "The door is locked" : value;
             Shown?.Invoke(text);
@@ -318,8 +336,9 @@ namespace Lumenfall.GridMovement
             }
 
             instance.message = text;
+            instance.heading = string.IsNullOrWhiteSpace(title) ? DefaultHeading : title;
             instance.shownAt = Time.unscaledTime;
-            instance.hideAt = instance.shownAt + VisibleSeconds;
+            instance.hideAt = instance.shownAt + Mathf.Max(seconds, FadeSeconds * 2f);
         }
 
         private void Update()
@@ -339,21 +358,24 @@ namespace Lumenfall.GridMovement
             skin.Fade = Mathf.Min(fadeIn, fadeOut);
 
             float width = Mathf.Min(Screen.width - 32f, 460f);
-            float height = 170f;
+            GUIStyle messageStyle = new GUIStyle(skin.Body)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 19,
+                wordWrap = true
+            };
+            // A longer message (such as a secret's) makes the card taller rather than spilling out of it.
+            float messageHeight = Mathf.Max(44f, messageStyle.CalcHeight(new GUIContent(message), width - 60f));
+            float height = 126f + messageHeight;
             Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
             int previousDepth = GUI.depth;
             GUI.depth = -1000;
             skin.PanelFrame(panel, now);
-            skin.DrawTitle(new Rect(panel.x + 28f, panel.y + 22f, panel.width - 56f, 48f), "Locked", now);
+            skin.DrawTitle(new Rect(panel.x + 28f, panel.y + 22f, panel.width - 56f, 48f), heading, now);
             skin.Divider(panel.center.x, panel.y + 82f, panel.width - 80f, now);
-            GUIStyle messageStyle = new GUIStyle(skin.Body)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 19
-            };
             Color previousColour = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, skin.Fade);
-            GUI.Label(new Rect(panel.x + 30f, panel.y + 94f, panel.width - 60f, 44f), message, messageStyle);
+            GUI.Label(new Rect(panel.x + 30f, panel.y + 94f, panel.width - 60f, messageHeight), message, messageStyle);
             GUI.color = previousColour;
             skin.DrawSparks(skin.Fade);
             GUI.depth = previousDepth;

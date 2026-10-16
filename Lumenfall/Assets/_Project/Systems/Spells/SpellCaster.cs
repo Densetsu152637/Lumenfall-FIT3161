@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
+using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -12,8 +13,8 @@ using Lumenfall.Startup;
 
 namespace Lumenfall.Spells
 {
-    /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default) or middle mouse opens the spell wheel,
-    /// the wheel selects a spell, and right mouse or the interact key casts at the nearest compatible object.
+    /// Applies the seven documented spells to live world state. The spell-wheel key (Q by default), middle mouse or the right gamepad shoulder opens the spell wheel,
+    /// the wheel selects a spell, and right mouse (or the interact key at a mechanism) casts at the nearest compatible object.
     [DisallowMultipleComponent]
     public sealed class SpellCaster : MonoBehaviour
     {
@@ -39,9 +40,13 @@ namespace Lumenfall.Spells
         private const string AlignmentObjectId = CinnaAlignmentRelic.RelicId;
         private readonly Dictionary<SpellId, Texture2D> icons = new Dictionary<SpellId, Texture2D>();
         private readonly SpellWheelView wheelView = new SpellWheelView();
+        // Arrow keys and the gamepad stick move round the open wheel; submit casts and cancel closes it.
+        private readonly Lumenfall.Startup.UiNavigationInput wheelNavigation = new Lumenfall.Startup.UiNavigationInput();
         public SpellId SelectedSpell => selectedSpell;
         public bool SpellWheelOpen => spellWheelOpen;
         public string LastCastFeedback { get; private set; }
+        public string LastSearchFeedback { get; private set; }
+        public event Action<string> SearchFeedbackChanged;
         /// The circuit object a Weave thread is currently held from, or null. The next Weave cast on another
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
@@ -72,13 +77,45 @@ namespace Lumenfall.Spells
         /// A held relic was let go without being placed (area change, reset); it stays at its last safe placement.
         public event Action<string> VisHoldReleased;
 
+        /// <summary>A spell the player has just cast from input, before it looks for a target.</summary>
+        public sealed class CastAttempt
+        {
+            public SpellId Spell { get; }
+            public string MapId { get; }
+            public Vector2Int Cell { get; }
+            /// <summary>Set by a handler that answered the cast. The spell then does nothing else, except Lost Echoes,
+            /// which still searches.</summary>
+            public bool Handled { get; set; }
+            public CastAttempt(SpellId spell, string mapId, Vector2Int cell) { Spell = spell; MapId = mapId; Cell = cell; }
+        }
+        /// <summary>
+        /// Raised for each cast from input (not for a mechanism that casts at its own object), so a place with no spell
+        /// target, such as a secret, can answer a spell cast there.
+        /// </summary>
+        public static event Action<CastAttempt> CastAttempted;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] private static void Bootstrap()
         { GridMover player = FindAnyObjectByType<GridMover>(); if (player != null && player.GetComponent<SpellCaster>() == null) player.gameObject.AddComponent<SpellCaster>(); }
+        private GameEventManager progressionManager;
         private void OnEnable()
-        { SubscribeProgression(); RefreshSelection(); }
-        // Starting a new game rebuilds the event runtime, so follow the live instance rather than the one seen at enable time.
-        private void SubscribeProgression()
-        { GameEventRuntime runtime = GameEventManager.Instance?.Runtime; if (runtime == null || runtime == subscribedRuntime) return; UnsubscribeProgression(); subscribedRuntime = runtime; Lumenfall.Quests.OrioRuneDiscPuzzle.RegisterQuestConditions(runtime); runtime.QuestStatusChanged += OnQuestStatusChanged; runtime.DialogueEnded += OnDialogueEnded; runtime.StateRestored += OnProgressionRestored; OnProgressionRestored(); }
+        {
+            progressionManager = GameEventManager.Instance;
+            progressionManager.RuntimeChanged += BindProgression;
+            BindProgression(progressionManager.Runtime);
+        }
+        private void BindProgression(GameEventRuntime runtime)
+        {
+            UnsubscribeProgression();
+            subscribedRuntime = runtime;
+            if (runtime != null)
+            {
+                OrioRuneDiscPuzzle.RegisterQuestConditions(runtime);
+                runtime.QuestStatusChanged += OnQuestStatusChanged;
+                runtime.DialogueEnded += OnDialogueEnded;
+                runtime.StateRestored += OnProgressionRestored;
+            }
+            OnProgressionRestored();
+        }
         private void UnsubscribeProgression()
         { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
@@ -132,7 +169,6 @@ namespace Lumenfall.Spells
         private void RefreshSelection() { SpellId[] spells = AvailableSpells; if (spells.Length > 0 && Array.IndexOf(spells, selectedSpell) < 0) selectedSpell = spells[0]; }
         private void Update()
         {
-            SubscribeProgression();
             // A held thread belongs to Weave on the current map; switching spells or maps drops it.
             if (HeldThread != null && (selectedSpell != SpellId.Weave || WorldStateService.Instance == null || !WorldStateService.Instance.TryGetObject(HeldThread, out _)))
                 ClearHeldThread();
@@ -144,10 +180,19 @@ namespace Lumenfall.Spells
             }
             Mouse mouse = Mouse.current;
             Keyboard keyboard = Keyboard.current;
-            if ((mouse != null && mouse.middleButton.wasPressedThisFrame) || KeyBindings.WasPressed(GameAction.SpellWheel))
+            if ((mouse != null && mouse.middleButton.wasPressedThisFrame) || KeyBindings.WasPressed(GameAction.SpellWheel) ||
+                Gamepad.current?.rightShoulder.wasPressedThisFrame == true)
             {
                 if (spellWheelOpen) CloseSpellWheel();
                 else OpenSpellWheel();
+            }
+            if (spellWheelOpen)
+            {
+                wheelNavigation.Read();
+                int offset = wheelNavigation.Horizontal != 0 ? wheelNavigation.Horizontal : wheelNavigation.Vertical;
+                if (offset != 0) SelectSpellByOffset(offset);
+                if (wheelNavigation.Cancel) { CloseSpellWheel(); return; }
+                if (wheelNavigation.Submit) { CastSelected(); CloseSpellWheel(); return; }
             }
             if (mouse != null && spellWheelOpen)
             {
@@ -181,6 +226,22 @@ namespace Lumenfall.Spells
             if (KeyBindings.WasPressed(GameAction.Spell5)) SelectSpell(SpellId.Glaciate);
             if (KeyBindings.WasPressed(GameAction.Spell6)) SelectSpell(SpellId.Vis);
             if (KeyBindings.WasPressed(GameAction.Spell7)) SelectSpell(SpellId.LostEchoes);
+        }
+
+        /// Casts the selected spell at the nearest compatible object. Lost Echoes searches the area around the player,
+        /// so it needs no target.
+        private void CastSelected()
+        {
+            bool answered = !(selectedSpell == SpellId.Vis && HeldRelic != null) && RaiseCastAttempted(selectedSpell);
+            if (selectedSpell == SpellId.LostEchoes) { CastLostEchoes(); return; }
+            if (selectedSpell == SpellId.Vis && HeldRelic != null)
+            {
+                if (TryGetPlacementCell(out Vector2Int cell)) TryPlaceHeldRelic(cell);
+                return;
+            }
+            if (answered) return;
+            string target = FindNearestTarget();
+            if (!string.IsNullOrEmpty(target)) Cast(selectedSpell, target, DirectionFromPlayer());
         }
 
         private SpellId[] AvailableSpells
@@ -221,7 +282,7 @@ namespace Lumenfall.Spells
             selectedSpell = spells[(index + offset % spells.Length + spells.Length) % spells.Length];
         }
 
-        private bool InputBlockedByOverlay => Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen ||InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress || CutscenePlayer.BlocksInput ||
+        private bool InputBlockedByOverlay => OverlayInputGate.IsBlockedExcept(this) || Startup.StartupMenu.IsOpen || QuestHintOverlay.IsSettingsOpen || InventoryUiState.IsOpen || CinnaTrialDeparture.InProgress || CutscenePlayer.BlocksInput ||
             GameEventManager.Instance?.Runtime?.ActiveDialogue != null;
         private void OpenSpellWheel()
         {
@@ -229,17 +290,20 @@ namespace Lumenfall.Spells
             spellWheelOpen = true;
             wheelView.Open();
             wheelMovementLockOwned = true;
-            GetComponent<GridMover>()?.SetMovementLocked(true);
+            GetComponent<GridMover>()?.SetMovementLocked(this, true);
+            OverlayInputGate.Acquire(this);
         }
         private bool CastSelectedFromInput()
         {
             if (!IsSpellUnlocked(selectedSpell)) return false;
             TriggerCastAnimation();
+            bool answered = !(selectedSpell == SpellId.Vis && HeldRelic != null) && RaiseCastAttempted(selectedSpell);
             // Lost Echoes searches the area around the player, so it needs no target.
-            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes();
+            if (selectedSpell == SpellId.LostEchoes) return CastLostEchoes() || answered;
             // Vis sets a held relic down on the tile ahead instead of looking for a target.
             if (selectedSpell == SpellId.Vis && HeldRelic != null)
                 return TryGetPlacementCell(out Vector2Int cell) && TryPlaceHeldRelic(cell);
+            if (answered) return true;
             string target = FindNearestTarget();
             if (!string.IsNullOrEmpty(target)) return Cast(selectedSpell, target, DirectionFromPlayer());
             return selectedSpell == SpellId.Weave && CancelHeldThread();
@@ -248,10 +312,13 @@ namespace Lumenfall.Spells
         /// Casts the selected spell at a specific object and plays the same animation as player input.
         public bool CastSelectedAt(string targetId)
         {
-            CloseSpellWheel();
-            if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
-            TriggerCastAnimation();
-            return Cast(selectedSpell, targetId, DirectionFromPlayer());
+            try
+            {
+                if (string.IsNullOrEmpty(targetId) || !IsSpellUnlocked(selectedSpell)) return false;
+                TriggerCastAnimation();
+                return Cast(selectedSpell, targetId, DirectionFromPlayer());
+            }
+            finally { CloseSpellWheel(); }
         }
 
         /// <summary>Lets other player-control scripts request the configured cast animation.</summary>
@@ -290,21 +357,20 @@ namespace Lumenfall.Spells
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
             wheelView.Close(picked);
-            // The inventory may have taken ownership of the same movement lock earlier
-            // in this frame. Release only the lock owned by the wheel in that case.
-            if (wheelMovementLockOwned && !InventoryUiState.IsOpen &&
-                GameEventManager.Instance?.Runtime?.ActiveDialogue == null)
-                GetComponent<GridMover>()?.SetMovementLocked(false);
+            // The wheel holds its own movement lock, so the journal's or dialogue's locks are left untouched.
+            if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
+            OverlayInputGate.Release(this);
             wheelMovementLockOwned = false;
         }
         private void OnDisable()
-        { UnsubscribeProgression(); CloseSpellWheel(); }
+        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
         private void OnDestroy() { wheelView.Dispose(); }
 
         private void OnGUI()
         {
             if (InputBlockedByOverlay) return;
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback)) HudSkin.Message(LastCastFeedback);
+            if (Time.timeScale <= 0f) return;
             if (!wheelView.Visible)
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.
@@ -314,7 +380,8 @@ namespace Lumenfall.Spells
             }
             SpellId[] spells = AvailableSpells;
             if (spells.Length == 0) return;
-            string hint = "Click or scroll: select   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   Right click or " + KeyBindings.GetKeyLabel(GameAction.Interact) + ": cast";
+            string hint = "Click, scroll or arrows: select   Right click / Enter / A: cast   " + KeyBindings.GetKeyLabel(GameAction.SpellWheel) + ": close   " +
+                KeyBindings.GetKeyLabel(GameAction.Interact) + ": use on a mechanism";
             SpellId? picked = wheelView.Draw(spells, selectedSpell, LoadIcon, hint);
             if (picked.HasValue) { selectedSpell = picked.Value; CloseSpellWheel(picked); }
         }
@@ -324,14 +391,17 @@ namespace Lumenfall.Spells
         /// </summary>
         public bool CastLostEchoes()
         {
-            CloseSpellWheel();
-            if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
-            WorldStateService state = WorldStateService.Instance;
-            if (state == null || !state.IsReady) return false;
-            List<string> revealed = new List<string>();
-            RevealHiddenAroundPlayer(state, revealed);
-            foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
-            return revealed.Count > 0;
+            try
+            {
+                if (!IsSpellUnlocked(SpellId.LostEchoes) || InputBlockedByOverlay) return false;
+                WorldStateService state = WorldStateService.Instance;
+                if (state == null || !state.IsReady) return false;
+                List<string> revealed = new List<string>();
+                RevealHiddenAroundPlayer(state, revealed);
+                foreach (string id in revealed) CastCompleted?.Invoke(SpellId.LostEchoes, id, true);
+                return revealed.Count > 0;
+            }
+            finally { CloseSpellWheel(); }
         }
         // Results are shown by LostEchoesPresentation (pulse, glow and sound), so the search reports no text.
         private int RevealHiddenAroundPlayer(WorldStateService state, List<string> revealed = null)
@@ -343,6 +413,17 @@ namespace Lumenfall.Spells
             int found = player == null ? 0 : state.RevealHiddenAround(player.CurrentCell, lostEchoesRadius, revealed);
             if (player != null) LostEchoesCast?.Invoke(player.CurrentCell, lostEchoesRadius, found);
             return found;
+        }
+        // A secret or other place with no spell target can answer the cast; see CastAttempted.
+        private bool RaiseCastAttempted(SpellId spell)
+        {
+            if (CastAttempted == null) return false;
+            GridMover player = GetComponent<GridMover>();
+            string mapId = DataDrivenWorldLoader.Instance?.LoadedMap?.id;
+            if (player == null || string.IsNullOrEmpty(mapId)) return false;
+            CastAttempt attempt = new CastAttempt(spell, mapId, player.CurrentCell);
+            CastAttempted.Invoke(attempt);
+            return attempt.Handled;
         }
         public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
         private Texture2D LoadIcon(SpellId spell)
@@ -634,6 +715,13 @@ namespace Lumenfall.Spells
                 changed = true;
             }
             return changed;
+        }
+        private void SearchFeedback(string message)
+        { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
+        private string FindNearestTarget(string requiredTag)
+        {
+            string target = FindNearestTarget();
+            return target != null && WorldStateService.Instance.TryGetObject(target, out WorldObjectSnapshot item) && HasTag(item, requiredTag) ? target : null;
         }
         private string FindNearestTarget()
         { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }

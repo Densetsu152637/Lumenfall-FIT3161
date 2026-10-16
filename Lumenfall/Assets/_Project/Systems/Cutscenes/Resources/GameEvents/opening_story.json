@@ -51,7 +51,7 @@
         {
           "id": "get_up",
           "speaker": "{player}",
-          "text": "<i>Well, lying here won't explain anything. Let me get up and have a look around.</i>",
+          "text": "<i>Well, standing here won't explain anything. Let me get up and have a look around.</i>",
           "nextNodeId": ""
         }
       ]

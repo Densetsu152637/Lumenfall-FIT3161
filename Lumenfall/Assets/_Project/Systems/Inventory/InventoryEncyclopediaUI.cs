@@ -33,11 +33,13 @@ namespace Lumenfall.Inventory
         private const string ItemFlagPrefix = "inventory.keyitem.";
         private static readonly string[] KeyItemIds =
         {
-            "dormitory-key", "katrina-library-anchor", "katrina-garden-anchor", "katrina-stream-anchor"
+            "dormitory-key", "katrina-keepsake", "optional-recovered-item", "katrina-library-anchor", "katrina-garden-anchor", "katrina-stream-anchor"
         };
         private static readonly Dictionary<string, KeyItemEntry> KeyItemEntries =
             new Dictionary<string, KeyItemEntry>(StringComparer.OrdinalIgnoreCase)
             {
+                { "katrina-keepsake", new KeyItemEntry("Katrina's keepsake", "Katrina's recovered keepsake.", null) },
+                { "optional-recovered-item", new KeyItemEntry("Recovered item (optional)", "An optional recovered item.", null) },
                 { "dormitory-key", new KeyItemEntry("Dormitory Key", "Your key to the dormitory room assigned at reception.", null) },
                 { "katrina-library-anchor", new KeyItemEntry("Brass Bookmark", "Katrina's brass bookmark, its edge covered in tiny corrections.", "KeyItemIcons/KatrinaBrassBookmark") },
                 { "katrina-garden-anchor", new KeyItemEntry("Silver Constellation Ribbon", "A silver ribbon embroidered with three slightly crooked constellations.", "KeyItemIcons/KatrinaSilverRibbon") },
@@ -48,8 +50,6 @@ namespace Lumenfall.Inventory
             {
                 { "stella", new CharacterEntry("Stella", "A student working through practical relic and circuit puzzles.") },
                 { "cinna_cirra", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_orientation", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
-                { "cinna_cirra_trial", new CharacterEntry("Cinna Cirra", "An orientation guide learning how the academy\'s practical objects fit together.") },
                 { "orio", new CharacterEntry("Orio", "A clever, reliable student who enjoys games, automation, and optimisation.") },
                 { "katrina", new CharacterEntry("Katrina", "A student searching for a keepsake while keeping its importance understated.") },
                 { "campus_student", new CharacterEntry("Kit", "A friendly student by the campus entrance who gives newcomers the lay of the land.") },
@@ -82,6 +82,7 @@ namespace Lumenfall.Inventory
         private const float PageFlipSeconds = 0.4f;
 
         private Page page;
+        private readonly UiNavigationInput navigation = new UiNavigationInput();
         private readonly MenuSkin skin = new MenuSkin();
         private readonly OptionsPanel options = new OptionsPanel { FlipPages = true };
         private readonly Rect[] tabRects = new Rect[PageLabels.Length];
@@ -90,6 +91,8 @@ namespace Lumenfall.Inventory
         private float openedAt;
         private float pageChangedAt;
         private Vector2 listScroll;
+        // The Miscellaneous item whose description is open, if any.
+        private string openMiscItem;
         // The active-tab underline slides between tabs; it is stored relative to the panel so parallax does not drag it.
         private float underlineOffset;
         private float underlineWidth;
@@ -144,6 +147,7 @@ namespace Lumenfall.Inventory
             runtime.DialogueStarted += OnDialogueStarted;
             runtime.StateRestored += OnStateRestored;
             runtime.DialogueEnded += OnDialogueEnded;
+            runtime.QuestStatusChanged += OnQuestStatusChanged;
         }
 
         private void UnsubscribeRuntime()
@@ -152,6 +156,7 @@ namespace Lumenfall.Inventory
             subscribedRuntime.DialogueStarted -= OnDialogueStarted;
             subscribedRuntime.StateRestored -= OnStateRestored;
             subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged;
             subscribedRuntime = null;
         }
 
@@ -159,21 +164,34 @@ namespace Lumenfall.Inventory
         {
             SubscribeRuntime();
             Keyboard keyboard = Keyboard.current;
+            Gamepad pad = Gamepad.current;
             if (InventoryUiState.IsOpen)
             {
                 float deltaTime = Time.unscaledDeltaTime;
                 skin.Tick(deltaTime);
                 // While a control is being rebound, every key (including the journal key and Escape) belongs to the rebind.
                 bool wasRebinding = options.IsRebinding;
-                options.Tick(deltaTime);
+                if (page == Page.Settings) options.Tick(deltaTime);
+                navigation.Read();
+                if (page != Page.Settings && navigation.Horizontal != 0)
+                { page = (Page)(((int)page + navigation.Horizontal + PageLabels.Length) % PageLabels.Length); pageChangedAt = Time.unscaledTime; listScroll = Vector2.zero; }
                 if (wasRebinding) return;
-                if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                int pageStep = pad?.leftShoulder.wasPressedThisFrame == true ? -1 : pad?.rightShoulder.wasPressedThisFrame == true ? 1 : 0;
+                if (pageStep != 0)
+                {
+                    options.CancelRebind();
+                    page = (Page)(((int)page + pageStep + PageLabels.Length) % PageLabels.Length);
+                    pageChangedAt = Time.unscaledTime;
+                    listScroll = Vector2.zero;
+                }
+                if (navigation.Cancel)
                 {
                     Close();
                     return;
                 }
             }
-            if (keyboard == null || !KeyBindings.WasPressed(GameAction.Journal)) return;
+            if (!InventoryUiState.IsOpen && OverlayInputGate.IsBlocked) return;
+            if (!KeyBindings.WasPressed(GameAction.Journal) && pad?.selectButton.wasPressedThisFrame != true) return;
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null) return;
             if (InventoryUiState.IsOpen) Close();
             else Open();
@@ -184,6 +202,7 @@ namespace Lumenfall.Inventory
             if (GameEventManager.Instance?.Runtime?.ActiveDialogue != null || FindAnyObjectByType<StartupMenu>() != null ||
                 QuestHintOverlay.IsSettingsOpen || CutscenePlayer.BlocksInput) return;
             InventoryUiState.IsOpen = true;
+            OverlayInputGate.Acquire(this);
             openedAt = pageChangedAt = Time.unscaledTime;
             underlinePlaced = false;
             saveFeedback = null;
@@ -192,16 +211,17 @@ namespace Lumenfall.Inventory
             options.Reset();
             skin.ResetAmbience();
             lockedMover = FindAnyObjectByType<GridMover>();
-            if (lockedMover != null) lockedMover.SetMovementLocked(true);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
         }
 
         private void Close()
         {
             if (InventoryUiState.IsOpen) InventoryUiState.ClosedFrame = Time.frameCount;
             InventoryUiState.IsOpen = false;
+            OverlayInputGate.Release(this);
             options.CancelRebind();
             skin.ShowWandCursor(false);
-            if (lockedMover != null) lockedMover.SetMovementLocked(false);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
         }
 
@@ -217,6 +237,11 @@ namespace Lumenfall.Inventory
         {
             if (session == null || !session.IsCompleted) return;
             GrantMetadataItem(session.Definition?.metadata);
+        }
+
+        private static void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
+        {
+            if (current == QuestStatus.Completed && quest != null) GrantMetadataItem(quest.metadata);
         }
 
         private static void GrantMetadataItem(GameMetadataEntry[] metadata)
@@ -484,6 +509,9 @@ namespace Lumenfall.Inventory
             if (!shown) GUILayout.Label("No key items discovered yet.", skin.Muted);
 
             GUILayout.Space(14f);
+            DrawMiscellaneous();
+
+            GUILayout.Space(14f);
             Heading("Unlocked spells");
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
             bool spellsShown = false;
@@ -498,6 +526,26 @@ namespace Lumenfall.Inventory
                 DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIconResourcePath(spell));
             }
             if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
+        }
+
+        // Curios found around the maps: just their names, and clicking one shows or hides its description.
+        private void DrawMiscellaneous()
+        {
+            Heading("Miscellaneous");
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            bool shown = false;
+            foreach (string key in MiscCollectibles.JournalKeys)
+            {
+                if (!MiscCollectibles.IsFound(runtime, key) ||
+                    !MiscCollectibles.TryGetText(runtime, key, out string itemName, out string description)) continue;
+                shown = true;
+                bool open = openMiscItem == key;
+                GUILayout.BeginVertical(skin.Entry);
+                if (GUILayout.Button(itemName, skin.EntryTitle)) openMiscItem = open ? null : key;
+                if (open && !string.IsNullOrWhiteSpace(description)) GUILayout.Label(description, skin.Muted);
+                GUILayout.EndVertical();
+            }
+            if (!shown) GUILayout.Label("Nothing found yet.", skin.Muted);
         }
 
         /// <summary>Shared journal row used by key items and spells: icon left, gold title and description right.</summary>
@@ -524,7 +572,7 @@ namespace Lumenfall.Inventory
             bool shown = false;
             foreach (KeyValuePair<string, CharacterEntry> pair in CharacterEntries)
             {
-                if (runtime == null || !runtime.GetFlag(CharacterFlagPrefix + pair.Key)) continue;
+                if (!AnyRecordDiscovered(runtime, pair.Key)) continue;
                 shown = true;
                 GUILayout.BeginVertical(skin.Entry);
                 GUILayout.Label(NpcIntroductions.NameFor(pair.Key, pair.Value.Name), skin.EntryTitle);
@@ -544,10 +592,25 @@ namespace Lumenfall.Inventory
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Adds a character to the journal. Several NPC records can be one person (Cinna on campus and in the ice trial),
+        /// so the entry is the person's, whichever record was met.
+        /// </summary>
         public static void DiscoverCharacter(string id)
         {
-            if (string.IsNullOrWhiteSpace(id) || !CharacterEntries.ContainsKey(id)) return;
-            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + id, true);
+            if (string.IsNullOrWhiteSpace(id)) return;
+            string person = NpcIntroductions.PersonId(id);
+            if (!CharacterEntries.ContainsKey(person)) return;
+            GameEventManager.Instance?.Runtime?.SetFlag(CharacterFlagPrefix + person, true);
+        }
+
+        // Saves from before records were merged hold the flag under the record's own id.
+        private static bool AnyRecordDiscovered(GameEventRuntime runtime, string person)
+        {
+            if (runtime == null) return false;
+            foreach (string record in NpcIntroductions.RecordIdsOf(person))
+                if (runtime.GetFlag(CharacterFlagPrefix + record)) return true;
+            return false;
         }
 
         public static void GrantKeyItem(string id)
@@ -566,8 +629,9 @@ namespace Lumenfall.Inventory
 
         public static bool IsCharacterDiscovered(string id)
         {
-            return !string.IsNullOrWhiteSpace(id) && CharacterEntries.ContainsKey(id) &&
-                   GameEventManager.Instance?.Runtime?.GetFlag(CharacterFlagPrefix + id) == true;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            string person = NpcIntroductions.PersonId(id);
+            return CharacterEntries.ContainsKey(person) && AnyRecordDiscovered(GameEventManager.Instance?.Runtime, person);
         }
 
         private static string MetadataValue(GameMetadataEntry[] metadata, string key)

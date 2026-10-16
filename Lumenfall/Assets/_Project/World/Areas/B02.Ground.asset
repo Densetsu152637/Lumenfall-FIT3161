@@ -215,6 +215,7 @@ MonoBehaviour:
       conditionMode: All
       requiredPowered: 1
       requiredConnected: 1
+      requiredSameNetwork: 1
       requiredRevealed: 0
       requiredFrozen: 0
       requiredAligned: 0

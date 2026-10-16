@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Lumenfall.GameEvents;
 using Lumenfall.Spells;
 
@@ -71,6 +70,8 @@ namespace Lumenfall.Quests
         private QuestPuzzleDatabase database;
         private readonly HashSet<string> fired = new HashSet<string>(StringComparer.Ordinal);
         private float nextCheck;
+        private GameEventManager eventManager;
+        private GameEventRuntime runtime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -89,53 +90,68 @@ namespace Lumenfall.Quests
             if (asset == null) { Debug.LogWarning($"Quest puzzle definitions missing at Resources/{ResourcePath}.json", this); return; }
             try { database = JsonUtility.FromJson<QuestPuzzleDatabase>(asset.text); }
             catch (Exception exception) { Debug.LogError($"Could not parse quest puzzle definitions: {exception.Message}", this); }
-            GameEventManager eventManager = GameEventManager.Instance;
-            GameEventRuntime runtime = eventManager == null ? null : eventManager.Runtime;
-            if (runtime != null)
-                runtime.StateRestored += OnStateRestored;
+        }
+
+        private void OnEnable()
+        {
+            eventManager = GameEventManager.Instance;
+            eventManager.RuntimeChanged += BindRuntime;
+            BindRuntime(eventManager.Runtime);
+        }
+
+        private void BindRuntime(GameEventRuntime nextRuntime)
+        {
+            if (runtime != null) runtime.StateRestored -= OnStateRestored;
+            runtime = nextRuntime;
+            if (runtime != null) runtime.StateRestored += OnStateRestored;
+            OnStateRestored();
+        }
+
+        private void OnDisable()
+        {
+            if (eventManager != null) eventManager.RuntimeChanged -= BindRuntime;
+            if (runtime != null) runtime.StateRestored -= OnStateRestored;
+            runtime = null;
+            eventManager = null;
         }
 
         private void OnDestroy()
         {
-            GameEventManager eventManager = GameEventManager.Instance;
-            GameEventRuntime runtime = eventManager == null ? null : eventManager.Runtime;
-            if (runtime != null) runtime.StateRestored -= OnStateRestored;
             if (instance == this) instance = null;
         }
 
-        private void OnStateRestored() { fired.Clear(); }
+        private void OnStateRestored() { fired.Clear(); nextCheck = 0f; }
 
         private void Update()
         {
-            if (database == null || Time.unscaledTime < nextCheck) return;
+            if (Time.unscaledTime < nextCheck) return;
             nextCheck = Time.unscaledTime + 0.1f;
             EvaluatePuzzles();
         }
 
         public int EvaluatePuzzles()
         {
-            GameEventManager manager = GameEventManager.Instance;
-            if (database == null || manager == null || manager.Runtime == null || manager.Runtime.ActiveDialogue != null) return 0;
+            if (!isActiveAndEnabled || database == null || runtime == null || runtime.ActiveDialogue != null) return 0;
             int completed = 0;
             foreach (QuestPuzzleDefinition puzzle in database.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
             {
                 if (puzzle == null || string.IsNullOrWhiteSpace(puzzle.questId) || string.IsNullOrWhiteSpace(puzzle.completionEventId)) continue;
                 string key = string.IsNullOrWhiteSpace(puzzle.id) ? puzzle.questId : puzzle.id;
-                QuestStatus status = manager.Runtime.GetQuestStatus(puzzle.questId);
+                QuestStatus status = runtime.GetQuestStatus(puzzle.questId);
                 if (status == QuestStatus.NotStarted) fired.Remove(key);
                 if (status != QuestStatus.Active) continue;
-                if (manager.Runtime.HasEventTriggered(puzzle.completionEventId)) { fired.Add(key); continue; }
+                if (runtime.HasEventTriggered(puzzle.completionEventId)) { fired.Add(key); continue; }
                 if (fired.Contains(key)) continue;
                 if (!SceneMatches(puzzle.mapId) || !TargetsReady(puzzle.targets)) continue;
-                GameEventTriggerResult result = manager.Runtime.TriggerEvent(puzzle.completionEventId);
+                GameEventTriggerResult result = runtime.TriggerEvent(puzzle.completionEventId);
                 if (result.Succeeded)
                 {
                     fired.Add(key);
                     completed++;
                     if (!string.IsNullOrWhiteSpace(puzzle.successDialogueId))
                     {
-                        manager.Runtime.StartDialogue(puzzle.successDialogueId);
-                        if (manager.Runtime.ActiveDialogue != null) break;
+                        runtime.StartDialogue(puzzle.successDialogueId);
+                        if (runtime.ActiveDialogue != null) break;
                     }
                 }
             }
@@ -162,8 +178,8 @@ namespace Lumenfall.Quests
                     if (endpoints.Length != 2 || string.IsNullOrWhiteSpace(endpoints[0]) || string.IsNullOrWhiteSpace(endpoints[1]) ||
                         !state.IsConnected(endpoints[0], endpoints[1]) ||
                         state.GetConnectionEffectivePower(endpoints[0], endpoints[1]) < target.minimumEffectivePower) return false;
-                if (target.requiredSameNetwork && !InSameNetwork(state, target.objectIds)) return false;
                 }
+                if (target.requiredSameNetwork && !state.AreInSameNetwork(target.objectIds)) return false;
                 bool any = string.Equals(target.conditionMode, "Any", StringComparison.OrdinalIgnoreCase);
                 bool targetReady = any ? false : true;
                 foreach (string objectId in target.objectIds)
@@ -198,28 +214,6 @@ namespace Lumenfall.Quests
                 if (!string.Equals(other.id, id, StringComparison.Ordinal) && state.IsConnected(id, other.id)) return true;
             }
             return false;
-        }
-
-        private static bool InSameNetwork(WorldStateService state, string[] objectIds)
-        {
-            if (objectIds == null || objectIds.Length == 0) return false;
-            HashSet<string> required = new HashSet<string>(objectIds, StringComparer.Ordinal);
-            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal) { objectIds[0] };
-            Queue<string> pending = new Queue<string>();
-            pending.Enqueue(objectIds[0]);
-            string[] connections = state.SnapshotConnections();
-            while (pending.Count > 0)
-            {
-                string current = pending.Dequeue();
-                foreach (string connection in connections)
-                {
-                    string[] endpoints = connection.Split('|');
-                    if (endpoints.Length != 2) continue;
-                    string other = endpoints[0] == current ? endpoints[1] : endpoints[1] == current ? endpoints[0] : null;
-                    if (other != null && required.Contains(other) && reached.Add(other)) pending.Enqueue(other);
-                }
-            }
-            return reached.Count == required.Count;
         }
 
         private static float NormalizeAngle(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Controls;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
@@ -54,6 +55,13 @@ namespace Lumenfall.Quests
 
         public static bool HintsEnabled => PlayerPrefs.GetInt(EnabledKey, 1) != 0;
         public static bool IsSettingsOpen => instance != null && instance.settingsOpen;
+        public static int SettingsClosedFrame { get; private set; } = -1;
+        public static void OpenSettings()
+        {
+            if (instance != null && !StartupMenu.IsVisible && !InventoryUiState.IsOpen) instance.SetSettingsOpen(true);
+        }
+        public static void CloseSettings() { if (instance != null) instance.SetSettingsOpen(false); }
+        private readonly UiNavigationInput settingsNavigation = new UiNavigationInput();
 
         public static void SetHintsEnabled(bool enabled)
         {
@@ -191,7 +199,9 @@ namespace Lumenfall.Quests
 
             if (string.Equals(activeQuest.id, OrioRuneDiscPuzzle.QuestId, StringComparison.Ordinal))
             {
-                if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
+                if (!runtime.GetFlag("spell.unlocked.Rotara"))
+                    hint = "Speak with Orio in the west forest and finish his Rotara lesson before turning the rune dais.";
+                else if (OrioRuneDiscPuzzle.IsQuestReady(world, runtime))
                     hint = "Return to Orio.";
                 else if (string.Equals(world.CurrentMapId, OrioRuneDiscPuzzle.PuzzleMapId, StringComparison.OrdinalIgnoreCase))
                     hint = "Put all three discs of the Rune dais in the correct position.\n" +
@@ -235,7 +245,10 @@ namespace Lumenfall.Quests
             if (!runtime.GetFlag(LateToOrientationScene.MetFlag))
             {
                 title = "Walk around this mysterious forest";
-                hint = "Press W, A, S, D to move";
+                // Read from the current bindings each time the hint refreshes, so a rebound key shows straight away.
+                hint = "Press " + KeyBindings.GetKeyLabel(GameAction.MoveUp) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveLeft) + ", " +
+                    KeyBindings.GetKeyLabel(GameAction.MoveDown) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveRight) + " to move\nPress " +
+                    KeyBindings.GetKeyLabel(GameAction.Journal) + " to open the menu";
                 return true;
             }
             if (!runtime.GetFlag(LayOfTheLandScene.MetFlag))
@@ -508,8 +521,9 @@ namespace Lumenfall.Quests
             skin.Ensure();
             if (questTitleStyle == null)
                 questTitleStyle = new GUIStyle(skin.Title) { alignment = TextAnchor.MiddleLeft, wordWrap = true };
-            if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 13 };
-            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 13, richText = true };
+            // 15 rather than 13, which was hard to read on the card.
+            if (questTrackerStyle == null) questTrackerStyle = new GUIStyle(skin.Body) { fontSize = 15 };
+            if (questHintStyle == null) questHintStyle = new GUIStyle(skin.Body) { fontSize = 15, richText = true };
             // The pop-out draws above dialogue and other overlays; IMGUI puts lower depths in front.
             GUI.depth = settingsOpen ? -10 : 0;
             if (HintsEnabled && !settingsOpen && !string.IsNullOrEmpty(hint))
@@ -638,7 +652,8 @@ namespace Lumenfall.Quests
             bool wasRebinding = options.IsRebinding;
             options.Tick(deltaTime);
             Keyboard keyboard = Keyboard.current;
-            if (!wasRebinding && keyboard != null && keyboard.escapeKey.wasPressedThisFrame) SetSettingsOpen(false);
+            settingsNavigation.Read();
+            if (!wasRebinding && settingsNavigation.Cancel) SetSettingsOpen(false);
         }
 
         /// <summary>
@@ -650,7 +665,7 @@ namespace Lumenfall.Quests
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return false;
             if (InventoryUiState.IsOpen || InventoryUiState.ClosedFrame == Time.frameCount || CutscenePlayer.BlocksInput) return false;
-            return FindAnyObjectByType<StartupMenu>() == null;
+            return !OverlayInputGate.IsBlocked && SettingsClosedFrame != Time.frameCount && FindAnyObjectByType<StartupMenu>() == null;
         }
 
         /// <summary>The Settings pop-out, styled like the startup menu: the options, then a short paused hint.</summary>
@@ -721,6 +736,7 @@ namespace Lumenfall.Quests
             settingsOpen = open;
             if (open)
             {
+                OverlayInputGate.Acquire(this);
                 settingsOpenedAt = Time.unscaledTime;
                 options.Reset();
                 skin.ResetAmbience();
@@ -732,6 +748,8 @@ namespace Lumenfall.Quests
             }
             else
             {
+                OverlayInputGate.Release(this);
+                if (wasOpen) SettingsClosedFrame = Time.frameCount;
                 options.CancelRebind();
                 skin.ShowWandCursor(false);
                 if (wasOpen)

@@ -8,4 +8,4 @@
 
 Only the `Models/FBX format` folder (140 models) and `License.txt` are included. The package's other model formats (DAE, glTF, OBJ, STL) and preview images were left out to keep the repository small. The models use plain colour materials and no textures; the package's FBX `Textures` folder is empty.
 
-The files are unchanged. They furnish the Dormitory interior through `Assets/_Project/Editor/DormitoryInteriorBuilder.cs`, which places them by path (`Models/FBX format/<name>.fbx`) and sizes each one to a target height or width.
+The files are unchanged. They furnish the Dormitory interior (`Dormitory.prefab`), where they were placed by hand and by an editor tool that has since been removed.

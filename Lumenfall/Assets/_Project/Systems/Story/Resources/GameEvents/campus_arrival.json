@@ -102,7 +102,7 @@
         {
           "id": "magic_school",
           "speaker": "{player}",
-          "text": "<i>Spell practice. Relics. So the afterlife is a magic school. Sure. Why not.</i>",
+          "text": "<i>Spell practice. Relics. So the afterlife is a magic school. Sure. Why not? Much better than doing differential equations.</i>",
           "nextNodeId": "ceremony"
         },
         {
@@ -126,7 +126,7 @@
         {
           "id": "right",
           "speaker": "{player}",
-          "text": "<i>The headmistress. By the fountain. Right.</i>",
+          "text": "<i>I don't get along well with teachers. I hope my luck changes this time.</i>",
           "nextNodeId": ""
         }
       ]
@@ -170,7 +170,7 @@
         {
           "id": "organised",
           "speaker": "{player}",
-          "text": "<i>A headmistress, a dorm room and a free day. For the afterlife, this is weirdly organised.</i>",
+          "text": "<i>A headmistress that's nice, a dorm room that's supposedly free, and I get to learn magic. For the afterlife, this ain't half bad.</i>",
           "nextNodeId": "off_you_go"
         },
         {

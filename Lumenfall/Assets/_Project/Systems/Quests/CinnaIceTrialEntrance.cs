@@ -9,6 +9,6 @@ namespace Lumenfall.Quests
     public static class CinnaIceTrialEntrance
     {
         public const string PortalId = "P.C05";
-        public static readonly Vector2Int EntranceCell = new Vector2Int(18, 45);
+        public static readonly Vector2Int EntranceCell = new Vector2Int(50, 45);
     }
 }

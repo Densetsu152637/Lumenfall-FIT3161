@@ -10,9 +10,10 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Stella", "text": "Oh, hello! Mind the wires, they bite. Well, they spark. I'm Stella.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.stella", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Stella", "text": "You're new, aren't you? What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Stella", "text": "Nice to meet you, {player}. Your timing might be perfect, actually.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Stella", "text": "Oh! Hi. Sorry, I've been staring at this circuit since sunrise. I'm Stella.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.stella", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Stella", "text": "You're new here too, aren't you? What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Stella", "text": "{player}. Nice to meet you. Please don't touch the bench, it's mid-experiment. Wouldn't want your first day to be that memorable.", "nextNodeId": "dormmates"},
+        {"id": "dormmates", "speaker": "Stella", "text": "Wait, you're the new arrival for our dormitory? Then we're dormmates. Quiet hours start at ten, and my plushies are not decorations. And whoever keeps knocking out pi on the room doors at night: please stop.", "nextNodeId": ""}
       ]
     },
     {
@@ -23,9 +24,10 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Cinna Cirra", "text": "Oh! Hello. I'm Cinna. Cinna Cirra. Sorry, I'm still learning where everything is.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.cinna_cirra", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Cinna Cirra", "text": "And you are...?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Cinna Cirra", "text": "{player}. Got it. I'm writing that down, so I don't forget.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Cinna Cirra", "text": "Oh! Hi! You startled me. I'm Cinna. Cinna Cirra, if you want the whole thing.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.cinna_cirra", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Cinna Cirra", "text": "And you are...? Sorry, I'm meant to ask that first. I read a book about it.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Cinna Cirra", "text": "{player}. Got it. I'm writing it down so I don't forget.", "nextNodeId": "dormmates"},
+        {"id": "dormmates", "speaker": "Cinna Cirra", "text": "Oh! You're the new student in our dormitory? Then we're dormmates! I've never had a dormmate before. I hope I'm good at it.", "nextNodeId": ""}
       ]
     },
     {
@@ -36,9 +38,10 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Orio", "text": "Ah, a visitor. Not many people find their way out here. I'm Orio.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.orio", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Orio", "text": "I like to know who I'm talking to. Your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Orio", "text": "{player}. Noted, and filed under people who wander into glades.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Orio", "text": "Oh, hey. Didn't hear you over the gears. I'm Orio.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.orio", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Orio", "text": "Name? I'm optimising introductions. Shortest version wins.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Orio", "text": "{player}. Nice. Saved to memory. No backup, though.", "nextNodeId": "dormmates"},
+        {"id": "dormmates", "speaker": "Orio", "text": "Hang on, you're the new one in our dorm? Nice, dormmates. If you hear flip-flops in the hall at 3 a.m., that's just me getting back.", "nextNodeId": ""}
       ]
     },
     {
@@ -49,9 +52,10 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Katrina", "text": "You look like you're about to ask me something. I'm Katrina.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.katrina", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Katrina", "text": "And you would be?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Katrina", "text": "{player}. Good. I'll try very hard not to forget that one.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Katrina", "text": "You've got the look of someone about to ask a question. I'm Katrina.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.katrina", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Katrina", "text": "And you are? Quickly. I've got a lot to do today.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Katrina", "text": "{player}. Noted. I'll try to remember it. That's a sore subject at the moment.", "nextNodeId": "dormmates"},
+        {"id": "dormmates", "speaker": "Katrina", "text": "Hold on. You're the new arrival in our dormitory? Then we're dormmates. Ground rule: the hall mirror is mine before nine.", "nextNodeId": ""}
       ]
     },
     {
@@ -62,9 +66,9 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Grace", "text": "Hello there! Out walking the lantern trail? I'm Grace.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.forest_student", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Grace", "text": "I don't think I've seen you before. What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Grace", "text": "Nice to meet you, {player}. Welcome to the forest.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Grace", "text": "Oh, hello! Don't mind the scorch marks, that was me. I'm Grace.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.forest_student", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Grace", "text": "I haven't seen you on the trail before. What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Grace", "text": "Nice to meet you, {player}. Welcome to the quietest classroom on campus.", "nextNodeId": ""}
       ]
     },
     {
@@ -75,9 +79,9 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Prof. Voltaire", "text": "Ah, a new face among the shelves. I am Professor Voltaire, keeper of this Library.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.prof_voltaire", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Prof. Voltaire", "text": "And whom do I have the pleasure of adding to my records?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Prof. Voltaire", "text": "{player}. Splendid. I shall remember that, particularly if a book goes missing.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Prof. Voltaire", "text": "Ah. A new face among the shelves. I am Professor Voltaire, and this Library is my responsibility.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.prof_voltaire", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Prof. Voltaire", "text": "Whom do I have the pleasure of adding to my records?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Prof. Voltaire", "text": "{player}. Splendid. I never forget a name, particularly on an overdue notice.", "nextNodeId": ""}
       ]
     },
     {
@@ -88,9 +92,9 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Vex", "text": "Hm? Oh. I'm Vex. Keep your voice down.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.vex", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Vex", "text": "Who are you, then?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Vex", "text": "{player}. Fine. Quietly, though.", "nextNodeId": ""}
+        {"id": "name", "speaker": "Vex", "text": "Shh. ...Hm? Oh. I'm Vex.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.vex", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Vex", "text": "And you are? Whisper it.", "choices": [{"id": "answer", "text": "(whispering) I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Vex", "text": "{player}. Fine. Welcome. Quietly.", "nextNodeId": ""}
       ]
     },
     {
@@ -101,9 +105,9 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Luna", "text": "Hello! I'm Luna. I don't think we've met.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.luna", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "name", "speaker": "Luna", "text": "Hello! I'm Luna. You're new, aren't you? You've got that looking-around face.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.luna", "boolValue": true}], "nextNodeId": "ask"},
         {"id": "ask", "speaker": "Luna", "text": "What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Luna", "text": "{player}. That's a lovely name. I'll remember it.", "nextNodeId": ""}
+        {"id": "pleased", "speaker": "Luna", "text": "{player}. That sounds like it belongs on a star chart.", "nextNodeId": ""}
       ]
     },
     {
@@ -114,8 +118,8 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Juno", "text": "Hi! I'm Juno. I know just about everyone on campus, and I don't know you.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.juno", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Juno", "text": "So, who are you?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "name", "speaker": "Juno", "text": "Hi! I'm Juno. I know everyone on campus, which means I definitely don't know you.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.juno", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Juno", "text": "So who are you? Quick, before the rumours start without me.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
         {"id": "pleased", "speaker": "Juno", "text": "{player}! Great. Now I know everyone again.", "nextNodeId": ""}
       ]
     },
@@ -127,9 +131,9 @@
         {"key": "placeholder", "value": "First-meeting lines, to be rewritten."}
       ],
       "nodes": [
-        {"id": "name", "speaker": "Rowan", "text": "Hey! You must be new. I'm Rowan.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.rowan", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Rowan", "text": "What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Rowan", "text": "Nice to meet you, {player}!", "nextNodeId": ""}
+        {"id": "name", "speaker": "Rowan", "text": "Hey! New arrival? Me too. I'm Rowan.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.rowan", "boolValue": true}], "nextNodeId": "ask"},
+        {"id": "ask", "speaker": "Rowan", "text": "What's your name? I'm collecting fellow people without a room.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "pleased", "speaker": "Rowan", "text": "Nice to meet you, {player}. Welcome to the lobby. I live here now, apparently.", "nextNodeId": ""}
       ]
     },
     {
@@ -141,7 +145,7 @@
       ],
       "nodes": [
         {"id": "name", "speaker": "Moss", "text": "...Oh. Hello. I'm Moss.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.moss", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Moss", "text": "Who are you?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "ask", "speaker": "Moss", "text": "You walk softly. That's good. What's your name?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
         {"id": "pleased", "speaker": "Moss", "text": "{player}. Nice to meet you. Quietly.", "nextNodeId": ""}
       ]
     },
@@ -155,7 +159,7 @@
       "nodes": [
         {"id": "name", "speaker": "Marigold", "text": "Hello, and welcome! I'm Marigold, one of the dormitory receptionists.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.marigold", "boolValue": true}], "nextNodeId": "ask"},
         {"id": "ask", "speaker": "Marigold", "text": "And who might you be?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
-        {"id": "pleased", "speaker": "Marigold", "text": "{player}. Lovely to meet you.", "nextNodeId": ""}
+        {"id": "pleased", "speaker": "Marigold", "text": "{player}. Lovely to meet you. Make yourself at home in the lobby.", "nextNodeId": ""}
       ]
     },
     {
@@ -167,7 +171,7 @@
       ],
       "nodes": [
         {"id": "name", "speaker": "Thistle", "text": "Oh! Hello. Sorry, I didn't see you there. I'm Thistle.", "onEnterActions": [{"type": "SetFlag", "key": "npc.met.thistle", "boolValue": true}], "nextNodeId": "ask"},
-        {"id": "ask", "speaker": "Thistle", "text": "You are...?", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
+        {"id": "ask", "speaker": "Thistle", "text": "You are...? Hang on, let me find a pen. ...Never mind.", "choices": [{"id": "answer", "text": "I'm {player}.", "nextNodeId": "pleased"}]},
         {"id": "pleased", "speaker": "Thistle", "text": "{player}. Right. I'll remember that. Probably.", "nextNodeId": ""}
       ]
     }

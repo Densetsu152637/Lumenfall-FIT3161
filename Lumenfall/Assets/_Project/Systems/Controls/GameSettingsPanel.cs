@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using Lumenfall.Audio;
+using Lumenfall.Startup;
 
 namespace Lumenfall.Controls
 {
@@ -11,8 +13,6 @@ namespace Lumenfall.Controls
     /// </summary>
     public sealed class GameSettingsPanel
     {
-        private const string MasterVolumeKey = "lumenfall.master-volume";
-        private const string VSyncKey = "lumenfall.vsync";
         private const string ReduceMotionKey = "lumenfall.reduce-motion";
 
         // The rebinding list is grouped; the seven spell slots fold into one row because they rarely change.
@@ -41,13 +41,11 @@ namespace Lumenfall.Controls
 
         public static float MasterVolume
         {
-            get => Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumeKey, 1f));
+            get => AudioMixSettings.Master;
             set
             {
-                float volume = Mathf.Clamp01(value);
-                AudioListener.volume = volume;
-                PlayerPrefs.SetFloat(MasterVolumeKey, volume);
-                PlayerPrefs.Save();
+                AudioMixSettings.SetVolume(AudioBus.Master, value);
+                AudioListener.volume = AudioMixSettings.Master;
             }
         }
 
@@ -60,12 +58,14 @@ namespace Lumenfall.Controls
 
         public static bool VSync
         {
-            get => PlayerPrefs.GetInt(VSyncKey, QualitySettings.vSyncCount > 0 ? 1 : 0) != 0;
+            get => GraphicsOptions.Instance != null ? GraphicsOptions.Instance.Preferences.VSync : GraphicsPreferences.Load().VSync;
             set
             {
-                QualitySettings.vSyncCount = value ? 1 : 0;
-                PlayerPrefs.SetInt(VSyncKey, value ? 1 : 0);
-                PlayerPrefs.Save();
+                GraphicsOptions graphics = GraphicsOptions.Instance;
+                GraphicsPreferences current = graphics != null ? graphics.Preferences : GraphicsPreferences.Load();
+                GraphicsPreferences next = new GraphicsPreferences(value, current.Antialiasing, current.AmbientOcclusion, current.Shading);
+                if (graphics != null) graphics.SetPreferences(next);
+                else { next.Save(); QualitySettings.vSyncCount = value ? 1 : 0; }
             }
         }
 
@@ -87,10 +87,17 @@ namespace Lumenfall.Controls
 
         public static void ApplySavedVolume() { AudioListener.volume = MasterVolume; }
 
-        /// <summary>VSync only overrides the quality settings once the player has chosen a value.</summary>
+        /// <summary>
+        /// GraphicsOptions owns VSync and applies it at startup. VSync used to be saved on its own under
+        /// <c>lumenfall.vsync</c>; an earlier choice is carried into the graphics preferences once, then the old key is dropped.
+        /// </summary>
         public static void ApplySavedDisplay()
         {
-            if (PlayerPrefs.HasKey(VSyncKey)) QualitySettings.vSyncCount = VSync ? 1 : 0;
+            const string LegacyVSyncKey = "lumenfall.vsync";
+            if (!PlayerPrefs.HasKey(LegacyVSyncKey)) return;
+            VSync = PlayerPrefs.GetInt(LegacyVSyncKey) != 0;
+            PlayerPrefs.DeleteKey(LegacyVSyncKey);
+            PlayerPrefs.Save();
         }
 
         public void DrawVolume(GUIStyle labelStyle)

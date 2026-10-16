@@ -82,6 +82,7 @@ namespace Lumenfall.Tests.GameEvents
                 monitorHost = new GameObject("stella-quest-puzzle-monitor-test");
                 monitor = monitorHost.AddComponent<QuestPuzzleMonitor>();
                 EditModeLifecycle.Call(monitor, "Awake");
+                EditModeLifecycle.Call(monitor, "OnEnable");
             }
             try
             {
@@ -145,7 +146,11 @@ namespace Lumenfall.Tests.GameEvents
             {
                 if (runtime.ActiveDialogue != null) runtime.ActiveDialogue.End();
                 runtime.ResetState();
-                if (monitorHost != null) Object.DestroyImmediate(monitorHost);
+                if (monitorHost != null)
+                {
+                    EditModeLifecycle.Call(monitor, "OnDisable");
+                    Object.DestroyImmediate(monitorHost);
+                }
             }
         }
 

@@ -131,9 +131,9 @@ namespace Lumenfall.Tests.GameEvents
             DialogueSession session = runtime.StartDialogue(Dialogue);
             session.SelectChoice("accept");
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Active));
-            Assert.That(runtime.GetFlag(Lesson), Is.False, "The lesson is lent only when Cinna finishes speaking.");
-            session.Continue();
-            Assert.That(runtime.GetFlag(Lesson), Is.True, "Cinna lends Glaciate for the trial.");
+            Assert.That(runtime.GetFlag(Lesson), Is.False, "The lesson is taught only when Cinna finishes speaking.");
+            while (!session.IsCompleted) Assert.That(session.Continue(), Is.True);
+            Assert.That(runtime.GetFlag(Lesson), Is.True, "Cinna teaches Glaciate for the trial.");
             Assert.That(runtime.GetFlag(Learned), Is.False, "Glaciate is only learned when the seal opens.");
             Assert.That(runtime.TriggerEvent("complete_" + Quest).Succeeded, Is.True);
             Assert.That(runtime.GetQuestStatus(Quest), Is.EqualTo(QuestStatus.Completed));
