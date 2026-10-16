@@ -33,10 +33,11 @@ One job checks out the current event revision with depth one and runs `Lumenfall
 through one GameCI action, using `testMode: all` and
 `customParameters: -testCategory !RequiresGraphics`. Its checkout enables Git LFS
 so terrain and other binary assets are available to Unity. The integrated inventory
-contains 303 EditMode and sixteen batch-capable PlayMode cases. Two additional rendering
+contains 324 EditMode and sixteen batch-capable PlayMode cases. Two additional rendering
 cases are explicitly categorized `RequiresGraphics` and must run separately
 in a graphical Editor; it is never accepted as a skipped CI test. The
-[behavior inventory and graphical procedure](../tests/README.md) cover all 321 cases.
+[behavior inventory](../tests/gameplay_suites.json) and [graphical procedure](../tests/README.md)
+cover all 324 EditMode cases, including the three shader-stripping contracts.
 There are no historical source fetches or snapshot matrices.
 
 The supported `cliVersion` input pins
@@ -212,23 +213,26 @@ limit. Together with the package behavior below, this is strong evidence that
 disabled general stripping contributed to the regression. The timings are not a
 controlled comparison: the merge also changed gameplay/UI source and assets.
 
-Unity 6000.4.10f1 with URP 17.4.0 confirms through the active
-`GraphicsSettings.TryGetRenderPipelineSettings<URPShaderStrippingSetting>` API that
-**Strip Unused Post Processing Variants is already enabled** and **Strip Unused
-Variants is disabled**, matching the [serialized settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset).
-The latter remains disabled for a specific runtime compatibility reason: Windows
-uses only [PC_Renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset), whose
-SSAO feature is active and runs before opaque rendering (`AfterOpaque: 0`). URP
-17.4.0's `Editor/ShaderBuildPreprocessor.cs`, lines 1109-1118, strips the SSAO-off
-variant when every included renderer has SSAO and unused-variant stripping is on.
+Both **Strip Unused Post Processing Variants** and **Strip Unused Variants** are now
+enabled in the active Unity 6000.4.10f1 / URP 17.4.0 API and
+[serialized settings](../Lumenfall/Assets/_Project/Settings/UniversalRenderPipelineGlobalSettings.asset).
+Simply enabling the general flag with the original renderer list would be unsafe:
+[PC_Renderer](../Lumenfall/Assets/_Project/Settings/PC_Renderer.asset) has active SSAO
+before opaque rendering (`AfterOpaque: 0`), and URP's
+`Editor/ShaderBuildPreprocessor.cs`, lines 1109-1118, removes the SSAO-off variant
+when every included renderer has SSAO.
 [GraphicsOptions](../Lumenfall/Assets/_Project/Systems/Startup/GraphicsOptions.cs)
-toggles that feature at runtime, so enabling the flag would remove a variant needed
-by the player's AO Off option. Mobile quality is excluded from Standalone and cannot
-supply the missing state. A possible follow-up is to include a second PC renderer
-without SSAO, retain both AO states, then enable general stripping and validate with
-strict shader-variant matching in a player. That renderer change is not part of this
-baseline. This is a missing-variant compatibility risk, not a deliberate reduction
-in rendering quality. See Unity's [stripping guidance](https://docs.unity3d.com/6000.4/Documentation/Manual/urp/shader-stripping-features.html).
+toggles SSAO at runtime; Mobile quality is excluded from Standalone and cannot
+supply that missing state. The PC pipeline therefore also includes
+[PC_Renderer_AOOffVariants](../Lumenfall/Assets/_Project/Settings/PC_Renderer_AOOffVariants.asset),
+an equivalent ForwardPlus renderer with an empty feature list. The original remains
+the default renderer at index 0. URP collects both feature sets and retains a variant
+if either needs it (`ShaderBuildPreprocessor.cs`, 638-659;
+`ShaderScriptableStripper.cs`, 1253-1278), preserving both AO states while pruning
+unrelated features. Quality presets and graphics APIs are unchanged. URP eagerly
+initializes the extra renderer, adding some initialization/allocation cost; cameras
+continue to render once with the original default renderer.
+See Unity's [stripping guidance](https://docs.unity3d.com/6000.4/Documentation/Manual/urp/shader-stripping-features.html).
 Diagnostics retain exported shader-stripping JSON from `Lumenfall/Temp` when available.
 
 With general stripping off, URP 17.4.0's build preprocessor uses permissive feature
@@ -261,7 +265,42 @@ delay, rather than a stalled C# compiler or license check. Native Windows timing
 not establish the duration of the Ubuntu-hosted build. Partial logs, API inputs,
 activity sample and cancellation evidence remain locally under
 `artifacts/unity-stripping-20261016/`; temporary probe and generated source changes
-were removed/restored. No new build or runtime test was run after the stop request.
+were removed/restored. The later optimization validation below was separately authorized.
+
+The optimized native Windows probe retained that Library and the same shipping
+scene, Mono backend, ForwardPlus path and graphics APIs. Its actual build collector
+confirmed two feature sets differing only in SSAO, AO prefilter `Select` (ON and OFF),
+and unused-XR stripping enabled. Three focused EditMode contracts exercise the
+installed URP collector, including a negative control showing that removing the
+alternate renderer loses the AO-off state; all three passed. The four existing
+`GraphicsOptionsPlayModeTests` also passed on the RTX 5080 with D3D11, covering
+repeated shading/AO changes and later-camera antialiasing. The Python harness
+passed all 62 tests. Original graphics preferences and incidental Editor settings
+were restored, and the temporary build probes were removed. The observed fragment
+counts (d3d11) were:
+
+| Shader/pass | General stripping off | Optimized | Optimized cache/compile evidence |
+| --- | ---: | ---: | --- |
+| Terrain `WavingDoublePass` / ForwardLit | 6,912 | 16 | 16 new, zero hits; 6.11s vs baseline 1,615.86s |
+| UberPost / UberPost | 13,824 | 432 | 432 local hits, zero new; 3.85s |
+| UberPost / UberPostXR | 13,824 | 0 | Pass stripped |
+
+All `ClusterDeferred` passes and the unused `FinalPostXR` passes were also stripped;
+the original ForwardPlus renderer remains selected. Terrain's raw fragment space
+was unchanged at 35,389,440; settings filtering reduced it to 6,144, built-in
+stripping to 48, and scriptable stripping to 16. UberPost's raw 92,160 became 960
+after settings filtering and 432 after scriptable stripping (0.01s preparation).
+These counts establish reduced build work. The retained cache explains UberPost's
+short time and the initial refresh of 21.719s; the timings are not a clean-cache
+comparison or a hosted-build estimate. Evidence is retained locally under
+`artifacts/unity-stripping-optimisation-20261016/`.
+
+The improved probe was stopped at the agreed profiling checkpoint after **15m16.3s**,
+still compiling URP/Lit ForwardLit (126/1,344 fragment variants ready in the last
+progress message). No executable or final BuildReport was produced. Cold third-party
+material shaders remain a cost: glTF-pbrMetallicRoughness's Forward fragment pass
+compiled 288 new variants with no hits in 157.28s. A complete optimized player build,
+strict shader-variant matching and standalone visual checks remain unverified.
 
 Measure the next successful manual branch build and a repeat with an exact cache
 hit before claiming an overall speedup. Manual runs produce workflow artifacts
