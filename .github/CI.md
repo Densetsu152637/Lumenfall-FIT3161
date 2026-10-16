@@ -8,9 +8,12 @@ The workflow always reports two stable required checks on Ubuntu 24.04:
 
 1. `Repository integrity` runs the Python harness and validates Unity metadata,
    JSON, build scenes, case-safe paths, merge markers and generated-file hygiene.
-   It also selects the needed checks and validates the PR workflow with actionlint
-   1.7.12, downloaded from its official release with a pinned SHA256. These checks
-   require no third-party Python packages or secrets.
+   It also selects the needed checks and validates every workflow YAML file with
+   actionlint 1.7.12, downloaded from its official release with a pinned SHA256.
+   That version does not recognize the release workflow's `concurrency.queue` key,
+   so the syntax check ignores only that diagnostic while still linting the rest
+   of all three workflows. These checks require no third-party Python packages or
+   secrets.
 2. `Unity EditMode tests` is the compatibility gate for branch protection. It
    requires repository integrity and, whenever Unity is required, the separate
    `Gameplay regression tests` job to succeed. That job verifies both EditMode and
@@ -138,7 +141,7 @@ From the repository root:
 ```sh
 python -m unittest discover --start-directory scripts/tests --verbose
 python scripts/validate_unity_project.py Lumenfall
-actionlint .github/workflows/pr-validation.yml
+actionlint -ignore 'unexpected key "queue" for "concurrency" section' .github/workflows/*.yml
 ```
 
 Use actionlint 1.7.12 with ShellCheck 0.11 to match the local validation tools.
@@ -146,8 +149,9 @@ The harness covers conservative selection, renamed/deleted inputs, missing histo
 malformed events, complete gameplay discovery and strict XML verification.
 `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH` and `GITHUB_OUTPUT` are the selector's
 standard Actions inputs/output; rehearse with sanitized event JSON and existing
-commit SHAs. The release workflow uses `concurrency.queue`, which actionlint 1.7.12
-does not recognize; the syntax command targets the maintained PR workflow.
+commit SHAs. The exact ignore is needed because actionlint 1.7.12 does not yet
+recognize `concurrency.queue`; removing that queue would change serialized release
+publication behavior. The same command lints the PR, release, and build-test workflows.
 
 See [gameplay test instructions](../tests/README.md) for both Unity Test Runner modes,
 fixture lifecycle requirements and verification of fresh GameCI results. The retired
