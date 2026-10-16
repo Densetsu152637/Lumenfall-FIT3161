@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 342 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 345 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -50,8 +50,9 @@ The integrated suite contains 342 EditMode, sixteen batch PlayMode and two graph
 | NPC introductions | NpcIntroductionsTests | 7 |
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
+| Terrain asset compatibility and Elara prefab serialization | SerializedAssetImportTests | 3 |
 | Dormitory onboarding | SettlingInTests | 6 |
-| **Gameplay rules / EditMode** | | **342** |
+| **Gameplay rules / EditMode** | | **345** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

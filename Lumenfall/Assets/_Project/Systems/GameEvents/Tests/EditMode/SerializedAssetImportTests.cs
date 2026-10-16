@@ -1,0 +1,93 @@
+using System;
+using System.IO;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+
+namespace Lumenfall.Tests.GameEvents
+{
+    public sealed class SerializedAssetImportTests
+    {
+        [TestCase("Assets/ThirdParty/Low Poly Tarvern Pack/New Terrain.asset", "New Terrain")]
+        [TestCase("Assets/ThirdParty/Low Poly Tarvern Pack/TerrainData_ef2baf1a-e0c2-47af-8b8d-c8ecc7214609.asset", "TerrainData_ef2baf1a-e0c2-47af-8b8d-c8ecc7214609")]
+        public void TavernTerrainDataLoadsWithRecordedSettings(string path, string name)
+        {
+            TerrainData terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(path);
+            Assert.That(terrain, Is.Not.Null, path);
+            Assert.That(terrain.name, Is.EqualTo(name));
+            Assert.That(terrain.heightmapResolution, Is.EqualTo(513));
+            Assert.That(terrain.size, Is.EqualTo(new Vector3(1000f, 600f, 1000f)));
+            Assert.That(terrain.alphamapResolution, Is.EqualTo(512));
+            Assert.That(terrain.baseMapResolution, Is.EqualTo(1024));
+            Assert.That(terrain.detailResolution, Is.EqualTo(1024));
+            Assert.That(terrain.enableHolesTextureCompression, Is.True);
+            Assert.That(terrain.terrainLayers, Is.Empty);
+            Assert.That(terrain.alphamapTextureCount, Is.Zero);
+            Assert.That(terrain.detailPrototypes, Is.Empty);
+            Assert.That(terrain.treePrototypes, Is.Empty);
+            Assert.That(terrain.treeInstances, Is.Empty);
+            Assert.That(terrain.detailScatterMode, Is.EqualTo((DetailScatterMode)0));
+            Assert.That(terrain.wavingGrassTint, Is.EqualTo(new Color(0.7f, 0.6f, 0.5f, 0f)));
+            Assert.That(terrain.wavingGrassStrength, Is.EqualTo(0.5f));
+            Assert.That(terrain.wavingGrassAmount, Is.EqualTo(0.5f));
+            Assert.That(terrain.wavingGrassSpeed, Is.EqualTo(0.5f));
+
+            float[,] heights = terrain.GetHeights(0, 0, terrain.heightmapResolution, terrain.heightmapResolution);
+            Assert.That(heights.Length, Is.EqualTo(263169));
+            int nonzeroHeights = 0;
+            for (int y = 0; y < heights.GetLength(0); y++)
+                for (int x = 0; x < heights.GetLength(1); x++)
+                    if (heights[y, x] != 0f) nonzeroHeights++;
+            Assert.That(nonzeroHeights, Is.Zero, path + " nonzero height samples");
+        }
+
+        [Test]
+        public void ElaraPrefabLoadsAndRoundTripsWithOriginalRootAndCollider()
+        {
+            const string sourcePath = "Assets/Resources/NPCs/Elara.prefab";
+            const string tempRoot = "Assets/Temp";
+            bool createdTempRoot = !AssetDatabase.IsValidFolder(tempRoot);
+            if (createdTempRoot) AssetDatabase.CreateFolder("Assets", "Temp");
+            string tempFolder = tempRoot + "/SerializedAssetImportTests_" + Guid.NewGuid().ToString("N");
+            AssetDatabase.CreateFolder(tempRoot, Path.GetFileName(tempFolder));
+            string tempPath = tempFolder + "/Elara.prefab";
+            GameObject source = null;
+            GameObject roundTrip = null;
+            try
+            {
+                source = PrefabUtility.LoadPrefabContents(sourcePath);
+                AssertElara(source);
+                bool saved;
+                PrefabUtility.SaveAsPrefabAsset(source, tempPath, out saved);
+                Assert.That(saved, Is.True);
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                roundTrip = PrefabUtility.LoadPrefabContents(tempPath);
+                AssertElara(roundTrip);
+            }
+            finally
+            {
+                if (roundTrip != null) PrefabUtility.UnloadPrefabContents(roundTrip);
+                if (source != null) PrefabUtility.UnloadPrefabContents(source);
+                if (!string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(tempPath))) AssetDatabase.DeleteAsset(tempPath);
+                if (AssetDatabase.IsValidFolder(tempFolder)) AssetDatabase.DeleteAsset(tempFolder);
+                if (createdTempRoot && AssetDatabase.IsValidFolder(tempRoot) && AssetDatabase.FindAssets(string.Empty, new[] { tempRoot }).Length == 0)
+                    AssetDatabase.DeleteAsset(tempRoot);
+            }
+        }
+
+        private static void AssertElara(GameObject root)
+        {
+            Assert.That(root, Is.Not.Null);
+            Assert.That(root.name, Is.EqualTo("Elara"));
+            Assert.That(root.transform.localPosition, Is.EqualTo(Vector3.zero));
+            Assert.That(root.transform.localRotation, Is.EqualTo(Quaternion.identity));
+            Assert.That(root.transform.localScale, Is.EqualTo(Vector3.one));
+            BoxCollider collider = root.GetComponent<BoxCollider>();
+            Assert.That(collider, Is.Not.Null);
+            Assert.That(collider.center, Is.EqualTo(Vector3.zero));
+            Assert.That(collider.size, Is.EqualTo(new Vector3(1f, 2f, 1f)));
+            Assert.That(collider.isTrigger, Is.False);
+            Assert.That(root.GetComponentsInChildren<Renderer>(true), Is.Empty);
+        }
+    }
+}
