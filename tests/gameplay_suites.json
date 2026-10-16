@@ -61,7 +61,8 @@
     "category": "RequiresGraphics",
     "fixtures": {
       "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
-      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1
+      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1,
+      "Lumenfall.Startup.Tests.ShaderAdditionalLightsValidation": 3
     }
   }
 }

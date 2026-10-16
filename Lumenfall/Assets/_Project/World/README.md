@@ -6,7 +6,7 @@ To regenerate these assets after intentionally changing a legacy migration input
 
 The migration preserves the prior portal glyph filter: reserved definitions and outdoor portals without the configured glyph are not live. It corrects three inherited blocked indoor return positions to the nearest free campus approach tile: B02 `(23,11)`, B03 `(53,7)`, and B04 `(85,47)`. Those values are serialized on the source portal assets and can be edited in the Inspector.
 
-The seven legacy NPC entries name `Resources/NPCs/Elara.prefab`, but Unity imports that incomplete file as a `DefaultAsset` and it has no renderer. The catalog and baked NPC instances therefore reference the reusable `NPCs/NpcPlaceholder.prefab`, which matches the visible cube fallback used when the old runtime loader could not load the legacy prefab.
+The seven legacy NPC entries name `Resources/NPCs/Elara.prefab`. It now imports as a valid collider-only prefab: its root has a `BoxCollider` with size `(1, 2, 1)` and center `(0, 0, 0)`, and it has no renderer. The catalog and baked NPC instances continue to reference the reusable `NPCs/NpcPlaceholder.prefab`, which matches the visible cube fallback used when the old runtime loader could not load the legacy prefab.
 
 The verified bake contains six area prefabs, nine registered map objects, 1,805 obstacle footprints, seven NPCs, and ten active portals. The PlayMode smoke test covers SampleScene startup, all ten active portal edges, world save restoration, and Cinna's quest-gated NPC visibility after area revisits.
 

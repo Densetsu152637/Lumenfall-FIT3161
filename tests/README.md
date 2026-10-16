@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 345 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 345 EditMode, sixteen batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -62,6 +62,8 @@ The integrated suite contains 345 EditMode, sixteen batch PlayMode and two graph
 | **Batch PlayMode** | | **16** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 | Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
+| Actual Polytope materials respond to additional lights in Forward and ForwardPlus; Frost materials respond to their supported main light | ShaderAdditionalLightsValidation | **2** |
+| Actual Rock and Opaque Polytope materials render with GBuffer configured and respond to additional lights in Deferred | ShaderAdditionalLightsValidation | **1** |
 
 Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tests`,
 `Lumenfall.Startup.Tests`, `Lumenfall.World.PlayModeTests` and
@@ -127,8 +129,13 @@ exits successfully, verify the separate manifest and exact current revision:
 python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical-directory> --outcome success --revision <full-current-checkout-sha>
 ```
 
-The graphical inventory has exactly two cases; the batch inventory contains the
-other sixteen PlayMode cases. Both verifications reject any failed or skipped case.
+The graphical inventory has exactly five cases; the batch inventory contains the
+other sixteen PlayMode cases. The shader fixtures use the five referenced Polytope
+materials for additional-light pixel deltas in Forward and ForwardPlus, and Rock
+plus Opaque for the Deferred configuration. Frost Ice/Snow are checked for main
+directional-light response in the two forward modes; they are forward-only and are
+not claimed as deferred or additional-light coverage. Both verifications reject
+any failed or skipped case.
 Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.

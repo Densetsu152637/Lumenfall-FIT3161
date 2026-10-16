@@ -235,7 +235,7 @@ class GameplayContractTests(unittest.TestCase):
             self.assertEqual(actual[platform], platforms[platform]["fixtures"])
             self.assertEqual(sum(actual[platform].values()), expected_total)
         self.assertEqual(graphical, gameplay.read_manifest(graphical=True)["playmode"]["fixtures"])
-        self.assertEqual(sum(graphical.values()), 2)
+        self.assertEqual(sum(graphical.values()), 5)
 
     def test_workflow_uses_one_current_checkout_action_and_verified_cache_save(self):
         workflow = (gameplay.ROOT / ".github/workflows/pr-validation.yml").read_text()
