@@ -30,7 +30,7 @@ namespace Lumenfall.DataDriven
             if (pitch <= 0f || Time.unscaledTime - lastPlayed < MinInterval) return;
             lastPlayed = Time.unscaledTime;
             source.pitch = pitch * UnityEngine.Random.Range(0.96f, 1.04f);
-            source.PlayOneShot(clip);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(source, clip);
         }
 
         private static float Pitch(string speaker)

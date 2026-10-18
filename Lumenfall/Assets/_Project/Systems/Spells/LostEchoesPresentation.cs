@@ -141,7 +141,7 @@ namespace Lumenfall.Spells
             if (world == null) return;
             PlayerFlare(world);
             Pulse(world, radius);
-            audioSource.PlayOneShot(pulseClip, found > 0 ? 0.35f : 0.45f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, pulseClip, found > 0 ? 0.35f : 0.45f);
 
             // Sonar: the nearest thing still hidden answers the pulse. Closer means a sooner, louder echo.
             WorldStateService state = WorldStateService.Instance;
@@ -248,7 +248,7 @@ namespace Lumenfall.Spells
             spot.y = OnFloor(spot, caster != null ? caster.transform : null).y - FloorClearance;
             Color colour = KindColour(revealed);
             Gather(world, spot, colour);
-            audioSource.PlayOneShot(gatherClip, 0.4f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, gatherClip, 0.4f);
             Flash(world, spot, colour, GatherSeconds * 0.85f);
             Schedule(revealClip, GatherSeconds * 0.8f, 0.6f);
         }
@@ -417,7 +417,7 @@ namespace Lumenfall.Spells
             for (int i = sounds.Count - 1; i >= 0; i--)
             {
                 if (Time.unscaledTime < sounds[i].at) continue;
-                audioSource.PlayOneShot(sounds[i].clip, sounds[i].volume);
+                Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, sounds[i].clip, sounds[i].volume);
                 sounds.RemoveAt(i);
             }
         }
