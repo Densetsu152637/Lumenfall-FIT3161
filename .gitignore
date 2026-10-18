@@ -10,6 +10,18 @@
 [Bb]uilds/
 dist/
 
+# Unity Windows player build output (when built into the repository root)
+/D3D12/
+/Lumenfall.exe
+/Lumenfall_Data/
+/Lumenfall_BurstDebugInformation_DoNotShip/
+/MonoBleedingEdge/
+/DirectML.dll
+/UnityCrashHandler64.exe
+/UnityPlayer.dll
+/dstorage.dll
+/dstoragecore.dll
+
 # IDE and generated project files
 .vscode/
 .idea/
