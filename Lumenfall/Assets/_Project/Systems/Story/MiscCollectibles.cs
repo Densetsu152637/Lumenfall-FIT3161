@@ -47,6 +47,7 @@ namespace Lumenfall.Story
             new Item("piece_of_parchment", "B04.Ground", 2, 5),
             new Item("good_witch_novel", "B04.Ground", 0, 14),
             new Item("faded_polaroid", "westForest", 24, 6),
+            new Item("tree_modus_card", "deepForest", 3, 11),
         };
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace Lumenfall.Story
         /// </summary>
         public static readonly string[] SecretRewards =
         {
-            "cold_cup_of_coffee", "slightly_warm_pebble", "annoying_dog_exe", "mop_for_your_troubles",
+            "cold_cup_of_coffee", "slightly_warm_pebble", "annoying_dog_exe", "mop_for_your_troubles", "egg",
         };
 
         /// <summary>Every curio key, in the order the journal lists them: the hidden ones, then the secrets' rewards.</summary>

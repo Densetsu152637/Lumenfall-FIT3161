@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graphical PlayMode cases:
+The integrated suite contains 348 EditMode, sixteen batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -36,11 +36,12 @@ The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graph
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
-| Audio buses and feedback | AudioFeedbackTests | 15 |
+| Audio buses and feedback | AudioFeedbackTests | 18 |
 | Transactional save recovery and rollback | GameSaveRecoveryTests | 19 |
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
+| Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
 | Opening forest story | LateToOrientationTests | 4 |
@@ -49,8 +50,9 @@ The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graph
 | NPC introductions | NpcIntroductionsTests | 7 |
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
-| Dormitory onboarding | SettlingInTests | 6 |
-| **Gameplay rules / EditMode** | | **303** |
+| Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
+| Dormitory onboarding | SettlingInTests | 7 |
+| **Gameplay rules / EditMode** | | **348** |
 | Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
@@ -60,13 +62,15 @@ The integrated suite contains 303 EditMode, sixteen batch PlayMode and two graph
 | **Batch PlayMode** | | **16** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 | Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
+| Actual Polytope materials respond to additional lights in Forward and ForwardPlus; Frost materials respond to their supported main light | ShaderAdditionalLightsValidation | **2** |
+| Actual Rock and Opaque Polytope materials render with GBuffer configured and respond to additional lights in Deferred | ShaderAdditionalLightsValidation | **1** |
 
 Tests live alongside their systems in four assemblies: `Lumenfall.GameEvents.Tests`,
 `Lumenfall.Startup.Tests`, `Lumenfall.World.PlayModeTests` and
 `Lumenfall.Startup.PlayModeTests`. The source inventory discovers all C# files owned
 by test assembly definitions, including nested helpers and files with other names.
-No test uses Ignore or Explicit. Both rendering tests have the explicit
-`RequiresGraphics` category and fails if accidentally selected in batch mode.
+No test uses Ignore or Explicit. All five graphical tests have the explicit
+`RequiresGraphics` category and fail if accidentally selected in batch mode.
 
 ## Running and verifying
 
@@ -98,6 +102,13 @@ unsuccessful action outcomes and a checkout revision mismatch. It writes
 `gameplay-test-results` for 14 days, including after test failures. The Library is
 saved only after both modes pass strict verification.
 
+The push-only `CI/build-test` workflow also supports an optional cold-import audit
+when the head commit message contains `[fresh-import-audit]`. It uses a fresh hosted
+runner with no Library cache, targets Windows Mono, runs only
+`SerializedAssetImportTests`, and verifies its expected case count from the live
+manifest. The job uploads its Editor log and NUnit XML even when the test action
+fails; ordinary branch pushes do not pay for this import-only run.
+
 For equivalent GameCI-generated results, run from the repository root after the
 Unity action has completed (supply its actual outcome and checked-out commit):
 
@@ -125,8 +136,18 @@ exits successfully, verify the separate manifest and exact current revision:
 python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical-directory> --outcome success --revision <full-current-checkout-sha>
 ```
 
-The graphical inventory has exactly two cases; the batch inventory contains the
-other sixteen PlayMode cases. Both verifications reject any failed or skipped case.
+The graphical inventory has exactly five cases; the batch inventory contains the
+other sixteen PlayMode cases. The shader fixtures render into 128-by-128 targets
+and compare the captured central 80-by-80 pixel region. The five referenced
+Polytope materials are checked for additional-light pixel deltas in configured
+Forward and ForwardPlus pipelines;
+Rock and Opaque also render through a configured Deferred renderer with a GBuffer
+pass. Frost Ice/Snow are checked for main directional-light response in the two
+forward modes; they are forward-only and are not claimed as deferred or
+additional-light coverage. The five graphical cases passed in a non-batch Windows
+Editor run on an NVIDIA GeForce RTX 5080 using Direct3D 12. The Deferred test asserts
+the configured renderer and GBuffer path; it does not observe URP's internal actual
+render mode. Both verifications reject any failed or skipped case.
 Graphical acceptance also requires inspecting the generated settings and dialogue screenshots
 under `Lumenfall/Logs/graphics-validation`. Batch results alone do not establish
 pointer repaint or visible layout quality.

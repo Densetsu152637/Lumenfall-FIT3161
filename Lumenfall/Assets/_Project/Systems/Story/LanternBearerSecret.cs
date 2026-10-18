@@ -4,6 +4,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
 using Lumenfall.Startup;
+using Lumenfall.Rendering;
 using UnityEngine;
 
 namespace Lumenfall.Story
@@ -316,6 +317,8 @@ namespace Lumenfall.Story
 
         private void Awake()
         {
+            // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+            useGUILayout = false;
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
@@ -371,7 +374,7 @@ namespace Lumenfall.Story
         {
             GameObject root = new GameObject(SpiritName);
             root.transform.SetParent(parent, true);
-            GameObject orb = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject orb = RuntimePrimitive.Create(PrimitiveType.Sphere);
             orb.name = "Orb";
             orb.transform.SetParent(root.transform, false);
             orb.transform.localPosition = new Vector3(0f, 1.1f, 0f);

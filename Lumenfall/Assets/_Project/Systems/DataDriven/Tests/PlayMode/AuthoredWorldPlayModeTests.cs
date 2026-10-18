@@ -18,6 +18,10 @@ namespace Lumenfall.Tests.World
 {
     public sealed class AuthoredWorldPlayModeTests
     {
+        // Where Cinna stands on the C02 terrace and in the ice trial lobby (their NPC catalog cells).
+        private static readonly Vector2Int TerraceCinnaCell = new Vector2Int(22, 51);
+        private static readonly Vector2Int TrialCinnaCell = new Vector2Int(8, 1);
+
         private Scene runnerScene;
         private Scene hostScene;
         private Scene worldScene;
@@ -148,7 +152,9 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.LoadedMap.id, Is.EqualTo("campus"));
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"));
             GridMover player = Object.FindAnyObjectByType<GridPlayerInput>().GetComponent<GridMover>();
-            Assert.That(player.CurrentCell, Is.EqualTo(new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y)));
+            Assert.That(player.CurrentCell, Is.Not.EqualTo(new Vector2Int(7, 1)), "The retired Recess coordinates must not be restored on campus.");
+            Assert.That(player.CurrentCell, Is.Not.EqualTo(new Vector2Int(loader.LoadedMap.spawn.x, loader.LoadedMap.spawn.y)),
+                "The blocked authored campus spawn must fall back to the nearest safe cell.");
             Assert.That(player.World.IsCellBlocked(player.CurrentCell), Is.False, "The restored player occupies walkable ground.");
             Assert.That(player.World.GetPortalAt(player.CurrentCell), Is.Null, "Legacy escape must not immediately trigger another portal.");
             GridPortal campusRoute = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude).Single(portal => portal.PortalId == "P.C02");
@@ -402,6 +408,10 @@ namespace Lumenfall.Tests.World
             Assert.That(events.GetFlag(SpellCaster.VisDeliveredFlagPrefix + CinnaAlignmentRelic.RelicId), Is.True);
             Assert.That(WorldStateService.Instance.TryGetObject(CinnaIceTrialRoom.RelicId, out WorldObjectSnapshot frost) && frost.spellCompatible, Is.True,
                 "The delivered relic takes Glaciate.");
+            DynamicNpc hiddenTrialCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
+                .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_trial");
+            Assert.That(hiddenTrialCinna.gameObject.activeSelf, Is.False, "Cinna has not reached the trial yet.");
+            Assert.That(world.IsCellBlocked(TrialCinnaCell), Is.False, "A hidden Cinna leaves no blocker in the trial lobby.");
 
             loader.Load(campus, catalog);
             yield return null;
@@ -409,6 +419,7 @@ namespace Lumenfall.Tests.World
             DynamicNpc terraceCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
                 .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_orientation");
             Assert.That(terraceCinna.gameObject.activeSelf, Is.True);
+            Assert.That(world.IsCellBlocked(TerraceCinnaCell), Is.True, "Cinna blocks their terrace tile while they stand on it.");
             Vector2Int reportedFrom = player.CurrentCell;
             DialogueSession report = events.StartDialogue("cinna_out_of_alignment_dialogue");
             Assert.That(report.SelectChoice("report"), Is.True);
@@ -423,6 +434,7 @@ namespace Lumenfall.Tests.World
             Assert.That(loader.CurrentArea.definition.id, Is.EqualTo("campus"), "Only Cinna goes; the player stays on campus.");
             Assert.That(player.CurrentCell, Is.EqualTo(reportedFrom));
             Assert.That(terraceCinna.gameObject.activeSelf, Is.False, "Cinna has left the terrace.");
+            Assert.That(world.IsCellBlocked(TerraceCinnaCell), Is.False, "Cinna's terrace tile is free once they leave.");
 
             GridPortal trialPortal = Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Single(portal => portal.Content != null && portal.Content.id == CinnaIceTrialEntrance.PortalId);
@@ -431,6 +443,7 @@ namespace Lumenfall.Tests.World
             DynamicNpc trialCinna = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Include)
                 .First(npc => npc.Definition != null && npc.Definition.id == "cinna_cirra_trial");
             Assert.That(trialCinna.gameObject.activeSelf, Is.True, "Cinna is waiting in the trial lobby.");
+            Assert.That(world.IsCellBlocked(TrialCinnaCell), Is.True, "Cinna blocks their tile in the trial lobby.");
         }
 
         [UnityTest]
@@ -507,10 +520,10 @@ namespace Lumenfall.Tests.World
             Assert.That(b02Exit.Content.destination, Is.SameAs(b02Entrance.Content));
             DynamicNpc stella = Object.FindObjectsByType<DynamicNpc>(FindObjectsInactive.Exclude)
                 .Single(npc => npc.Id == "stella");
-            Assert.That(b02Exit.World.WorldToCell(stella.transform.position), Is.EqualTo(new Vector2Int(19, 15)),
+            Assert.That(b02Exit.World.WorldToCell(stella.transform.position), Is.EqualTo(new Vector2Int(19, 10)),
                 "Stella's authored prefab position, rather than the legacy catalog coordinates, defines her interaction side.");
             Vector2Int[] interactionCells = new[]
-                { new Vector2Int(19, 14), new Vector2Int(18, 15), new Vector2Int(20, 15), new Vector2Int(19, 16) }
+                { new Vector2Int(19, 9), new Vector2Int(18, 10), new Vector2Int(20, 10), new Vector2Int(19, 11) }
                 .Where(cell => !b02Exit.World.IsCellBlocked(cell) && CanReach(b02Exit.World, player.CurrentCell, cell) &&
                     Vector3.Distance(b02Exit.World.CellToWorld(cell), stella.transform.position) <= 2.01f).ToArray();
             Assert.That(interactionCells, Is.Not.Empty, "The B02 landing must reach a walkable cell beside Stella within talk range.");

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lumenfall.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
@@ -402,6 +403,9 @@ namespace Lumenfall.Quests
             item != null && Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
 
         private void ShowFeedback(string message) { feedback = message; feedbackUntil = Time.unscaledTime + 4f; }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {
@@ -822,15 +826,18 @@ namespace Lumenfall.Quests
             Animator animator = npc.GetComponentInChildren<Animator>();
             if (animator != null && cinnaAnimator != null) animator.runtimeAnimatorController = cinnaAnimator;
             npc.AddComponent<DynamicNpc>().Configure(cinna, null);
+            // A child of Cinna, so hiding them (DynamicNpc.RefreshVisibility deactivates the NPC until Out of Alignment
+            // is complete) also frees their cell instead of leaving an invisible blocker behind.
             GameObject blocker = new GameObject(cinna.displayName + " obstacle");
-            blocker.transform.SetParent(geometry, false);
-            blocker.transform.position = world.CellToWorld(cell);
+            blocker.transform.SetParent(npc.transform, false);
             blocker.AddComponent<GridObstacle>().Configure(world, Vector2Int.one);
+            // The room is built after the area's own visibility pass, so apply Cinna's quest gate now.
+            npc.GetComponent<DynamicNpc>().RefreshVisibility();
         }
 
         private GameObject Part(PrimitiveType type, string name, Vector3 position, Vector3 scale, Color color, bool emissive = false)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             Collider collider = part.GetComponent<Collider>();
             if (collider != null) Destroy(collider);

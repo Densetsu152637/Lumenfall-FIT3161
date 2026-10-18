@@ -9,7 +9,6 @@ using Lumenfall.Inventory;
 using Lumenfall.Spells;
 using Lumenfall.DataDriven;
 using Lumenfall.Startup;
-using Lumenfall.Controls;
 using Lumenfall.Cutscenes;
 using Lumenfall.Story;
 
@@ -242,19 +241,25 @@ namespace Lumenfall.Quests
 
         private bool TryBuildOnboardingHint(GameEventRuntime runtime, WorldStateService world)
         {
+            // A player who has already taken on a quest is guided through that quest instead of the steps before the
+            // dormitory. Marigold's first visit still shows once Prof. Bann has sent them there.
+            if (!runtime.GetFlag(SettlingInScene.BannMetFlag) && SelectActiveQuest(runtime) != null) return false;
             if (!runtime.GetFlag(LateToOrientationScene.MetFlag))
             {
                 title = "Walk around this mysterious forest";
                 // Read from the current bindings each time the hint refreshes, so a rebound key shows straight away.
+                string sprint = KeyBindings.GetKeyLabel(GameAction.Sprint);
                 hint = "Press " + KeyBindings.GetKeyLabel(GameAction.MoveUp) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveLeft) + ", " +
-                    KeyBindings.GetKeyLabel(GameAction.MoveDown) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveRight) + " to move\nPress " +
-                    KeyBindings.GetKeyLabel(GameAction.Journal) + " to open the menu";
+                    KeyBindings.GetKeyLabel(GameAction.MoveDown) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveRight) + " to move\n" +
+                    "Hold " + sprint + " to sprint\n" +
+                    "Hold Ctrl or " + sprint + " to speed up dialogue\n" +
+                    "Press " + KeyBindings.GetKeyLabel(GameAction.Journal) + " to open the menu";
                 return true;
             }
             if (!runtime.GetFlag(LayOfTheLandScene.MetFlag))
             {
                 title = "Talk to the student calling you";
-                hint = "Move to the red hat student.\nPress E to interact";
+                hint = "Move to the red hat student.\nPress " + KeyBindings.GetKeyLabel(GameAction.Talk) + " to interact";
                 return true;
             }
             if (!runtime.GetFlag(SettlingInScene.BannMetFlag))
@@ -273,7 +278,7 @@ namespace Lumenfall.Quests
                 else
                 {
                     title = "Talk with the Receptionist";
-                    hint = "She is ginger and wears glasses";
+                    hint = "She has brown hair and wears glasses";
                 }
                 return true;
             }
@@ -323,7 +328,7 @@ namespace Lumenfall.Quests
             if (people.Count == 0)
             {
                 title = "Talk with the Receptionist";
-                hint = "Return to the Dormitory reception.\n    Speak with the ginger receptionist who wears glasses.";
+                hint = "Return to the Dormitory reception.\n    Speak with the brown-haired receptionist who wears glasses.";
                 return;
             }
             hint = string.Join("\n\n", people);
@@ -748,7 +753,7 @@ namespace Lumenfall.Quests
                 pausedTimeScale = Time.timeScale;
                 Time.timeScale = 0f;
                 pausedTime = true;
-                foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>(FindObjectsSortMode.None))
+                foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>())
                     if (input != null && input.enabled) { input.enabled = false; pausedInputs.Add(input); }
             }
             else

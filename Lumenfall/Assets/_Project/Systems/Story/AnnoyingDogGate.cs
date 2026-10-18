@@ -47,6 +47,20 @@ namespace Lumenfall.Story
             ("almost_there_trust_me.tmp", 0.97f, 1.6f),
             (DogFile, 0.99f, 1.8f),
         };
+        // Tries 2 to 9 after the joke, one line each: the gate's notice plus a sign the dog is slowly stirring. The last
+        // ones hint that it could be lifted, leading into the tenth try, which points at Vis.
+        private static readonly string[] StirringReplies =
+        {
+            "A dog obstructs the way. It is snoring softly.",
+            "A dog obstructs the way. It snores a little louder, as if to make a point.",
+            "A dog obstructs the way. One of its ears twitches.",
+            "A dog obstructs the way. Both of its ears twitch.",
+            "A dog obstructs the way. Its tail gives a single, sleepy thump.",
+            "A dog obstructs the way. It is starting to stir...",
+            "A dog obstructs the way. It rolls over, barely. It hardly seems to weigh a thing.",
+            "A dog obstructs the way. One eye almost opens. A dog this small could surely be lifted...",
+        };
+
         private const float DropSeconds = 0.45f;
         private const float HoldEmptySeconds = 0.9f;
         private const float FadeSeconds = 0.25f;
@@ -89,10 +103,9 @@ namespace Lumenfall.Story
             if (runtime.GetFlag(AwareFlag)) return "The dog is aware of you. It does not seem to care. It does look light enough to lift.";
             int tries = runtime.GetCounter(TriesCounter) + 1;
             runtime.SetCounter(TriesCounter, tries);
-            // The usual notice at first, then signs that persistence is getting somewhere.
-            if (tries < 4) return null;
-            if (tries < 7) return "A dog obstructs the way. One of its ears twitches.";
-            if (tries < AwareAfterTries) return "A dog obstructs the way. It is starting to stir...";
+            // The usual notice at first, then a new sign each try that persistence is getting somewhere.
+            if (tries < 2) return null;
+            if (tries < AwareAfterTries) return StirringReplies[tries - 2];
             runtime.SetFlag(AwareFlag, true);
             return "The dog is now aware of you. It looks light enough to lift.";
         }
@@ -122,6 +135,8 @@ namespace Lumenfall.Story
             if (playing) return true;
             GameEventRuntime runtime = GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null;
             if (runtime == null) return false;
+            // At the end of the white dog's trail the gate leads somewhere else instead (see WhiteDogTrailSecret).
+            if (WhiteDogTrailSecret.TryFollowAtGate(runtime)) return true;
             if (runtime.GetFlag(SeenFlag))
             {
                 string reply = ReplyToTry(runtime, out bool opens);
@@ -183,6 +198,9 @@ namespace Lumenfall.Story
             file = DogFile;
             dropped = true;
         }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {

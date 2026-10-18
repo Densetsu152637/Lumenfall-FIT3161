@@ -58,6 +58,21 @@ namespace Lumenfall.Story
 
         public static readonly Look[] All = { Nick, Glasses, Curls };
 
+        /// <summary>
+        /// The forgotten man at the end of the white dog's trail (<see cref="SecretRooms.ForgottenRoomId"/>): white hair, a
+        /// full white beard and moustache, thin brass spectacles, weathered skin and a faded grey-brown coat. Built on the
+        /// short-haired model, whose glasses he keeps.
+        /// </summary>
+        public static readonly Look OldMan = new Look
+        {
+            Id = "secret_forgotten_man", Name = "Man", DialogueId = "secret_forgotten_man",
+            Skin = Hex("#DDB79C"), Hair = Hex("#E4E2DA"), Outfit = Hex("#4E4840"), FacialHair = Hex("#ECEAE2"),
+            Frames = Hex("#9C8250"), Shoes = Hex("#2A2622"), FullBeard = true, Hide = new[] { "Book", "SatchelBag", "SatchelStrap" }
+        };
+
+        /// <summary>Every look dressed when its room is placed: the developers and the forgotten man.</summary>
+        public static readonly Look[] Dressed = { Nick, Glasses, Curls, OldMan };
+
         private const string DressingName = "Dev Dressing";
         private static readonly Color Lime = Hex("#8CDB33");
         private static readonly Color White = Hex("#F2F2EC");
@@ -71,15 +86,19 @@ namespace Lumenfall.Story
             foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>(true))
             {
                 if (Array.IndexOf(look.Hide, renderer.gameObject.name) >= 0) { renderer.enabled = false; continue; }
-                Material[] materials = renderer.materials;
+                // In the editor (baking a prefab) the copies are made explicitly; renderer.materials there would leak.
+                Material[] materials = Application.isPlaying ? renderer.materials
+                    : Array.ConvertAll(renderer.sharedMaterials, source => source == null ? null : new Material(source) { name = source.name });
                 foreach (Material material in materials)
                 {
+                    if (material == null) continue;
                     Color? colour = ColourFor(material.name, look);
                     if (!colour.HasValue) continue;
                     material.SetColor("_BaseColor", colour.Value);
                     material.SetColor("_Color", colour.Value);
                 }
-                renderer.materials = materials;
+                if (Application.isPlaying) renderer.materials = materials;
+                else renderer.sharedMaterials = materials;
             }
             return model;
         }

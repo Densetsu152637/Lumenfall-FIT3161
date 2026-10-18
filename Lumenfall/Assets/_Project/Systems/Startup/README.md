@@ -149,7 +149,9 @@ See [UI integration sources and validation](../../../../../docs/implementation/g
 The current test contract is defined by the [fixture inventory](../../../../../tests/gameplay_suites.json)
 and [test procedures](../../../../../tests/README.md). Batch CI explicitly excludes
 `RequiresGraphics`; run that category separately in a graphical Editor and inspect
-its screenshots. Follow the test procedures for exact verification and local
+its screenshots. Shader pixel checks cover the five changed Polytope materials in
+Forward/ForwardPlus, Rock and Opaque in Deferred, and Frost Ice/Snow main-light
+response in the forward modes. Follow the test procedures for exact verification and local
 preference/save isolation.
 
 Confirmed New Game resumes periodic autosaves only after the guarded reset succeeds. Failed resets keep autosaves suspended. The manual save picker offers all three manual slots, including empty destinations, and keyboard/controller confirmation saves to the selected slot.

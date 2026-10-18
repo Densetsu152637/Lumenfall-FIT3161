@@ -66,6 +66,9 @@ namespace Lumenfall.Player
             current = null;
         }
 
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
+
         private void OnGUI()
         {
             using (UiScale.Begin()) DrawGui();

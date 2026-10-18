@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lumenfall.Rendering;
 using UnityEngine;
 using Lumenfall.Controls;
 using Lumenfall.GameEvents;
@@ -88,13 +89,14 @@ namespace Lumenfall.Quests
             }
             if (board == (1 << RelicCount) - 1)
             {
-                instruction = "All five relics are lit. Return to Stella.";
+                instruction = "All five obelisks are lit. Return to Stella.";
                 return true;
             }
 
             int nextSwitch = FindNextSwitch(board);
             if (nextSwitch < 0 || !worldState.TryGetObject(ObjectId(nextSwitch), out WorldObjectSnapshot target)) return false;
-            instruction = $"Next: cast Ampere on relic {nextSwitch + 1}.";
+            // The relics carry no visible numbers, so the hint names the obelisk and the overlay adds which way it is.
+            instruction = "Next: cast Ampere on the stone obelisk.";
             targetCell = target.cell;
             return true;
         }
@@ -129,11 +131,22 @@ namespace Lumenfall.Quests
                     return true;
                 }
                 foreach (WorldObjectSnapshot other in nodes)
-                    if (!previous.ContainsKey(other.id) && 1f / (1f + Vector2Int.Distance(current.cell, other.cell)) >= WorldStateService.MinimumCableStrength)
+                    if (!previous.ContainsKey(other.id) && CanTie(current.id, other.id) &&
+                        1f / (1f + Vector2Int.Distance(current.cell, other.cell)) >= WorldStateService.MinimumCableStrength)
                     { previous[other.id] = current.id; pending.Enqueue(other); }
             }
-            instruction = "Weave the relays into a ring that reaches every relic.";
+            instruction = "Weave the relay stones into a ring that reaches every obelisk.";
             return true;
+        }
+
+        /// <summary>
+        /// Whether Weave may tie a cable between two of the board's nodes. The golden gyroscope draws its power from a dark
+        /// obelisk, never from a small relay stone.
+        /// </summary>
+        public static bool CanTie(string first, string second)
+        {
+            bool Relay(string id) => id != null && id.StartsWith(RelayPrefix, StringComparison.Ordinal);
+            return !(first == WorkbenchLinkId && Relay(second)) && !(second == WorkbenchLinkId && Relay(first));
         }
 
         private static IEnumerable<string> CircuitNodeIds()
@@ -146,9 +159,9 @@ namespace Lumenfall.Quests
         private static string NodeName(string id)
         {
             if (id == SourceId) return "Stella's power relic";
-            if (id == WorkbenchLinkId) return "the magical item";
-            if (id != null && id.StartsWith(IdPrefix, StringComparison.Ordinal)) return "relic " + id.Substring(IdPrefix.Length);
-            return "the next relay";
+            if (id == WorkbenchLinkId) return "the golden gyroscope";
+            if (id != null && id.StartsWith(IdPrefix, StringComparison.Ordinal)) return "the stone obelisk";
+            return "the next relay stone";
         }
 
         private static bool CircuitNetworkComplete(WorldStateService worldState)
@@ -278,7 +291,7 @@ namespace Lumenfall.Quests
                     relicViews[i] = authored;
                     continue;
                 }
-                GameObject relic = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                GameObject relic = RuntimePrimitive.Create(PrimitiveType.Cube);
                 relic.name = "Circuit Relic " + (i + 1);
                 relic.transform.SetParent(root.transform, false);
                 relic.transform.localScale = new Vector3(0.52f, 0.72f, 0.32f);
@@ -300,7 +313,7 @@ namespace Lumenfall.Quests
                     relayViews[i] = authored;
                     continue;
                 }
-                GameObject relay = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                GameObject relay = RuntimePrimitive.Create(PrimitiveType.Cylinder);
                 relay.name = "Circuit Relay " + (i + 1);
                 relay.transform.SetParent(relays.transform, false);
                 relay.transform.localScale = new Vector3(0.3f, 0.42f, 0.3f);
@@ -312,14 +325,14 @@ namespace Lumenfall.Quests
 
         private static GameObject FindInactiveObject(string objectName)
         {
-            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsInactive.Include))
                 if (candidate.name == objectName) return candidate.gameObject;
             return null;
         }
 
         private static void AddBase(Transform relic, int index)
         {
-            GameObject baseObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            GameObject baseObject = RuntimePrimitive.Create(PrimitiveType.Cylinder);
             baseObject.name = "Socket";
             baseObject.transform.SetParent(relic, false);
             baseObject.transform.localPosition = new Vector3(0f, -0.53f, 0f);
@@ -356,12 +369,27 @@ namespace Lumenfall.Quests
             {
                 appliedStateVersion = version;
                 appliedQuestSignature = questSignature;
+                RepairGyroscope();
                 SyncCircuitMode();
                 RefreshViews();
                 RefreshMagicItem();
                 TryCompleteIfSolved();
             }
             KeepAuthoredPresentation();
+        }
+
+        /// <summary>
+        /// Saves from before the gyroscope moved beside its obelisk keep its old cell and may hold a cable to a relay stone,
+        /// which Weave no longer allows. The gyroscope never moves in play, so its cell is set back to where it stands and
+        /// any such cable is cut.
+        /// </summary>
+        private void RepairGyroscope()
+        {
+            if (magicItem == null || grid == null || !state.TryGetObject(WorkbenchLinkId, out WorldObjectSnapshot gyroscope)) return;
+            Vector2Int standing = grid.WorldToCell(magicItemPosition);
+            if (gyroscope.cell != standing) state.SetProperty(WorkbenchLinkId, item => item.cell = standing);
+            for (int i = 0; i < RelayCount; i++)
+                if (state.IsConnected(RelayId(i), WorkbenchLinkId)) state.RemoveConnection(RelayId(i), WorkbenchLinkId);
         }
 
         private static int QuestSignature()
@@ -548,11 +576,11 @@ namespace Lumenfall.Quests
         internal static string Tracker(string questId, WorldStateService world)
         {
             int litRelics = CountPowered(world, RelicPrefix, RelicCount);
-            if (questId == FirstLightQuestId) return $"Relics lit: {litRelics}/{RelicCount}";
+            if (questId == FirstLightQuestId) return $"Obelisks lit: {litRelics}/{RelicCount}";
 
             int liveRelays = CountPowered(world, RelayPrefix, RelayCount);
             bool itemPowered = TryGet(world, MagicalItemId, out WorldObjectSnapshot item) && item.powered;
-            return $"Relics lit: {litRelics}/{RelicCount}\nRelays powered: {liveRelays}/{RelayCount}\nMagical item: {(itemPowered ? "powered" : "not powered")}";
+            return $"Obelisks lit: {litRelics}/{RelicCount}\nRelays powered: {liveRelays}/{RelayCount}\nGolden gyroscope: {(itemPowered ? "powered" : "not powered")}";
         }
 
         internal static string Instructions(string questId, out Vector2Int targetCell)
@@ -567,15 +595,15 @@ namespace Lumenfall.Quests
             if (questId == FirstLightQuestId)
             {
                 string result = $"1. Press {wheel} and select Ampere.\n" +
-                                $"2. Right-click or press {cast} on a numbered relic.\n" +
-                                "3. Each cast changes several relics; light all five together.";
+                                $"2. Right-click or press {cast} on a stone obelisk.\n" +
+                                "3. Each cast changes several obelisks; light all five together.";
                 if (StellaStringThemTogetherPuzzle.TryGetFirstLightStep(out string next, out targetCell)) result += "\n" + next;
                 return result;
             }
 
             string circuit = $"1. Press {wheel} and select Weave.\n" +
-                             $"2. Right-click or press {cast} on a powered relic to hold a thread.\n" +
-                             "3. Weave through nearby relays until every relic and the magical item receive power.";
+                             $"2. Right-click or press {cast} on a lit obelisk to hold a thread.\n" +
+                             "3. Weave through the small relay stones until every obelisk is linked, then tie the obelisk beside the golden gyroscope to it.";
             if (StellaStringThemTogetherPuzzle.TryGetCircuitStep(out string nextStep, out targetCell)) circuit += "\n" + nextStep;
             return circuit;
         }

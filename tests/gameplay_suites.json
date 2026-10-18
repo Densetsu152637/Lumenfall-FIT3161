@@ -11,8 +11,10 @@
         "Lumenfall.Startup.Tests.GraphicsPreferencesTests": 13,
         "Lumenfall.Startup.Tests.GraphicsRecommendationsTests": 17,
         "Lumenfall.Startup.Tests.GraphicsShaderStrippingTests": 3,
+        "Lumenfall.Startup.Tests.KeyBindingsTests": 18,
         "Lumenfall.Tests.GameEvents.AmbientCastTests": 7,
-        "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 16,
+        "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 19,
+        "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 5,
         "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
         "Lumenfall.Tests.GameEvents.CutsceneSequenceTests": 15,
         "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 7,
@@ -31,13 +33,15 @@
         "Lumenfall.Tests.GameEvents.PlayerProfileTests": 5,
         "Lumenfall.Tests.GameEvents.PlayerVisibilityTests": 4,
         "Lumenfall.Tests.GameEvents.ProductionUiPolicyTests": 4,
-        "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 3,
+        "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 4,
         "Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests": 9,
         "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 10,
-        "Lumenfall.Tests.GameEvents.SecretsTests": 16,
+        "Lumenfall.Tests.GameEvents.RuntimePrimitiveTests": 2,
+        "Lumenfall.Tests.GameEvents.SecretsTests": 17,
+        "Lumenfall.Tests.GameEvents.SerializedAssetImportTests": 4,
         "Lumenfall.Tests.GameEvents.SettlingInTests": 7,
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
-        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 7,
+        "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 8,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
         "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
       }
@@ -50,7 +54,7 @@
         "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 7,
         "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
-        "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 1
+        "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 2
       }
     }
   },
@@ -59,7 +63,8 @@
     "category": "RequiresGraphics",
     "fixtures": {
       "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
-      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1
+      "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 1,
+      "Lumenfall.Startup.Tests.ShaderAdditionalLightsValidation": 3
     }
   }
 }

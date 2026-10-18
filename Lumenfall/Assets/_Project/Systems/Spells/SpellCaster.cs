@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Lumenfall.Audio;
 using Lumenfall.Controls;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -51,6 +52,13 @@ namespace Lumenfall.Spells
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
         private float feedbackUntil;
+        // A newly learned spell is announced once the screen is clear of dialogue and cutscenes.
+        private const float NewSpellSeconds = 3.6f;
+        private SpellId? newSpell;
+        private float newSpellShownAt = -1f;
+        private bool restoringProgression;
+        /// <summary>The spell waiting to be, or being, announced as newly learned.</summary>
+        public SpellId? AnnouncedSpell => newSpell;
         private float nextScrollAt;
         private const float ScrollCooldown = 0.06f;
         private const string CircuitTag = "circuit";
@@ -113,20 +121,46 @@ namespace Lumenfall.Spells
                 runtime.QuestStatusChanged += OnQuestStatusChanged;
                 runtime.DialogueEnded += OnDialogueEnded;
                 runtime.StateRestored += OnProgressionRestored;
+                runtime.FlagChanged += OnFlagChanged;
             }
             OnProgressionRestored();
         }
         private void UnsubscribeProgression()
-        { if (subscribedRuntime == null) return; subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded; subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime = null; }
+        {
+            if (subscribedRuntime == null) return;
+            subscribedRuntime.QuestStatusChanged -= OnQuestStatusChanged; subscribedRuntime.DialogueEnded -= OnDialogueEnded;
+            subscribedRuntime.StateRestored -= OnProgressionRestored; subscribedRuntime.FlagChanged -= OnFlagChanged; subscribedRuntime = null;
+        }
         // Saves made while rewards were missed still hold the completed quests, so re-derive their spell rewards.
         private void OnProgressionRestored()
         {
             // A new game or a loaded save starts with empty hands; the relic is wherever world state has it.
             if (HeldRelic != null) ReleaseHeldRelic(null);
-            if (subscribedRuntime != null)
-                foreach (QuestDefinition quest in subscribedRuntime.Catalog.Quests.Values)
-                    if (quest != null && subscribedRuntime.GetQuestStatus(quest.id) == QuestStatus.Completed) GrantSpellRewards(quest.metadata);
+            // Rewards re-derived for a loaded save are not news, and an announcement from the previous run is dropped.
+            newSpell = null;
+            restoringProgression = true;
+            try
+            {
+                if (subscribedRuntime != null)
+                    foreach (QuestDefinition quest in subscribedRuntime.Catalog.Quests.Values)
+                        if (quest != null && subscribedRuntime.GetQuestStatus(quest.id) == QuestStatus.Completed) GrantSpellRewards(quest.metadata);
+            }
+            finally { restoringProgression = false; }
             RefreshSelection();
+        }
+        // A spell becomes available through its lesson flag or its unlock flag, whichever comes first: select it and
+        // announce it. The second of the two flags is not news.
+        private void OnFlagChanged(string key, bool value)
+        {
+            if (!value || restoringProgression || subscribedRuntime == null || key == null) return;
+            string name, other;
+            if (key.StartsWith(SpellFlagPrefix, StringComparison.Ordinal)) { name = key.Substring(SpellFlagPrefix.Length); other = SpellLessonFlagPrefix + name; }
+            else if (key.StartsWith(SpellLessonFlagPrefix, StringComparison.Ordinal)) { name = key.Substring(SpellLessonFlagPrefix.Length); other = SpellFlagPrefix + name; }
+            else return;
+            if (!TryParseSpell(name, out SpellId spell) || subscribedRuntime.GetFlag(other)) return;
+            selectedSpell = spell;
+            newSpell = spell;
+            newSpellShownAt = -1f;
         }
         private void OnQuestStatusChanged(QuestDefinition quest, QuestStatus previous, QuestStatus current)
         { if (current == QuestStatus.Completed && quest != null) GrantSpellRewards(quest.metadata); RefreshSelection(); }
@@ -194,14 +228,15 @@ namespace Lumenfall.Spells
                 if (wheelNavigation.Cancel) { CloseSpellWheel(); return; }
                 if (wheelNavigation.Submit) { CastSelected(); CloseSpellWheel(); return; }
             }
-            if (mouse != null && spellWheelOpen)
+            // The mouse wheel cycles spells whether or not the wheel is open; with it closed, the spell chip shows the pick.
+            if (mouse != null)
             {
                 float scroll = mouse.scroll.ReadValue().y;
                 // A short cooldown keeps smooth trackpad scrolling from racing through every spell.
                 if (Mathf.Abs(scroll) > 0.01f && Time.unscaledTime >= nextScrollAt)
                 {
                     SelectSpellByOffset(scroll > 0f ? -1 : 1);
-                    wheelView.Scrolled();
+                    if (spellWheelOpen) wheelView.Scrolled();
                     nextScrollAt = Time.unscaledTime + ScrollCooldown;
                 }
             }
@@ -289,6 +324,7 @@ namespace Lumenfall.Spells
             if (spellWheelOpen || InputBlockedByOverlay || AvailableSpells.Length == 0) return;
             spellWheelOpen = true;
             wheelView.Open();
+            AudioFeedbackService.PlayUi(AudioUiCue.SpellWheelOpen);
             wheelMovementLockOwned = true;
             GetComponent<GridMover>()?.SetMovementLocked(this, true);
             OverlayInputGate.Acquire(this);
@@ -352,19 +388,24 @@ namespace Lumenfall.Spells
         {
             HeldThread = null;
         }
-        private void CloseSpellWheel(SpellId? picked = null)
+        private void CloseSpellWheel(SpellId? picked = null, bool silent = false)
         {
             if (!spellWheelOpen) return;
             spellWheelOpen = false;
             wheelView.Close(picked);
+            if (!silent) AudioFeedbackService.PlayUi(AudioUiCue.SpellWheelClose);
             // The wheel holds its own movement lock, so the journal's or dialogue's locks are left untouched.
             if (wheelMovementLockOwned) GetComponent<GridMover>()?.SetMovementLocked(this, false);
             OverlayInputGate.Release(this);
             wheelMovementLockOwned = false;
         }
+        // Silent: the player did not close the wheel themselves when it is disabled (an area or scene change).
         private void OnDisable()
-        { CloseSpellWheel(); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
+        { CloseSpellWheel(silent: true); if (progressionManager != null) progressionManager.RuntimeChanged -= BindProgression; UnsubscribeProgression(); progressionManager = null; }
         private void OnDestroy() { wheelView.Dispose(); }
+
+        // Drawn with GUI only, never GUILayout, so skip the per-frame layout pass and its allocations.
+        private void Awake() => useGUILayout = false;
 
         private void OnGUI()
         {
@@ -373,6 +414,14 @@ namespace Lumenfall.Spells
             if (Time.unscaledTime < feedbackUntil && !string.IsNullOrEmpty(LastCastFeedback))
                 using (UiScale.Begin()) HudSkin.Message(LastCastFeedback);
             if (Time.timeScale <= 0f) return;
+            if (newSpell.HasValue)
+            {
+                // The card's clock starts the first time it can be seen, so a lesson that ends in dialogue still shows it.
+                if (newSpellShownAt < 0f) newSpellShownAt = Time.unscaledTime;
+                float elapsed = Time.unscaledTime - newSpellShownAt;
+                if (elapsed > NewSpellSeconds) newSpell = null;
+                else wheelView.DrawNewSpell(newSpell.Value, LoadIcon, elapsed, NewSpellSeconds);
+            }
             if (!wheelView.Visible)
             {
                 // The chip only paints on repaint, so skip building the spell list for other events.
@@ -501,6 +550,11 @@ namespace Lumenfall.Spells
                 ClearHeldThread();
                 ShowFeedback("Cable cut. Cast Weave on a relic to hold a new thread.");
                 return state.RemoveConnection(from, targetId);
+            }
+            if (!StellaStringThemTogetherPuzzle.CanTie(from, targetId))
+            {
+                ShowFeedback("The golden gyroscope only takes power from a stone obelisk. Still holding the thread.");
+                return false;
             }
             if (!state.AddConnection(from, targetId))
             {

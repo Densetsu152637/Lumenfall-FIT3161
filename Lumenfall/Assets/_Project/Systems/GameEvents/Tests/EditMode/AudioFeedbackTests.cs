@@ -154,6 +154,43 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(catalog.GetStatus("unknown"), Is.EqualTo(AudioClipStatus.UnknownCue));
             Assert.That(catalog.TryGetReady("missing", out _, out _), Is.False);
         }
+        [Test] public void AnyReadyReportsOnlyBusesWithAPlayableClip()
+        {
+            // The settings menus show the Ambience slider only when an ambience clip is ready.
+            AudioClip clip = AudioClip.Create("ready", 1, 1, 44100, false);
+            try
+            {
+                AudioClipCatalog catalog = new AudioClipCatalog(new AudioManifest { cues = new[] {
+                    new AudioCueDefinition { id = "sfx", bus = "Sfx", gain = 1f, resourcePath = "Audio/Ready", approvalStatus = "approved" },
+                    new AudioCueDefinition { id = "ambience", bus = "Ambience", loop = true, gain = 1f, approvalStatus = "missing_approved_media" }
+                } }, _ => clip);
+                Assert.That(catalog.AnyReady(AudioBus.Sfx), Is.True);
+                Assert.That(catalog.AnyReady(AudioBus.Ambience), Is.False, "Ambience with no approved media has nothing to adjust.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(clip); }
+        }
+        [Test] public void ShippedManifestLoadsSpellWheelAndGlaciateSounds()
+        {
+            AudioClipCatalog catalog = new AudioClipCatalog(LoadShippedManifest(), path => Resources.Load<AudioClip>(path));
+            foreach (string cue in new[] { "ui.spellwheelopen", "ui.spellwheelclose", "spell.glaciate" })
+                Assert.That(catalog.GetStatus(cue), Is.EqualTo(AudioClipStatus.Ready), cue + " should load its sound effect.");
+        }
+        [Test] public void EveryUiCueHasAShippedManifestEntry()
+        {
+            AudioClipCatalog catalog = new AudioClipCatalog(LoadShippedManifest(), _ => null);
+            // AudioFeedbackService.PlayUi plays "ui." + the lower-case enum name.
+            foreach (AudioUiCue cue in Enum.GetValues(typeof(AudioUiCue)))
+            {
+                string id = "ui." + cue.ToString().ToLowerInvariant();
+                Assert.That(catalog.GetStatus(id), Is.Not.EqualTo(AudioClipStatus.UnknownCue), id + " is missing from the audio manifest.");
+            }
+        }
+        private static AudioManifest LoadShippedManifest()
+        {
+            TextAsset asset = Resources.Load<TextAsset>("Audio/audio-manifest");
+            Assert.That(asset, Is.Not.Null, "Resources/Audio/audio-manifest.json is missing.");
+            return JsonUtility.FromJson<AudioManifest>(asset.text);
+        }
         [Test] public void UnityJsonRestoreDoesNotReplaySleepWakeQuestOrDialogueCues()
         {
             GameEventRuntime saved = CreateRuntime(); saved.SetFlag("chapter1.complete", true); saved.StartQuest("q"); saved.CompleteQuest("q");

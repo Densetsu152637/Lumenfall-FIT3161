@@ -3,7 +3,8 @@ using System;
 namespace Lumenfall.Audio
 {
     public enum AudioContext { Silent, Forest, Campus, Interior, Dialogue, Mystery, Sleep }
-    public enum AudioUiCue { Confirm, Cancel, Open, Error }
+    /// <summary>Plays as the manifest cue "ui." + the lower-case name, e.g. SpellWheelOpen is "ui.spellwheelopen".</summary>
+    public enum AudioUiCue { Confirm, Cancel, Open, Error, SpellWheelOpen, SpellWheelClose }
 
     /// <summary>Priority and mix policy, without engine time or scene dependencies.</summary>
     public static class AudioContextPolicy

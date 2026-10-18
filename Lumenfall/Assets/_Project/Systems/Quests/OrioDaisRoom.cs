@@ -1,4 +1,5 @@
 using System;
+using Lumenfall.Rendering;
 using UnityEngine;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -197,7 +198,7 @@ namespace Lumenfall.Quests
         private static Transform CreateRing(Transform parent)
         {
             // Same ring as the Stella return portal so players recognise it as a way through.
-            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            GameObject visual = RuntimePrimitive.Create(PrimitiveType.Cylinder);
             visual.name = "Portal ring";
             visual.transform.SetParent(parent, false);
             visual.transform.localPosition = new Vector3(0f, 0.08f, 0f);
@@ -246,7 +247,7 @@ namespace Lumenfall.Quests
 
         private static void CreatePart(PrimitiveType type, string name, Transform parent, Vector3 localPosition, Vector3 localScale, Color color)
         {
-            GameObject part = GameObject.CreatePrimitive(type);
+            GameObject part = RuntimePrimitive.Create(type);
             part.name = name;
             part.transform.SetParent(parent, false);
             part.transform.localPosition = localPosition;

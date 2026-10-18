@@ -184,6 +184,43 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(done, Does.Contain("magical item is moving"));
         }
 
+        [Test] public void TheGoldenGyroscopeTakesPowerFromAnObeliskNotARelayStone()
+        {
+            const string relay = "stella.circuit.relay.7", obelisk = "stella.string-together.relic.1";
+            Assert.That(StellaStringThemTogetherPuzzle.CanTie(Link, relay), Is.False);
+            Assert.That(StellaStringThemTogetherPuzzle.CanTie(relay, Link), Is.False);
+            Assert.That(StellaStringThemTogetherPuzzle.CanTie(obelisk, Link), Is.True);
+            Assert.That(StellaStringThemTogetherPuzzle.CanTie(relay, "stella.circuit.relay.6"), Is.True, "Relay stones still tie to each other.");
+
+            runtime.SetFlag("spell.unlocked.Weave", true);
+            state.RegisterObject(relay, null, new Vector2Int(14, 5), Vector2Int.one, true, ConductorTags);
+            state.RegisterObject(obelisk, null, new Vector2Int(15, 5), Vector2Int.one, true, new[] { "ampere", "weave", "circuit" });
+            caster.Cast(SpellId.Weave, relay, Vector2Int.up);
+            Assert.That(caster.Cast(SpellId.Weave, Link, Vector2Int.up), Is.False);
+            Assert.That(state.IsConnected(relay, Link), Is.False, "A relay stone cannot feed the gyroscope.");
+            Assert.That(caster.HeldThread, Is.EqualTo(relay), "The refused thread is still held.");
+            caster.CancelHeldThread();
+            caster.Cast(SpellId.Weave, obelisk, Vector2Int.up);
+            Assert.That(caster.Cast(SpellId.Weave, Link, Vector2Int.up), Is.True);
+            Assert.That(state.IsConnected(obelisk, Link), Is.True);
+
+            // In the workshop the gyroscope stands beside a stone obelisk.
+            GameObject room = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/World/Areas/Prefabs/Arcane Workshop.prefab");
+            Assert.That(room, Is.Not.Null);
+            Vector2 Cell(string name)
+            {
+                foreach (Transform part in room.GetComponentsInChildren<Transform>(true))
+                    if (part.name == name) return new Vector2(Mathf.Round(part.position.x), Mathf.Round(part.position.z));
+                Assert.Fail(name + " is missing from the workshop.");
+                return default;
+            }
+            Vector2 gyroscope = Cell("magical_gyroscope");
+            float nearestObelisk = float.MaxValue;
+            for (int i = 1; i <= 5; i++) nearestObelisk = Mathf.Min(nearestObelisk, Vector2.Distance(gyroscope, Cell("stella.string-together.relic." + i)));
+            Assert.That(nearestObelisk, Is.LessThanOrEqualTo(4f), "A stone obelisk is within a cable's reach (four tiles) of the gyroscope.");
+            Assert.That(Cell("Stella"), Is.EqualTo(new Vector2(19f, 10f)), "Stella stands clear of the gyroscope.");
+        }
+
         [Test] public void StellaDeterministicallyHandsOffToNextOrActiveAssignment()
         {
             NpcCatalogAsset catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<NpcCatalogAsset>("Assets/_Project/World/Areas/NpcCatalog.asset");
