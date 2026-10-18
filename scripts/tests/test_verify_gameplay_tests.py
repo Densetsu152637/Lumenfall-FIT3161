@@ -239,7 +239,7 @@ class GameplayContractTests(unittest.TestCase):
 
     def test_workflow_uses_one_current_checkout_action_and_verified_cache_save(self):
         workflow = (gameplay.ROOT / ".github/workflows/pr-validation.yml").read_text()
-        self.assertEqual(workflow.count("uses: game-ci/unity-test-runner@v4"), 1)
+        self.assertEqual(workflow.count("uses: game-ci/unity-test-runner@v32e57712352b500e17974b245a6dce9e11a73213"), 1)
         self.assertIn("testMode: all", workflow)
         self.assertIn("customParameters: -testCategory !RequiresGraphics", workflow)
         unity_job = workflow.split("  run-gameplay-tests:", 1)[1]
