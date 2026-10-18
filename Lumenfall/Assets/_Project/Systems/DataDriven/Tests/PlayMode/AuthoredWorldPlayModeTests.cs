@@ -198,6 +198,62 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
+        public IEnumerator CompletedGyroscopeStopsWhenItsLiveCircuitBreaksAndRestartsWhenReconnected()
+        {
+            yield return DismissStartupMenu();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.StartQuest("stella_first_light");
+            events.CompleteQuest("stella_first_light");
+            events.StartQuest("stella_string_them_together");
+            loader.Load(loader.GetArea("B02.Ground"), catalog);
+            yield return null;
+            WorldStateService state = WorldStateService.Instance;
+            List<string> nodes = new List<string> { "circuit.stella.link" };
+            for (int i = 1; i <= 5; i++)
+            {
+                string id = "stella.string-together.relic." + i;
+                nodes.Add(id);
+                state.SetProperty(id, value => value.powered = true);
+            }
+            for (int i = 1; i <= 10; i++) nodes.Add("stella.circuit.relay." + i);
+            // Use only legal authored edges; no teleports or direct conductor-power mutation.
+            for (int i = 0; i < nodes.Count; i++)
+                for (int j = i + 1; j < nodes.Count; j++)
+                    if (StellaStringThemTogetherPuzzle.CanTie(nodes[i], nodes[j])) state.AddConnection(nodes[i], nodes[j]);
+            Assert.That(state.AreInSameNetwork(nodes.ToArray()), Is.True);
+            Assert.That(state.TryGetObject(nodes[0], out WorldObjectSnapshot item) && item.powered, Is.True);
+            events.CompleteQuest("stella_string_them_together");
+            yield return null;
+            GameObject gyroscope = GameObject.Find("magical_gyroscope");
+            Assert.That(gyroscope, Is.Not.Null);
+            Transform[] movingParts = gyroscope.GetComponentsInChildren<Transform>(true).Skip(1).ToArray();
+            Assert.That(movingParts.Length, Is.GreaterThan(0));
+            Quaternion[] before = movingParts.Select(part => part.localRotation).ToArray();
+            yield return new WaitForSeconds(0.17f);
+            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.True,
+                "The authored gyroscope's animated children must move while its circuit is live.");
+            List<string> feeds = nodes.Skip(1).Where(id => state.IsConnected(nodes[0], id)).ToList();
+            Assert.That(feeds.Count, Is.GreaterThan(0));
+            foreach (string feed in feeds) state.RemoveConnection(nodes[0], feed);
+            yield return null; // Stop/rewind is applied once before capturing the stationary pose.
+            Assert.That(state.TryGetObject(nodes[0], out item) && item.powered, Is.False);
+            before = movingParts.Select(part => part.localRotation).ToArray();
+            yield return new WaitForSeconds(0.17f);
+            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.False,
+                "Completed quest history must not keep the actual animation spinning without power.");
+            Assert.That(events.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
+            Assert.That(state.AddConnection(nodes[0], feeds[0]), Is.True);
+            yield return null;
+            before = movingParts.Select(part => part.localRotation).ToArray();
+            yield return new WaitForSeconds(0.17f);
+            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.True,
+                "Reconnecting live power resumes the authored animation.");
+        }
+
+        [UnityTest]
         public IEnumerator LegacyKatrinaRecessSaveMigratesToCampus()
         {
             yield return DismissStartupMenu();

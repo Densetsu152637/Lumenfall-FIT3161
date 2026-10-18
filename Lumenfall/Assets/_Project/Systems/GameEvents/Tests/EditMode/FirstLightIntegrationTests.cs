@@ -86,6 +86,56 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void DarkeningSolvedBoardBlocksReportUntilResonanceSolvesItAgain()
+        {
+            TeachAmpere();
+            SetRelicsPowered(true);
+            monitor.EvaluatePuzzles();
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.up), Is.True);
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.False);
+            DialogueSession blocked = manager.Runtime.StartDialogue("stella_first_light_dialogue");
+            Assert.That(blocked.SelectChoice("report"), Is.False);
+            blocked.End();
+            DialogueSession nextStage = manager.Runtime.StartDialogue("stella_string_them_together_dialogue");
+            Assert.That(nextStage.SelectChoice("accept"), Is.False);
+            nextStage.End();
+            Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.up), Is.True);
+            monitor.EvaluatePuzzles();
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            ReportFirstLight();
+            nextStage = manager.Runtime.StartDialogue("stella_string_them_together_dialogue");
+            Assert.That(nextStage.SelectChoice("accept"), Is.True);
+            nextStage.End();
+            SetRelicsPowered(false);
+            Assert.That(manager.Runtime.GetQuestStatus("stella_first_light"), Is.EqualTo(QuestStatus.Completed));
+        }
+
+        [Test]
+        public void RestoredSolvedEventUsesLiveBoardReadinessAndCanBecomeReadyAgain()
+        {
+            TeachAmpere();
+            SetRelicsPowered(true);
+            monitor.EvaluatePuzzles();
+            string solvedEvents = manager.Runtime.ExportStateJson(false);
+            Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.up), Is.True);
+            string darkWorld = state.CaptureStateJson();
+            SetRelicsPowered(true);
+            Assert.That(manager.Runtime.ImportStateJson(solvedEvents), Is.True);
+            Assert.That(state.RestoreStateJson(darkWorld), Is.True);
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.False);
+            DialogueSession blocked = manager.Runtime.StartDialogue("stella_first_light_dialogue");
+            Assert.That(blocked.SelectChoice("report"), Is.False);
+            blocked.End();
+            // Restoring events after the world must also clear the historical true flag.
+            Assert.That(manager.Runtime.ImportStateJson(solvedEvents), Is.True);
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.False);
+            Assert.That(caster.Cast(SpellId.Ampere, "stella.string-together.relic.1", Vector2Int.up), Is.True);
+            Assert.That(manager.Runtime.GetFlag("stella.first_light.ready_to_report"), Is.True);
+            ReportFirstLight();
+        }
+
+        [Test]
         public void CompletionRequiresActiveQuestCorrectMapAndPoweredTarget()
         {
             SetRelicsPowered(true);
