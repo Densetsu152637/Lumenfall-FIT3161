@@ -9,11 +9,21 @@ namespace Lumenfall.Quests
     /// <summary>Registers one of Katrina's three Lost Echoes items at its authored prefab marker.</summary>
     public sealed class KatrinaQuestItemMarker : MonoBehaviour
     {
+        private const int StreamItemIndex = 2;
+        private static readonly Vector2Int StreamItemCell = new Vector2Int(27, 26);
+
         private static readonly string[] ItemIds =
         {
             "katrina.item.library",
             "katrina.item.garden",
             "katrina.item.stream"
+        };
+
+        private static readonly string[] PickupEventIds =
+        {
+            "found_katrina_library_item",
+            "found_katrina_garden_item",
+            "found_katrina_stream_item"
         };
 
         private void OnEnable()
@@ -28,14 +38,21 @@ namespace Lumenfall.Quests
             if (!string.Equals(loader.LoadedMap.id, expectedMap, StringComparison.OrdinalIgnoreCase)) return;
 
             Vector2Int cell = world.WorldToCell(transform.position);
+            if (index == StreamItemIndex)
+            {
+                cell = StreamItemCell;
+                transform.position = world.CellToWorld(cell, 0f);
+            }
+            Debug.Log($"Katrina marker '{name}' on {expectedMap}: grid {cell}, world {transform.position}.", this);
             if (!world.IsWithinBounds(cell))
             {
                 Debug.LogError($"Katrina quest marker '{name}' resolves outside {expectedMap} at {cell}.", this);
                 return;
             }
 
+            // Credit the collected state immediately; a map transition can precede the monitor's next poll.
             state.RegisterObject(ItemIds[index], gameObject, cell, Vector2Int.one, true,
-                new[] { "hidden", WorldStateService.PickupTag });
+                new[] { "hidden", WorldStateService.PickupTag, WorldStateService.OnPickupTagPrefix + PickupEventIds[index] });
         }
 
         private static bool TryGetItemIndex(string markerName, out int index)

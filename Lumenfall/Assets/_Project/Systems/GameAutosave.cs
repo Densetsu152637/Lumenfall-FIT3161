@@ -1,7 +1,9 @@
 using UnityEngine;
 using Lumenfall.Startup;
 using Lumenfall.Cutscenes;
+using Lumenfall.DataDriven;
 using Lumenfall.GridMovement;
+using Lumenfall.Spells;
 
 namespace Lumenfall.GameEvents
 {
@@ -23,8 +25,6 @@ namespace Lumenfall.GameEvents
         private bool saving;
         // Set after a load or new game; the run's first save then marks autosave as last played.
         private bool initialAutosavePending;
-        // A new game's manual slot is written together with the run's first save, not when the game starts.
-        private string pendingManualSlot;
         private float secondsUntilSave;
         private float activeSecondsSinceLoad;
         private GridMover player;
@@ -85,21 +85,19 @@ namespace Lumenfall.GameEvents
         {
             if (instance == null) return;
             instance.initialAutosavePending = false;
-            instance.pendingManualSlot = null;
             instance.secondsUntilSave = PeriodicSaveSeconds;
             instance.activeSecondsSinceLoad = 0f;
         }
 
         /// <summary>
-        /// Arms the first save of a run that has just started (a new game, or a loaded manual slot). It happens after 30
-        /// seconds of active play, or sooner if something calls <see cref="SaveNow"/>. A new game passes its manual slot,
-        /// which is written alongside that first save.
+        /// Arms the first autosave of a run that has just started (a new game, or a loaded manual slot). It happens after
+        /// 30 seconds of active play, or sooner if something calls <see cref="SaveNow"/>. Automatic saves never write a
+        /// manual slot; only Quick Save and the manual Save screen may do that.
         /// </summary>
-        public static void BeginNewRun(string manualSlot = null)
+        public static void BeginNewRun()
         {
             if (instance == null) return;
             instance.initialAutosavePending = true;
-            instance.pendingManualSlot = manualSlot;
             instance.secondsUntilSave = PeriodicSaveSeconds;
             instance.activeSecondsSinceLoad = 0f;
         }
@@ -109,6 +107,11 @@ namespace Lumenfall.GameEvents
         {
             GameAutosave autosave = instance;
             GameSaveManager saves = GameSaveManager.Instance;
+            if (!WorldReadyToSave())
+            {
+                Debug.LogError("Autosave was postponed because the world save providers are not ready.");
+                return false;
+            }
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
             GameSaveOverlay.NotifySaveStarted();
             bool succeeded = saves.Save(GameSaveManager.AutosaveSlot);
@@ -137,7 +140,7 @@ namespace Lumenfall.GameEvents
             }
         }
 
-        /// <summary>After a run's first successful save: mark autosave as last played and write a new game's slot.</summary>
+        /// <summary>After a run's first successful automatic save, mark only the autosave as last played.</summary>
         private void CompleteFirstSave()
         {
             if (initialAutosavePending)
@@ -145,11 +148,6 @@ namespace Lumenfall.GameEvents
                 initialAutosavePending = false;
                 saveManager.MarkPlayed(GameSaveManager.AutosaveSlot);
             }
-            // Empty, not null, after Unity reloads scripts during Play Mode, which serializes private strings.
-            if (string.IsNullOrEmpty(pendingManualSlot)) return;
-            string slot = pendingManualSlot;
-            pendingManualSlot = null;
-            if (saveManager.Save(slot)) SaveSlotSummary.RequestThumbnailRefresh(slot);
         }
 
         private bool PlayerIsMoving()
@@ -165,7 +163,15 @@ namespace Lumenfall.GameEvents
         private bool CanAutosave()
         {
             return saveManager != null && saveManager.AutosaveAllowed && Time.timeScale > 0f && !StartupMenu.IsVisible && !CutscenePlayer.IsPlaying &&
+                WorldReadyToSave() &&
                 (initialAutosavePending || saveManager.HasSave(GameSaveManager.AutosaveSlot));
+        }
+
+        private static bool WorldReadyToSave()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            WorldStateService state = WorldStateService.Instance;
+            return loader != null && loader.IsSaveProviderRegistered && loader.LoadedMap != null && state != null && state.IsReady;
         }
     }
 }

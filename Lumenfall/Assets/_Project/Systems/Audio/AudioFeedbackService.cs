@@ -162,7 +162,7 @@ namespace Lumenfall.Audio
                 if (voice.Paused || voice.Source.isPlaying) continue;
                 voice.Ui = ui; voice.Gain = definition.gain; voice.Source.transform.position = position;
                 voice.Source.spatialBlend = ui ? 0f : 0.2f; voice.Source.clip = clip;
-                voice.Source.volume = AudioMixSettings.Sfx * voice.Gain; voice.Source.Play(); return;
+                voice.Source.volume = AudioMixSettings.Sfx * voice.Gain; Lumenfall.Audio.AudioPlayback.Play(voice.Source); return;
             }
         }
         private void RefreshPlayback()
@@ -191,7 +191,7 @@ namespace Lumenfall.Audio
             // Reuse an already playing clip when context returns during a fade.
             foreach (LoopChannel channel in channels) if (channel.Source.clip == clip) { selected = channel; break; }
             if (selected.Source.clip != clip)
-            { selected.Source.Stop(); selected.Source.clip = clip; selected.Gain = 0f; selected.Source.volume = 0f; selected.Source.Play(); }
+            { selected.Source.Stop(); selected.Source.clip = clip; selected.Gain = 0f; selected.Source.volume = 0f; Lumenfall.Audio.AudioPlayback.Play(selected.Source); }
             selected.Target = definition.gain;
             if (applicationPaused || (ReferenceEquals(channels, ambience) && gameplayPaused)) selected.Source.Pause();
         }
@@ -227,14 +227,14 @@ namespace Lumenfall.Audio
         private void OnApplicationPause(bool paused) { applicationPaused = paused; ApplyPause(); }
         private void ApplyPause()
         {
-            foreach (LoopChannel channel in music) { if (applicationPaused) channel.Source.Pause(); else channel.Source.UnPause(); }
-            foreach (LoopChannel channel in ambience) { if (applicationPaused || gameplayPaused) channel.Source.Pause(); else channel.Source.UnPause(); }
+            foreach (LoopChannel channel in music) { if (applicationPaused) channel.Source.Pause(); else Lumenfall.Audio.AudioPlayback.UnPause(channel.Source); }
+            foreach (LoopChannel channel in ambience) { if (applicationPaused || gameplayPaused) channel.Source.Pause(); else Lumenfall.Audio.AudioPlayback.UnPause(channel.Source); }
             foreach (Voice voice in voices)
             {
                 bool paused = AudioContextPolicy.ShouldPauseVoice(voice.Source.isPlaying || voice.Paused, voice.Ui, gameplayPaused, applicationPaused);
                 if (!voice.Source.isPlaying && !voice.Paused) { voice.Source.clip = null; continue; }
                 if (voice.Paused == paused) continue; voice.Paused = paused;
-                if (paused) voice.Source.Pause(); else voice.Source.UnPause();
+                if (paused) voice.Source.Pause(); else Lumenfall.Audio.AudioPlayback.UnPause(voice.Source);
             }
         }
     }

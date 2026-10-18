@@ -1,0 +1,6 @@
+{
+    "name": "Lumenfall.Audio.Editor",
+    "rootNamespace": "Lumenfall.Audio.Editor",
+    "references": ["Lumenfall.Runtime", "UnityEditor.TestRunner", "UnityEngine.TestRunner"],
+    "includePlatforms": ["Editor"]
+}

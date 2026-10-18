@@ -117,7 +117,7 @@ namespace Lumenfall.Cutscenes
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
-            audioSource.PlayOneShot(Keep(FallClip(duration - twinkleSeconds, twinkleSeconds)), 0.55f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, Keep(FallClip(duration - twinkleSeconds, twinkleSeconds)), 0.55f);
 
             Place(twinklePoint);
         }
@@ -199,7 +199,7 @@ namespace Lumenfall.Cutscenes
             Place(impact);
             trail.emitting = false;
             coreRenderer.enabled = false;
-            audioSource.PlayOneShot(Keep(ImpactClip()), 0.8f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, Keep(ImpactClip()), 0.8f);
             for (int i = 0; i < 32; i++)
             {
                 float angle = i / 32f * Mathf.PI * 2f + Range(-0.1f, 0.1f);

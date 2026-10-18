@@ -28,11 +28,22 @@ namespace Lumenfall.DataDriven
         /// The live instance of <see cref="CurrentArea"/>; a new object whenever an area is loaded or re-instantiated.
         public GameObject CurrentAreaRoot { get; private set; }
         public string SaveKey => "data-driven-world";
+        public bool IsSaveProviderRegistered => registeredSaveProvider;
 
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            TryRegisterSaveProvider();
+        }
+
+        private void OnEnable() => TryRegisterSaveProvider();
+
+        // A script reload can recreate this component while a save operation is finishing. Registration is deliberately
+        // refused while the manager is busy, so retry until the provider has safely rejoined the next save transaction.
+        private void TryRegisterSaveProvider()
+        {
+            if (registeredSaveProvider) return;
             saveManager = GameSaveManager.Instance;
             registeredSaveProvider = saveManager != null && saveManager.RegisterProvider(this);
         }
@@ -46,6 +57,7 @@ namespace Lumenfall.DataDriven
 
         private void Start()
         {
+            TryRegisterSaveProvider();
             if (world == null) world = FindAnyObjectByType<GridWorld>();
             if (startingArea == null) { Debug.LogError("Assign a starting World Area asset in the Inspector.", this); return; }
             Load(startingArea, npcCatalog);
@@ -53,6 +65,7 @@ namespace Lumenfall.DataDriven
 
         private void Update()
         {
+            if (!registeredSaveProvider) TryRegisterSaveProvider();
             if (LoadedNpcs == null || GameEventManager.Instance == null) return;
             // Compared in place rather than as a rebuilt string, so the per-frame check does not allocate.
             NpcDefinition[] npcs = LoadedNpcs.npcs ?? Array.Empty<NpcDefinition>();
@@ -97,7 +110,8 @@ namespace Lumenfall.DataDriven
             LoadedNpcs = catalog == null ? new NpcDatabaseDefinition() : new NpcDatabaseDefinition { npcs = catalog.npcs, layers = catalog.layers };
             WorldStateService.Instance?.BeginMapRebuild(LoadedMap.id);
             WorldStateService.Instance?.RegisterPuzzleTargets(LoadedMap.puzzleTargets);
-            if (world != null) world.ConfigureBounds(LoadedMap.width, LoadedMap.height);
+            if (world != null) world.ConfigureBounds(
+                new Vector2Int(LoadedMap.boundsMinX, LoadedMap.boundsMinY), LoadedMap.width, LoadedMap.height);
             if (!areaInstances.TryGetValue(area, out GameObject root))
             {
                 Transform parent = contentRoot == null ? transform : contentRoot;
@@ -109,6 +123,9 @@ namespace Lumenfall.DataDriven
             root.SetActive(true);
             CurrentAreaRoot = root;
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
+            // Cached story actors must match the imported runtime before a spawn or saved player cell is validated.
+            if (LoadedMap.id == SettlingInScene.MapId)
+                SettlingInScene.RefreshRowanPlacement(root, world, GameEventManager.Instance?.Runtime);
             ApplySpawn(LoadedMap, placeAtSpawn);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
@@ -149,7 +166,9 @@ namespace Lumenfall.DataDriven
                 GridMover player = FindAnyObjectByType<GridMover>();
                 GridWorld grid = world == null ? FindAnyObjectByType<GridWorld>() : world;
                 return area != null && area.areaPrefab != null && area.definition != null && player != null && !player.IsMoving && grid != null &&
-                    state.playerX >= 0 && state.playerY >= 0 && state.playerX < area.definition.width && state.playerY < area.definition.height;
+                    state.playerX >= area.definition.boundsMinX && state.playerY >= area.definition.boundsMinY &&
+                    state.playerX < area.definition.boundsMinX + area.definition.width &&
+                    state.playerY < area.definition.boundsMinY + area.definition.height;
             }
             catch { return false; }
         }

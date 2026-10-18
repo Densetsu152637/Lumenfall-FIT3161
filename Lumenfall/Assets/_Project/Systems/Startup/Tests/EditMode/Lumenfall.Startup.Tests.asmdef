@@ -1,7 +1,7 @@
 {
     "name": "Lumenfall.Startup.Tests",
     "rootNamespace": "Lumenfall.Startup.Tests",
-    "references": ["Lumenfall.Runtime", "Unity.InputSystem", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.Universal.Runtime"],
+    "references": ["Lumenfall.Runtime", "Unity.InputSystem", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.Universal.Runtime", "Lumenfall.Audio.Editor"],
     "includePlatforms": ["Editor"],
     "optionalUnityReferences": ["TestAssemblies"]
 }

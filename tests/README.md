@@ -12,14 +12,14 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 348 EditMode, sixteen batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 372 EditMode, twenty-two batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
 | Dialogue page splitting and rich-text balancing | DialoguePagingTests | 6 |
 | Dialogue text effects and spell highlighting | DialogueTextEffectsTests | 8 |
 | Cinna ice switches and seal | CinnaIceTrialTests | 5 |
-| First Light completion and runtime replacement | FirstLightIntegrationTests | 7 |
+| First Light completion, live report readiness and runtime replacement | FirstLightIntegrationTests | 9 |
 | Lost Echoes reveals, collection and progression events | LostEchoesRevealEventTests | 8 |
 | Vis carry, placement, reset and Cinna hand-off | OutOfAlignmentTests | 33 |
 | Dialogue reveal and rich text | DialogueTextRevealTests | 8 |
@@ -28,19 +28,22 @@ The integrated suite contains 348 EditMode, sixteen batch PlayMode and five grap
 | Borrowed Light progression and spell rewards | KatrinaBorrowedProgressionTests | 8 |
 | Borrowed Light world state and restoration | KatrinaBorrowedWorldTests | 8 |
 | Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
-| Authored quest dialogue references | QuestDialogueContentTests | 3 |
+| Authored quest dialogue references | QuestDialogueContentTests | 4 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
 | Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 10 |
-| Spell state and world save round trips | SpellWorldStateTests | 4 |
-| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 7 |
+| Spell state, rejected-input feedback and world save round trips | SpellWorldStateTests | 8 |
+| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 8 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
-| Audio buses and feedback | AudioFeedbackTests | 18 |
+| Test audio suppression and cleanup | AudioPlaybackTests | 3 |
+| Audio buses and feedback | AudioFeedbackTests | 19 |
 | Transactional save recovery and rollback | GameSaveRecoveryTests | 19 |
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
+| Graphics shader stripping configuration | GraphicsShaderStrippingTests | 3 |
+| Authored world layout | AuthoredLayoutTests | 5 |
 | Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
@@ -50,16 +53,19 @@ The integrated suite contains 348 EditMode, sixteen batch PlayMode and five grap
 | NPC introductions | NpcIntroductionsTests | 7 |
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
+| Runtime primitive behavior | RuntimePrimitiveTests | 2 |
+| Hidden interactions and collectible secrets | SecretsTests | 17 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
-| Dormitory onboarding | SettlingInTests | 7 |
-| **Gameplay rules / EditMode** | | **348** |
-| Scene boot/references, saved-state refresh, forest gate and campus portals | AuthoredWorldPlayModeTests | 7 |
+| Dormitory onboarding, Rowan staging and restored blockers | SettlingInTests | 11 |
+| **Gameplay rules / EditMode** | | **372** |
+| Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
 | Settings keyboard navigation and preset isolation | OptionsPanelPlayModeTests | 2 |
 | Dialogue pointer gating, runtime replacement and owned cleanup | DialogueSettingsUiPlayModeTests | 1 |
-| Wheel casts, sibling ownership and closing-frame input consumption | SpellWheelCastingPlayModeTests | 1 |
-| **Batch PlayMode** | | **16** |
+| Wheel casts, sibling ownership and closing-frame input consumption | SpellWheelCastingPlayModeTests | 2 |
+| Test bootstrap and native audio suppression | AudioPlaybackPlayModeTests | 1 |
+| **Batch PlayMode** | | **22** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 | Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
 | Actual Polytope materials respond to additional lights in Forward and ForwardPlus; Frost materials respond to their supported main light | ShaderAdditionalLightsValidation | **2** |
@@ -81,6 +87,13 @@ use the existing `EditModeLifecycle` helper when applicable, restore previous wo
 instances, and unsubscribe fixture-owned event handlers during cleanup. Quest
 monitors must load their definitions before evaluation. Preserve production reward
 and completion requirements.
+
+All four test assemblies arm the audio test guard before runner scene startup,
+including filtered case runs. First-party playback stays suppressed while cue
+selection, buses and logical audio events continue to run. The audio regression
+fixtures check the pre-scene PlayMode boundary, EditMode suppression, failure cleanup
+and canceled-run restoration policy; ordinary Editor playback still needs listening
+acceptance after the run. See the audio system README for lifecycle and scope.
 
 Authored-world PlayMode cases load their own `SampleScene` additively while
 retaining the runner and an empty fixture host. Teardown unloads only that owned
@@ -137,7 +150,7 @@ python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical
 ```
 
 The graphical inventory has exactly five cases; the batch inventory contains the
-other sixteen PlayMode cases. The shader fixtures render into 128-by-128 targets
+other twenty-two PlayMode cases. The shader fixtures render into 128-by-128 targets
 and compare the captured central 80-by-80 pixel region. The five referenced
 Polytope materials are checked for additional-light pixel deltas in configured
 Forward and ForwardPlus pipelines;

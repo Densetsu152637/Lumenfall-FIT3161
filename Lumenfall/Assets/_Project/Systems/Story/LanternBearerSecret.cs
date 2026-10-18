@@ -333,7 +333,7 @@ namespace Lumenfall.Story
 
         private void Play(AudioClip clip, float volume)
         {
-            if (clip != null && audioSource != null) audioSource.PlayOneShot(clip, volume * Lumenfall.Audio.AudioMixSettings.Sfx);
+            if (clip != null && audioSource != null) Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, clip, volume * Lumenfall.Audio.AudioMixSettings.Sfx);
         }
 
         // A soft sine with a quick attack and an exponential fade; a bell ping when high and short, a dull thud when low.

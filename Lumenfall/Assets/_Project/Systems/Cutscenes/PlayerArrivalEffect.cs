@@ -89,7 +89,7 @@ namespace Lumenfall.Cutscenes
             if (player != null) player.localScale = playerScale * 0.9f;
             for (int i = 0; i < sparks.Length; i++) sparks[i].landed = true;
             coreRenderer.enabled = false;
-            audioSource.PlayOneShot(Keep(RevealClip()), 0.7f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, Keep(RevealClip()), 0.7f);
             Vector3 centre = GroundPoint();
             for (int i = 0; i < 36; i++)
             {
@@ -157,7 +157,7 @@ namespace Lumenfall.Cutscenes
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
-            audioSource.PlayOneShot(Keep(GatherClip(GatherSeconds + HoldSeconds)), 0.5f);
+            Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, Keep(GatherClip(GatherSeconds + HoldSeconds)), 0.5f);
         }
 
         private void Update()

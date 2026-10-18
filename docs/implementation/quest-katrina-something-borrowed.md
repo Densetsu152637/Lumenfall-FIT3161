@@ -100,3 +100,40 @@ Katrina stands on campus (see "Katrina on campus and general Lost Echoes" below)
 Lost Echoes gained data-driven reveal hooks (`on-reveal:<eventId>` tags), a range preview, a cast pulse and a reveal flash with sound. See the Lost Echoes section of [`spells.md`](../spells.md). Lost Echoes now casts with right-click or `F`; the player picks the keepsake up with `E` (it is tagged `hidden` and `pickup`). It can be picked up even before it is revealed; Lost Echoes is how it is located: only a revealed keepsake shows a glowing marker and the "E Pick up" prompt. Picking it up while concealed reveals it first. `katrina_something_borrowed_monitor` additionally requires `requiredCollected`, so the found event and the Narrator line fire on pickup, not on reveal. `QuestHintOverlay` merges `requiredCollected` and hints "Pick up the revealed keepsake with E" once it is revealed, otherwise "Find the hidden keepsake and pick it up with E; Lost Echoes helps locate it". `KatrinaBorrowedWorldTests` adds the pickup step to the monitor test. `LostEchoesRevealEventTests` covers hooks firing once, honouring event conditions, not firing on restore, and untagged reveals.
 
 Checks: offline runtime and EditMode compiles with no errors; `validate_npc_dialogue.py`, `validate_runtime_world.py`, `validate_unity_project.py` and the Python validator tests pass. Not run: Unity import of the new assets, Play Mode traversal, save/load inside the recess, or the EditMode test runner.
+
+
+## Three memory anchors: synchronous pickup credit (2026-10-18)
+
+The current quest is **Three Lost Echoes**. Katrina's brass bookmark is in the Library
+(`B04.Ground`, `katrina.item.library`), the silver ribbon in the campus sakura garden
+(`campus`, `katrina.item.garden`), and the riverglass chime beside the forest stream
+(`westForest`, `katrina.item.stream`). The three `Kat_item_1/2/3` prefab markers are
+registered by `KatrinaQuestItemMarker`. Earlier single-keepsake/recess descriptions
+above record previous implementations.
+
+Each marker now carries its matching `on-pickup:found_katrina_*_item` event tag.
+`WorldStateService` sets `collected` before invoking that hook, so a valid pickup
+while the quest is Active sets its anchor inventory flag during the same call.
+Credit no longer depends on staying in the map until the monitor's next 0.1-second
+poll. The found event also owns its recovery narration, once; these three monitors
+retain collected/revealed requirements but no separate success dialogue. They
+remain a fallback for an item collected before quest activation or restored without
+its credit, when its map is visited while the quest is Active. Inactive quest event
+conditions still reject credit, reveal alone is insufficient, and unrelated Library
+curios do not contribute. All three anchor flags permit returning to Katrina; the
+pickup itself does not complete the quest. Existing object IDs, prefab GUIDs and
+save formats remain unchanged, and loading a save does not replay pickup hooks.
+
+`AuthoredWorldPlayModeTests.KatrinaAuthoredPickupsCreditBeforeMonitorAndMapTransition`
+loads the actual area prefabs, checks each registered marker, reveals/collects all
+three without yielding to the polling monitor, checks immediate flags and exactly
+one recovery narration each, transitions maps, returns the anchors, and round-trips
+runtime progress. It must fail on the pre-fix pickup-credit assertion. Runtime
+execution remains a separate validation step; this change addresses a demonstrated
+source-level timing gap, not a confirmed reproduction of feedback issue #42's
+unspecified Library item/build/save sequence.
+
+The adjacent `KatrinaInactivePickupUsesMonitorFallbackWithoutRestoreReplay` case
+checks that an unrelated Library curio and a pickup before quest activation do not
+grant anchor credit, that activation allows the existing monitor fallback, and
+that save restoration plus a cached-area revisit does not replay its narration.

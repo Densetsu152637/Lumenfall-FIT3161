@@ -27,7 +27,6 @@ namespace Lumenfall.DataDriven
         [SerializeField] private string panelTitle = "Campus Building";
         [SerializeField] private string promptLabel = "Read";
         private GridMover lockedMover;
-        private bool moverWasLocked;
         // Text shown for this visit only, in place of the sign's own; see ShowInstead.
         private string visitTitle;
         private string visitMessage;
@@ -50,7 +49,7 @@ namespace Lumenfall.DataDriven
         private void Update()
         {
             if (activeSign != null && activeSign != this) return;
-            if (QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
+            if (OverlayInputGate.IsBlockedExcept(this) || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || InventoryUiState.IsOpen || CutscenePlayer.BlocksInput ||
                 DialogueOverlay.IsNpcInteractionBlocked || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 GridPortal.IsPlayerAtInteractivePortal || Keyboard.current == null) return;
 
@@ -76,11 +75,11 @@ namespace Lumenfall.DataDriven
         {
             if (activeSign == this)
             {
-                DrawPopup();
+                if (!OverlayInputGate.IsBlockedExcept(this)) DrawPopup();
                 return;
             }
 
-            if (activeSign != null || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || CutscenePlayer.BlocksInput ||
+            if (activeSign != null || OverlayInputGate.IsBlocked || QuestHintOverlay.IsSettingsOpen || Time.timeScale <= 0f || CutscenePlayer.BlocksInput ||
                 InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
 
@@ -123,13 +122,14 @@ namespace Lumenfall.DataDriven
 
         private void Open(GridMover player)
         {
+            if (OverlayInputGate.IsBlocked) return;
             // A door's locked notice (such as the main hall's cruxite one) may still be up; the sign card replaces it.
             PortalBlockedPopup.Dismiss();
             activeSign = this;
             inputBlockedUntilFrame = Time.frameCount + 1;
             lockedMover = player;
-            moverWasLocked = lockedMover.IsMovementLocked;
-            lockedMover.SetMovementLocked(true);
+            lockedMover.SetMovementLocked(this, true);
+            OverlayInputGate.Acquire(this);
             visitTitle = visitMessage = null;
             Checked?.Invoke(this);
         }
@@ -138,7 +138,8 @@ namespace Lumenfall.DataDriven
         {
             activeSign = null;
             inputBlockedUntilFrame = Time.frameCount + 1;
-            if (lockedMover != null) lockedMover.SetMovementLocked(moverWasLocked);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
+            OverlayInputGate.Release(this);
             lockedMover = null;
             visitTitle = visitMessage = null;
             Closed?.Invoke(this);

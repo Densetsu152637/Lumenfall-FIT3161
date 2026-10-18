@@ -16,8 +16,8 @@ namespace Lumenfall.Quests
     /// authored object.
     /// </summary>
     /// <remarks>
-    /// World state never moves while the relic is carried: it stays registered at its last safe placement, which a faint
-    /// mark shows. The relic the player sees is a separate visual that layers motion on top: an idle wobble at rest; a
+    /// World state remembers the last safe placement while the relic is carried, but its ground object and obstacle are
+    /// disabled until it is placed again. The relic the player sees is a separate visual that layers motion on top: an idle wobble at rest; a
     /// dip and rise when lifted; a bobbing, slowly turning hover in front of the player; a float down when set down; a shudder
     /// or a bump when placement is refused; and on delivery a socket pulse and a shockwave ring. A ghost tile shows
     /// where the relic would land, green when allowed. Map loads, save restores and releases snap without animating.
@@ -263,6 +263,10 @@ namespace Lumenfall.Quests
             idleTime += deltaTime;
             bool held = subscribedCaster != null && subscribedCaster.HeldRelic == RelicId;
             bool delivered = CinnaIceTrialRoom.RelicDelivered();
+            // Keep the saved cell for map transitions and save recovery, but remove every ground presence while carried.
+            // Disabling relicView invokes GridObstacle.OnDisable, immediately freeing the tile.
+            bool groundPresent = campusRegistered && !held;
+            if (relicView.activeSelf != groundPresent) relicView.SetActive(groundPresent);
             // Effects started by a landing this frame begin ticking next frame.
             bool pulseRunning = pulseTime >= 0f, ringRunning = ringTime >= 0f;
 
@@ -372,14 +376,8 @@ namespace Lumenfall.Quests
 
         private void UpdateMarkers(WorldStateService state, bool held)
         {
-            // The last safe placement stays blocked while the relic is carried; the mark explains the empty tile.
-            bool showMark = held && campusRegistered;
-            if (restMark.activeSelf != showMark) restMark.SetActive(showMark);
-            if (showMark)
-            {
-                restMark.transform.position = relicView.transform.position + Vector3.up * 0.01f;
-                SetColor(markRenderer, MarkColor);
-            }
+            // A carried relic leaves no footprint: no grey last-placement mark and no blocking obstacle.
+            if (restMark.activeSelf) restMark.SetActive(false);
             Vector2Int cell = default;
             bool showPreview = held && motion == Motion.None && (campusRegistered || standOnMap) && grid != null &&
                 subscribedCaster.TryGetPlacementCell(out cell);
@@ -415,6 +413,8 @@ namespace Lumenfall.Quests
         private void OnLifted(string relic)
         {
             if (relic != RelicId || !relicVisual.gameObject.activeInHierarchy) return;
+            relicView.SetActive(false);
+            restMark.SetActive(false);
             StartMotion(Motion.Lift);
         }
 
@@ -422,6 +422,7 @@ namespace Lumenfall.Quests
         private void OnPlaced(string relic, Vector2Int cell, bool delivered)
         {
             if (relic != RelicId || grid == null) return;
+            if (campusRegistered) relicView.SetActive(true);
             placeDelivers = delivered;
             placeTarget = delivered ? StandPosition() : relicView.transform.position;
             StartMotion(Motion.Place);
@@ -442,6 +443,7 @@ namespace Lumenfall.Quests
         private void OnReleased(string relic)
         {
             if (relic != RelicId) return;
+            if (campusRegistered) relicView.SetActive(true);
             motion = Motion.None;
             feedbackTime = -1f;
             hoverPlaced = false;

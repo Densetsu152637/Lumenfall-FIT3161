@@ -17,3 +17,16 @@ Map rebuild, runtime replacement, scene reload, and disable/re-enable capture an
 Music and ambience use two loop sources each with a 0.6 second unscaled fade. Dialogue ducks music to 0.4, ambience to 0.6; sleep ducks both to 0.3. These gains are provisional until approved media can be listened to. The eight-source transient pool drops excess concurrent cues; no per-event objects are instantiated. Loops and UI cues are 2D; gameplay one-shots use provisional spatialBlend 0.2 at the player position, with Unity default attenuation. No visual animation or reduced-motion preference is introduced.
 
 Gameplay pause keeps music and UI feedback available, pauses ambience and existing gameplay voices, and rejects new gameplay cues. Application pause pauses all channels. Empty voices never become owned paused voices, leaving startup UI capacity available. Fades use unscaled time; no AudioListener.pause or Time.timeScale mutations occur. Audible/spatial/device/render acceptance remains pending. Dependency pointer/GetComponent checks run per frame; player searches occur only on scene/map/world replacement.
+
+Automated EditMode and PlayMode runs in the Editor suppress first-party native
+playback through `AudioPlayback`, including dialogue blips, arrival/star effects,
+Lost Echoes, pickups and lantern cues. The four test assemblies declare an
+Editor-only prebuild hook so the guard is armed before PlayMode scene bootstrap.
+Public Test Runner callbacks and postbuild cleanup release it after fixture teardown;
+PlayMode keeps it armed until returning to EditMode. The session flag survives domain
+reloads. If cancellation skips cleanup, starting normal play from the restored scene
+clears the old flag. No bus preferences, source volumes, listener mute or serialized
+assets are changed by suppression, so routing/state tests remain active. Normal
+Editor gameplay and built players retain playback. Player-hosted test runs are not
+covered by this Editor guard. New first-party playback must use this boundary and
+new test assemblies must declare the same assembly hooks.

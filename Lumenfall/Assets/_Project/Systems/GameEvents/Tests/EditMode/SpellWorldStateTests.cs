@@ -168,6 +168,76 @@ namespace Lumenfall.Tests.GameEvents
             state.BeginMapRebuild("footprint"); GameObject block = Register("wide", new Vector2Int(2, 2), new Vector2Int(2, 1), null); GridObstacle obstacle = block.AddComponent<GridObstacle>(); obstacle.Configure(grid, new Vector2Int(2, 1)); GameObject blocker = Register("blocker", new Vector2Int(4, 2), Vector2Int.one, null); GridObstacle blockerObstacle = blocker.AddComponent<GridObstacle>(); blockerObstacle.Configure(grid, Vector2Int.one); state.EndMapRebuild(); Assert.That(state.TryMoveObject("wide", Vector2Int.right), Is.False);
         }
 
+        [Test]
+        public void InputCastExplainsUnavailableSpellWithoutChangingRelic()
+        {
+            Register("nearby-relic", Vector2Int.right, Vector2Int.one, null);
+            SpellCaster caster = CreateInputCaster();
+            state.EndMapRebuild();
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
+            Assert.That(caster.LastCastFeedback, Does.Contain("not available"));
+            Assert.That(state.TryGetObject("nearby-relic", out WorldObjectSnapshot relic) && relic.powered, Is.False);
+        }
+
+        [Test]
+        public void InputCastExplainsOutOfReachWithoutExtendingTargetRadius()
+        {
+            Register("distant-relic", new Vector2Int(3, 0), Vector2Int.one, null);
+            UnlockForTest(SpellId.Ampere);
+            SpellCaster caster = CreateInputCaster();
+            state.EndMapRebuild();
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
+            Assert.That(caster.LastCastFeedback, Does.Contain("within reach"));
+            Assert.That(state.TryGetObject("distant-relic", out WorldObjectSnapshot relic) && relic.powered, Is.False);
+        }
+
+        [Test]
+        public void InputCastExplainsInapplicableSpellWithoutChangingTarget()
+        {
+            Register("plain-relic", Vector2Int.right, Vector2Int.one, null);
+            UnlockForTest(SpellId.Rotara);
+            SpellCaster caster = CreateInputCaster();
+            typeof(SpellCaster).GetField("selectedSpell", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(caster, SpellId.Rotara);
+            state.EndMapRebuild();
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
+            Assert.That(caster.LastCastFeedback, Does.Contain("cannot change"));
+            Assert.That(state.TryGetObject("plain-relic", out WorldObjectSnapshot relic), Is.True);
+            Assert.That(relic.rotation, Is.Zero);
+        }
+
+        [Test]
+        public void InputCastPreservesSpecificFeedbackOnRepeatedWeaveAttempts()
+        {
+            Register("circuit-relic", Vector2Int.right, Vector2Int.one, new[] { "circuit" });
+            UnlockForTest(SpellId.Weave);
+            SpellCaster caster = CreateInputCaster();
+            typeof(SpellCaster).GetField("selectedSpell", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(caster, SpellId.Weave);
+            state.EndMapRebuild();
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.HeldThread, Is.EqualTo("circuit-relic"));
+            Assert.That(caster.LastCastFeedback, Does.StartWith("Thread held"));
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.HeldThread, Is.Null);
+            Assert.That(caster.LastCastFeedback, Is.EqualTo("Thread released."));
+            Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Does.StartWith("Thread held"));
+        }
+
+        private SpellCaster CreateInputCaster()
+        {
+            GameObject player = new GameObject("feedback-player");
+            created.Add(player);
+            player.AddComponent<GridMover>();
+            return player.AddComponent<SpellCaster>();
+        }
+
+        // Exercise the common F/right-click entry after input eligibility, without changing keyboard preferences.
+        private static bool CastFromInput(SpellCaster caster) =>
+            (bool)typeof(SpellCaster).GetMethod("CastSelectedFromInput", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(caster, null);
+
         private GameObject Register(string id, Vector2Int cell, Vector2Int size, string[] tags)
         { GameObject go = new GameObject(id); created.Add(go); go.transform.position = grid.CellToWorld(cell); state.RegisterObject(id, go, cell, size, true, tags); return go; }
 

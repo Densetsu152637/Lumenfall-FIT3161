@@ -104,7 +104,7 @@ namespace Lumenfall.Spells
             if (promptTarget != null && KeyBindings.WasPressed(GameAction.Talk) &&
                 state.TryCollectObject(promptTarget, player.CurrentCell, PickupRadius))
             {
-                audioSource.PlayOneShot(pickupClip, 0.6f);
+                Lumenfall.Audio.AudioPlayback.PlayOneShot(audioSource, pickupClip, 0.6f);
                 promptTarget = null;
             }
         }

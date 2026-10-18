@@ -457,8 +457,24 @@ namespace Lumenfall.Quests
                 world.SetProperty(ObjectId(i), item => item.powered = next);
                 world.QueueEffect("stella-relic:" + (i + 1) + ":" + (next ? "on" : "off"));
             }
+            SyncFirstLightReadiness(world, runtime);
             instance?.RestoreAuthoredTransforms();
             return true;
+        }
+
+        // Readiness can be revoked before the report, unlike the durable completed quest.
+        // The original success event remains one-shot; re-solving only restores its report flag.
+        internal static void SyncFirstLightReadiness(WorldStateService world, GameEventRuntime runtime)
+        {
+            if (runtime == null || world == null || !world.IsReady ||
+                !string.Equals(world.CurrentMapId, MapId, StringComparison.OrdinalIgnoreCase) ||
+                runtime.GetQuestStatus(QuestId) != QuestStatus.Active ||
+                !runtime.HasEventTriggered("complete_stella_first_light")) return;
+            bool ready = true;
+            for (int i = 0; i < RelicCount; i++)
+                ready &= world.TryGetObject(ObjectId(i), out WorldObjectSnapshot relic) && relic.powered;
+            if (runtime.GetFlag(StellaQuestGuide.FirstLightReadyFlag) != ready)
+                runtime.SetFlag(StellaQuestGuide.FirstLightReadyFlag, ready);
         }
 
         private void TryCompleteIfSolved()
@@ -498,8 +514,7 @@ namespace Lumenfall.Quests
             if (magicItem == null) magicItem = FindInactiveObject("magical_gyroscope");
             if (magicItem == null) return;
             magicItem.transform.SetPositionAndRotation(magicItemPosition, magicItemRotation);
-            bool completed = GameEventManager.Instance?.Runtime?.GetQuestStatus(CircuitQuestId) == QuestStatus.Completed;
-            bool shouldRun = completed || (CircuitMode() && CircuitNetworkComplete(state));
+            bool shouldRun = CircuitMode() && CircuitNetworkComplete(state);
             if (magicItemStateApplied && magicItemRunning == shouldRun) return;
             magicItemStateApplied = true;
             magicItemRunning = shouldRun;

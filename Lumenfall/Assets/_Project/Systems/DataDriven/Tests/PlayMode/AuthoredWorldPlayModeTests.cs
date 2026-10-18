@@ -100,6 +100,149 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
+        public IEnumerator KatrinaAuthoredPickupsCreditBeforeMonitorAndMapTransition()
+        {
+            yield return DismissStartupMenu();
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.ResetState();
+            CompleteOnboarding(events);
+            WorldStateService state = WorldStateService.Instance;
+            state.ResetAllState();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            const string quest = "katrina_something_borrowed";
+            events.StartQuest(quest);
+            string[] maps = { "B04.Ground", "campus", "westForest" };
+            string[] anchors = { "library", "garden", "stream" };
+            int recoveryDialogues = 0;
+            events.DialogueStarted += session =>
+            {
+                if (anchors.Any(anchor => session.Definition.id == "katrina_" + anchor + "_item_recovered"))
+                    recoveryDialogues++;
+            };
+
+            // Deliberately do not yield between collection and changing maps: the polling monitor never gets a turn.
+            for (int i = 0; i < maps.Length; i++)
+            {
+                loader.Load(loader.GetArea(maps[i]), catalog);
+                Assert.That(state.TryGetObject("katrina.item." + anchors[i], out WorldObjectSnapshot item), Is.True,
+                    "The authored marker must register through its real prefab and OnEnable.");
+                string flag = "inventory.keyitem.katrina-" + anchors[i] + "-anchor";
+                Assert.That(state.TryRevealObject(item.id, item.cell, 4), Is.True);
+                Assert.That(events.GetFlag(flag), Is.False, "Reveal alone must not credit a pickup.");
+                Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.True);
+                Assert.That(events.GetFlag(flag), Is.True, "Credit must be synchronous with a valid pickup.");
+                Assert.That(events.ActiveDialogue?.Definition.id, Is.EqualTo("katrina_" + anchors[i] + "_item_recovered"));
+                Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.False, "A collected anchor cannot count twice.");
+                events.ActiveDialogue.End();
+                loader.Load(loader.GetArea(maps[(i + 1) % maps.Length]), catalog);
+                Assert.That(events.GetFlag(flag), Is.True, "Leaving before a monitor tick must retain credit.");
+                QuestPuzzleMonitor monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
+                Assert.That(monitor, Is.Not.Null);
+                Assert.That(monitor.EvaluatePuzzles(), Is.Zero, "The fallback monitor must not duplicate pickup narration.");
+                Assert.That(events.ActiveDialogue, Is.Null);
+            }
+            Assert.That(recoveryDialogues, Is.EqualTo(3));
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+            DialogueSession report = events.StartDialogue(quest + "_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
+            Assert.That(events.GetQuestStatus(quest), Is.EqualTo(QuestStatus.Completed));
+            report.End();
+            string saved = events.ExportStateJson(false);
+            events.ResetState();
+            Assert.That(events.ImportStateJson(saved), Is.True);
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-library-anchor"), Is.True);
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator CachedDormRestoresRowanBeforePlacingAnEarlierSave()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
+            loader.Load(loader.GetArea(SettlingInScene.MapId), catalog);
+            yield return null;
+            GameObject cachedDorm = loader.CurrentAreaRoot;
+            DynamicNpc rowan = cachedDorm.GetComponentsInChildren<DynamicNpc>(true)
+                .Single(npc => npc.Definition.id == SettlingInScene.RowanNpcId);
+            GridMover player = GridMover.FindActive();
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+
+            // New Game replaces the runtime but reuses authored area instances; an earlier slot imports equivalent flags.
+            GameEventManager.Instance.ReloadDefinitions();
+            loader.ResetToStartingState();
+            const string earlierDormSave = "{\"mapId\":\"B01.Ground\",\"playerX\":27,\"playerY\":7}";
+            Assert.That(loader.PrepareRestoreStateJson(earlierDormSave), Is.True);
+            Assert.That(loader.CurrentAreaRoot, Is.SameAs(cachedDorm));
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(new Vector2Int(12, 6)));
+            Assert.That(loader.RestoreStateJson(earlierDormSave), Is.True, "Rowan's stale lounge blocker must be removed before validating the saved player cell.");
+            Assert.That(player.CurrentCell, Is.EqualTo(SettlingInScene.RowanHomelessCell));
+
+            // While this player occupies the lounge, the late-stage move waits, then retries on the same cached area.
+            GameEventManager.Instance.Runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
+            yield return null;
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(new Vector2Int(12, 6)));
+            Vector2Int departure = Enumerable.Range(0, loader.LoadedMap.width)
+                .SelectMany(x => Enumerable.Range(0, loader.LoadedMap.height).Select(y => new Vector2Int(x, y)))
+                .First(cell => player.World.IsCellAvailable(cell) && player.World.GetPortalAt(cell) == null);
+            Assert.That(player.TryTeleportTo(player.World, departure), Is.True);
+            yield return null;
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+        }
+
+        [UnityTest]
+        public IEnumerator KatrinaInactivePickupUsesMonitorFallbackWithoutRestoreReplay()
+        {
+            yield return DismissStartupMenu();
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.ResetState();
+            CompleteOnboarding(events);
+            WorldStateService state = WorldStateService.Instance;
+            state.ResetAllState();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            loader.Load(loader.GetArea("B04.Ground"), catalog);
+            const string flag = "inventory.keyitem.katrina-library-anchor";
+            Assert.That(state.TryGetObject("misc.good_witch_novel", out WorldObjectSnapshot curio), Is.True);
+            Assert.That(state.TryCollectObject(curio.id, curio.cell, 1), Is.True);
+            Assert.That(events.GetFlag(flag), Is.False, "A Library curio is not Katrina's anchor.");
+            events.ActiveDialogue?.End();
+            int recoveryDialogues = 0;
+            events.DialogueStarted += session =>
+            {
+                if (session.Definition.id == "katrina_library_item_recovered") recoveryDialogues++;
+            };
+            Assert.That(state.TryGetObject("katrina.item.library", out WorldObjectSnapshot item), Is.True);
+            Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.True);
+            Assert.That(events.GetFlag(flag), Is.False, "Inactive quests must not receive pickup credit.");
+            Assert.That(events.ActiveDialogue, Is.Null);
+            Assert.That(recoveryDialogues, Is.Zero);
+            events.StartQuest("katrina_something_borrowed");
+            QuestPuzzleMonitor monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
+            Assert.That(monitor, Is.Not.Null);
+            Assert.That(monitor.EvaluatePuzzles(), Is.EqualTo(1), "The existing monitor recovers a pre-activation pickup.");
+            Assert.That(events.GetFlag(flag), Is.True);
+            Assert.That(events.ActiveDialogue?.Definition.id, Is.EqualTo("katrina_library_item_recovered"));
+            events.ActiveDialogue.End();
+            string worldSaved = state.CaptureStateJson();
+            string eventsSaved = events.ExportStateJson(false);
+            loader.Load(loader.GetArea("campus"), catalog);
+            loader.Load(loader.GetArea("B04.Ground"), catalog);
+            Assert.That(events.ImportStateJson(eventsSaved), Is.True);
+            Assert.That(state.RestoreStateJson(worldSaved), Is.True);
+            Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
+            Assert.That(events.ActiveDialogue, Is.Null, "Restore and revisit must not replay recovery narration.");
+            Assert.That(recoveryDialogues, Is.EqualTo(1));
+            Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.False);
+            Assert.That(events.GetFlag(flag), Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator AuthoredDeepForestRouteAndLegacyHallSaveBothReturnSafely()
         {
             yield return DismissStartupMenu();
@@ -138,6 +281,89 @@ namespace Lumenfall.Tests.World
             Assert.That(Object.FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude)
                 .Any(portal => portal.PortalId == "P.F04.ORIO.HALL"), Is.False);
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CompletedGyroscopeStopsWhenItsLiveCircuitBreaksAndRestartsWhenReconnected()
+        {
+            yield return DismissStartupMenu();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.StartQuest("stella_first_light");
+            events.CompleteQuest("stella_first_light");
+            events.StartQuest("stella_string_them_together");
+            loader.Load(loader.GetArea("B02.Ground"), catalog);
+            yield return null;
+            WorldStateService state = WorldStateService.Instance;
+            List<string> nodes = new List<string> { "circuit.stella.link" };
+            for (int i = 1; i <= 5; i++)
+            {
+                string id = "stella.string-together.relic." + i;
+                nodes.Add(id);
+                state.SetProperty(id, value => value.powered = true);
+            }
+            for (int i = 1; i <= 10; i++) nodes.Add("stella.circuit.relay." + i);
+            // Use only legal authored edges; no teleports or direct conductor-power mutation.
+            for (int i = 0; i < nodes.Count; i++)
+                for (int j = i + 1; j < nodes.Count; j++)
+                    if (StellaStringThemTogetherPuzzle.CanTie(nodes[i], nodes[j])) state.AddConnection(nodes[i], nodes[j]);
+            Assert.That(state.AreInSameNetwork(nodes.ToArray()), Is.True);
+            Assert.That(state.TryGetObject(nodes[0], out WorldObjectSnapshot item) && item.powered, Is.True);
+            events.CompleteQuest("stella_string_them_together");
+            yield return null;
+            GameObject gyroscope = GameObject.Find("magical_gyroscope");
+            Assert.That(gyroscope, Is.Not.Null);
+            Transform[] movingParts = gyroscope.GetComponentsInChildren<Transform>(true).Skip(1).ToArray();
+            Assert.That(movingParts.Length, Is.GreaterThan(0));
+            Quaternion[] before = movingParts.Select(part => part.localRotation).ToArray();
+            yield return new WaitForSeconds(0.17f);
+            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.True,
+                "The authored gyroscope's animated children must move while its circuit is live.");
+            List<string> feeds = nodes.Skip(1).Where(id => state.IsConnected(nodes[0], id)).ToList();
+            Assert.That(feeds.Count, Is.GreaterThan(0));
+            foreach (string feed in feeds) state.RemoveConnection(nodes[0], feed);
+            yield return null; // Stop/rewind is applied once before capturing the stationary pose.
+            Assert.That(state.TryGetObject(nodes[0], out item) && item.powered, Is.False);
+            before = movingParts.Select(part => part.localRotation).ToArray();
+            yield return new WaitForSeconds(0.17f);
+            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.False,
+                "Completed quest history must not keep the actual animation spinning without power.");
+            Assert.That(events.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
+            Assert.That(state.AddConnection(nodes[0], feeds[0]), Is.True);
+            Assert.That(state.AreInSameNetwork(nodes.ToArray()), Is.True, "Reconnection restores the entire authored circuit.");
+            Assert.That(nodes.All(id => state.TryGetObject(id, out WorldObjectSnapshot node) && node.powered), Is.True,
+                "All required nodes have live power before animation restart is evaluated.");
+            yield return null;
+            Animation restarted = gyroscope.GetComponentsInChildren<Animation>(true).First(animation => animation.clip != null);
+            AnimationState playingClip = restarted[restarted.clip.name];
+            float deadline = Time.realtimeSinceStartup + 2f;
+            // Coroutine continuation can precede animation evaluation. Establish a pose after the
+            // restarted clip advances, rather than comparing its next 0.17s with the old 0.17s pose.
+            while ((!restarted.isPlaying || playingClip.time <= 0f) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(restarted.isPlaying && playingClip.time > 0f, Is.True,
+                "The reconnected clip must actually restart. " + DescribeGyroscopeAnimation(gyroscope));
+            before = movingParts.Select(part => part.localRotation).ToArray();
+            float baselineTime = playingClip.time;
+            bool observedMotion = false;
+            while (!observedMotion && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                if (Mathf.Approximately(playingClip.time, baselineTime)) continue;
+                observedMotion = movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any();
+            }
+            Assert.That(restarted.isPlaying && observedMotion, Is.True,
+                "Reconnecting live power resumes the authored animation. " + DescribeGyroscopeAnimation(gyroscope));
+        }
+
+        private static string DescribeGyroscopeAnimation(GameObject gyroscope)
+        {
+            return string.Join("; ", gyroscope.GetComponentsInChildren<Animation>(true).Select(animation =>
+                $"{animation.name}: active={animation.gameObject.activeInHierarchy}, enabled={animation.enabled}, playing={animation.isPlaying}, " +
+                string.Join(", ", animation.Cast<AnimationState>().Select(clip =>
+                    $"{clip.name}[enabled={clip.enabled}, speed={clip.speed}, time={clip.time}, weight={clip.weight}, wrap={clip.wrapMode}]"))));
         }
 
         [UnityTest]

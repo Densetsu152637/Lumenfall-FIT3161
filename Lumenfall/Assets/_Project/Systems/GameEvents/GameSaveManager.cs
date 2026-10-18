@@ -28,6 +28,7 @@ namespace Lumenfall.GameEvents
         private const int MaximumProviders = 128;
         public const string AutosaveSlot = "autosave";
         public static readonly string[] ManualSlots = { "save-1", "save-2", "save-3" };
+        private static readonly string[] RequiredWorldProviderKeys = { "data-driven-world", "spell-world-state" };
         private const string DefaultSlot = AutosaveSlot;
         private const string LastPlayedFileName = "last-played.json";
         private static GameSaveManager instance;
@@ -49,6 +50,14 @@ namespace Lumenfall.GameEvents
         public event Action OperationStarted;
         public bool IsBusy { get; private set; }
         public bool AutosaveAllowed => !IsBusy && !autosaveSuspended;
+        public bool RequiredWorldProvidersRegistered
+        {
+            get
+            {
+                foreach (string key in RequiredWorldProviderKeys) if (!providers.ContainsKey(key)) return false;
+                return true;
+            }
+        }
         public string LastError { get; private set; }
         /// <summary>
         /// True while providers restore a save, so state they apply then can be shown as already settled rather than as a
@@ -131,8 +140,11 @@ namespace Lumenfall.GameEvents
             try
             {
                 if (!TryGetSlotPath(slot, out string path, out string error)) return Fail(error);
+                ProviderState[] capturedProviders = CaptureProviders();
+                if (IsPlayerSlot(slot) && !ContainsRequiredWorldProviders(capturedProviders))
+                    return Fail($"Could not save slot '{slot}': the world save providers are not ready. The existing save was left unchanged.");
                 SaveFile file = new SaveFile { schemaVersion = CurrentSchemaVersion, savedAtUtc = DateTime.UtcNow.ToString("O"),
-                    eventStateJson = GameEventManager.Instance.Runtime.ExportStateJson(false), providers = CaptureProviders() };
+                    eventStateJson = GameEventManager.Instance.Runtime.ExportStateJson(false), providers = capturedProviders };
                 file.payloadHash = PayloadHash(file);
                 Directory.CreateDirectory(SaveDirectory);
                 // An interrupted write is evidence until explicitly recovered or discarded.
@@ -299,7 +311,7 @@ namespace Lumenfall.GameEvents
                 foreach (ProviderState state in states)
                     if (state == null || string.IsNullOrWhiteSpace(state.key) || state.key.Length > 128 || !keys.Add(state.key) || !JsonSyntax.IsObject(state.payload))
                         return Inspection(SaveSlotStatus.Corrupt, "Provider keys must be unique and payloads must be JSON objects.", sourceVersion);
-                foreach (string required in new[] { "data-driven-world", "spell-world-state" })
+                foreach (string required in RequiredWorldProviderKeys)
                     if (providers.ContainsKey(required) && !keys.Contains(required)) return Inspection(SaveSlotStatus.Corrupt, $"Required provider '{required}' is missing.", sourceVersion);
                 string mapId = null;
                 foreach (ProviderState state in states)
@@ -349,6 +361,15 @@ namespace Lumenfall.GameEvents
             return sorted;
         }
         private static int RestorePriority(string key) => key == "data-driven-world" ? 0 : key == "spell-world-state" ? 1 : 2;
+        private static bool IsPlayerSlot(string slot) => string.Equals(slot, AutosaveSlot, StringComparison.Ordinal) || Array.IndexOf(ManualSlots, slot) >= 0;
+        private static bool ContainsRequiredWorldProviders(ProviderState[] states)
+        {
+            HashSet<string> keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ProviderState state in states ?? Array.Empty<ProviderState>())
+                if (state != null && !string.IsNullOrWhiteSpace(state.key)) keys.Add(state.key);
+            foreach (string required in RequiredWorldProviderKeys) if (!keys.Contains(required)) return false;
+            return true;
+        }
         private void RestoreProviders(ProviderState[] states)
         {
             IsRestoring = true;

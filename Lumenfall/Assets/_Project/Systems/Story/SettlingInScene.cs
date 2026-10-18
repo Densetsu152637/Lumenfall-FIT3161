@@ -66,7 +66,9 @@ namespace Lumenfall.Story
         private static SettlingInScene instance;
         private bool endingWasPlaying;
         private bool thoughtFailed;
-        private GameObject rowanMovedIn;
+        private GameObject rowanPlacedIn;
+        private GameEventRuntime rowanPlacedRuntime;
+        private bool rowanPlacedHomeless;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => instance = null;
@@ -134,27 +136,42 @@ namespace Lumenfall.Story
 
             // A missing or broken cutscene would otherwise be retried every frame.
             if (!thoughtFailed && ShouldThinkRoomIsReady(runtime) && IsQuiet(runtime)) thoughtFailed = !CutscenePlayer.Play(ThoughtCutsceneId);
-            if (runtime.GetFlag(ThoughtFlag)) MoveRowanToTheLounge();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            if (loader != null && loader.LoadedMap != null && loader.LoadedMap.id == MapId)
+            {
+                GridMover player = GridMover.FindActive();
+                GridWorld world = player != null ? player.World : FindAnyObjectByType<GridWorld>();
+                bool homeless = runtime.GetFlag(ThoughtFlag);
+                if ((rowanPlacedIn != loader.CurrentAreaRoot || rowanPlacedRuntime != runtime || rowanPlacedHomeless != homeless) &&
+                    RefreshRowanPlacement(loader.CurrentAreaRoot, world, runtime, player))
+                {
+                    rowanPlacedIn = loader.CurrentAreaRoot;
+                    rowanPlacedRuntime = runtime;
+                    rowanPlacedHomeless = homeless;
+                }
+            }
         }
 
-        // Rowan is baked into the dorm, so each time it is placed after the thought he is moved, with the obstacle he carries.
-        private void MoveRowanToTheLounge()
+        /// <summary>
+        /// Reconciles the cached dorm's Rowan and blocker with the current story state, including after an earlier save
+        /// or New Game. Area activation calls this before placing the player; live changes wait for their cell to clear.
+        /// </summary>
+        /// <returns>False when placement must be retried because dependencies or the destination are unavailable.</returns>
+        public static bool RefreshRowanPlacement(GameObject area, GridWorld world, GameEventRuntime runtime, GridMover player = null)
         {
-            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
-            GameObject area = loader != null && loader.LoadedMap != null && loader.LoadedMap.id == MapId ? loader.CurrentAreaRoot : null;
-            if (area == null || area == rowanMovedIn) return;
-            GridMover player = GridMover.FindActive();
-            GridWorld world = player != null ? player.World : FindAnyObjectByType<GridWorld>();
-            // Not onto the player: he waits until they step off his spot.
-            if (world == null || (player != null && (player.CurrentCell == RowanHomelessCell || player.DestinationCell == RowanHomelessCell))) return;
+            if (area == null || world == null || runtime == null) return false;
             foreach (DynamicNpc npc in area.GetComponentsInChildren<DynamicNpc>(true))
             {
                 if (npc.Definition == null || npc.Definition.id != RowanNpcId) continue;
-                Vector3 spot = world.CellToWorld(RowanHomelessCell);
-                npc.transform.position = new Vector3(spot.x, npc.transform.position.y, spot.z);
+                Vector2Int cell = runtime.GetFlag(ThoughtFlag) ? RowanHomelessCell : new Vector2Int(npc.Definition.x, npc.Definition.y);
+                Vector3 spot = world.CellToWorld(cell);
+                Vector3 current = npc.transform.position;
+                if (Mathf.Approximately(current.x, spot.x) && Mathf.Approximately(current.z, spot.z)) continue;
+                if (player != null && (player.CurrentCell == cell || player.DestinationCell == cell)) return false;
+                npc.transform.position = new Vector3(spot.x, current.y, spot.z);
                 foreach (GridObstacle obstacle in npc.GetComponentsInChildren<GridObstacle>(true)) obstacle.RefreshFootprint();
             }
-            rowanMovedIn = area;
+            return true;
         }
 
         // Nothing else on screen, so the thought follows the last puzzle's own wrap-up rather than interrupting it.

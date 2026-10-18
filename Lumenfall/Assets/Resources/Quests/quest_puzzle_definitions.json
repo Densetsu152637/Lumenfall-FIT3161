@@ -40,7 +40,6 @@
       "id": "katrina_library_item_monitor",
       "questId": "katrina_something_borrowed",
       "completionEventId": "found_katrina_library_item",
-      "successDialogueId": "katrina_library_item_recovered",
       "mapId": "B04.Ground",
       "targets": [
         { "id": "library_item", "objectIds": ["katrina.item.library"], "requiredRevealed": true, "requiredCollected": true }
@@ -50,7 +49,6 @@
       "id": "katrina_garden_item_monitor",
       "questId": "katrina_something_borrowed",
       "completionEventId": "found_katrina_garden_item",
-      "successDialogueId": "katrina_garden_item_recovered",
       "mapId": "campus",
       "targets": [
         { "id": "garden_item", "objectIds": ["katrina.item.garden"], "requiredRevealed": true, "requiredCollected": true }
@@ -60,7 +58,6 @@
       "id": "katrina_stream_item_monitor",
       "questId": "katrina_something_borrowed",
       "completionEventId": "found_katrina_stream_item",
-      "successDialogueId": "katrina_stream_item_recovered",
       "mapId": "westForest",
       "targets": [
         { "id": "stream_item", "objectIds": ["katrina.item.stream"], "requiredRevealed": true, "requiredCollected": true }
