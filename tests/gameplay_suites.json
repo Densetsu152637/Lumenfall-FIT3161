@@ -17,7 +17,7 @@
         "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 5,
         "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
         "Lumenfall.Tests.GameEvents.CutsceneSequenceTests": 15,
-        "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 7,
+        "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 9,
         "Lumenfall.Tests.GameEvents.GameEventRuntimeTests": 7,
         "Lumenfall.Tests.GameEvents.GameSaveRecoveryTests": 19,
         "Lumenfall.Tests.GameEvents.GameSaveSlotPolicyTests": 3,
@@ -39,8 +39,8 @@
         "Lumenfall.Tests.GameEvents.RuntimePrimitiveTests": 2,
         "Lumenfall.Tests.GameEvents.SecretsTests": 17,
         "Lumenfall.Tests.GameEvents.SerializedAssetImportTests": 4,
-        "Lumenfall.Tests.GameEvents.SettlingInTests": 7,
-        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 4,
+        "Lumenfall.Tests.GameEvents.SettlingInTests": 11,
+        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 8,
         "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 8,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
         "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1
@@ -51,7 +51,7 @@
       "fixtures": {
         "Lumenfall.Startup.Tests.GraphicsOptionsPlayModeTests": 4,
         "Lumenfall.Startup.Tests.OptionsPanelPlayModeTests": 2,
-        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 7,
+        "Lumenfall.Tests.World.AuthoredWorldPlayModeTests": 11,
         "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
         "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 2
