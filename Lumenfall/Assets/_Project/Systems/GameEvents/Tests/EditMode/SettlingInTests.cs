@@ -3,6 +3,7 @@ using System.Linq;
 using Lumenfall.Cutscenes;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
+using Lumenfall.GridMovement;
 using Lumenfall.Player;
 using Lumenfall.Story;
 using NUnit.Framework;
@@ -59,6 +60,78 @@ namespace Lumenfall.Tests.GameEvents
             direction.y = 0f;
             Assert.That(Vector3.Dot(rowan.forward, direction.normalized), Is.GreaterThan(0.99f));
             Assert.That(Vector3.Dot(thistle.forward, -direction.normalized), Is.GreaterThan(0.99f));
+        }
+
+        [Test]
+        public void CachedRowanAndHisBlockerFollowFreshAndRestoredStoryState()
+        {
+            GameObject area = new GameObject("cached-dorm");
+            try
+            {
+                GridWorld world = area.AddComponent<GridWorld>();
+                world.ConfigureBounds(40, 30);
+                GameObject actor = new GameObject("Rowan");
+                actor.transform.SetParent(area.transform);
+                actor.transform.position = new Vector3(12f, 0.25f, 6f);
+                DynamicNpc rowan = actor.AddComponent<DynamicNpc>();
+                rowan.Configure(new NpcDefinition { id = SettlingInScene.RowanNpcId, x = 12, y = 6 }, null);
+                GridObstacle blocker = actor.AddComponent<GridObstacle>();
+                blocker.Configure(world, Vector2Int.one);
+                GameEventRuntime late = new GameEventRuntime(Events());
+                late.SetFlag(SettlingInScene.ThoughtFlag, true);
+                SettlingInScene.RefreshRowanPlacement(area, world, late);
+                Assert.That(world.WorldToCell(actor.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+                Assert.That(world.IsCellBlocked(SettlingInScene.RowanHomelessCell), Is.True);
+                Assert.That(world.IsCellBlocked(new Vector2Int(12, 6)), Is.False);
+
+                // The same cached objects survive New Game and earlier-save restoration.
+                GameEventRuntime fresh = new GameEventRuntime(Events());
+                SettlingInScene.RefreshRowanPlacement(area, world, fresh);
+                Assert.That(world.WorldToCell(actor.transform.position), Is.EqualTo(new Vector2Int(12, 6)));
+                Assert.That(world.IsCellBlocked(SettlingInScene.RowanHomelessCell), Is.False);
+                Assert.That(world.IsCellBlocked(new Vector2Int(12, 6)), Is.True);
+                Assert.That(Turn(fresh, SettlingInScene.RowanNpcId).turn, Is.False);
+                Assert.That(actor.transform.position.y, Is.EqualTo(0.25f));
+
+                fresh.SetFlag(SettlingInScene.ThoughtFlag, true);
+                SettlingInScene.RefreshRowanPlacement(area, world, fresh);
+                SettlingInScene.RefreshRowanPlacement(area, world, fresh);
+                Assert.That(world.WorldToCell(actor.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+                Assert.That(Turn(fresh, SettlingInScene.RowanNpcId).dialogue, Is.EqualTo(SettlingInScene.RowanHomelessDialogueId));
+                Assert.That(world.IsCellBlocked(new Vector2Int(12, 6)), Is.False);
+            }
+            finally { Object.DestroyImmediate(area); }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RowanWaitsUntilThePlayerLeavesHisDesiredCell(bool homeless)
+        {
+            GameObject area = new GameObject("dorm-placement");
+            try
+            {
+                GridWorld world = area.AddComponent<GridWorld>();
+                world.ConfigureBounds(40, 30);
+                GameObject actor = new GameObject("Rowan");
+                actor.transform.SetParent(area.transform);
+                Vector2Int waiting = new Vector2Int(12, 6);
+                Vector2Int source = homeless ? waiting : SettlingInScene.RowanHomelessCell;
+                Vector2Int target = homeless ? SettlingInScene.RowanHomelessCell : waiting;
+                actor.transform.position = world.CellToWorld(source);
+                actor.AddComponent<DynamicNpc>().Configure(new NpcDefinition { id = SettlingInScene.RowanNpcId, x = waiting.x, y = waiting.y }, null);
+                GameObject playerObject = new GameObject("player");
+                playerObject.transform.SetParent(area.transform);
+                GridMover player = playerObject.AddComponent<GridMover>();
+                Assert.That(player.TryTeleportTo(world, target), Is.True);
+                GameEventRuntime runtime = new GameEventRuntime(Events());
+                runtime.SetFlag(SettlingInScene.ThoughtFlag, homeless);
+                Assert.That(SettlingInScene.RefreshRowanPlacement(area, world, runtime, player), Is.False);
+                Assert.That(world.WorldToCell(actor.transform.position), Is.EqualTo(source));
+                Assert.That(player.TryTeleportTo(world, new Vector2Int(1, 1)), Is.True);
+                Assert.That(SettlingInScene.RefreshRowanPlacement(area, world, runtime, player), Is.True);
+                Assert.That(world.WorldToCell(actor.transform.position), Is.EqualTo(target));
+            }
+            finally { Object.DestroyImmediate(area); }
         }
 
         [Test]

@@ -109,6 +109,9 @@ namespace Lumenfall.DataDriven
             root.SetActive(true);
             CurrentAreaRoot = root;
             foreach (DynamicNpc npc in root.GetComponentsInChildren<DynamicNpc>(true)) npc.RefreshVisibility();
+            // Cached story actors must match the imported runtime before a spawn or saved player cell is validated.
+            if (LoadedMap.id == SettlingInScene.MapId)
+                SettlingInScene.RefreshRowanPlacement(root, world, GameEventManager.Instance?.Runtime);
             ApplySpawn(LoadedMap, placeAtSpawn);
             StellaStringThemTogetherPuzzle.RegisterForMap(LoadedMap.id, world);
             CinnaAlignmentRelic.RegisterForMap(LoadedMap, world);
