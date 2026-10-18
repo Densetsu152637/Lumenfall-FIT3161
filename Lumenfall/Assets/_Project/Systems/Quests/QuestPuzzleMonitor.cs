@@ -72,6 +72,7 @@ namespace Lumenfall.Quests
         private float nextCheck;
         private GameEventManager eventManager;
         private GameEventRuntime runtime;
+        private WorldStateService observedWorld;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -111,6 +112,8 @@ namespace Lumenfall.Quests
         {
             if (eventManager != null) eventManager.RuntimeChanged -= BindRuntime;
             if (runtime != null) runtime.StateRestored -= OnStateRestored;
+            if (observedWorld != null) observedWorld.StateChanged -= OnWorldStateChanged;
+            observedWorld = null;
             runtime = null;
             eventManager = null;
         }
@@ -120,7 +123,26 @@ namespace Lumenfall.Quests
             if (instance == this) instance = null;
         }
 
-        private void OnStateRestored() { fired.Clear(); nextCheck = 0f; }
+        private void OnStateRestored()
+        {
+            fired.Clear();
+            nextCheck = 0f;
+            ObserveWorld();
+            SyncStellaReadiness();
+        }
+
+        private void ObserveWorld()
+        {
+            WorldStateService next = WorldStateService.Instance;
+            if (observedWorld == next) return;
+            if (observedWorld != null) observedWorld.StateChanged -= OnWorldStateChanged;
+            observedWorld = next;
+            if (observedWorld != null) observedWorld.StateChanged += OnWorldStateChanged;
+        }
+
+        private void OnWorldStateChanged(MapStateSnapshot snapshot) => SyncStellaReadiness();
+
+        private void SyncStellaReadiness() => StellaStringThemTogetherPuzzle.SyncFirstLightReadiness(observedWorld, runtime);
 
         private void Update()
         {
@@ -131,7 +153,10 @@ namespace Lumenfall.Quests
 
         public int EvaluatePuzzles()
         {
-            if (!isActiveAndEnabled || database == null || runtime == null || runtime.ActiveDialogue != null) return 0;
+            if (!isActiveAndEnabled || database == null || runtime == null) return 0;
+            ObserveWorld();
+            SyncStellaReadiness();
+            if (runtime.ActiveDialogue != null) return 0;
             int completed = 0;
             foreach (QuestPuzzleDefinition puzzle in database.puzzles ?? Array.Empty<QuestPuzzleDefinition>())
             {

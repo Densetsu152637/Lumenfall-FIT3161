@@ -4,6 +4,12 @@
 **Monitor:** `stella_first_light_monitor` → `complete_stella_first_light`
 **Assessment:** **Implemented core puzzle; partial end-to-end quest.** The five-relic board, matching active-only monitor target, dialogue reward, BFS objective hint, and return portal exist in code/data. Runtime/test compilation and the full Unity build passed; the headless GameEvents suite passed 29/29 tests. The batch command and local generated result paths are recorded in `docs/implementation-status.md`. Rendered board behavior, map traversal, and restore flow still need play-mode validation.
 
+## Live readiness and the handoff to Weave
+
+Current readiness is live until the player reports First Light to Stella. All five large obelisks must still be powered when the report dialogue opens. Solving the board sets `stella.first_light.ready_to_report`; darkening it with Ampere clears that flag, and solving it again restores the flag without replaying the one-shot success event. World-state and event-state restoration recompute readiness on the workshop map. First Light remains Active until the report, and its Completed history is retained afterward. The second lesson requires that completed quest; there is no physical gate around the shared board, and its relay stones remain visible before Weave.
+
+The current board uses Ampere resonance, rather than the historical F-operated primitive implementation described in the tracker sections below. Regression coverage is `FirstLightIntegrationTests.DarkeningSolvedBoardBlocksReportUntilResonanceSolvesItAgain` and `RestoredSolvedEventUsesLiveBoardReadinessAndCanBecomeReadyAgain`. These cover the normal player flow, where dialogue blocks world input; they do not add a generic dialogue guard against external mutations of an already-open cached choice.
+
 ## Player flow and authored contract
 
 Stella is registered on `B02.Ground` at `(12,4)` with placeholder `NPCs/Elara.prefab`. Her dialogue provides NotStarted, Active, and Completed branches. Accept starts `stella_first_light`; the accept and active lines explain five star-point relics, F interaction, and lighting all five. This guidance matches the custom implementation in `StellaStringThemTogetherPuzzle.cs`.
