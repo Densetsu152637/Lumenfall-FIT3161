@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Lumenfall.Audio;
 using UnityEngine;
 
 namespace Lumenfall.Spells
@@ -39,6 +40,8 @@ namespace Lumenfall.Spells
         private SpellCaster caster;
         private WorldStateService subscribedState;
         private Material material;
+        private AudioSource resonanceAudio;
+        private AudioClip[] resonanceClips;
         private int clearedVersion = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -48,6 +51,20 @@ namespace Lumenfall.Spells
             GameObject host = new GameObject("[Ampere Presentation]");
             instance = host.AddComponent<AmperePresentation>();
             DontDestroyOnLoad(host);
+        }
+
+        private void Awake()
+        {
+            resonanceAudio = gameObject.AddComponent<AudioSource>();
+            resonanceAudio.playOnAwake = false;
+            resonanceAudio.loop = false;
+            resonanceAudio.spatialBlend = 0.2f;
+            resonanceClips = new[]
+            {
+                Resources.Load<AudioClip>("Audio/Ampere/Resonance1"),
+                Resources.Load<AudioClip>("Audio/Ampere/Resonance2"),
+                Resources.Load<AudioClip>("Audio/Ampere/Resonance3")
+            };
         }
 
         private void OnDestroy()
@@ -118,13 +135,26 @@ namespace Lumenfall.Spells
             if (!TryGetTop(targetId, out Vector3 target)) return;
             AddBolt(hand, target, 0f, 0.12f, true);
             float delay = ArcDelay;
+            int resonanceCount = 0;
             foreach (string id in queuedTargets)
             {
                 if (id == targetId) continue;
+                resonanceCount++;
                 PlayArc(target, id, delay);
                 delay += ArcDelay * 0.5f;
             }
+            if (targetId.StartsWith(StellaRelicIdPrefix, StringComparison.Ordinal))
+                PlayResonance(resonanceCount, target);
             queuedTargets.Clear();
+        }
+
+        private void PlayResonance(int resonanceCount, Vector3 position)
+        {
+            if (resonanceAudio == null || resonanceClips == null || resonanceCount < 1 || resonanceCount > resonanceClips.Length) return;
+            AudioClip clip = resonanceClips[resonanceCount - 1];
+            if (clip == null) return;
+            resonanceAudio.transform.position = position;
+            resonanceAudio.PlayOneShot(clip, 0.8f * AudioMixSettings.Sfx);
         }
 
         private void PlayArc(Vector3? from, string id, float delay)

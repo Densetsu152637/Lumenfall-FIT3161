@@ -60,8 +60,10 @@ namespace Lumenfall.GridMovement
         private void OnEnable()
         {
             mover.MoveCompleted += HandleMoveCompleted;
+            mover.Teleported += HandleTeleported;
             AccessibilitySettings.Changed += OnPreferencesChanged;
             mover.SlideEnded += HandleSlideEnded;
+            LogPlayerLocation("enabled");
             ResolveActions();
             if (activeMoveAction == null)
             {
@@ -86,6 +88,7 @@ namespace Lumenfall.GridMovement
         private void OnDisable()
         {
             mover.MoveCompleted -= HandleMoveCompleted;
+            mover.Teleported -= HandleTeleported;
             AccessibilitySettings.Changed -= OnPreferencesChanged;
             sprintPreference.Reset();
             sprinting = false;
@@ -175,6 +178,7 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)
         {
+            LogPlayerLocation("moved");
             if (waitForRelease || AccessibilitySettingsOverlay.InputBlocked || !repeatWhileHeld || activeMoveAction == null || mover.IsMovementLocked || Lumenfall.GameEvents.OverlayInputGate.IsBlocked)
             {
                 return;
@@ -195,6 +199,16 @@ namespace Lumenfall.GridMovement
             heldDirection = direction;
             mover.SetMovementMode(sprinting ? GridMovementMode.Sprint : GridMovementMode.Walk);
             TryMoveHeldDirection();
+        }
+
+        private void HandleTeleported(GridMover movingActor, Vector2Int destination)
+        {
+            LogPlayerLocation("teleported");
+        }
+
+        private void LogPlayerLocation(string reason)
+        {
+            Debug.Log($"Player location [{reason}]: grid {mover.CurrentCell}, world {transform.position}", this);
         }
 
         private void OnPreferencesChanged(AccessibilitySnapshot _) { sprintPreference.Reset(); sprinting = false; }

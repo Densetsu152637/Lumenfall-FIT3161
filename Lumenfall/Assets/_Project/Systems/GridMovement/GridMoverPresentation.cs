@@ -4,7 +4,7 @@ namespace Lumenfall.GridMovement
 {
     /// <summary>
     /// Connects a GridMover to a visual model without taking ownership of movement.
-    /// The model faces each accepted step and an optional Animator reflects walk/sprint state.
+    /// The model faces each attempted step and an optional Animator reflects walk/sprint state.
     /// </summary>
     [RequireComponent(typeof(GridMover))]
     [DisallowMultipleComponent]
@@ -67,6 +67,7 @@ namespace Lumenfall.GridMovement
         private void OnEnable()
         {
             mover.MoveStarted += HandleMoveStarted;
+            mover.MoveBlocked += HandleMoveBlocked;
             mover.MoveCompleted += HandleMoveCompleted;
             mover.Teleported += HandleTeleported;
 
@@ -77,6 +78,7 @@ namespace Lumenfall.GridMovement
         private void OnDisable()
         {
             mover.MoveStarted -= HandleMoveStarted;
+            mover.MoveBlocked -= HandleMoveBlocked;
             mover.MoveCompleted -= HandleMoveCompleted;
             mover.Teleported -= HandleTeleported;
             targetAnimationSpeed = 0f;
@@ -109,6 +111,17 @@ namespace Lumenfall.GridMovement
 
         private void HandleMoveStarted(GridMover movingActor, Vector2Int destination)
         {
+            FaceDestination(movingActor, destination);
+            targetAnimationSpeed = GetMovementAnimationSpeed();
+        }
+
+        private void HandleMoveBlocked(GridMover movingActor, Vector2Int destination)
+        {
+            FaceDestination(movingActor, destination);
+        }
+
+        private void FaceDestination(GridMover movingActor, Vector2Int destination)
+        {
             Vector3 from = movingActor.World.CellToWorld(movingActor.CurrentCell);
             Vector3 to = movingActor.World.CellToWorld(destination);
             Vector3 direction = to - from;
@@ -122,8 +135,6 @@ namespace Lumenfall.GridMovement
                     ? Quaternion.Angle(facingRoot.rotation, targetRotation) / turnTime
                     : 0f;
             }
-
-            targetAnimationSpeed = GetMovementAnimationSpeed();
         }
 
         private void HandleMoveCompleted(GridMover movingActor, Vector2Int destination)

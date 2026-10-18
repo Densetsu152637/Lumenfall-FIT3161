@@ -35,6 +35,12 @@ namespace Lumenfall.Spells
         private bool wheelMovementLockOwned;
         private GameEventRuntime subscribedRuntime;
         private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
+        // Wheel slot zero is the top orb. SpellWheelView advances positive indices clockwise in screen space.
+        private static readonly SpellId[] SpellsByHotkey =
+        {
+            SpellId.Ampere, SpellId.Weave, SpellId.LostEchoes, SpellId.Vis,
+            SpellId.Glaciate, SpellId.Rotara, SpellId.Gravitate
+        };
         private const string SpellFlagPrefix = "spell.unlocked.";
         private const string SpellLessonFlagPrefix = "spell.lesson.";
         private const string AlignmentQuestId = "cinna_out_of_alignment";
@@ -255,13 +261,8 @@ namespace Lumenfall.Spells
             if (keyboard == null) return;
             if (keyboard.rKey.wasPressedThisFrame && IsNearAlignmentMarker()) ResetActiveAlignmentPuzzle();
             Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
-            if (KeyBindings.WasPressed(GameAction.Spell1)) SelectSpell(SpellId.Ampere);
-            if (KeyBindings.WasPressed(GameAction.Spell2)) SelectSpell(SpellId.Weave);
-            if (KeyBindings.WasPressed(GameAction.Spell3)) SelectSpell(SpellId.Gravitate);
-            if (KeyBindings.WasPressed(GameAction.Spell4)) SelectSpell(SpellId.Rotara);
-            if (KeyBindings.WasPressed(GameAction.Spell5)) SelectSpell(SpellId.Glaciate);
-            if (KeyBindings.WasPressed(GameAction.Spell6)) SelectSpell(SpellId.Vis);
-            if (KeyBindings.WasPressed(GameAction.Spell7)) SelectSpell(SpellId.LostEchoes);
+            foreach (SpellId spell in AllSpells)
+                if (KeyBindings.WasPressed(KeyActionFor(spell))) SelectSpell(spell);
         }
 
         /// Casts the selected spell at the nearest compatible object. Lost Echoes searches the area around the player,
@@ -285,7 +286,7 @@ namespace Lumenfall.Spells
             get
             {
                 List<SpellId> available = new List<SpellId>();
-                foreach (SpellId spell in AllSpells)
+                foreach (SpellId spell in SpellsByHotkey)
                 {
                     bool allowed = IsProgressionUnlocked(spell) && (unlockedSpells == null || unlockedSpells.Length == 0 || Array.IndexOf(unlockedSpells, spell) >= 0);
                     if (allowed) available.Add(spell);
@@ -498,6 +499,9 @@ namespace Lumenfall.Spells
         {
             if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
             WorldStateService state = WorldStateService.Instance; if (state == null || !state.IsReady || !state.TryGetObject(targetId, out WorldObjectSnapshot target) || !target.spellCompatible) return false;
+            // A generic spell-compatible flag only exposes an object to the spell system. The authored spell tag
+            // decides which spell may mutate it; an incorrect spell is a true no-op and cannot poison puzzle state.
+            if (!CanTarget(spell, target)) return false;
             int previousCableCount = spell == SpellId.Weave ? CountConnections(state, targetId) : 0;
             bool changed = false;
             switch (spell)
@@ -548,6 +552,35 @@ namespace Lumenfall.Spells
         }
         private void ShowFeedback(string message) { LastCastFeedback = message; feedbackUntil = Time.unscaledTime + 4f; feedbackVersion++; }
         private static bool HasTag(WorldObjectSnapshot item, string tag) => Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
+        public static bool CanTarget(SpellId spell, WorldObjectSnapshot target)
+        {
+            if (target == null || !target.spellCompatible) return false;
+            switch (spell)
+            {
+                case SpellId.Ampere: return HasTag(target, "ampere");
+                case SpellId.Weave: return HasTag(target, "weave");
+                case SpellId.Rotara: return HasTag(target, "rotara");
+                case SpellId.Glaciate: return HasTag(target, "glaciate");
+                case SpellId.Vis: return HasTag(target, VisLiftTag) || HasTag(target, "vis");
+                case SpellId.LostEchoes: return !target.revealed && WorldStateService.IsLostEchoesTarget(target);
+                default: return true;
+            }
+        }
+
+        /// <summary>The rebindable spell slot assigned to each spell. Kept explicit so enum order cannot alter controls.</summary>
+        public static GameAction KeyActionFor(SpellId spell)
+        {
+            switch (spell)
+            {
+                case SpellId.Ampere: return GameAction.Spell1;
+                case SpellId.Weave: return GameAction.Spell2;
+                case SpellId.LostEchoes: return GameAction.Spell3;
+                case SpellId.Vis: return GameAction.Spell4;
+                case SpellId.Glaciate: return GameAction.Spell5;
+                case SpellId.Rotara: return GameAction.Spell6;
+                default: return GameAction.Spell7;
+            }
+        }
         /// Circuit objects are wired by hand: the first cast holds a thread, each later cast ties it to the next
         /// object and keeps holding it there so a chain can be drawn relay by relay. Casting on a linked pair cuts it.
         private bool WeaveCircuit(WorldStateService state, string targetId)
@@ -613,8 +646,8 @@ namespace Lumenfall.Spells
         }
         private static float NormalizeRotation(float angle) { angle %= 360f; return angle < 0f ? angle + 360f : angle; }
         /// <summary>
-        /// Lifts a <c>vis-lift</c> relic. World state does not move while it is carried: the relic stays registered at
-        /// its last safe placement, so leaving its maps or loading a save simply leaves it there.
+        /// Lifts a <c>vis-lift</c> relic. World state remembers its last safe placement for map transitions and save
+        /// recovery, while the relic presentation removes its ground visual and blocking footprint until placement.
         /// </summary>
         private bool LiftRelic(WorldStateService state, WorldObjectSnapshot target)
         {
@@ -789,13 +822,8 @@ namespace Lumenfall.Spells
         }
         private void SearchFeedback(string message)
         { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
-        private string FindNearestTarget(string requiredTag)
-        {
-            string target = FindNearestTarget();
-            return target != null && WorldStateService.Instance.TryGetObject(target, out WorldObjectSnapshot item) && HasTag(item, requiredTag) ? target : null;
-        }
         private string FindNearestTarget()
-        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && item.spellCompatible && (selectedSpell != SpellId.LostEchoes || (!item.revealed && WorldStateService.IsLostEchoesTarget(item)))) { distance = d; best = item.id; } } return best; }
+        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && CanTarget(selectedSpell, item)) { distance = d; best = item.id; } } return best; }
         /// <summary>The cardinal or diagonal direction the player last moved or is moving.</summary>
         public Vector2Int FacingDirection => DirectionFromPlayer();
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }

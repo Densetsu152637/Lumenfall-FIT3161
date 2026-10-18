@@ -323,7 +323,7 @@ namespace Lumenfall.Inventory
             if (skin.Button(new Rect(x, y, 126f, Height), "Main menu")) action = FooterAction.MainMenu;
             x += 126f + Gap;
             string quickSaveSlot = ManualSaveSlot.Linked;
-            if (quickSaveSlot != null && GameSaveManager.Instance.HasSave(quickSaveSlot))
+            if (quickSaveSlot != null)
             {
                 // Wide enough for the hourglass, "Quick Save · Slot 3", and trailing text breathing room.
                 if (QuickSaveButton(new Rect(x, y, 230f, Height))) action = FooterAction.QuickSave;

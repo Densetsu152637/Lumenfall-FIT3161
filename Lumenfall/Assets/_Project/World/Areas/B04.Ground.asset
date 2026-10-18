@@ -15,7 +15,9 @@ MonoBehaviour:
   definition:
     schemaVersion: 1
     id: B04.Ground
-    width: 36
+    boundsMinX: -4
+    boundsMinY: 1
+    width: 25
     height: 26
     tileFile: B04.Ground.txt
     portalGlyph: 

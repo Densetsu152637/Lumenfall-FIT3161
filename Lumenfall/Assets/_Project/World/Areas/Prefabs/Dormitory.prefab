@@ -1877,56 +1877,6 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
---- !u!1 &5012400976193392950
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5710943107134810199}
-  - component: {fileID: 5050587607868973092}
-  m_Layer: 0
-  m_Name: Reception Cabinet East Blocker
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5710943107134810199
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5012400976193392950}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.92183, y: 0, z: -6.63121}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7269268176932005472}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5050587607868973092
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5012400976193392950}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
-  world: {fileID: 0}
-  useTransformAsAnchor: 1
-  anchorCell: {x: 0, y: 0}
-  footprintOffset: {x: 0, y: 0}
-  footprintSize: {x: 1, y: 1}
-  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3320453400009738168
 GameObject:
   m_ObjectHideFlags: 0
@@ -2737,6 +2687,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 0}
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 3}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5012400976193392950
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5710943107134810199}
+  - component: {fileID: 5050587607868973092}
+  m_Layer: 0
+  m_Name: Reception Cabinet East Blocker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5710943107134810199
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5012400976193392950}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -6.92183, y: 0, z: -6.63121}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7269268176932005472}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5050587607868973092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5012400976193392950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5296782287064104485
 GameObject:
@@ -7019,7 +7019,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 12
+      value: 11.982285
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7027,7 +7027,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 6
+      value: 6.052911
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7035,15 +7035,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -7051,7 +7051,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -360
       objectReference: {fileID: 0}
     - target: {fileID: 2296975891976615690, guid: 7e30f6e3f5dd6774599ef62f069d0d8e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
