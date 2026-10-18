@@ -52,6 +52,7 @@ namespace Lumenfall.Spells
         /// circuit object ties the thread to it.
         public string HeldThread { get; private set; }
         private float feedbackUntil;
+        private int feedbackVersion;
         // A newly learned spell is announced once the screen is clear of dialogue and cutscenes.
         private const float NewSpellSeconds = 3.6f;
         private SpellId? newSpell;
@@ -331,7 +332,11 @@ namespace Lumenfall.Spells
         }
         private bool CastSelectedFromInput()
         {
-            if (!IsSpellUnlocked(selectedSpell)) return false;
+            if (!IsSpellUnlocked(selectedSpell))
+            {
+                ShowFeedback("This spell is not available yet. Finish its lesson and choose an available spell.");
+                return false;
+            }
             TriggerCastAnimation();
             bool answered = !(selectedSpell == SpellId.Vis && HeldRelic != null) && RaiseCastAttempted(selectedSpell);
             // Lost Echoes searches the area around the player, so it needs no target.
@@ -341,8 +346,18 @@ namespace Lumenfall.Spells
                 return TryGetPlacementCell(out Vector2Int cell) && TryPlaceHeldRelic(cell);
             if (answered) return true;
             string target = FindNearestTarget();
-            if (!string.IsNullOrEmpty(target)) return Cast(selectedSpell, target, DirectionFromPlayer());
-            return selectedSpell == SpellId.Weave && CancelHeldThread();
+            if (!string.IsNullOrEmpty(target))
+            {
+                int previousFeedback = feedbackVersion;
+                bool changed = Cast(selectedSpell, target, DirectionFromPlayer());
+                // Keep explanations from spell-specific rules, including the first Weave thread.
+                if (!changed && feedbackVersion == previousFeedback)
+                    ShowFeedback("The selected spell cannot change this object right now. Try another spell or a clear direction.");
+                return changed;
+            }
+            if (selectedSpell == SpellId.Weave && CancelHeldThread()) return true;
+            ShowFeedback("No spell target within reach. Move closer to a relic and try again.");
+            return false;
         }
 
         /// Casts the selected spell at a specific object and plays the same animation as player input.
@@ -531,7 +546,7 @@ namespace Lumenfall.Spells
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
-        private void ShowFeedback(string message) { LastCastFeedback = message; feedbackUntil = Time.unscaledTime + 4f; }
+        private void ShowFeedback(string message) { LastCastFeedback = message; feedbackUntil = Time.unscaledTime + 4f; feedbackVersion++; }
         private static bool HasTag(WorldObjectSnapshot item, string tag) => Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
         /// Circuit objects are wired by hand: the first cast holds a thread, each later cast ties it to the next
         /// object and keeps holding it there so a chain can be drawn relay by relay. Casting on a linked pair cuts it.
