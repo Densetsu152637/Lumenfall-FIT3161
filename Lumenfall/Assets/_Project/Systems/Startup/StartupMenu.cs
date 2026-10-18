@@ -213,8 +213,9 @@ namespace Lumenfall.Startup
         public static void ReturnToMainMenu()
         {
             if (FindAnyObjectByType<StartupMenu>() != null) return;
-            // Peeking at a load and backing straight out leaves every file as it was.
-            if (GameAutosave.HasPlayedSinceLoad) GameAutosave.SaveNow();
+            // Returning to the title is an explicit checkpoint. Save first through the guarded autosave route so an
+            // unready world cannot replace the existing autosave with a partial snapshot.
+            GameAutosave.SaveNow();
             new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
 
@@ -268,6 +269,21 @@ namespace Lumenfall.Startup
             GameSaveManager saves = GameSaveManager.Instance;
             subscribedSaves = saves;
             saves.SaveFailed += OnSaveFailed;
+            // Runtime providers register from scene/bootstrap lifecycle callbacks. Do not inspect or restore a player
+            // slot during a domain/scene reload while only part of that provider set exists.
+            const int providerWaitFrames = 120;
+            int waitedFrames = 0;
+            while (!saves.RequiredWorldProvidersRegistered && waitedFrames++ < providerWaitFrames) yield return null;
+            if (!saves.RequiredWorldProvidersRegistered)
+            {
+                message = "The world save systems did not finish starting. Existing saves were left unchanged; restart the game before loading or saving.";
+                GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
+                float failedAt = Time.unscaledTime;
+                openedAt = phaseStartedAt = menuShownAt = failedAt;
+                cameraDrift.Begin(failedAt);
+                ready = true;
+                yield break;
+            }
             if (savePickerMode)
             {
                 page = Page.Load;

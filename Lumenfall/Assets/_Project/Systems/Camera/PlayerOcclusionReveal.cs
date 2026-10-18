@@ -179,6 +179,7 @@ namespace Lumenfall.CameraEffects
                     copy.CopyPropertiesFromMaterial(source);
                     CopyLegacyLitProperties(source, copy);
                     CopyGltfLitProperties(source, copy);
+                    CopyMainSurfaceProperties(source, copy);
                     gardenMaterialCopies.Add(source, copy);
                 }
 
@@ -249,6 +250,44 @@ namespace Lumenfall.CameraEffects
             CopyGltfTexture(source, destination, "emissiveTexture", "_EmissionMap", "_EMISSION");
             if (source.HasProperty("emissiveFactor"))
                 destination.SetColor("_EmissionColor", source.GetColor("emissiveFactor"));
+        }
+
+        // Imported FBX materials do not all expose their albedo through the same property name. In the editor,
+        // their source shader can still resolve its designated main texture, but a player only has this reveal
+        // shader after the runtime swap. Copy the resolved texture explicitly so it cannot fall back to white.
+        private static void CopyMainSurfaceProperties(Material source, Material destination)
+        {
+            string[] textureProperties =
+            {
+                "_BaseMap", "_MainTex", "baseColorTexture", "_BaseColorTexture", "_BaseColorMap"
+            };
+            Texture texture = source.mainTexture;
+            Vector2 scale = source.mainTextureScale;
+            Vector2 offset = source.mainTextureOffset;
+            for (int i = 0; texture == null && i < textureProperties.Length; i++)
+            {
+                string property = textureProperties[i];
+                if (!source.HasProperty(property)) continue;
+                texture = source.GetTexture(property);
+                if (texture == null) continue;
+                scale = source.GetTextureScale(property);
+                offset = source.GetTextureOffset(property);
+            }
+            if (texture != null && destination.HasProperty("_BaseMap"))
+            {
+                destination.SetTexture("_BaseMap", texture);
+                destination.SetTextureScale("_BaseMap", scale);
+                destination.SetTextureOffset("_BaseMap", offset);
+            }
+
+            string[] colourProperties = { "_BaseColor", "_Color", "baseColorFactor", "_BaseColorFactor" };
+            for (int i = 0; i < colourProperties.Length; i++)
+            {
+                string property = colourProperties[i];
+                if (!source.HasProperty(property)) continue;
+                destination.SetColor("_BaseColor", source.GetColor(property));
+                break;
+            }
         }
 
         private static void CopyGltfTexture(
