@@ -24,6 +24,8 @@ namespace Lumenfall.Controls
         private static readonly GameAction[] InterfaceActions = { GameAction.Talk, GameAction.Interact, GameAction.Journal };
 
         private static int reduceMotionCache = -1;
+        private static int windowedWidth;
+        private static int windowedHeight;
 
         private GameAction? rebinding;
         // A key that is already in use waits here until the player confirms or cancels the swap.
@@ -49,11 +51,33 @@ namespace Lumenfall.Controls
             }
         }
 
-        /// <summary>Unity remembers the window mode itself, so this is not stored in PlayerPrefs. No effect in the editor.</summary>
+        /// <summary>
+        /// Unity remembers the window mode itself, so this is not stored in PlayerPrefs. Entering fullscreen explicitly
+        /// adopts the monitor resolution instead of reusing a stretched window's dimensions; leaving restores that window.
+        /// No effect in the editor.
+        /// </summary>
         public static bool Fullscreen
         {
             get => Screen.fullScreen;
-            set => Screen.fullScreen = value;
+            set
+            {
+                if (Application.isEditor || Screen.fullScreen == value) return;
+
+                if (value)
+                {
+                    windowedWidth = Screen.width;
+                    windowedHeight = Screen.height;
+                    Resolution display = Screen.currentResolution;
+                    Screen.SetResolution(display.width, display.height, FullScreenMode.FullScreenWindow,
+                        display.refreshRateRatio);
+                    return;
+                }
+
+                if (windowedWidth > 0 && windowedHeight > 0)
+                    Screen.SetResolution(windowedWidth, windowedHeight, FullScreenMode.Windowed);
+                else
+                    Screen.fullScreen = false;
+            }
         }
 
         public static bool VSync
