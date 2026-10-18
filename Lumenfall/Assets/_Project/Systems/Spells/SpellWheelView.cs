@@ -207,7 +207,7 @@ namespace Lumenfall.Spells
                     for (int m = 0; m < 3; m++)
                         DrawAt(sparkle, position + Dir(now * 2.4f + m * Mathf.PI * 2f / 3f) * r * 1.3f, 6f * s, WithAlpha(Color.Lerp(color, Color.white, 0.5f), 0.9f * orbFade));
                 Label(new Rect(position.x - 60f * s, position.y + r + 1f * s, 120f * s, 18f * s), DisplayName(spell), smallStyle, WithAlpha(Color.Lerp(MutedText, Color.white, lit), (0.7f + 0.3f * lit) * orbFade));
-                string key = KeyBindings.GetKeyLabel(GameAction.Spell1 + (int)spell);
+                string key = KeyBindings.GetKeyLabel(SpellCaster.KeyActionFor(spell));
                 if (!string.IsNullOrEmpty(key) && key.Length <= 3)
                 {
                     Vector2 badge = position + new Vector2(r * 0.74f, -r * 0.74f);

@@ -50,7 +50,7 @@ namespace Lumenfall.Tests.World
                 var relic = new GameObject("Wheel power target");
                 relic.transform.SetParent(host.transform, false);
                 state.RegisterObject("wheel-hidden", hidden, Vector2Int.one, Vector2Int.one, true, new[] { "hidden" });
-                state.RegisterObject("wheel-power", relic, Vector2Int.right, Vector2Int.one, true, new string[0]);
+                state.RegisterObject("wheel-power", relic, Vector2Int.right, Vector2Int.one, true, new[] { "ampere" });
                 state.EndMapRebuild();
                 host.SetActive(true);
                 mover.SetMovementLocked(sibling, true);

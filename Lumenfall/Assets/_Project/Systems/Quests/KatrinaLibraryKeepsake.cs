@@ -9,6 +9,9 @@ namespace Lumenfall.Quests
     /// <summary>Registers one of Katrina's three Lost Echoes items at its authored prefab marker.</summary>
     public sealed class KatrinaQuestItemMarker : MonoBehaviour
     {
+        private const int StreamItemIndex = 2;
+        private static readonly Vector2Int StreamItemCell = new Vector2Int(27, 26);
+
         private static readonly string[] ItemIds =
         {
             "katrina.item.library",
@@ -28,6 +31,12 @@ namespace Lumenfall.Quests
             if (!string.Equals(loader.LoadedMap.id, expectedMap, StringComparison.OrdinalIgnoreCase)) return;
 
             Vector2Int cell = world.WorldToCell(transform.position);
+            if (index == StreamItemIndex)
+            {
+                cell = StreamItemCell;
+                transform.position = world.CellToWorld(cell, 0f);
+            }
+            Debug.Log($"Katrina marker '{name}' on {expectedMap}: grid {cell}, world {transform.position}.", this);
             if (!world.IsWithinBounds(cell))
             {
                 Debug.LogError($"Katrina quest marker '{name}' resolves outside {expectedMap} at {cell}.", this);

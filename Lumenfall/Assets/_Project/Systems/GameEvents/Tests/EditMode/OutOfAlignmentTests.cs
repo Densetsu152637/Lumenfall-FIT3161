@@ -204,16 +204,30 @@ namespace Lumenfall.Tests.GameEvents
         // ---- Lift and place ----
 
         [Test]
-        public void LiftingLeavesWorldStateAtTheLastPlacement()
+        public void LiftingRemembersTheLastPlacementButRemovesItsGroundFootprint()
         {
-            BuildCampus();
+            MapDefinition campus = Area("campus.asset");
+            world.BeginMapRebuild("campus");
+            CinnaAlignmentRelic.RegisterForMap(campus, grid);
+            world.EndMapRebuild();
+            CinnaAlignmentRelic presentation = Object.FindAnyObjectByType<CinnaAlignmentRelic>(FindObjectsInactive.Include);
+            Call(presentation, "Advance", 0f); // Subscribe to this test's caster before the lift event.
+            Assert.That(world.TryGetSceneObject(Relic, out GameObject groundObject), Is.True);
+            Assert.That(grid.IsCellAvailable(Start), Is.False, "The resting relic blocks its tile.");
             int changes = 0;
             world.StateChanged += _ => changes++;
             Lift();
             Assert.That(State().cell, Is.EqualTo(Start));
             Assert.That(changes, Is.EqualTo(0), "Carrying is not a world-state change.");
+            Assert.That(groundObject.activeSelf, Is.False, "The carried relic has no ground object or obstacle.");
+            Assert.That(grid.IsCellAvailable(Start), Is.True, "Lifting immediately frees the previous tile.");
             Assert.That(caster.Cast(SpellId.Vis, Relic, Vector2Int.up), Is.False, "Only one relic can be held.");
             Assert.That(caster.LastCastFeedback, Does.Contain("already holding"));
+
+            Assert.That(caster.TryPlaceHeldRelic(Start + Vector2Int.up), Is.True);
+            Assert.That(groundObject.activeSelf, Is.True, "Placing restores the ground object.");
+            Assert.That(grid.IsCellAvailable(Start + Vector2Int.up), Is.False, "The placed relic blocks only its new tile.");
+            Assert.That(grid.IsCellAvailable(Start), Is.True, "The old tile stays free after placement.");
         }
 
         [Test]

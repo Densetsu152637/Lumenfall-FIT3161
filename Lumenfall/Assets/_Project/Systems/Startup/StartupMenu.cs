@@ -278,6 +278,7 @@ namespace Lumenfall.Startup
             {
                 backdropSlot = GameSaveManager.AutosaveSlot;
                 if (!saves.Load(backdropSlot, false)) message = saves.LastError;
+                else ManualSaveSlot.Link(null);
             }
             else
             {
@@ -1546,9 +1547,8 @@ namespace Lumenfall.Startup
         // ---- Game flow ----
 
         /// <summary>
-        /// Starts a new game in a manual slot. A filled slot, or an existing autosave, needs a second START to confirm. The
-        /// run is linked to the slot straight away, but nothing is written until the run's first save (30 seconds of play,
-        /// or an earlier Save), so a new game abandoned at once leaves the old files intact.
+        /// Starts a new game linked to a manual slot for Quick Save. Automatic saving writes only the autosave; the linked
+        /// manual slot changes only when the player explicitly uses Quick Save or Save.
         /// </summary>
         private void StartNewGame(string slot)
         {
@@ -1559,7 +1559,7 @@ namespace Lumenfall.Startup
             {
                 confirmSlot = slot;
                 message = replacesSlot
-                    ? $"{ManualSaveSlot.Label(slot)} already holds a save. Press START again; it is replaced once the new game first saves."
+                    ? $"{ManualSaveSlot.Label(slot)} already holds a save. Press START again to use it as this run's Quick Save slot; it changes only when you Quick Save or Save."
                     : "A new game replaces your autosave once it first saves. Press START again to begin.";
                 return;
             }
@@ -1574,7 +1574,7 @@ namespace Lumenfall.Startup
             ManualSaveSlot.Link(slot);
             SaveSlotSummary.BeginNewGame();
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
-            GameAutosave.BeginNewRun(slot);
+            GameAutosave.BeginNewRun();
             // The opening, in which the player appears out of the menu's light, starts as this menu dissolves.
             CutscenePlayer.QueueAfterMenu(CutscenePlayer.OpeningCutsceneId);
             backdropSlot = GameSaveManager.AutosaveSlot;
@@ -1604,7 +1604,13 @@ namespace Lumenfall.Startup
                     ManualSaveSlot.Link(slot);
                     GameAutosave.BeginNewRun();
                 }
-                else GameAutosave.RestartTimer();
+                else
+                {
+                    // Autosave is an independent rolling snapshot. Loading it never inherits a manual quick-save target
+                    // that happened to be recorded when the snapshot was taken.
+                    ManualSaveSlot.Link(null);
+                    GameAutosave.RestartTimer();
+                }
                 backdropSlot = GameSaveManager.AutosaveSlot;
                 message = string.Empty;
                 BeginClosing();

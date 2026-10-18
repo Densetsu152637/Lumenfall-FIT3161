@@ -239,8 +239,8 @@ namespace Lumenfall.Story
         }
 
         /// <summary>
-        /// Starts the run over as New Game does, keeps its manual slot, and saves that fresh start over the autosave and
-        /// the manual slot, so the file the player had now holds the very beginning.
+        /// Starts the run over as New Game does and writes the fresh start only to autosave. The linked manual slot remains
+        /// untouched until the player explicitly uses Quick Save or Save.
         /// </summary>
         private void ResetRun()
         {
@@ -264,7 +264,6 @@ namespace Lumenfall.Story
             runtime.SetFlag(OpeningPendingFlag, true);
             SaveSlotSummary.BeginNewGame();
             if (!saves.Save(GameSaveManager.AutosaveSlot)) Debug.LogWarning("The sequence-break reset could not write the autosave: " + saves.LastError);
-            if (linked != null && !saves.Save(linked)) Debug.LogWarning($"The sequence-break reset could not write {linked}: " + saves.LastError);
             // Nothing has been played since this fresh start, so returning to the menu does not save again.
             GameAutosave.RestartTimer();
         }

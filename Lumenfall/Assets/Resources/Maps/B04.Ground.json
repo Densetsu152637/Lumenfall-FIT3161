@@ -1,5 +1,7 @@
 {
-  "width": 36,
+  "boundsMinX": -4,
+  "boundsMinY": 1,
+  "width": 25,
   "height": 26,
   "regions": [
     {
