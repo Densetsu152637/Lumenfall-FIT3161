@@ -42,17 +42,22 @@ namespace Lumenfall.Audio.Editor
         public void TestStarted(ITestAdaptor test) { }
         public void TestFinished(ITestResultAdaptor result) { }
 
-        internal static void OnPlayModeChanged(PlayModeStateChange state)
+        private static void OnPlayModeChanged(PlayModeStateChange state)
+        {
+            var scene = SceneManager.GetActiveScene();
+            OnPlayModeChanged(state, scene.path, scene.handle);
+        }
+
+        internal static void OnPlayModeChanged(PlayModeStateChange state, string scenePath, int sceneHandle)
         {
             if (state == PlayModeStateChange.EnteredEditMode) SetActive(false);
             if (state != PlayModeStateChange.ExitingEditMode || !AudioPlayback.IsSuppressed) return;
             // Cancellation can skip PostBuildCleanup. A subsequent ordinary play session
             // starts from the restored developer scene, not the prepared test scene.
-            var scene = SceneManager.GetActiveScene();
             string preparedPath = SessionState.GetString(PreparedScenePathKey, "");
             bool prepared = string.IsNullOrEmpty(preparedPath)
-                ? scene.handle == SessionState.GetInt(PreparedSceneHandleKey, -1)
-                : scene.path == preparedPath;
+                ? sceneHandle == SessionState.GetInt(PreparedSceneHandleKey, -1)
+                : scenePath == preparedPath;
             if (!prepared) SetActive(false);
         }
 

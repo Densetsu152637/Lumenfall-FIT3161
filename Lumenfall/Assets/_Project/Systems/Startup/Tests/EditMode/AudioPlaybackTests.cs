@@ -2,7 +2,6 @@ using Lumenfall.Audio;
 using Lumenfall.Audio.Editor;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 
@@ -42,25 +41,21 @@ namespace Lumenfall.Startup.Tests
             bool previous = AudioPlayback.IsSuppressed;
             var original = SceneManager.GetActiveScene();
             var guard = new AudioTestPlaybackGuard();
-            var replacement = default(Scene);
             try
             {
                 guard.Setup();
-                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.ExitingEditMode);
+                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.ExitingEditMode, original.path, original.handle);
                 Assert.That(AudioPlayback.IsSuppressed, Is.True, "Prepared test bootstrap must stay suppressed.");
                 // Test Runner cancellation restores the prior scene instead of calling postbuild cleanup.
-                replacement = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-                SceneManager.SetActiveScene(replacement);
-                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.ExitingEditMode);
+                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.ExitingEditMode,
+                    "Assets/RestoredDeveloperScene.unity", original.handle + 1);
                 Assert.That(AudioPlayback.IsSuppressed, Is.False, "A different restored scene must allow normal play.");
                 guard.Setup();
-                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.EnteredEditMode);
+                AudioTestPlaybackGuard.OnPlayModeChanged(PlayModeStateChange.EnteredEditMode, original.path, original.handle);
                 Assert.That(AudioPlayback.IsSuppressed, Is.False, "PlayMode exit/cancel releases suppression.");
             }
             finally
             {
-                SceneManager.SetActiveScene(original);
-                if (replacement.IsValid()) EditorSceneManager.CloseScene(replacement, true);
                 guard.Setup();
                 SessionState.SetBool(AudioPlayback.TestRunSessionKey, previous);
             }
