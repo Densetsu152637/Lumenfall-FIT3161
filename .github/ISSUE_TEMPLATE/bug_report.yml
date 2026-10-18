@@ -1,0 +1,70 @@
+name: Bug report
+description: Report a reproducible problem in Lumenfall.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search open and closed issues before submitting. Describe one bug per report.
+        Share only information needed to investigate; remove names, email addresses and other personal details from screenshots, logs and feedback excerpts.
+        If a detail is unknown, say so. Separate what was reported from what you reproduced.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem and impact
+      description: What went wrong, and how did it affect play? Mention blocked progress, lost saves or a workaround if applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Build and environment
+      description: Include the release/build or commit, operating system, CPU, GPU and RAM where known. Say "unknown" for missing details.
+      placeholder: "Build: unknown; OS: unknown; CPU/GPU/RAM: unknown"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the scene/area, quest, relevant save state and inputs. For feedback reports, record only the steps actually supplied and identify missing details.
+      placeholder: |
+        1. Start from...
+        2. Perform...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Observed behaviour
+      description: Describe the actual result, including exact error text if available.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: Describe what should happen under the same conditions.
+    validations:
+      required: true
+  - type: dropdown
+    id: verification
+    attributes:
+      label: Verification status
+      options:
+        - Reported by a tester; not independently reproduced
+        - Reproduced by the issue author
+        - Intermittent; reproduction not yet reliable
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and source
+      description: Add relevant screenshots, video or sanitised logs. For imported feedback, link the source and give a response ordinal/date if available, without respondent identities. Explain missing evidence and how often the bug occurs.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Investigation gaps and acceptance criteria
+      description: Note information still needed and the observable result that would demonstrate a fix. Link related issues and explain any difference.
