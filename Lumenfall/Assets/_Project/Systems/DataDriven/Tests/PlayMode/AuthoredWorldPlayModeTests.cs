@@ -100,6 +100,63 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
+        public IEnumerator KatrinaAuthoredPickupsCreditBeforeMonitorAndMapTransition()
+        {
+            yield return DismissStartupMenu();
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.ResetState();
+            CompleteOnboarding(events);
+            WorldStateService state = WorldStateService.Instance;
+            state.ResetAllState();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            const string quest = "katrina_something_borrowed";
+            events.StartQuest(quest);
+            string[] maps = { "B04.Ground", "campus", "westForest" };
+            string[] anchors = { "library", "garden", "stream" };
+            int recoveryDialogues = 0;
+            events.DialogueStarted += session =>
+            {
+                if (anchors.Any(anchor => session.Definition.id == "katrina_" + anchor + "_item_recovered"))
+                    recoveryDialogues++;
+            };
+
+            // Deliberately do not yield between collection and changing maps: the polling monitor never gets a turn.
+            for (int i = 0; i < maps.Length; i++)
+            {
+                loader.Load(loader.GetArea(maps[i]), catalog);
+                Assert.That(state.TryGetObject("katrina.item." + anchors[i], out WorldObjectSnapshot item), Is.True,
+                    "The authored marker must register through its real prefab and OnEnable.");
+                string flag = "inventory.keyitem.katrina-" + anchors[i] + "-anchor";
+                Assert.That(state.TryRevealObject(item.id, item.cell, 4), Is.True);
+                Assert.That(events.GetFlag(flag), Is.False, "Reveal alone must not credit a pickup.");
+                Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.True);
+                Assert.That(events.GetFlag(flag), Is.True, "Credit must be synchronous with a valid pickup.");
+                Assert.That(events.ActiveDialogue?.Definition.id, Is.EqualTo("katrina_" + anchors[i] + "_item_recovered"));
+                Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.False, "A collected anchor cannot count twice.");
+                events.ActiveDialogue.End();
+                loader.Load(loader.GetArea(maps[(i + 1) % maps.Length]), catalog);
+                Assert.That(events.GetFlag(flag), Is.True, "Leaving before a monitor tick must retain credit.");
+                QuestPuzzleMonitor monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
+                Assert.That(monitor, Is.Not.Null);
+                Assert.That(monitor.EvaluatePuzzles(), Is.Zero, "The fallback monitor must not duplicate pickup narration.");
+                Assert.That(events.ActiveDialogue, Is.Null);
+            }
+            Assert.That(recoveryDialogues, Is.EqualTo(3));
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+            DialogueSession report = events.StartDialogue(quest + "_dialogue");
+            Assert.That(report.SelectChoice("report"), Is.True);
+            Assert.That(events.GetQuestStatus(quest), Is.EqualTo(QuestStatus.Completed));
+            report.End();
+            string saved = events.ExportStateJson(false);
+            events.ResetState();
+            Assert.That(events.ImportStateJson(saved), Is.True);
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-library-anchor"), Is.True);
+            Assert.That(events.GetFlag("inventory.keyitem.katrina-keepsake"), Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator AuthoredDeepForestRouteAndLegacyHallSaveBothReturnSafely()
         {
             yield return DismissStartupMenu();
