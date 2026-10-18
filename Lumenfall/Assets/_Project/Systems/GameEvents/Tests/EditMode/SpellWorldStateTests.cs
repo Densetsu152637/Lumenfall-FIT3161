@@ -175,6 +175,7 @@ namespace Lumenfall.Tests.GameEvents
             SpellCaster caster = CreateInputCaster();
             state.EndMapRebuild();
             Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
             Assert.That(caster.LastCastFeedback, Does.Contain("not available"));
             Assert.That(state.TryGetObject("nearby-relic", out WorldObjectSnapshot relic) && relic.powered, Is.False);
         }
@@ -187,6 +188,7 @@ namespace Lumenfall.Tests.GameEvents
             SpellCaster caster = CreateInputCaster();
             state.EndMapRebuild();
             Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
             Assert.That(caster.LastCastFeedback, Does.Contain("within reach"));
             Assert.That(state.TryGetObject("distant-relic", out WorldObjectSnapshot relic) && relic.powered, Is.False);
         }
@@ -200,6 +202,7 @@ namespace Lumenfall.Tests.GameEvents
             typeof(SpellCaster).GetField("selectedSpell", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(caster, SpellId.Rotara);
             state.EndMapRebuild();
             Assert.That(CastFromInput(caster), Is.False);
+            Assert.That(caster.LastCastFeedback, Is.Not.Null.And.Not.Empty, "A rejected input cast must explain why it did not change the world.");
             Assert.That(caster.LastCastFeedback, Does.Contain("cannot change"));
             Assert.That(state.TryGetObject("plain-relic", out WorldObjectSnapshot relic), Is.True);
             Assert.That(relic.rotation, Is.Zero);
