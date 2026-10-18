@@ -157,6 +157,43 @@ namespace Lumenfall.Tests.World
         }
 
         [UnityTest]
+        public IEnumerator CachedDormRestoresRowanBeforePlacingAnEarlierSave()
+        {
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            GameEventRuntime runtime = GameEventManager.Instance.Runtime;
+            runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
+            loader.Load(loader.GetArea(SettlingInScene.MapId), catalog);
+            yield return null;
+            GameObject cachedDorm = loader.CurrentAreaRoot;
+            DynamicNpc rowan = cachedDorm.GetComponentsInChildren<DynamicNpc>(true)
+                .Single(npc => npc.Definition.id == SettlingInScene.RowanNpcId);
+            GridMover player = GridMover.FindActive();
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+
+            // New Game replaces the runtime but reuses authored area instances; an earlier slot imports equivalent flags.
+            GameEventManager.Instance.ReloadDefinitions();
+            loader.ResetToStartingState();
+            const string earlierDormSave = "{\"mapId\":\"B01.Ground\",\"playerX\":27,\"playerY\":7}";
+            Assert.That(loader.PrepareRestoreStateJson(earlierDormSave), Is.True);
+            Assert.That(loader.CurrentAreaRoot, Is.SameAs(cachedDorm));
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(new Vector2Int(12, 6)));
+            Assert.That(loader.RestoreStateJson(earlierDormSave), Is.True, "Rowan's stale lounge blocker must be removed before validating the saved player cell.");
+            Assert.That(player.CurrentCell, Is.EqualTo(SettlingInScene.RowanHomelessCell));
+
+            // While this player occupies the lounge, the late-stage move waits, then retries on the same cached area.
+            GameEventManager.Instance.Runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
+            yield return null;
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(new Vector2Int(12, 6)));
+            Vector2Int departure = Enumerable.Range(0, loader.LoadedMap.width)
+                .SelectMany(x => Enumerable.Range(0, loader.LoadedMap.height).Select(y => new Vector2Int(x, y)))
+                .First(cell => player.World.IsCellAvailable(cell) && player.World.GetPortalAt(cell) == null);
+            Assert.That(player.TryTeleportTo(player.World, departure), Is.True);
+            yield return null;
+            Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
+        }
+        [UnityTest]
         public IEnumerator AuthoredDeepForestRouteAndLegacyHallSaveBothReturnSafely()
         {
             yield return DismissStartupMenu();

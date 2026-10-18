@@ -49,6 +49,19 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void DormReceptionPartnersFaceEachOtherInTheirAuthoredPose()
+        {
+            GameObject dorm = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/World/Areas/Prefabs/Dormitory.prefab");
+            DynamicNpc[] people = dorm.GetComponentsInChildren<DynamicNpc>(true);
+            Transform rowan = people.Single(npc => npc.Definition.id == SettlingInScene.RowanNpcId).transform;
+            Transform thistle = people.Single(npc => npc.Definition.id == SettlingInScene.ThistleNpcId).transform;
+            Vector3 direction = thistle.position - rowan.position;
+            direction.y = 0f;
+            Assert.That(Vector3.Dot(rowan.forward, direction.normalized), Is.GreaterThan(0.99f));
+            Assert.That(Vector3.Dot(thistle.forward, -direction.normalized), Is.GreaterThan(0.99f));
+        }
+
+        [Test]
         public void TheStoryRunsFromTheHeadmistressToTheRoomKey()
         {
             GameEventRuntime runtime = new GameEventRuntime(Events());
