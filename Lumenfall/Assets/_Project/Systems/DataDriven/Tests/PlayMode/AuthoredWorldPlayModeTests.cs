@@ -336,10 +336,25 @@ namespace Lumenfall.Tests.World
             Assert.That(nodes.All(id => state.TryGetObject(id, out WorldObjectSnapshot node) && node.powered), Is.True,
                 "All required nodes have live power before animation restart is evaluated.");
             yield return null;
-            TestContext.WriteLine("Reconnected gyroscope before motion sample: " + DescribeGyroscopeAnimation(gyroscope));
+            Animation restarted = gyroscope.GetComponentsInChildren<Animation>(true).First(animation => animation.clip != null);
+            AnimationState playingClip = restarted[restarted.clip.name];
+            float deadline = Time.realtimeSinceStartup + 2f;
+            // Coroutine continuation can precede animation evaluation. Establish a pose after the
+            // restarted clip advances, rather than comparing its next 0.17s with the old 0.17s pose.
+            while ((!restarted.isPlaying || playingClip.time <= 0f) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(restarted.isPlaying && playingClip.time > 0f, Is.True,
+                "The reconnected clip must actually restart. " + DescribeGyroscopeAnimation(gyroscope));
             before = movingParts.Select(part => part.localRotation).ToArray();
-            yield return new WaitForSeconds(0.17f);
-            Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.True,
+            float baselineTime = playingClip.time;
+            bool observedMotion = false;
+            while (!observedMotion && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                if (Mathf.Approximately(playingClip.time, baselineTime)) continue;
+                observedMotion = movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any();
+            }
+            Assert.That(restarted.isPlaying && observedMotion, Is.True,
                 "Reconnecting live power resumes the authored animation. " + DescribeGyroscopeAnimation(gyroscope));
         }
 
