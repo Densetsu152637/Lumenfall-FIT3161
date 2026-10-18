@@ -332,11 +332,23 @@ namespace Lumenfall.Tests.World
                 "Completed quest history must not keep the actual animation spinning without power.");
             Assert.That(events.GetQuestStatus("stella_string_them_together"), Is.EqualTo(QuestStatus.Completed));
             Assert.That(state.AddConnection(nodes[0], feeds[0]), Is.True);
+            Assert.That(state.AreInSameNetwork(nodes.ToArray()), Is.True, "Reconnection restores the entire authored circuit.");
+            Assert.That(nodes.All(id => state.TryGetObject(id, out WorldObjectSnapshot node) && node.powered), Is.True,
+                "All required nodes have live power before animation restart is evaluated.");
             yield return null;
+            TestContext.WriteLine("Reconnected gyroscope before motion sample: " + DescribeGyroscopeAnimation(gyroscope));
             before = movingParts.Select(part => part.localRotation).ToArray();
             yield return new WaitForSeconds(0.17f);
             Assert.That(movingParts.Where((part, i) => Quaternion.Angle(before[i], part.localRotation) > 0.01f).Any(), Is.True,
-                "Reconnecting live power resumes the authored animation.");
+                "Reconnecting live power resumes the authored animation. " + DescribeGyroscopeAnimation(gyroscope));
+        }
+
+        private static string DescribeGyroscopeAnimation(GameObject gyroscope)
+        {
+            return string.Join("; ", gyroscope.GetComponentsInChildren<Animation>(true).Select(animation =>
+                $"{animation.name}: active={animation.gameObject.activeInHierarchy}, enabled={animation.enabled}, playing={animation.isPlaying}, " +
+                string.Join(", ", animation.Cast<AnimationState>().Select(clip =>
+                    $"{clip.name}[enabled={clip.enabled}, speed={clip.speed}, time={clip.time}, weight={clip.weight}, wrap={clip.wrapMode}]"))));
         }
 
         [UnityTest]
