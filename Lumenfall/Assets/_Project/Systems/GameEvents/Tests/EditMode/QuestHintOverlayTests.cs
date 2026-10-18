@@ -335,6 +335,7 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(runtime.TriggerEvent("found_katrina_library_item").Succeeded, Is.True);
             Assert.That(runtime.TriggerEvent("found_katrina_garden_item").Succeeded, Is.True);
             Assert.That(runtime.TriggerEvent("found_katrina_stream_item").Succeeded, Is.True);
+            EditModeLifecycle.FinishDialogue(runtime.ActiveDialogue);
             RefreshHint();
             Assert.That(ReadField<string>("hint"), Does.Contain("Return the recovered memory anchors to Katrina on campus"));
             Assert.That(runtime.GetQuestStatus("katrina_something_borrowed"), Is.EqualTo(QuestStatus.Active));

@@ -193,6 +193,55 @@ namespace Lumenfall.Tests.World
             yield return null;
             Assert.That(player.World.WorldToCell(rowan.transform.position), Is.EqualTo(SettlingInScene.RowanHomelessCell));
         }
+
+        [UnityTest]
+        public IEnumerator KatrinaInactivePickupUsesMonitorFallbackWithoutRestoreReplay()
+        {
+            yield return DismissStartupMenu();
+            GameEventRuntime events = GameEventManager.Instance.Runtime;
+            events.ResetState();
+            CompleteOnboarding(events);
+            WorldStateService state = WorldStateService.Instance;
+            state.ResetAllState();
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            NpcCatalogAsset catalog = (NpcCatalogAsset)typeof(DataDrivenWorldLoader)
+                .GetField("npcCatalog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+            loader.Load(loader.GetArea("B04.Ground"), catalog);
+            const string flag = "inventory.keyitem.katrina-library-anchor";
+            Assert.That(state.TryGetObject("misc.good_witch_novel", out WorldObjectSnapshot curio), Is.True);
+            Assert.That(state.TryCollectObject(curio.id, curio.cell, 1), Is.True);
+            Assert.That(events.GetFlag(flag), Is.False, "A Library curio is not Katrina's anchor.");
+            events.ActiveDialogue?.End();
+            int recoveryDialogues = 0;
+            events.DialogueStarted += session =>
+            {
+                if (session.Definition.id == "katrina_library_item_recovered") recoveryDialogues++;
+            };
+            Assert.That(state.TryGetObject("katrina.item.library", out WorldObjectSnapshot item), Is.True);
+            Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.True);
+            Assert.That(events.GetFlag(flag), Is.False, "Inactive quests must not receive pickup credit.");
+            Assert.That(events.ActiveDialogue, Is.Null);
+            Assert.That(recoveryDialogues, Is.Zero);
+            events.StartQuest("katrina_something_borrowed");
+            QuestPuzzleMonitor monitor = Object.FindAnyObjectByType<QuestPuzzleMonitor>();
+            Assert.That(monitor, Is.Not.Null);
+            Assert.That(monitor.EvaluatePuzzles(), Is.EqualTo(1), "The existing monitor recovers a pre-activation pickup.");
+            Assert.That(events.GetFlag(flag), Is.True);
+            Assert.That(events.ActiveDialogue?.Definition.id, Is.EqualTo("katrina_library_item_recovered"));
+            events.ActiveDialogue.End();
+            string worldSaved = state.CaptureStateJson();
+            string eventsSaved = events.ExportStateJson(false);
+            loader.Load(loader.GetArea("campus"), catalog);
+            loader.Load(loader.GetArea("B04.Ground"), catalog);
+            Assert.That(events.ImportStateJson(eventsSaved), Is.True);
+            Assert.That(state.RestoreStateJson(worldSaved), Is.True);
+            Assert.That(monitor.EvaluatePuzzles(), Is.Zero);
+            Assert.That(events.ActiveDialogue, Is.Null, "Restore and revisit must not replay recovery narration.");
+            Assert.That(recoveryDialogues, Is.EqualTo(1));
+            Assert.That(state.TryCollectObject(item.id, item.cell, 1), Is.False);
+            Assert.That(events.GetFlag(flag), Is.True);
+        }
+
         [UnityTest]
         public IEnumerator AuthoredDeepForestRouteAndLegacyHallSaveBothReturnSafely()
         {

@@ -16,6 +16,13 @@ namespace Lumenfall.Quests
             "katrina.item.stream"
         };
 
+        private static readonly string[] PickupEventIds =
+        {
+            "found_katrina_library_item",
+            "found_katrina_garden_item",
+            "found_katrina_stream_item"
+        };
+
         private void OnEnable()
         {
             if (!TryGetItemIndex(gameObject.name, out int index)) return;
@@ -34,8 +41,9 @@ namespace Lumenfall.Quests
                 return;
             }
 
+            // Credit the collected state immediately; a map transition can precede the monitor's next poll.
             state.RegisterObject(ItemIds[index], gameObject, cell, Vector2Int.one, true,
-                new[] { "hidden", WorldStateService.PickupTag });
+                new[] { "hidden", WorldStateService.PickupTag, WorldStateService.OnPickupTagPrefix + PickupEventIds[index] });
         }
 
         private static bool TryGetItemIndex(string markerName, out int index)
