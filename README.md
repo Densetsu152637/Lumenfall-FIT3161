@@ -12,6 +12,8 @@ Arrive at a magical academy, befriend the students of the Sirius dormitory, and 
 
 <sub>Unity 6000.4.10f1 · Windows x64 · FIT3161 project</sub>
 
+<img src="docs/readme/gifs/explore.gif" width="640" alt="The player walking along a forest path toward the academy">
+
 </div>
 
 ---
@@ -49,6 +51,22 @@ flowchart LR
     G --> A
 ```
 
+### See it in action
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="docs/readme/gifs/talk.gif" width="100%" alt="Orio greeting the player in the forest with a dialogue box"><br><sub><b>Talk:</b> Orio introduces his rune dais.</sub></td>
+    <td width="50%" align="center"><img src="docs/readme/gifs/saves.gif" width="100%" alt="Main menu opening the Load Game slot list"><br><sub><b>Save and continue:</b> pick up from any of three slots.</sub></td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td width="33%" align="center"><img src="docs/readme/gifs/vis.gif" width="100%" alt="Choosing Vis on the spell wheel and lifting a relic beside the fountain"><br><sub><b>Vis:</b> lift and carry a relic.</sub></td>
+    <td width="33%" align="center"><img src="docs/readme/gifs/rotara.gif" width="100%" alt="Casting Rotara to turn discs on the forest rune dais"><br><sub><b>Rotara:</b> turn the dais discs.</sub></td>
+    <td width="33%" align="center"><img src="docs/readme/gifs/lost-echoes.gif" width="100%" alt="Lost Echoes revealing a hidden picnic basket in the campus garden"><br><sub><b>Lost Echoes:</b> uncover a hidden item.</sub></td>
+  </tr>
+</table>
+
 What makes the loop work:
 
 - **Grid movement.** You move one whole tile at a time, so puzzles are about positions and directions rather than reflexes. Hold Shift to sprint.
@@ -59,6 +77,11 @@ What makes the loop work:
 ## Example: one loop, start to finish
 
 Here is Stella's first quest, **First Light**, which teaches Ampere.
+
+<p align="center">
+  <img src="docs/readme/gifs/ampere.gif" width="360" alt="Star-point relics in Stella's room glowing as they are powered"><br>
+  <sub>Powered relics resonate with each other on Stella's board.</sub>
+</p>
 
 ```mermaid
 sequenceDiagram
