@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Lumenfall.DataDriven;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
 using NUnit.Framework;
@@ -48,6 +49,50 @@ namespace Lumenfall.Tests.GameEvents
             foreach (GridObstacle obstacle in cinna.GetComponentsInChildren<GridObstacle>(true))
                 found |= Cells(obstacle).Contains(new Vector2Int(22, 51));
             Assert.That(found, Is.True, "The blocker on Cinna's terrace tile is a child of Cinna, so hiding Cinna frees the tile.");
+        }
+
+        [Test]
+        public void TheExpandedForestReachesEveryPortalAndKeepsItsTreesAsScenery()
+        {
+            GameObject forest = Load("West Forest.prefab");
+            MapDefinition map = AssetDatabase.LoadAssetAtPath<WorldAreaAsset>("Assets/_Project/World/Areas/westForest.asset").definition;
+            RectInt bounds = new RectInt(map.boundsMinX, map.boundsMinY, map.width, map.height);
+            Assert.That(bounds.xMin < 0 && bounds.yMin < 0, Is.True, "The forest grows west and south, so the original cells keep their coordinates.");
+
+            HashSet<Vector2Int> blocked = BlockedCells(forest);
+            HashSet<Vector2Int> portals = new HashSet<Vector2Int>();
+            foreach (GridPortal portal in forest.GetComponentsInChildren<GridPortal>(true))
+                for (int x = -portal.ExtendNegativeX; x <= portal.ExtendPositiveX; x++)
+                    for (int z = -portal.ExtendNegativeZ; z <= portal.ExtendPositiveZ; z++)
+                        portals.Add(Cell(portal.gameObject) + new Vector2Int(x, z));
+            Vector2Int spawn = new Vector2Int(map.spawn.x, map.spawn.y);
+            HashSet<Vector2Int> reached = new HashSet<Vector2Int> { spawn };
+            Queue<Vector2Int> queue = new Queue<Vector2Int>(reached);
+            while (queue.Count > 0)
+            {
+                Vector2Int cell = queue.Dequeue();
+                foreach (Vector2Int next in new[] { cell + Vector2Int.up, cell + Vector2Int.down, cell + Vector2Int.left, cell + Vector2Int.right })
+                    if (bounds.Contains(next) && (!blocked.Contains(next) || portals.Contains(next)) && reached.Add(next)) queue.Enqueue(next);
+            }
+
+            Assert.That(Cell(Find(forest, "P.F01")), Is.EqualTo(new Vector2Int(-24, 24)), "The deep forest portal ends the longer stone trail.");
+            foreach (Vector2Int cell in new[] { new Vector2Int(17, 48), new Vector2Int(-24, 24) })
+                Assert.That(reached, Has.Member(cell), "Portal cell " + cell);
+            foreach (Vector2Int cell in new[] { new Vector2Int(8, 23), new Vector2Int(11, 3), new Vector2Int(24, 6), new Vector2Int(27, 26), new Vector2Int(18, 22) })
+                Assert.That(reached, Has.Member(cell), "Story cell " + cell + " is still on the walkable paths.");
+            foreach (Vector2Int cell in new[] { new Vector2Int(7, -16), new Vector2Int(-12, 26), new Vector2Int(-13, 0) })
+                Assert.That(reached, Has.Member(cell), "New ground at " + cell + " joins the paths.");
+
+            Transform orio = Find(forest, "Orio").transform;
+            Assert.That(Cell(orio.gameObject), Is.EqualTo(new Vector2Int(-12, 24)), "Orio waits in the Waystone clearing.");
+            bool orioBlocks = false;
+            foreach (GridObstacle obstacle in orio.GetComponentsInChildren<GridObstacle>(true))
+                orioBlocks |= Cells(obstacle).Contains(new Vector2Int(-12, 24));
+            Assert.That(orioBlocks, Is.True, "Orio's blocker belongs to Orio, so it follows him if he moves.");
+            Assert.That(reached, Has.Member(new Vector2Int(-11, 24)), "The cell east of Orio stays free for his dais portal.");
+            foreach (Vector2Int cell in reached)
+                Assert.That(cell.x > bounds.xMin && cell.y > bounds.yMin && cell.x < bounds.xMax - 1 && cell.y < bounds.yMax - 1, Is.True,
+                    "Blockers fence the paths in before the map's edge, so the trees cannot be walked through: " + cell);
         }
 
         [Test]

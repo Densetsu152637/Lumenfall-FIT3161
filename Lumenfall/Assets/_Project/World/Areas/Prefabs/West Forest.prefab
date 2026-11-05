@@ -262,7 +262,7 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
---- !u!1 &86245122673771129
+--- !u!1 &61423075098173166
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -270,72 +270,50 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8486456283691505097}
-  - component: {fileID: 5605847834453884013}
-  - component: {fileID: 6846511674726308396}
-  - component: {fileID: 1206567087976064881}
-  - component: {fileID: 8551298393196791127}
+  - component: {fileID: 5920630846757399753}
+  - component: {fileID: 3604307822650302494}
+  - component: {fileID: 5071809529165468740}
+  - component: {fileID: 3481317916109987191}
   m_Layer: 0
-  m_Name: T_tile_48_14
+  m_Name: Stream (2) extension 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8486456283691505097
+--- !u!4 &5920630846757399753
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86245122673771129}
+  m_GameObject: {fileID: 61423075098173166}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.4000006, y: 0, z: -1.315789}
-  m_LocalScale: {x: 0.2, y: 0.5, z: 0.2631579}
+  m_LocalRotation: {x: -0, y: -0.025861707, z: -0, w: 0.99966556}
+  m_LocalPosition: {x: 52.411827, y: 0.2, z: 38.445667}
+  m_LocalScale: {x: 1, y: 1, z: 0.19999999}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3771662217064198606}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5605847834453884013
+  m_Father: {fileID: 5592580418071979060}
+  m_LocalEulerAnglesHint: {x: 0, y: -36.967, z: 0}
+--- !u!33 &3604307822650302494
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86245122673771129}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &6846511674726308396
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86245122673771129}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &1206567087976064881
+  m_GameObject: {fileID: 61423075098173166}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &5071809529165468740
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86245122673771129}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_GameObject: {fileID: 61423075098173166}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -351,7 +329,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 86473f2b9969f4645b64529b62e4661d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -360,7 +338,7 @@ MeshRenderer:
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
   m_ReceiveGI: 1
-  m_PreserveUVs: 1
+  m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
   m_StitchLightmapSeams: 1
@@ -375,24 +353,28 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &8551298393196791127
-MonoBehaviour:
+--- !u!64 &3481317916109987191
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86245122673771129}
+  m_GameObject: {fileID: 61423075098173166}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
-  world: {fileID: 0}
-  useTransformAsAnchor: 1
-  anchorCell: {x: 0, y: 49}
-  footprintOffset: {x: 0, y: -1}
-  footprintSize: {x: 2, y: 2}
-  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &107538861696057144
 GameObject:
   m_ObjectHideFlags: 0
@@ -427,6 +409,106 @@ Transform:
   - {fileID: 7310830027277084338}
   m_Father: {fileID: 143181183513890913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &166456396571297518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2666093568243895679}
+  - component: {fileID: 8173995499232160620}
+  m_Layer: 0
+  m_Name: T_ext_-17_27
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2666093568243895679
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 166456396571297518}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -17, y: 0, z: 27}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8173995499232160620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 166456396571297518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &243822122741509472
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 852737018431438761}
+  - component: {fileID: 5533098594210037647}
+  m_Layer: 0
+  m_Name: T_ext_-11_-14
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &852737018431438761
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 243822122741509472}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -11, y: 0, z: -14}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5533098594210037647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 243822122741509472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &253552634415960984
 GameObject:
   m_ObjectHideFlags: 0
@@ -950,6 +1032,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &424102007171885991
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6143335579104629147}
+  - component: {fileID: 56870604104452014}
+  m_Layer: 0
+  m_Name: T_ext_-7_26
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6143335579104629147
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424102007171885991}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7, y: 0, z: 26}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &56870604104452014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424102007171885991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 11, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &434584328043403844
 GameObject:
@@ -1519,6 +1651,119 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &812654566962196559
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2543284130009744360}
+  - component: {fileID: 5648598494138575084}
+  - component: {fileID: 6782583417946589761}
+  - component: {fileID: 452895442368029420}
+  m_Layer: 0
+  m_Name: Stream (2) extension 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2543284130009744360
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812654566962196559}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.13021354, z: -0, w: 0.991486}
+  m_LocalPosition: {x: 43.087402, y: 0.2, z: 36.921944}
+  m_LocalScale: {x: 1, y: 1, z: 0.19999999}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5592580418071979060}
+  m_LocalEulerAnglesHint: {x: 0, y: -36.967, z: 0}
+--- !u!33 &5648598494138575084
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812654566962196559}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &6782583417946589761
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812654566962196559}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 86473f2b9969f4645b64529b62e4661d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &452895442368029420
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812654566962196559}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &927373250754901197
 GameObject:
   m_ObjectHideFlags: 0
@@ -1555,8 +1800,6 @@ Transform:
   - {fileID: 4852218590715311395}
   - {fileID: 1786200295601764825}
   - {fileID: 6065685683943149915}
-  - {fileID: 5278746575161565464}
-  - {fileID: 9193433184608535433}
   - {fileID: 5534563202156739182}
   - {fileID: 4326800462421300202}
   - {fileID: 7022047767182945407}
@@ -1584,9 +1827,7 @@ Transform:
   - {fileID: 6545824706440097368}
   - {fileID: 970331939052154710}
   - {fileID: 273643039862023723}
-  - {fileID: 8486456283691505097}
   - {fileID: 6887907792498168508}
-  - {fileID: 3668870038001792547}
   - {fileID: 113764048912594348}
   - {fileID: 7404117817083836635}
   - {fileID: 3086811316603635018}
@@ -1769,6 +2010,200 @@ MonoBehaviour:
   world: {fileID: 0}
   useTransformAsAnchor: 1
   anchorCell: {x: 0, y: 49}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1032560742275080226
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4095676806303098019}
+  - component: {fileID: 3449053771479262472}
+  - component: {fileID: 1352450741199361423}
+  m_Layer: 0
+  m_Name: West Forest Surround Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &4095676806303098019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032560742275080226}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -40, y: -0.05, z: -40}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8361055512035410027}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!218 &3449053771479262472
+Terrain:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032560742275080226}
+  m_Enabled: 1
+  serializedVersion: 6
+  m_TerrainData: {fileID: 15600000, guid: 5b13fbcdbe6f61a4e99ebbabbbe7bbdb, type: 2}
+  m_TreeDistance: 5000
+  m_TreeBillboardDistance: 50
+  m_TreeCrossFadeLength: 5
+  m_TreeMaximumFullLODCount: 50
+  m_DetailObjectDistance: 80
+  m_DetailObjectDensity: 1
+  m_HeightmapPixelError: 5
+  m_SplatMapDistance: 1000
+  m_HeightmapMinimumLODSimplification: 0
+  m_HeightmapMaximumLOD: 0
+  m_ShadowCastingMode: 2
+  m_DrawHeightmap: 1
+  m_DrawInstanced: 0
+  m_DrawTreesAndFoliage: 1
+  m_StaticShadowCaster: 0
+  m_IgnoreQualitySettings: 0
+  m_ReflectionProbeUsage: 1
+  m_MaterialTemplate: {fileID: 2100000, guid: 594ea882c5a793440b60ff72d896021e, type: 2}
+  m_BakeLightProbesForTrees: 1
+  m_PreserveTreePrototypeLayers: 0
+  m_DeringLightProbesForTrees: 1
+  m_ReceiveGI: 1
+  m_ScaleInLightmap: 0.0256
+  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+  m_GroupingID: 0
+  m_RenderingLayerMask: 1
+  m_AllowAutoConnect: 1
+  m_EnableHeightmapRayTracing: 1
+  m_EnableTreesAndDetailsRayTracing: 0
+  m_EnableHeightmapLODFrustumCulling: 1
+  m_TreeMotionVectorModeOverride: 3
+--- !u!154 &1352450741199361423
+TerrainCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032560742275080226}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_TerrainData: {fileID: 15600000, guid: 5b13fbcdbe6f61a4e99ebbabbbe7bbdb, type: 2}
+  m_EnableTreeColliders: 1
+--- !u!1 &1137474645657052570
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 497323382733019124}
+  - component: {fileID: 665258702355630027}
+  m_Layer: 0
+  m_Name: T_ext_14_-18
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &497323382733019124
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137474645657052570}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 14, y: 0, z: -18}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &665258702355630027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137474645657052570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 5}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1233016811705690856
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8435716069434750274}
+  - component: {fileID: 6173759524486980580}
+  m_Layer: 0
+  m_Name: T_ext_-10_-15
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8435716069434750274
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233016811705690856}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10, y: 0, z: -15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6173759524486980580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233016811705690856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 2, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
@@ -2034,6 +2469,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1305910991600560469
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7877980842434593738}
+  - component: {fileID: 5939445236579521888}
+  m_Layer: 0
+  m_Name: T_ext_13_-19
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7877980842434593738
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1305910991600560469}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13, y: 0, z: -19}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5939445236579521888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1305910991600560469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &1312088720365195941
 GameObject:
   m_ObjectHideFlags: 0
@@ -2296,6 +2781,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1454768258687799091
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8999378774210492088}
+  - component: {fileID: 7721097680562365230}
+  m_Layer: 0
+  m_Name: T_ext_14_-1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8999378774210492088
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1454768258687799091}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 14, y: 0, z: -1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7721097680562365230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1454768258687799091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &1469079295440488257
 GameObject:
   m_ObjectHideFlags: 0
@@ -2427,6 +2962,269 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1519374898485189315
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2258095978846536281}
+  - component: {fileID: 1546518568923597534}
+  m_Layer: 0
+  m_Name: T_ext_-8_27
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2258095978846536281
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1519374898485189315}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0, z: 27}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1546518568923597534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1519374898485189315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1545820232524594004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 543679681056906567}
+  - component: {fileID: 2295873963884460608}
+  m_Layer: 0
+  m_Name: T_ext_12_-13
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &543679681056906567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1545820232524594004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12, y: 0, z: -13}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2295873963884460608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1545820232524594004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1632869100627273158
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1599970218442361951}
+  - component: {fileID: 1688594773191305025}
+  m_Layer: 0
+  m_Name: T_ext_-7_-11
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1599970218442361951
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632869100627273158}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7, y: 0, z: -11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1688594773191305025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632869100627273158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1705958805943720206
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9096263261169286410}
+  - component: {fileID: 67752325692275864}
+  - component: {fileID: 315473068202156734}
+  - component: {fileID: 230419909569809837}
+  m_Layer: 0
+  m_Name: Stream extension 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9096263261169286410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705958805943720206}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.5344515, z: -0, w: 0.84519917}
+  m_LocalPosition: {x: 39.63106, y: 0.75000006, z: 6.165949}
+  m_LocalScale: {x: 1.5, y: 1, z: 0.20000002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5592580418071979060}
+  m_LocalEulerAnglesHint: {x: 0, y: -123.362, z: 0}
+--- !u!33 &67752325692275864
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705958805943720206}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &315473068202156734
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705958805943720206}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 86473f2b9969f4645b64529b62e4661d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &230419909569809837
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705958805943720206}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1706950187753703930
 GameObject:
   m_ObjectHideFlags: 0
@@ -2671,6 +3469,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &1759685692622981890
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3534422361196387933}
+  - component: {fileID: 623416551506501953}
+  m_Layer: 0
+  m_Name: T_ext_-15_-4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3534422361196387933
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759685692622981890}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -15, y: 0, z: -4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &623416551506501953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759685692622981890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 17}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &1839882497339586790
 GameObject:
   m_ObjectHideFlags: 0
@@ -2802,7 +3650,7 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
---- !u!1 &1918709362660252758
+--- !u!1 &1871454687556541634
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2810,118 +3658,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 9193433184608535433}
-  - component: {fileID: 6674443832753791651}
-  - component: {fileID: 5640539172230059828}
-  - component: {fileID: 6419712755585631239}
-  - component: {fileID: 273195819838024220}
+  - component: {fileID: 144770372271693144}
+  - component: {fileID: 2960287352534531653}
   m_Layer: 0
-  m_Name: T_tile_16_0
+  m_Name: T_ext_-12_-12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &9193433184608535433
+--- !u!4 &144770372271693144
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918709362660252758}
+  m_GameObject: {fileID: 1871454687556541634}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.2000004, y: 0, z: -3.947369}
-  m_LocalScale: {x: 0.2, y: 0.5, z: 0.2631579}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -12, y: 0, z: -12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3771662217064198606}
+  m_Father: {fileID: 4463764262194791487}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6674443832753791651
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918709362660252758}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &5640539172230059828
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918709362660252758}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &6419712755585631239
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918709362660252758}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &273195819838024220
+--- !u!114 &2960287352534531653
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1918709362660252758}
+  m_GameObject: {fileID: 1871454687556541634}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
@@ -2929,9 +3696,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
-  anchorCell: {x: 0, y: 49}
-  footprintOffset: {x: 0, y: -1}
-  footprintSize: {x: 2, y: 2}
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2097226171711133870
 GameObject:
@@ -3098,6 +3865,106 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2228637750248128838
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8513218174111754482}
+  - component: {fileID: 8681686497163472743}
+  m_Layer: 0
+  m_Name: T_ext_13_-14
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8513218174111754482
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2228637750248128838}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13, y: 0, z: -14}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8681686497163472743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2228637750248128838}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2336021272099492912
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6793154728388062048}
+  - component: {fileID: 2373637060214510830}
+  m_Layer: 0
+  m_Name: T_ext_-7_-12
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6793154728388062048
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336021272099492912}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7, y: 0, z: -12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2373637060214510830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336021272099492912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 3, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2359087177233088073
 GameObject:
@@ -3360,6 +4227,106 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2425873387334468588
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 827929206487368626}
+  - component: {fileID: 8788354289532061464}
+  m_Layer: 0
+  m_Name: T_ext_-3_-15
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &827929206487368626
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2425873387334468588}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3, y: 0, z: -15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8788354289532061464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2425873387334468588}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 4, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2532839803943963315
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7402314323549347904}
+  - component: {fileID: 7666276671582376110}
+  m_Layer: 0
+  m_Name: T_ext_10_-9
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7402314323549347904
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2532839803943963315}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 10, y: 0, z: -9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7666276671582376110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2532839803943963315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2555595323777974677
 GameObject:
@@ -3754,6 +4721,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2606496621750103088
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2387800036686264567}
+  - component: {fileID: 3469634631294156360}
+  m_Layer: 0
+  m_Name: T_ext_13_-4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2387800036686264567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606496621750103088}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13, y: 0, z: -4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3469634631294156360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606496621750103088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2684462810708829275
 GameObject:
   m_ObjectHideFlags: 0
@@ -3785,6 +4802,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 143181183513890913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2763312449027540635
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6257376565158161063}
+  - component: {fileID: 3188101785209976300}
+  m_Layer: 0
+  m_Name: T_ext_-16_21
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6257376565158161063
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2763312449027540635}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -16, y: 0, z: 21}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3188101785209976300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2763312449027540635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2770254169427168887
 GameObject:
   m_ObjectHideFlags: 0
@@ -3916,6 +4983,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &2842607193727055565
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 367003276383564684}
+  - component: {fileID: 2358771493814138025}
+  m_Layer: 0
+  m_Name: T_ext_17_-6
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &367003276383564684
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2842607193727055565}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 17, y: 0, z: -6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2358771493814138025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2842607193727055565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &2919982477475418273
 GameObject:
   m_ObjectHideFlags: 0
@@ -3955,7 +5072,7 @@ Transform:
   - {fileID: 7063622213385927319}
   m_Father: {fileID: 143181183513890913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &3173448600027813139
+--- !u!1 &2977044660112380159
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3963,118 +5080,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3668870038001792547}
-  - component: {fileID: 1191974563243312963}
-  - component: {fileID: 2769338715326614179}
-  - component: {fileID: 5835601104644090954}
-  - component: {fileID: 2223281493770354007}
+  - component: {fileID: 8916538081207313962}
+  - component: {fileID: 3590848534574436442}
   m_Layer: 0
-  m_Name: T_tile_48_16
+  m_Name: T_ext_-24_26
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3668870038001792547
+--- !u!4 &8916538081207313962
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173448600027813139}
+  m_GameObject: {fileID: 2977044660112380159}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.4000006, y: 0, z: -0.78947324}
-  m_LocalScale: {x: 0.2, y: 0.5, z: 0.2631579}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -24, y: 0, z: 26}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3771662217064198606}
+  m_Father: {fileID: 4463764262194791487}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1191974563243312963
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173448600027813139}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &2769338715326614179
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173448600027813139}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &5835601104644090954
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173448600027813139}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &2223281493770354007
+--- !u!114 &3590848534574436442
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173448600027813139}
+  m_GameObject: {fileID: 2977044660112380159}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
@@ -4082,9 +5118,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
   world: {fileID: 0}
   useTransformAsAnchor: 1
-  anchorCell: {x: 0, y: 49}
-  footprintOffset: {x: 0, y: -1}
-  footprintSize: {x: 2, y: 2}
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 8, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3215960246098670963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8849385747257073538}
+  - component: {fileID: 6789516649718760818}
+  m_Layer: 0
+  m_Name: T_ext_12_-6
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8849385747257073538
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3215960246098670963}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12, y: 0, z: -6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6789516649718760818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3215960246098670963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3239514147238366340
 GameObject:
@@ -4216,6 +5302,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3243478031454985132
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 455394685754812658}
+  - component: {fileID: 8755996897703480686}
+  m_Layer: 0
+  m_Name: T_ext_-6_-18
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &455394685754812658
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3243478031454985132}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6, y: 0, z: -18}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8755996897703480686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3243478031454985132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3274688081714259862
 GameObject:
@@ -4479,6 +5615,91 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3510963138985430017
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5592580418071979060}
+  m_Layer: 0
+  m_Name: Stream
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5592580418071979060
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3510963138985430017}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9096263261169286410}
+  - {fileID: 7719330732395495883}
+  - {fileID: 2543284130009744360}
+  - {fileID: 5920630846757399753}
+  m_Father: {fileID: 8361055512035410027}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3519054342498325443
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2143446236397547137}
+  - component: {fileID: 6504007912148244156}
+  m_Layer: 0
+  m_Name: T_ext_-4_-14
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2143446236397547137
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3519054342498325443}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4, y: 0, z: -14}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6504007912148244156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3519054342498325443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3555635186879196384
 GameObject:
   m_ObjectHideFlags: 0
@@ -4609,6 +5830,91 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3572609194094305330
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8361055512035410027}
+  m_Layer: 0
+  m_Name: Forest Expansion
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8361055512035410027
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3572609194094305330}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4463764262194791487}
+  - {fileID: 5592580418071979060}
+  - {fileID: 3010015142352475001}
+  - {fileID: 4095676806303098019}
+  m_Father: {fileID: 143181183513890913}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3593129236511626241
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7758454808154001630}
+  - component: {fileID: 7356249820080950883}
+  m_Layer: 0
+  m_Name: T_ext_1_-20
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7758454808154001630
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3593129236511626241}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 0, z: -20}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7356249820080950883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3593129236511626241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3654426890619336920
 GameObject:
@@ -5265,6 +6571,106 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3869074351548453119
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1357445666942643369}
+  - component: {fileID: 7259570570420617656}
+  m_Layer: 0
+  m_Name: T_ext_-25_23
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1357445666942643369
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869074351548453119}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -25, y: 0, z: 23}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7259570570420617656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869074351548453119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &3869577402060492123
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8447718207952343207}
+  - component: {fileID: 7638758461595418967}
+  m_Layer: 0
+  m_Name: T_ext_-13_-10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8447718207952343207
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869577402060492123}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -13, y: 0, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7638758461595418967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869577402060492123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &3879184417740246355
 GameObject:
   m_ObjectHideFlags: 0
@@ -5658,6 +7064,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 2, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &4019636372507048988
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7797173138979850937}
+  - component: {fileID: 5965294940725301053}
+  m_Layer: 0
+  m_Name: T_ext_-9_-8
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7797173138979850937
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4019636372507048988}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9, y: 0, z: -8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5965294940725301053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4019636372507048988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &4048310678936484547
 GameObject:
   m_ObjectHideFlags: 0
@@ -6040,137 +7496,6 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4118833428774654838}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
-  world: {fileID: 0}
-  useTransformAsAnchor: 1
-  anchorCell: {x: 0, y: 49}
-  footprintOffset: {x: 0, y: -1}
-  footprintSize: {x: 2, y: 2}
-  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
---- !u!1 &4138499547914331993
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5278746575161565464}
-  - component: {fileID: 705731590300257259}
-  - component: {fileID: 3213801030169070568}
-  - component: {fileID: 4396277874263028279}
-  - component: {fileID: 4943809146571063049}
-  m_Layer: 0
-  m_Name: T_tile_14_0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5278746575161565464
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4138499547914331993}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.19999963, y: 0, z: -4.210526}
-  m_LocalScale: {x: 0.2, y: 0.5, z: 0.2631579}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3771662217064198606}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &705731590300257259
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4138499547914331993}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &3213801030169070568
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4138499547914331993}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &4396277874263028279
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4138499547914331993}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4943809146571063049
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4138499547914331993}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
@@ -6968,6 +8293,156 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &4764327658974837494
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6385413880642624475}
+  - component: {fileID: 7166734691294284137}
+  m_Layer: 0
+  m_Name: T_ext_-14_12
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6385413880642624475
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4764327658974837494}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -14, y: 0, z: 12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7166734691294284137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4764327658974837494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 10}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &4817895737036646272
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8959897660285214734}
+  - component: {fileID: 8577335552209532027}
+  m_Layer: 0
+  m_Name: T_ext_-14_-8
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8959897660285214734
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4817895737036646272}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -14, y: 0, z: -8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8577335552209532027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4817895737036646272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 5}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &4889760078079366742
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3649769255104403446}
+  - component: {fileID: 5094620913541965852}
+  m_Layer: 0
+  m_Name: T_ext_-8_-10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3649769255104403446
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4889760078079366742}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5094620913541965852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4889760078079366742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5000023135876501481
 GameObject:
   m_ObjectHideFlags: 0
@@ -7429,6 +8904,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5249710450129957888
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6961451259969956507}
+  - component: {fileID: 165809330625830920}
+  m_Layer: 0
+  m_Name: T_ext_11_-7
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6961451259969956507
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5249710450129957888}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11, y: 0, z: -7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &165809330625830920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5249710450129957888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5268500536388489440
 GameObject:
   m_ObjectHideFlags: 0
@@ -7691,6 +9216,106 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5302774821442343743
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2058381881245591574}
+  - component: {fileID: 4266587899323852388}
+  m_Layer: 0
+  m_Name: T_ext_-25_22
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2058381881245591574
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5302774821442343743}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -25, y: 0, z: 22}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4266587899323852388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5302774821442343743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 10, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5363500825564855535
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8115055693670847565}
+  - component: {fileID: 5534074791795134209}
+  m_Layer: 0
+  m_Name: T_ext_-11_-3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8115055693670847565
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363500825564855535}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -11, y: 0, z: -3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5534074791795134209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363500825564855535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 14}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5383633805346838656
 GameObject:
   m_ObjectHideFlags: 0
@@ -7822,6 +9447,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5468539512062310452
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2548218645801095813}
+  - component: {fileID: 1419499765894258974}
+  m_Layer: 0
+  m_Name: T_ext_12_-20
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2548218645801095813
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5468539512062310452}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12, y: 0, z: -20}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1419499765894258974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5468539512062310452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5530789834481445618
 GameObject:
   m_ObjectHideFlags: 0
@@ -7952,6 +9627,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &5537495546543892466
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 766183566471943817}
+  - component: {fileID: 8468814172750126379}
+  m_Layer: 0
+  m_Name: T_ext_-9_21
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &766183566471943817
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537495546543892466}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9, y: 0, z: 21}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8468814172750126379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537495546543892466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5578979975630526882
 GameObject:
@@ -8239,8 +9964,59 @@ Transform:
   - {fileID: 7421053580076367607}
   - {fileID: 7056750120222290489}
   - {fileID: 4683741605627279084}
+  - {fileID: 8361055512035410027}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5672549525390157147
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 867668045013653882}
+  - component: {fileID: 7801142069593473935}
+  m_Layer: 0
+  m_Name: T_ext_18_-3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &867668045013653882
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5672549525390157147}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 18, y: 0, z: -3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7801142069593473935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5672549525390157147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 4}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &5673799402947403172
 GameObject:
   m_ObjectHideFlags: 0
@@ -9420,6 +11196,106 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &6096769216664977169
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8666026136829849393}
+  - component: {fileID: 8019804216997681470}
+  m_Layer: 0
+  m_Name: T_ext_-8_22
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8666026136829849393
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6096769216664977169}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0, z: 22}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8019804216997681470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6096769216664977169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 14, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &6127476821587078340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8516575019928540318}
+  - component: {fileID: 109942472993587680}
+  m_Layer: 0
+  m_Name: T_ext_2_-21
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8516575019928540318
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6127476821587078340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2, y: 0, z: -21}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &109942472993587680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6127476821587078340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 11, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &6218460531114207894
 GameObject:
   m_ObjectHideFlags: 0
@@ -9813,6 +11689,169 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &6430119626837370800
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7719330732395495883}
+  - component: {fileID: 4308475831470404127}
+  - component: {fileID: 7924694421470232891}
+  - component: {fileID: 349141867412916963}
+  m_Layer: 0
+  m_Name: Stream extension 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7719330732395495883
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6430119626837370800}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.42746392, z: -0, w: 0.9040324}
+  m_LocalPosition: {x: 47.28833, y: 0.75000006, z: -6.0199976}
+  m_LocalScale: {x: 1.5, y: 1, z: 0.20000002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5592580418071979060}
+  m_LocalEulerAnglesHint: {x: 0, y: -123.362, z: 0}
+--- !u!33 &4308475831470404127
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6430119626837370800}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &7924694421470232891
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6430119626837370800}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 86473f2b9969f4645b64529b62e4661d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &349141867412916963
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6430119626837370800}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &6463173263940565685
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4107835163815354362}
+  - component: {fileID: 6960933050753876494}
+  m_Layer: 0
+  m_Name: T_ext_1_-13
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4107835163815354362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6463173263940565685}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 0, z: -13}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6960933050753876494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6463173263940565685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &6504864558914425770
 GameObject:
   m_ObjectHideFlags: 0
@@ -10188,6 +12227,106 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &6793303311931626045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5193910172586656676}
+  - component: {fileID: 8914739851051436888}
+  m_Layer: 0
+  m_Name: T_ext_8_-11
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5193910172586656676
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6793303311931626045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8, y: 0, z: -11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8914739851051436888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6793303311931626045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7155248484271222272
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1371189559651654284}
+  - component: {fileID: 4174232117711827885}
+  m_Layer: 0
+  m_Name: T_ext_-5_-19
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1371189559651654284
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7155248484271222272}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5, y: 0, z: -19}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4174232117711827885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7155248484271222272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 7, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7213567122035462558
 GameObject:
   m_ObjectHideFlags: 0
@@ -10450,6 +12589,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7246996736975305938
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5160126888631353259}
+  - component: {fileID: 2358530517319709355}
+  m_Layer: 0
+  m_Name: T_ext_-10_-7
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5160126888631353259
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7246996736975305938}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10, y: 0, z: -7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2358530517319709355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7246996736975305938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 5}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7314827074230258023
 GameObject:
   m_ObjectHideFlags: 0
@@ -10581,6 +12770,156 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7394756283450699083
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 912408435145411035}
+  - component: {fileID: 2843661514777335364}
+  m_Layer: 0
+  m_Name: T_ext_-9_-16
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &912408435145411035
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7394756283450699083}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9, y: 0, z: -16}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2843661514777335364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7394756283450699083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7408459609014100798
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 943271583389352809}
+  - component: {fileID: 109602912504313049}
+  m_Layer: 0
+  m_Name: T_ext_0_-14
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &943271583389352809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7408459609014100798}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -14}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &109602912504313049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7408459609014100798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7408786981684861856
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3954646611497955301}
+  - component: {fileID: 1607857024301336640}
+  m_Layer: 0
+  m_Name: T_ext_16_-8
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3954646611497955301
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7408786981684861856}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 16, y: 0, z: -8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1607857024301336640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7408786981684861856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7434032024891706252
 GameObject:
   m_ObjectHideFlags: 0
@@ -10711,6 +13050,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7561941619827085635
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4075012936667142135}
+  - component: {fileID: 1366543270571898825}
+  m_Layer: 0
+  m_Name: T_ext_2_-12
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4075012936667142135
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7561941619827085635}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2, y: 0, z: -12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1366543270571898825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7561941619827085635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 7, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7630419064699035860
 GameObject:
@@ -10974,6 +13363,56 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: 0}
   footprintSize: {x: 1, y: 1}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7689155444720051823
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8354798411639228604}
+  - component: {fileID: 559873664766878568}
+  m_Layer: 0
+  m_Name: T_ext_-5_-13
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8354798411639228604
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7689155444720051823}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5, y: 0, z: -13}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &559873664766878568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7689155444720051823}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 2, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7746003731846305020
 GameObject:
   m_ObjectHideFlags: 0
@@ -11218,6 +13657,241 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &7776540055923707687
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6085215180707426743}
+  - component: {fileID: 9128828539071918390}
+  m_Layer: 0
+  m_Name: T_ext_15_-9
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6085215180707426743
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7776540055923707687}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 15, y: 0, z: -9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9128828539071918390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7776540055923707687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7826719498533139195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4463764262194791487}
+  m_Layer: 0
+  m_Name: Obstacles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4463764262194791487
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7826719498533139195}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8516575019928540318}
+  - {fileID: 7758454808154001630}
+  - {fileID: 2548218645801095813}
+  - {fileID: 1371189559651654284}
+  - {fileID: 7877980842434593738}
+  - {fileID: 455394685754812658}
+  - {fileID: 497323382733019124}
+  - {fileID: 1282096796660939411}
+  - {fileID: 912408435145411035}
+  - {fileID: 8435716069434750274}
+  - {fileID: 827929206487368626}
+  - {fileID: 852737018431438761}
+  - {fileID: 2143446236397547137}
+  - {fileID: 943271583389352809}
+  - {fileID: 8513218174111754482}
+  - {fileID: 8523641514280552373}
+  - {fileID: 8354798411639228604}
+  - {fileID: 4107835163815354362}
+  - {fileID: 543679681056906567}
+  - {fileID: 144770372271693144}
+  - {fileID: 6793154728388062048}
+  - {fileID: 4075012936667142135}
+  - {fileID: 1599970218442361951}
+  - {fileID: 5193910172586656676}
+  - {fileID: 4381873376858700820}
+  - {fileID: 8447718207952343207}
+  - {fileID: 3649769255104403446}
+  - {fileID: 6997034580676759766}
+  - {fileID: 7402314323549347904}
+  - {fileID: 6085215180707426743}
+  - {fileID: 8959897660285214734}
+  - {fileID: 7797173138979850937}
+  - {fileID: 3954646611497955301}
+  - {fileID: 5160126888631353259}
+  - {fileID: 6961451259969956507}
+  - {fileID: 8849385747257073538}
+  - {fileID: 367003276383564684}
+  - {fileID: 3534422361196387933}
+  - {fileID: 2387800036686264567}
+  - {fileID: 8115055693670847565}
+  - {fileID: 867668045013653882}
+  - {fileID: 8999378774210492088}
+  - {fileID: 6914528704825136571}
+  - {fileID: 6385413880642624475}
+  - {fileID: 6257376565158161063}
+  - {fileID: 766183566471943817}
+  - {fileID: 2058381881245591574}
+  - {fileID: 8666026136829849393}
+  - {fileID: 1357445666942643369}
+  - {fileID: 8916538081207313962}
+  - {fileID: 6143335579104629147}
+  - {fileID: 2666093568243895679}
+  - {fileID: 2258095978846536281}
+  - {fileID: 6962051375215878241}
+  m_Father: {fileID: 8361055512035410027}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7868982087207449697
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1282096796660939411}
+  - component: {fileID: 2932111220048842901}
+  m_Layer: 0
+  m_Name: T_ext_-8_-17
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1282096796660939411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7868982087207449697}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8, y: 0, z: -17}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2932111220048842901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7868982087207449697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 3, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &7908734875209489288
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4381873376858700820}
+  - component: {fileID: 6342098996452421500}
+  m_Layer: 0
+  m_Name: T_ext_14_-11
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4381873376858700820
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7908734875209489288}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 14, y: 0, z: -11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6342098996452421500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7908734875209489288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 3}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &7928592437878147447
 GameObject:
   m_ObjectHideFlags: 0
@@ -12030,7 +14704,7 @@ Transform:
   m_GameObject: {fileID: 8168777992912273026}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 0.03, z: 24}
+  m_LocalPosition: {x: -24, y: 0.03, z: 24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12058,6 +14732,56 @@ MonoBehaviour:
   preserveEntryOffset: 0
   gizmoColour: {r: 0.65, g: 0.15, b: 0.95, a: 0.55}
   gizmoFillOpacity: 0.22
+--- !u!1 &8322897341166457783
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6914528704825136571}
+  - component: {fileID: 2113849787956037528}
+  m_Layer: 0
+  m_Name: T_ext_-10_10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6914528704825136571
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8322897341166457783}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10, y: 0, z: 10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2113849787956037528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8322897341166457783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 12}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &8364727137719877387
 GameObject:
   m_ObjectHideFlags: 0
@@ -12451,6 +15175,43 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &8700605297504633420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3010015142352475001}
+  m_Layer: 0
+  m_Name: Walls
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3010015142352475001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8700605297504633420}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1668701218490597102}
+  - {fileID: 1791437486787904194}
+  - {fileID: 91125710169887476}
+  - {fileID: 9010361393426988551}
+  - {fileID: 503247817853733170}
+  - {fileID: 2707605785957656000}
+  m_Father: {fileID: 8361055512035410027}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8875878738259737727
 GameObject:
   m_ObjectHideFlags: 0
@@ -12581,6 +15342,56 @@ MonoBehaviour:
   anchorCell: {x: 0, y: 49}
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &8968468396400923193
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8523641514280552373}
+  - component: {fileID: 4935326339628467460}
+  m_Layer: 0
+  m_Name: T_ext_-11_-13
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8523641514280552373
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8968468396400923193}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -11, y: 0, z: -13}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4935326339628467460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8968468396400923193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1 &9007494625267932067
 GameObject:
@@ -13069,6 +15880,106 @@ MonoBehaviour:
   footprintOffset: {x: 0, y: -1}
   footprintSize: {x: 2, y: 2}
   gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &9115033012510621285
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6997034580676759766}
+  - component: {fileID: 1221811285681880777}
+  m_Layer: 0
+  m_Name: T_ext_9_-10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6997034580676759766
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9115033012510621285}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9, y: 0, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1221811285681880777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9115033012510621285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 2}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1 &9130426005863542678
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6962051375215878241}
+  - component: {fileID: 537773167076180543}
+  m_Layer: 0
+  m_Name: T_ext_-16_28
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6962051375215878241
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9130426005863542678}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -16, y: 0, z: 28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4463764262194791487}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &537773167076180543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9130426005863542678}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 9, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
 --- !u!1001 &806317944167350809
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13186,6 +16097,68 @@ MonoBehaviour:
       prerequisiteQuestStatus: 
       weight: 1
   initialDialogueId: 
+--- !u!1001 &946341593714991000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension 35.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 35.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &9010361393426988551 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 946341593714991000}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1310030320878869256
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13694,6 +16667,68 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3167166540051383711, guid: 4b4e93db03c6cbd4b846d1a489565aff, type: 3}
   m_PrefabInstance: {fileID: 5550943662035417960}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6177379878948078687
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension 43.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 43.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &2707605785957656000 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 6177379878948078687}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6244770027812978706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13942,6 +16977,192 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 514b2dac06920b142a15bdfd74e32cc6, type: 3}
   m_PrefabInstance: {fileID: 7133684568072208729}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7422290293517475697
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension -3.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &1668701218490597102 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 7422290293517475697}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7563049829163279197
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &1791437486787904194 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 7563049829163279197}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8172503909043024747
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension -10.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -10.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &91125710169887476 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 8172503909043024747}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8509496846914848588
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13964,7 +17185,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8
+      value: -12
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
       propertyPath: m_LocalPosition.y
@@ -13972,7 +17193,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 25
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
       propertyPath: m_LocalRotation.w
@@ -14017,6 +17238,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8810975188040086415}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8810975188040086416}
   m_SourcePrefab: {fileID: 100100000, guid: 376e04b9a6ab01d42b00faee9f763a20, type: 3}
 --- !u!4 &8186830751964586151 stripped
 Transform:
@@ -14045,8 +17269,8 @@ MonoBehaviour:
     displayName: Orio
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
     mapId: westForest
-    x: 8
-    y: 23
+    x: -12
+    y: 24
     layerSymbol: o
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 
@@ -14071,3 +17295,83 @@ MonoBehaviour:
       prerequisiteQuestStatus: 
       weight: 5
   initialDialogueId: 
+--- !u!114 &8810975188040086416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8851446414382184989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef7f7202081a4a47a12f5b5fe113cf57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.GridMovement.GridObstacle
+  world: {fileID: 0}
+  useTransformAsAnchor: 1
+  anchorCell: {x: 0, y: 0}
+  footprintOffset: {x: 0, y: 0}
+  footprintSize: {x: 1, y: 1}
+  gizmoColour: {r: 1, g: 0.25, b: 0.2, a: 0.45}
+--- !u!1001 &8562128363601094829
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3010015142352475001}
+    m_Modifications:
+    - target: {fileID: 8082043064124931519, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_Name
+      value: wall1 extension 39.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 39.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 47.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00000008146034
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1.110223e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1.1102233e-16
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+--- !u!4 &503247817853733170 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8082043064125022623, guid: abe1f0a726802e34cb4c535739298e72, type: 3}
+  m_PrefabInstance: {fileID: 8562128363601094829}
+  m_PrefabAsset: {fileID: 0}

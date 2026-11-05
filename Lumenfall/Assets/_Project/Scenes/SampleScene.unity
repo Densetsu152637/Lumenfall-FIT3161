@@ -271,7 +271,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow2_5D
   target: {fileID: 488168670}
-  offset: {x: 8, y: 10, z: -8}
+  offset: {x: 0, y: 10, z: -11.3}
   focusOffset: {x: 0, y: 1.5, z: 0}
   smoothTime: 0.15
 --- !u!114 &330585549

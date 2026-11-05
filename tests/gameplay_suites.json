@@ -14,7 +14,7 @@
         "Lumenfall.Startup.Tests.KeyBindingsTests": 18,
         "Lumenfall.Tests.GameEvents.AmbientCastTests": 7,
         "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 19,
-        "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 5,
+        "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 6,
         "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
         "Lumenfall.Tests.GameEvents.CutsceneSequenceTests": 15,
         "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 9,

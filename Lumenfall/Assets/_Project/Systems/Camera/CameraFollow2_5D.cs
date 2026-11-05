@@ -1,10 +1,18 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Lumenfall.Accessibility;
+using Lumenfall.Cutscenes;
+using Lumenfall.GameEvents;
+using Lumenfall.GridMovement;
+using Lumenfall.Inventory;
+using Lumenfall.Startup;
 
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
 /// The camera moves smoothly while continuously looking at the target.
 /// During a conversation it eases in to frame a requested focus point instead.
+/// Holding the left mouse button and dragging (or the gamepad right stick) swings the view a little around the
+/// target to peek past walls and through doorways; it eases back to the fixed angle on release.
 /// </summary>
 public class CameraFollow2_5D : MonoBehaviour
 {
@@ -13,9 +21,10 @@ public class CameraFollow2_5D : MonoBehaviour
     [SerializeField] private Transform target;
 
     [Header("Position")]
-    [Tooltip("The camera's world-space position relative to the target.")]
+    [Tooltip("The camera's world-space position relative to the target. Keeping x at 0 places the camera due south " +
+             "of the target, so the grid's axes line up with the screen and W/A/S/D move up/left/down/right on screen.")]
     [SerializeField] private Vector3 offset =
-        new Vector3(8f, 10f, -8f);
+        new Vector3(0f, 10f, -11.3f);
 
     [Tooltip("Offsets the camera's focus point from the target's origin.")]
     [SerializeField] private Vector3 focusOffset =
@@ -29,6 +38,26 @@ public class CameraFollow2_5D : MonoBehaviour
     [Tooltip("The approximate time taken to ease into and out of conversation framing.")]
     [Min(0f)]
     [SerializeField] private float conversationBlendTime = 0.45f;
+
+    [Header("Peek")]
+    [Tooltip("How far the view can swing left or right around the target, in degrees. Kept under 45 so W still reads as up.")]
+    [Range(0f, 45f)]
+    [SerializeField] private float peekYawLimit = 35f;
+
+    [Tooltip("How far the camera can rise above (positive) or drop below (negative) its resting angle, in degrees.")]
+    [SerializeField] private Vector2 peekPitchRange = new Vector2(-15f, 20f);
+
+    [Tooltip("Degrees of swing per pixel of mouse drag.")]
+    [Min(0f)]
+    [SerializeField] private float peekMouseSensitivity = 0.25f;
+
+    [Tooltip("Degrees of swing per second at full right-stick tilt.")]
+    [Min(0f)]
+    [SerializeField] private float peekStickSpeed = 120f;
+
+    [Tooltip("The approximate time taken to ease back to the resting angle after letting go.")]
+    [Min(0f)]
+    [SerializeField] private float peekReturnTime = 0.35f;
 
     // Conversation framing requested by the dialogue box; shared because there is one gameplay camera.
     private static bool conversationActive;
@@ -61,6 +90,11 @@ public class CameraFollow2_5D : MonoBehaviour
     // How far the camera has eased into conversation framing, from 0 to 1.
     private float conversationBlend;
     private float conversationBlendVelocity;
+
+    // The current peek swing in degrees (x yaw, y pitch) and the velocity used to ease it back.
+    private Vector2 peek;
+    private Vector2 peekVelocity;
+    private GridMover targetMover;
 
     /// <summary>
     /// Frames a conversation: the camera centres on <paramref name="focus"/> and moves closer by
@@ -134,9 +168,11 @@ public class CameraFollow2_5D : MonoBehaviour
         Vector3 anchor = Vector3.Lerp(target.position, conversationFocus, conversationBlend);
         float distanceScale = Mathf.Lerp(1f, conversationZoom, conversationBlend);
 
-        // Calculate the camera's desired position relative to the target.
+        UpdatePeek();
+
+        // Calculate the camera's desired position relative to the target, swung around it by any peek.
         Vector3 desiredPosition =
-            anchor + offset * distanceScale;
+            anchor + PeekRotation() * offset * distanceScale;
 
         // Smoothly move the camera toward its desired position.
         transform.position = reducedMotion ? desiredPosition : Vector3.SmoothDamp(
@@ -154,5 +190,62 @@ public class CameraFollow2_5D : MonoBehaviour
 
         appliedShake = reducedMotion ? Vector3.zero : shakeOffset;
         transform.position += appliedShake;
+    }
+
+    /// <summary>
+    /// Swings the peek from a held left-mouse drag or the right stick, and eases it back to rest otherwise.
+    /// Peeking is off whenever the player could not move: menus, dialogue, cutscenes, the spell wheel and the journal.
+    /// </summary>
+    private void UpdatePeek()
+    {
+        if (targetMover == null || targetMover.transform != target) targetMover = target.GetComponent<GridMover>();
+        bool blocked = Time.timeScale <= 0f || conversationActive || StartupMenu.IsOpen || CutscenePlayer.BlocksInput ||
+                       OverlayInputGate.IsBlocked || AccessibilitySettingsOverlay.InputBlocked || InventoryUiState.IsOpen ||
+                       (targetMover != null && targetMover.IsMovementLocked);
+
+        Vector2 swing = Vector2.zero;
+        bool held = false;
+        if (!blocked)
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null && mouse.leftButton.isPressed)
+            {
+                held = true;
+                // Dragging right looks right; dragging up raises the camera to see over walls.
+                swing += mouse.delta.ReadValue() * peekMouseSensitivity;
+            }
+
+            Vector2 stick = Gamepad.current != null ? Gamepad.current.rightStick.ReadValue() : Vector2.zero;
+            if (stick.sqrMagnitude > 0.04f)
+            {
+                held = true;
+                swing += stick * (peekStickSpeed * Time.unscaledDeltaTime);
+            }
+        }
+
+        if (held)
+        {
+            peekVelocity = Vector2.zero;
+            peek.x = Mathf.Clamp(peek.x + swing.x, -peekYawLimit, peekYawLimit);
+            peek.y = Mathf.Clamp(peek.y + swing.y, peekPitchRange.x, peekPitchRange.y);
+        }
+        else if (reducedMotion)
+        {
+            peekVelocity = Vector2.zero;
+            peek = Vector2.zero;
+        }
+        else
+        {
+            peek = Vector2.SmoothDamp(peek, Vector2.zero, ref peekVelocity, peekReturnTime, Mathf.Infinity, Time.unscaledDeltaTime);
+        }
+    }
+
+    // Yaw turns the offset around the world up axis; pitch tilts it around the horizontal axis across the view.
+    private Quaternion PeekRotation()
+    {
+        if (peek == Vector2.zero) return Quaternion.identity;
+        Vector3 across = Vector3.Cross(offset, Vector3.up);
+        Quaternion pitch = across.sqrMagnitude > 0.0001f ? Quaternion.AngleAxis(peek.y, across.normalized) : Quaternion.identity;
+        return Quaternion.Euler(0f, peek.x, 0f) * pitch;
     }
 }

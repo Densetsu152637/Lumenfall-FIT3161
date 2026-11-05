@@ -25,7 +25,7 @@ namespace Lumenfall.Quests
         public static readonly Vector2Int ReturnPortalCell = new Vector2Int(6, 1);
         // The portal sits beside Orio on the camera-facing east side, off the south approach used to talk to him.
         private const string OrioNpcId = "orio";
-        private static readonly Vector2Int FallbackOrioCell = new Vector2Int(8, 23);
+        private static readonly Vector2Int FallbackOrioCell = new Vector2Int(-12, 24);
         private static readonly Vector2Int ForestPortalOffsetFromOrio = Vector2Int.right;
         private static readonly Vector2Int[] ForestArrivalOffsets =
         {

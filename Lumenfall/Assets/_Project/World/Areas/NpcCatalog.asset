@@ -140,8 +140,8 @@ MonoBehaviour:
     displayName: Orio
     prefab: {fileID: 8662732533863260530, guid: 7695bbc380f84ae458a46d96a97e65d7, type: 3}
     mapId: westForest
-    x: 8
-    y: 23
+    x: -12
+    y: 24
     layerSymbol: o
     showWhenQuestCompleted: 
     hideWhenQuestCompleted: 

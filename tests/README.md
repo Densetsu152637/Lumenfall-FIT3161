@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 372 EditMode, twenty-two batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -43,7 +43,7 @@ The integrated suite contains 372 EditMode, twenty-two batch PlayMode and five g
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
 | Graphics shader stripping configuration | GraphicsShaderStrippingTests | 3 |
-| Authored world layout | AuthoredLayoutTests | 5 |
+| Authored world layout | AuthoredLayoutTests | 6 |
 | Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
@@ -57,7 +57,7 @@ The integrated suite contains 372 EditMode, twenty-two batch PlayMode and five g
 | Hidden interactions and collectible secrets | SecretsTests | 17 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, Rowan staging and restored blockers | SettlingInTests | 11 |
-| **Gameplay rules / EditMode** | | **372** |
+| **Gameplay rules / EditMode** | | **373** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

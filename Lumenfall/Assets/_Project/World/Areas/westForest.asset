@@ -15,8 +15,10 @@ MonoBehaviour:
   definition:
     schemaVersion: 1
     id: westForest
-    width: 38
-    height: 50
+    boundsMinX: -27
+    boundsMinY: -24
+    width: 65
+    height: 74
     tileFile: westForest.txt
     portalGlyph: X
     spawn:
@@ -66,10 +68,42 @@ MonoBehaviour:
     - id: F06
       name: Deep forest boundary
       rect:
-        x: 2
-        y: 20
-        width: 4
+        x: -26
+        y: 21
+        width: 9
+        height: 7
+      walkable: 1
+    - id: F07
+      name: Southern trail
+      rect:
+        x: 8
+        y: -13
+        width: 10
+        height: 14
+      walkable: 1
+    - id: F08
+      name: Mossy hollow
+      rect:
+        x: 0
+        y: -21
+        width: 14
+        height: 10
+      walkable: 1
+    - id: F10
+      name: Waystone clearing
+      rect:
+        x: -17
+        y: 21
+        width: 10
         height: 8
+      walkable: 1
+    - id: F09
+      name: Fern loop
+      rect:
+        x: -15
+        y: -19
+        width: 17
+        height: 40
       walkable: 1
     B01:
       x: 0

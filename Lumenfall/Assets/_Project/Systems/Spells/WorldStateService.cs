@@ -335,7 +335,9 @@ namespace Lumenfall.Spells
             {
                 if (item == null || string.IsNullOrWhiteSpace(item.id) || !ids.Add(item.id) || item.mapId != snapshot.mapId || item.size.x < 1 || item.size.y < 1 ||
                     float.IsNaN(item.elevation) || float.IsInfinity(item.elevation) || float.IsNaN(item.rotation) || float.IsInfinity(item.rotation)) return false;
-                if (definition != null && (item.cell.x < 0 || item.cell.y < 0 || (long)item.cell.x + item.size.x > definition.width || (long)item.cell.y + item.size.y > definition.height)) return false;
+                if (definition != null && (item.cell.x < definition.boundsMinX || item.cell.y < definition.boundsMinY ||
+                    (long)item.cell.x + item.size.x > (long)definition.boundsMinX + definition.width ||
+                    (long)item.cell.y + item.size.y > (long)definition.boundsMinY + definition.height)) return false;
             }
             HashSet<string> links = new HashSet<string>(StringComparer.Ordinal);
             string[] savedConnections = snapshot.connections ?? Array.Empty<string>();
