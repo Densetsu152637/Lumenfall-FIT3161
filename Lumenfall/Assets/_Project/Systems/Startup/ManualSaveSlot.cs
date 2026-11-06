@@ -14,20 +14,42 @@ namespace Lumenfall.Startup
         private const string CounterKey = "save.manual-slot";
 
         /// <summary>The linked slot id (such as <c>save-1</c>), or null when the run has no slot yet.</summary>
-        public static string Linked
+        public static string Linked => SlotFor(CounterKey);
+
+        /// <summary>
+        /// The manual slot this run came from: the one it was last started in, loaded from or saved to (counter
+        /// <c>save.origin-slot</c>). Unlike <see cref="Linked"/>, it survives loading the autosave, which drops the Quick
+        /// Save link but is still the same run. Null when the run never had a slot. Only the sequence break uses it, to
+        /// erase the file the player came from (<see cref="Lumenfall.Story.SequenceBreakEnding"/>).
+        /// </summary>
+        public static string Origin => SlotFor(OriginCounterKey);
+
+        private const string OriginCounterKey = "save.origin-slot";
+
+        private static string SlotFor(string counter)
         {
-            get
-            {
-                int number = GameEventManager.Instance?.Runtime?.GetCounter(CounterKey) ?? 0;
-                return number >= 1 && number <= GameSaveManager.ManualSlots.Length ? GameSaveManager.ManualSlots[number - 1] : null;
-            }
+            int number = GameEventManager.Instance?.Runtime?.GetCounter(counter) ?? 0;
+            return number >= 1 && number <= GameSaveManager.ManualSlots.Length ? GameSaveManager.ManualSlots[number - 1] : null;
         }
 
-        /// <summary>Links the run to a manual slot; any other value (including null) unlinks it.</summary>
+        /// <summary>
+        /// Links the run to a manual slot; any other value (including null) unlinks it. Linking also records the slot as
+        /// the run's <see cref="Origin"/>; unlinking leaves the origin as it was.
+        /// </summary>
         public static void Link(string slot)
         {
             GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
-            if (runtime != null) runtime.SetCounter(CounterKey, Array.IndexOf(GameSaveManager.ManualSlots, slot) + 1);
+            if (runtime == null) return;
+            int number = Array.IndexOf(GameSaveManager.ManualSlots, slot) + 1;
+            runtime.SetCounter(CounterKey, number);
+            if (number > 0) runtime.SetCounter(OriginCounterKey, number);
+        }
+
+        /// <summary>Sets the run's <see cref="Origin"/> directly (null clears it), as when putting it back after a reset.</summary>
+        public static void SetOrigin(string slot)
+        {
+            GameEventRuntime runtime = GameEventManager.Instance?.Runtime;
+            if (runtime != null) runtime.SetCounter(OriginCounterKey, Array.IndexOf(GameSaveManager.ManualSlots, slot) + 1);
         }
 
         public static bool IsManual(string slot) => Array.IndexOf(GameSaveManager.ManualSlots, slot) >= 0;
@@ -71,10 +93,12 @@ namespace Lumenfall.Startup
             }
 
             string previous = Linked;
+            string previousOrigin = Origin;
             Link(slot);
             if (!GameAutosave.SaveNow())
             {
                 Link(previous);
+                SetOrigin(previousOrigin);
                 error = GameSaveManager.Instance.LastError ?? "Could not refresh the autosave.";
                 return false;
             }
@@ -83,6 +107,7 @@ namespace Lumenfall.Startup
             if (!saves.Save(slot))
             {
                 Link(previous);
+                SetOrigin(previousOrigin);
                 error = saves.LastError ?? "Could not save to " + Label(slot) + ".";
                 return false;
             }

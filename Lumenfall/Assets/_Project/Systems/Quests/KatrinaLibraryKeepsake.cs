@@ -43,7 +43,6 @@ namespace Lumenfall.Quests
                 cell = StreamItemCell;
                 transform.position = world.CellToWorld(cell, 0f);
             }
-            Debug.Log($"Katrina marker '{name}' on {expectedMap}: grid {cell}, world {transform.position}.", this);
             if (!world.IsWithinBounds(cell))
             {
                 Debug.LogError($"Katrina quest marker '{name}' resolves outside {expectedMap} at {cell}.", this);

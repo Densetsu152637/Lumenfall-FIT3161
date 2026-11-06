@@ -75,8 +75,8 @@ namespace Lumenfall.Tests.GameEvents
                     if (bounds.Contains(next) && (!blocked.Contains(next) || portals.Contains(next)) && reached.Add(next)) queue.Enqueue(next);
             }
 
-            Assert.That(Cell(Find(forest, "P.F01")), Is.EqualTo(new Vector2Int(-24, 24)), "The deep forest portal ends the longer stone trail.");
-            foreach (Vector2Int cell in new[] { new Vector2Int(17, 48), new Vector2Int(-24, 24) })
+            Assert.That(Cell(Find(forest, "P.F01")), Is.EqualTo(new Vector2Int(-27, 25)), "The deep forest portal ends the longer stone trail.");
+            foreach (Vector2Int cell in new[] { new Vector2Int(17, 48), new Vector2Int(-27, 25) })
                 Assert.That(reached, Has.Member(cell), "Portal cell " + cell);
             foreach (Vector2Int cell in new[] { new Vector2Int(8, 23), new Vector2Int(11, 3), new Vector2Int(24, 6), new Vector2Int(27, 26), new Vector2Int(18, 22) })
                 Assert.That(reached, Has.Member(cell), "Story cell " + cell + " is still on the walkable paths.");

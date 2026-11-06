@@ -203,11 +203,17 @@ namespace Lumenfall.Startup
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (FindAnyObjectByType<StartupMenu>() == null)
-            {
-                GameObject menuObject = new GameObject("[StartupMenu]");
-                menuObject.AddComponent<StartupMenu>();
-            }
+            // After the sequence break the game opens on an empty screen instead; it opens the menu itself if the
+            // player is let back in (see SequenceBreakLockout).
+            if (Lumenfall.Story.SequenceBreakLockout.IsLockedOut) return;
+            Open();
+        }
+
+        /// <summary>Opens the title menu, with its opening sequence, without saving first.</summary>
+        public static void Open()
+        {
+            if (FindAnyObjectByType<StartupMenu>() != null) return;
+            new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
 
         /// <summary>

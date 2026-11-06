@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Lumenfall.Cutscenes;
 using Lumenfall.DataDriven;
 using Lumenfall.GameEvents;
@@ -16,10 +17,14 @@ namespace Lumenfall.Story
     /// secret without having heard the hints that lead to it (<see cref="KnowsTooMuch"/>; only someone who has played
     /// before would know to), or solving all six Chapter 1 puzzles before ever setting foot in the dormitory
     /// (<see cref="SolvedEverythingFirst"/>). Solving one puzzle early is fine. Once nothing else is on screen, a glitching
-    /// voice notices, then the screen cuts to black and silence and a voice that speaks in hands spells out that this
-    /// story cannot continue. The run is then reset to a new game and written over
-    /// its autosave and linked manual slot, and the game returns to the main menu. Loading that file plays the opening
-    /// again (<see cref="OpeningPendingFlag"/>), as if the game had never been played.
+    /// voice notices. A still of the game is taken, then the screen cuts to black and silence and a voice that speaks in
+    /// hands (the real Wingdings font, <see cref="WingdingsText"/>) has its say, ending in English. The still comes back,
+    /// cracks and shatters (<see cref="ScreenShatter"/>), and the game closes.
+    /// The moment the screen goes black, the run is reset to a new game and written over the autosave and the run's linked
+    /// manual slot, and the game is locked out (<see cref="SequenceBreakLockout"/>), so closing it
+    /// early escapes nothing. Every launch after that opens on an empty screen until Miki lets the player back in. Loading
+    /// the reset autosave then plays the opening again (<see cref="OpeningPendingFlag"/>), as if the game had never been
+    /// played.
     /// </summary>
     public sealed class SequenceBreakEnding : MonoBehaviour
     {
@@ -33,43 +38,62 @@ namespace Lumenfall.Story
         /// <summary>Saved in the reset file: loading it starts the New Game opening.</summary>
         public const string OpeningPendingFlag = "secret.sequence_break.opening_pending";
 
-        // The black screen's lines: when each appears, in seconds, and the text. The first and last are in hands; the
-        // second and third depend on how the order was broken.
-        private static readonly (float at, string text, bool hands)[] Lines =
+        /// <summary>How a black-screen line is shown.</summary>
+        internal enum LineStyle
         {
-            (1.5f, "☜☝✋☟ ✌☞✋☜ ☟✋✌☝", true),
-            (4.5f, "THE ORDER OF EVENTS HAS BEEN BROKEN.", false),
-            (8.0f, "{0}", false),
-            (11.5f, "{1}", false),
-            (15.5f, "THIS STORY CANNOT CONTINUE FROM HERE.", false),
-            (19.0f, "IT WILL HAVE TO BEGIN AGAIN.", false),
-            (22.0f, "...BEGIN AGAIN.", false),
-            (25.0f, "✋ ☜☟☝✌ ☞✋", true),
-        };
-        private static readonly string[] KnowledgeLines =
+            /// <summary>English, one letter at a time, slowly.</summary>
+            Slow,
+            /// <summary>Written in English, drawn in Wingdings, all at once.</summary>
+            Hands,
+            /// <summary>English, typed out.</summary>
+            Typed,
+            /// <summary>English, one letter at a time, each letter shaking on its own.</summary>
+            Shaky,
+        }
+
+        // The black screen's lines: when each appears, in seconds, the text, and how it is shown. The same for either cause.
+        internal static readonly (float at, string text, LineStyle style)[] Lines =
         {
-            "A SECRET, OPENED BEFORE IT COULD BE KNOWN.",
-            "YOU HAVE WALKED THIS PATH BEFORE. YOU REMEMBER WHAT YOU SHOULD NOT.",
+            (1.5f, "Interesting.", LineStyle.Slow),
+            (6.5f, "WE HAVE BEEN HERE BEFORE, HAVEN'T WE?", LineStyle.Hands),
+            (10.0f, "I KNOW WHAT YOU DID.", LineStyle.Hands),
+            (13.5f, "YOU ENJOY THIS, DON'T YOU?", LineStyle.Hands),
+            (17.0f, "A CRACK IS A REMARKABLE THING ISNT IT", LineStyle.Hands),
+            (20.5f, "NO MATTER HOW MUCH I CHANGE THIS WORLD", LineStyle.Hands),
+            (24.0f, "YOU WILL ALWAYS BREAK IT", LineStyle.Hands),
+            (27.5f, "TIME TO STOP BEING MYSTERIOUS", LineStyle.Hands),
+            (31.0f, "TIME FOR ME TO HAVE SOME FUN", LineStyle.Typed),
+            (35.0f, "BREAKING YOU", LineStyle.Shaky),
         };
-        private static readonly string[] EverythingLines =
+        internal const float LastLineFadesAt = 39.1f;
+        /// <summary>When the still of the game comes back and breaks.</summary>
+        internal const float ShatterAt = 39.5f;
+        private const float EndsAt = ShatterAt + ScreenShatter.Duration;
+
+        /// <summary>Letters per second for each style (Hands lines appear whole).</summary>
+        internal static float RevealRate(LineStyle style) => style switch
         {
-            "EVERY TASK, FINISHED BEFORE ANY WAS GIVEN.",
-            "A ROOM THAT WAS NEVER VISITED. A STUDENT WHO WAS NEVER EXPECTED.",
+            LineStyle.Slow => 4f,
+            LineStyle.Typed => 18f,
+            LineStyle.Shaky => 5f,
+            _ => float.PositiveInfinity,
         };
-        private const float LastLineFadesAt = 28.5f;
-        private const float EndsAt = 31f;
-        private const float RevealCharactersPerSecond = 18f;
 
         private static SequenceBreakEnding instance;
         private GameEventRuntime subscribed;
         private bool pending;
         private Cause cause;
         private bool glitchPlayed;
+        private bool capturing;
         private bool blackScreen;
+        private bool runReset;
         private float blackSince;
         private GridMover lockedMover;
+        private Texture2D still;
+        private ScreenShatter shatter;
         private GUIStyle lineStyle;
         private GUIStyle handsStyle;
+        private Font handsFont;
         private bool queuedOpening;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -130,7 +154,7 @@ namespace Lumenfall.Story
         /// <summary>Breaks the story for <paramref name="why"/>: the glitch plays once nothing else is on screen.</summary>
         public static void Begin(Cause why)
         {
-            if (instance == null || why == Cause.None || instance.blackScreen || instance.pending) return;
+            if (instance == null || why == Cause.None || instance.blackScreen || instance.pending || SequenceBreakLockout.InProgress) return;
             instance.cause = why;
             instance.pending = true;
         }
@@ -201,9 +225,27 @@ namespace Lumenfall.Story
 
             if (blackScreen)
             {
-                if (Time.unscaledTime - blackSince >= EndsAt) Finish();
+                if (!runReset)
+                {
+                    // The run is erased and the game locked out as soon as the screen is black, so closing the game
+                    // during it escapes nothing.
+                    runReset = true;
+                    ResetRun();
+                    SequenceBreakLockout.Arm();
+                }
+                // Time stands still behind the black, so the fresh world cannot play its own scenes or autosave over the
+                // reset. Everything here runs on unscaled time.
+                Time.timeScale = 0f;
+                float elapsed = Time.unscaledTime - blackSince;
+                if (elapsed >= ShatterAt && still != null)
+                {
+                    if (shatter == null) shatter = new ScreenShatter(still);
+                    shatter.Tick(elapsed - ShatterAt);
+                }
+                if (elapsed >= EndsAt) Finish();
                 return;
             }
+            if (capturing) return;
             if (!pending || !IsQuiet(runtime)) return;
             if (!glitchPlayed)
             {
@@ -215,38 +257,58 @@ namespace Lumenfall.Story
 
         private void BeginBlackScreen()
         {
+            capturing = true;
+            OverlayInputGate.Acquire(this);
+            lockedMover = GridMover.FindActive();
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
+            StartCoroutine(CaptureThenGoBlack());
+        }
+
+        // The game as it was the moment the voice fell silent: the picture that shatters at the end.
+        private IEnumerator CaptureThenGoBlack()
+        {
+            yield return new WaitForEndOfFrame();
+            try { still = ScreenCapture.CaptureScreenshotAsTexture(); }
+            catch (Exception exception) { Debug.LogWarning("The sequence break could not capture the screen: " + exception.Message); }
+            capturing = false;
             blackScreen = true;
             blackSince = Time.unscaledTime;
             // Silence: every sound stops at once.
             AudioListener.pause = true;
-            OverlayInputGate.Acquire(this);
-            lockedMover = GridMover.FindActive();
-            if (lockedMover != null) lockedMover.SetMovementLocked(this, true);
         }
 
         private void Finish()
         {
             blackScreen = false;
+            runReset = false;
             pending = false;
             glitchPlayed = false;
             cause = Cause.None;
+            shatter?.Dispose();
+            shatter = null;
+            if (still != null) Destroy(still);
+            still = null;
             if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
             OverlayInputGate.Release(this);
-            AudioListener.pause = false;
-            ResetRun();
-            StartupMenu.ReturnToMainMenu();
+            SequenceBreakLockout.QuitGame();
         }
 
         /// <summary>
-        /// Starts the run over as New Game does and writes the fresh start only to autosave. The linked manual slot remains
-        /// untouched until the player explicitly uses Quick Save or Save.
+        /// Starts the run over as New Game does, keeps its manual slot, and saves that fresh start over the autosave and
+        /// the manual slot the run came from (<see cref="ManualSaveSlot.Linked"/>, or <see cref="ManualSaveSlot.Origin"/>
+        /// for a run continued from the autosave), so the file the player had now holds the very beginning. This is the one
+        /// deliberate exception to automatic saving never writing a manual slot: the story erasing itself is the point. A
+        /// run that never had a slot has only the autosave to erase.
         /// </summary>
         private void ResetRun()
         {
             GameSaveManager saves = GameSaveManager.Instance;
             if (saves == null) return;
             string linked = ManualSaveSlot.Linked;
+            // The file the player came from: the linked slot, or, for a run continued from the autosave (which drops the
+            // Quick Save link), the slot that autosave came from.
+            string erased = linked ?? ManualSaveSlot.Origin;
             if (!saves.ResetState(() =>
             {
                 GameEventManager.Instance.ReloadDefinitions();
@@ -261,9 +323,16 @@ namespace Lumenfall.Story
             GameEventRuntime runtime = GameEventManager.Instance.Runtime;
             Subscribe(runtime);
             ManualSaveSlot.Link(linked);
+            // The fresh start still belongs to that file, so breaking the story again erases the same one.
+            ManualSaveSlot.SetOrigin(erased);
             runtime.SetFlag(OpeningPendingFlag, true);
             SaveSlotSummary.BeginNewGame();
             if (!saves.Save(GameSaveManager.AutosaveSlot)) Debug.LogWarning("The sequence-break reset could not write the autosave: " + saves.LastError);
+            if (erased != null)
+            {
+                if (saves.Save(erased)) SaveSlotSummary.RequestThumbnailRefresh(erased);
+                else Debug.LogWarning($"The sequence-break reset could not write {erased}: " + saves.LastError);
+            }
             // Nothing has been played since this fresh start, so returning to the menu does not save again.
             GameAutosave.RestartTimer();
         }
@@ -282,31 +351,67 @@ namespace Lumenfall.Story
             int previousDepth = GUI.depth;
             GUI.depth = -3000;
             Color previous = GUI.color;
+            float elapsed = Time.unscaledTime - blackSince;
+            if (elapsed >= ShatterAt && shatter != null)
+            {
+                if (Event.current.type == EventType.Repaint) shatter.Draw(elapsed - ShatterAt);
+                GUI.depth = previousDepth;
+                return;
+            }
             GUI.color = Color.black;
             GUI.DrawTexture(new Rect(0f, 0f, UiScale.Width, UiScale.Height), Texture2D.whiteTexture);
-            if (lineStyle == null)
-            {
-                lineStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 26, wordWrap = true };
-                handsStyle = new GUIStyle(lineStyle) { fontSize = 34 };
-            }
-            float elapsed = Time.unscaledTime - blackSince;
-            // One line at a time, typed out slowly, trembling slightly, and gone before the next.
+            EnsureStyles();
+            // One line at a time, trembling slightly, and gone before the next.
             for (int i = 0; i < Lines.Length; i++)
             {
                 float start = Lines[i].at;
                 float end = i + 1 < Lines.Length ? Lines[i + 1].at - 0.4f : LastLineFadesAt;
                 if (elapsed < start || elapsed > end) continue;
-                string[] causeLines = cause == Cause.Knowledge ? KnowledgeLines : EverythingLines;
-                string text = Lines[i].text == "{0}" ? causeLines[0] : Lines[i].text == "{1}" ? causeLines[1] : Lines[i].text;
-                int shown = Lines[i].hands ? text.Length : Mathf.Min(text.Length, Mathf.FloorToInt((elapsed - start) * RevealCharactersPerSecond));
+                string text = Lines[i].text;
+                LineStyle style = Lines[i].style;
+                float rate = RevealRate(style);
+                int shown = float.IsInfinity(rate) ? text.Length : Mathf.Min(text.Length, Mathf.FloorToInt((elapsed - start) * rate));
                 float alpha = Mathf.Clamp01((end - elapsed) / 0.6f) * Mathf.Clamp01((elapsed - start) / 0.4f);
                 GUI.color = new Color(1f, 1f, 1f, alpha);
-                Vector2 tremble = new Vector2(UnityEngine.Random.Range(-1.2f, 1.2f), UnityEngine.Random.Range(-1.2f, 1.2f));
-                Rect rect = new Rect(UiScale.Width * 0.1f + tremble.x, UiScale.Height * 0.5f - 60f + tremble.y, UiScale.Width * 0.8f, 120f);
-                GUI.Label(rect, text.Substring(0, shown), Lines[i].hands ? handsStyle : lineStyle);
+                Rect rect = new Rect(UiScale.Width * 0.1f, UiScale.Height * 0.5f - 60f, UiScale.Width * 0.8f, 120f);
+                if (style == LineStyle.Shaky)
+                {
+                    DrawShaking(rect, text, shown);
+                    continue;
+                }
+                rect.position += new Vector2(UnityEngine.Random.Range(-1.2f, 1.2f), UnityEngine.Random.Range(-1.2f, 1.2f));
+                if (style == LineStyle.Hands)
+                    GUI.Label(rect, handsFont != null ? WingdingsText.ForFont(handsFont, text) : WingdingsText.AsSymbols(text), handsStyle);
+                else GUI.Label(rect, text.Substring(0, shown), lineStyle);
             }
             GUI.color = previous;
             GUI.depth = previousDepth;
+        }
+
+        // Each letter where it would sit in the whole line, shaking on its own.
+        private void DrawShaking(Rect rect, string text, int shown)
+        {
+            float total = lineStyle.CalcSize(new GUIContent(text)).x;
+            float left = rect.center.x - total * 0.5f;
+            float height = lineStyle.CalcSize(new GUIContent("X")).y;
+            for (int c = 0; c < shown; c++)
+            {
+                if (text[c] == ' ') continue;
+                float x = left + lineStyle.CalcSize(new GUIContent(text.Substring(0, c))).x - lineStyle.padding.horizontal;
+                Vector2 shake = new Vector2(UnityEngine.Random.Range(-3f, 3f), UnityEngine.Random.Range(-3f, 3f));
+                GUIContent letter = new GUIContent(text[c].ToString());
+                float width = lineStyle.CalcSize(letter).x;
+                GUI.Label(new Rect(x + shake.x, rect.center.y - height * 0.5f + shake.y, width + 2f, height), letter, lineStyle);
+            }
+        }
+
+        private void EnsureStyles()
+        {
+            if (lineStyle != null) return;
+            lineStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 26, wordWrap = true };
+            handsFont = WingdingsText.Font;
+            handsStyle = new GUIStyle(lineStyle) { fontSize = 30 };
+            if (handsFont != null) handsStyle.font = handsFont;
         }
 
         // Nothing else on screen, so the glitch follows the puzzle's own wrap-up rather than interrupting it.

@@ -1,6 +1,6 @@
 # Startup menu and shared settings
 
-`StartupMenu` bootstraps after scene load and pauses gameplay until Start or a successful Load completes its closing transition. It owns an `OverlayInputGate` lease, disables active gameplay input and dialogue overlays, and restores its previous time scale and input state when destroyed. Generated textures and event subscriptions are released with their owner.
+`StartupMenu` bootstraps after scene load (unless the sequence break has locked the game out, in which case `SequenceBreakLockout` opens it with `StartupMenu.Open` once the player is let back in) and pauses gameplay until Start or a successful Load completes its closing transition. It owns an `OverlayInputGate` lease, disables active gameplay input and dialogue overlays, and restores its previous time scale and input state when destroyed. Generated textures and event subscriptions are released with their owner.
 
 ## Settings
 

@@ -218,6 +218,64 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheBlackScreenSpeaksInOrderAndEndsBeforeTheScreenBreaks()
+        {
+            var lines = SequenceBreakEnding.Lines;
+            Assert.That(lines.First().text, Is.EqualTo("Interesting."));
+            Assert.That(lines.Last().text, Is.EqualTo("BREAKING YOU"));
+            Assert.That(lines.Last().style, Is.EqualTo(SequenceBreakEnding.LineStyle.Shaky));
+            Assert.That(lines.Count(line => line.style == SequenceBreakEnding.LineStyle.Hands), Is.EqualTo(7));
+            for (int i = 1; i < lines.Length; i++)
+                Assert.That(lines[i].at, Is.GreaterThan(lines[i - 1].at + 0.4f), lines[i].text + " comes after the line before it.");
+            foreach (var line in lines)
+            {
+                float rate = SequenceBreakEnding.RevealRate(line.style);
+                if (float.IsInfinity(rate)) continue;
+                int index = System.Array.IndexOf(lines, line);
+                float end = index + 1 < lines.Length ? lines[index + 1].at - 0.4f : SequenceBreakEnding.LastLineFadesAt;
+                Assert.That(line.at + line.text.Length / rate, Is.LessThan(end), line.text + " is fully written before it fades.");
+            }
+            Assert.That(SequenceBreakEnding.LastLineFadesAt, Is.LessThan(SequenceBreakEnding.ShatterAt));
+        }
+
+        [Test]
+        public void HandLinesFallBackToWingdingsOwnSymbols()
+        {
+            Assert.That(WingdingsText.AsSymbols("AEIOU"), Is.EqualTo("✌☜✋⚐🕆"));
+            Assert.That(WingdingsText.AsSymbols("we, too?"), Is.EqualTo("🕈☜, ❄⚐⚐?"), "Lower case reads as capitals; marks stay.");
+            Assert.That(WingdingsText.ForFont(null, "HI"), Is.EqualTo("HI"));
+        }
+
+        [Test]
+        public void MikiOnlyLetsThePlayerBackAfterTwoYeses()
+        {
+            var script = SequenceBreakLockout.Script;
+            string[] ids = script.Select(entry => entry.id).ToArray();
+            Assert.That(ids.Distinct().Count(), Is.EqualTo(ids.Length), "Every line has its own id.");
+            foreach (var entry in script)
+                foreach (string step in SequenceBreakLockout.StepsFrom(entry))
+                    Assert.That(step == SequenceBreakLockout.QuitStep || step == SequenceBreakLockout.PlayStep || ids.Contains(step), Is.True,
+                        entry.id + " leads to " + step);
+
+            // Follow every path: each ends in closing the game or playing, and playing takes exactly two yeses.
+            var questions = script.Where(entry => entry.yes != null).ToArray();
+            Assert.That(questions.Length, Is.EqualTo(2), "Play again? Then: give something in return?");
+            var endings = new List<(string end, int yeses)>();
+            void Walk(string id, int yeses, int depth)
+            {
+                Assert.That(depth, Is.LessThan(50), "The conversation never loops.");
+                if (id == SequenceBreakLockout.QuitStep || id == SequenceBreakLockout.PlayStep) { endings.Add((id, yeses)); return; }
+                var entry = script.Single(candidate => candidate.id == id);
+                if (entry.yes == null) { Walk(entry.next, yeses, depth + 1); return; }
+                Walk(entry.yes, yeses + 1, depth + 1);
+                Walk(entry.no, yeses, depth + 1);
+            }
+            Walk(script[0].id, 0, 0);
+            Assert.That(endings.Where(e => e.end == SequenceBreakLockout.PlayStep).Select(e => e.yeses), Is.EqualTo(new[] { 2 }));
+            Assert.That(endings.Count(e => e.end == SequenceBreakLockout.QuitStep), Is.EqualTo(2), "Either no closes the game.");
+        }
+
+        [Test]
         public void FinishingASecretWithoutItsHintsMeansYouKnowTooMuch()
         {
             GameEventCatalog events = Events();

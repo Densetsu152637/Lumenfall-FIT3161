@@ -36,7 +36,7 @@ namespace Lumenfall.EditorTools
         // The expanded grid: x -27..37, z -24..49. The original map was x 0..37, z 0..49.
         private static readonly RectInt Bounds = new RectInt(-27, -24, 65, 74);
         private static readonly RectInt OriginalBounds = new RectInt(0, 0, 38, 50);
-        private static readonly Vector2Int DeepForestPortalCell = new Vector2Int(-24, 24);
+        private static readonly Vector2Int DeepForestPortalCell = new Vector2Int(-27, 25);
 
         // The surround terrain is square so that its 0.2 m hole texels line up with the original terrain's edges,
         // which sit at x 0..38 and z -1..49 (40 and 39 m from the surround's corner).
