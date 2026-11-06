@@ -164,17 +164,17 @@ namespace Lumenfall.Quests
             fallTime = 0f;
             fallReturned = false;
             fallStart = player.transform.position;
-            player.SetMovementLocked(true);
+            player.SetMovementLocked(this, true);
             if (effects != null) effects.PlayFall(fallStart);
         }
 
         // The player drops out of sight with the screen fading to black, comes back at the entrance with the switches
-        // dark, and the screen fades back in. Dialogue and menus also lock movement, so the lock is reasserted each frame.
+        // dark, and the screen fades back in. The room holds its own movement lock for the whole fall.
         private void AdvanceFall(float deltaTime)
         {
             if (fallTime < 0f) return;
             if (subscribedPlayer == null) { FinishFall(); return; }
-            subscribedPlayer.SetMovementLocked(true);
+            subscribedPlayer.SetMovementLocked(this, true);
             fallTime += deltaTime;
             if (!fallReturned)
             {
@@ -189,7 +189,7 @@ namespace Lumenfall.Quests
             fadeAlpha = 1f - Mathf.Clamp01((fallTime - FallHoldSeconds) / FallFadeInSeconds);
             if (fadeAlpha > 0f) return;
             fallTime = -1f;
-            subscribedPlayer.SetMovementLocked(false);
+            subscribedPlayer.SetMovementLocked(this, false);
         }
 
         private void ReturnFromFall()
@@ -211,7 +211,7 @@ namespace Lumenfall.Quests
             if (!fallReturned) ReturnFromFall();
             fallTime = -1f;
             fadeAlpha = 0f;
-            if (subscribedPlayer != null) subscribedPlayer.SetMovementLocked(false);
+            if (subscribedPlayer != null) subscribedPlayer.SetMovementLocked(this, false);
         }
 
         // The relic and the switches are registered each time the area activates so the loader's pending save

@@ -169,5 +169,42 @@ namespace Lumenfall.Tests.GameEvents
                 Assert.That(chat.nodes.Single(node => node.id == reminder).text.Replace("Sure! ", string.Empty),
                     Is.EqualTo(tour.nodes.Single(node => node.id == arrival).text), reminder);
         }
+
+        [Test]
+        public void KitsTourTurnsTheCameraToEachPlaceItNames()
+        {
+            // Playtesters could not find the buildings Kit named, so each line turns the camera to the door it names.
+            TextAsset arrivalAsset = Resources.Load<TextAsset>("GameEvents/campus_arrival");
+            Assert.That(GameEventCatalog.TryParseJson(arrivalAsset.text, arrivalAsset.name, out GameEventDatabaseDefinition arrival, out string error), Is.True, error);
+            TextAsset chatAsset = Resources.Load<TextAsset>("GameEvents/quest_npc_dialogue");
+            Assert.That(GameEventCatalog.TryParseJson(chatAsset.text, chatAsset.name, out GameEventDatabaseDefinition chats, out error), Is.True, error);
+            Assert.That(new GameEventCatalog(new[] { arrival }).TryGetDialogue("kit_lay_of_the_land", out DialogueDefinition tour), Is.True);
+            Assert.That(new GameEventCatalog(new[] { chats }).TryGetDialogue("ambient_courtyard_student", out DialogueDefinition reminder), Is.True);
+
+            var expected = new Dictionary<string, string>
+            {
+                { "main_building", "area:B03.Ground" }, { "library", "area:B04.Ground" }, { "workshop", "area:B02.Ground" },
+                { "dormitory", "area:B01.Ground" }, { "forest", "area:westForest" }, { "headmistress", "npc:prof_bann" },
+            };
+            foreach (KeyValuePair<string, string> line in expected)
+                Assert.That(tour.nodes.Single(node => node.id == line.Key).metadata.GetValue("cameraFocus"), Is.EqualTo(line.Value), line.Key);
+            foreach ((string chatNode, string tourNode) in new[] { ("academy", "main_building"), ("library", "library"), ("workshop", "workshop"), ("dormitory", "dormitory") })
+                Assert.That(reminder.nodes.Single(node => node.id == chatNode).metadata.GetValue("cameraFocus"),
+                    Is.EqualTo(expected[tourNode]), "Kit's reminder turns the camera the same way: " + chatNode);
+
+            // Every place named is real: an area some campus door leads to, or a campus NPC.
+            WorldAreaAsset campus = UnityEditor.AssetDatabase.LoadAssetAtPath<WorldAreaAsset>("Assets/_Project/World/Areas/campus.asset");
+            HashSet<string> doors = new HashSet<string>(campus.portals.Where(p => p != null && p.destination != null && p.destination.area != null)
+                .Select(p => p.destination.area.definition.id));
+            foreach (DialogueNodeDefinition node in tour.nodes.Concat(reminder.nodes))
+            {
+                string focus = node.metadata.GetValue("cameraFocus");
+                if (string.IsNullOrEmpty(focus)) continue;
+                if (focus.StartsWith("area:")) Assert.That(doors, Has.Member(focus.Substring(5)), node.id + " names a door on campus.");
+                else Assert.That(focus, Is.EqualTo("npc:prof_bann"), node.id);
+                Assert.That(node.text, Does.Not.Contain(" above ").And.Not.Contain(" below "),
+                    node.id + ": with the camera pointing, Kit says \"over there\" instead of screen directions that turn with the camera.");
+            }
+        }
     }
 }

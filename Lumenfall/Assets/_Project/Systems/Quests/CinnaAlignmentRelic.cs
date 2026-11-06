@@ -265,7 +265,8 @@ namespace Lumenfall.Quests
             bool delivered = CinnaIceTrialRoom.RelicDelivered();
             // Keep the saved cell for map transitions and save recovery, but remove every ground presence while carried.
             // Disabling relicView invokes GridObstacle.OnDisable, immediately freeing the tile.
-            bool groundPresent = campusRegistered && !held;
+            // Its grid goes when a scene unloads (the relic outlives scenes), and with it any ground to stand on.
+            bool groundPresent = campusRegistered && !held && grid != null;
             if (relicView.activeSelf != groundPresent) relicView.SetActive(groundPresent);
             // Effects started by a landing this frame begin ticking next frame.
             bool pulseRunning = pulseTime >= 0f, ringRunning = ringTime >= 0f;

@@ -125,12 +125,14 @@ namespace Lumenfall.Quests
             runtime.TriggerEvent(CompletionEventId);
         }
 
-        // Dialogue and menus also lock movement, so the lock is reasserted each frame until the fade-in ends.
+        // Held under its own owner, so dialogue or a menu closing during the fade cannot release it, and it cannot release theirs.
+        private static readonly object MovementLockOwner = new object();
+
         private static void LockPlayer(bool locked)
         {
             GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
             GridMover player = input == null ? null : input.GetComponent<GridMover>();
-            if (player != null) player.SetMovementLocked(locked);
+            if (player != null) player.SetMovementLocked(MovementLockOwner, locked);
         }
 
         private void OnGUI()

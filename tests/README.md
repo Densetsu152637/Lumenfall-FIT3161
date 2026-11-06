@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 398 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -30,8 +30,8 @@ The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five g
 | Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
 | Authored quest dialogue references | QuestDialogueContentTests | 4 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
-| Quest hint visibility and dialogue input gating | QuestHintOverlayTests | 10 |
-| Spell state, rejected-input feedback and world save round trips | SpellWorldStateTests | 8 |
+| Quest hint visibility, dialogue input gating, waypoints, side quests and room-key progress | QuestHintOverlayTests | 13 |
+| Spell state, rejected-input feedback, gap-free spell keys and world save round trips | SpellWorldStateTests | 10 |
 | Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 8 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
@@ -43,12 +43,12 @@ The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five g
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
 | Graphics shader stripping configuration | GraphicsShaderStrippingTests | 3 |
-| Authored world layout | AuthoredLayoutTests | 6 |
+| Authored world layout, open forest ground, rune dais spacing and plaza collision | AuthoredLayoutTests | 8 |
 | Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking | CutsceneSequenceTests | 15 |
 | Opening forest story | LateToOrientationTests | 4 |
-| Campus introduction | LayOfTheLandTests | 6 |
+| Campus introduction and the tour's camera turning to each place | LayOfTheLandTests | 7 |
 | Collectible discovery | MiscCollectiblesTests | 3 |
 | NPC introductions | NpcIntroductionsTests | 7 |
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
@@ -57,7 +57,11 @@ The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five g
 | Hidden interactions and collectible secrets | SecretsTests | 17 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, Rowan staging and restored blockers | SettlingInTests | 11 |
-| **Gameplay rules / EditMode** | | **373** |
+| Movement locks, the menu's and project's time scale, wayfinding routes, quest banners and tips | PlaytestFeedbackTests | 7 |
+| Follow camera alignment, follow lag and peeking | CameraFollowTests | 4 |
+| Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
+| Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
+| **Gameplay rules / EditMode** | | **398** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
@@ -65,7 +69,8 @@ The integrated suite contains 373 EditMode, twenty-two batch PlayMode and five g
 | Dialogue pointer gating, runtime replacement and owned cleanup | DialogueSettingsUiPlayModeTests | 1 |
 | Wheel casts, sibling ownership and closing-frame input consumption | SpellWheelCastingPlayModeTests | 2 |
 | Test bootstrap and native audio suppression | AudioPlaybackPlayModeTests | 1 |
-| **Batch PlayMode** | | **22** |
+| Held diagonals sliding along walls, and ice keeping to the grid | WallSlidePlayModeTests | 2 |
+| **Batch PlayMode** | | **24** |
 | Pointer ribbon interaction and screenshots (graphical only) | OptionsPanelPlayModeTests | **1** |
 | Localized dialogue, reveal speed, large text and high-contrast screenshots (graphical only) | DialogueSettingsUiPlayModeTests | **1** |
 | Actual Polytope materials respond to additional lights in Forward and ForwardPlus; Frost materials respond to their supported main light | ShaderAdditionalLightsValidation | **2** |
@@ -150,7 +155,7 @@ python scripts/verify_gameplay_tests.py --graphical --artifacts <fresh-graphical
 ```
 
 The graphical inventory has exactly five cases; the batch inventory contains the
-other twenty-two PlayMode cases. The shader fixtures render into 128-by-128 targets
+other twenty-four PlayMode cases. The shader fixtures render into 128-by-128 targets
 and compare the captured central 80-by-80 pixel region. The five referenced
 Polytope materials are checked for additional-light pixel deltas in configured
 Forward and ForwardPlus pipelines;

@@ -72,7 +72,8 @@ namespace Lumenfall.Tests.GameEvents
             runtime.SetFlag("spell.unlocked.Weave", true); runtime.SetFlag("spell.unlocked.Ampere", true);
 
             Assert.That(caster.Cast(SpellId.Ampere, "relic.near", Vector2Int.up), Is.False, "Ampere cannot charge a conductor.");
-            Assert.That(caster.LastCastFeedback, Does.Contain("Weave"));
+            Assert.That(state.TryGetObject("relic.near", out WorldObjectSnapshot conductor) && !SpellCaster.CanTarget(SpellId.Ampere, conductor), Is.True,
+                "A relay answers only to Weave, as in the game, where the input cast names Weave instead.");
             state.SetProperty("relic.near", x => x.powered = true);
             Assert.That(Powered("relic.near"), Is.False, "Conductor power is derived from cables, not stored.");
 

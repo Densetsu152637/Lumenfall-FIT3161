@@ -212,11 +212,14 @@ namespace Lumenfall.Cutscenes
             return input == null ? null : input.GetComponent<GridMover>();
         }
 
-        // Dialogue also locks and then unlocks movement, so the lock is reasserted every frame until the cutscene ends.
+        /// <summary>The cutscene's own movement-lock owner, so it never releases a lock held by dialogue or a menu.</summary>
+        internal static readonly object MovementLockOwner = new object();
+
+        // Reasserted every frame until the cutscene ends, since a walk lifts it while it moves the player.
         private static void LockPlayer(bool locked)
         {
             GridMover player = Player();
-            if (player != null) player.SetMovementLocked(locked);
+            if (player != null) player.SetMovementLocked(MovementLockOwner, locked);
         }
 
         // An open dialogue frames its own speakers; the cutscene's framing resumes once it closes.
@@ -339,9 +342,9 @@ namespace Lumenfall.Cutscenes
             walk = null;
             if (!portal.ContainsCell(player.CurrentCell)) player.TryTeleportTo(player.World, cell);
             // Portals refuse a locked player; the lock returns on the next frame.
-            player.SetMovementLocked(false);
+            player.SetMovementLocked(MovementLockOwner, false);
             bool entered = portal.TryEnter(player);
-            player.SetMovementLocked(true);
+            player.SetMovementLocked(MovementLockOwner, true);
             return entered;
         }
 

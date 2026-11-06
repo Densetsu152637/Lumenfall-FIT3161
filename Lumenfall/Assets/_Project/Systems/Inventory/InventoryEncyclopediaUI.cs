@@ -528,7 +528,7 @@ namespace Lumenfall.Inventory
                 spellsShown = true;
                 string description = SpellDescriptions.TryGetValue(spell, out string authoredDescription)
                     ? authoredDescription : "A learned spell.";
-                DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIconResourcePath(spell));
+                DrawInventoryEntry(SpellWheelView.DisplayName(spell), description, SpellCaster.GetIcon(spell));
             }
             if (!spellsShown) GUILayout.Label("No spells unlocked yet.", skin.Muted);
         }
@@ -554,10 +554,12 @@ namespace Lumenfall.Inventory
         }
 
         /// <summary>Shared journal row used by key items and spells: icon left, gold title and description right.</summary>
-        private void DrawInventoryEntry(string entryName, string description, string iconResourcePath)
+        private void DrawInventoryEntry(string entryName, string description, string iconResourcePath) =>
+            DrawInventoryEntry(entryName, description, string.IsNullOrWhiteSpace(iconResourcePath) ? null : Resources.Load<Texture2D>(iconResourcePath));
+
+        private void DrawInventoryEntry(string entryName, string description, Texture2D icon)
         {
             GUILayout.BeginHorizontal(skin.Entry);
-            Texture2D icon = string.IsNullOrWhiteSpace(iconResourcePath) ? null : Resources.Load<Texture2D>(iconResourcePath);
             if (icon != null)
             {
                 GUILayout.Label(icon, GUIStyle.none, GUILayout.Width(40f), GUILayout.Height(40f));

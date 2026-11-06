@@ -215,10 +215,30 @@ namespace Lumenfall.GridMovement
 
         private void TryMoveHeldDirection()
         {
-            if (!mover.TryMove(heldDirection))
+            if (!mover.TryMove(heldDirection) && !TrySlideAlongWall(heldDirection))
             {
                 nextRepeatTime = Time.unscaledTime + repeatInterval;
             }
+        }
+
+        // A diagonal held into a wall or round a corner carries on along whichever axis is open, instead of stopping
+        // dead against it. Ice keeps its strict cardinal rule, so a held diagonal never launches a slide there.
+        private bool TrySlideAlongWall(Vector2Int direction)
+        {
+            if (direction.x == 0 || direction.y == 0 || mover.World == null || mover.World.IsIce(mover.CurrentCell)) return false;
+            Vector2Int horizontal = new Vector2Int(direction.x, 0);
+            Vector2Int vertical = new Vector2Int(0, direction.y);
+            if (mover.World.IsIce(mover.CurrentCell + horizontal) || mover.World.IsIce(mover.CurrentCell + vertical)) return false;
+            return mover.TryMove(horizontal) || mover.TryMove(vertical);
+        }
+
+        // Leaving the game window drops key-up events, so a direction held at that moment must not stay held on return.
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus) return;
+            heldDirection = Vector2Int.zero;
+            bufferedUntil = float.NegativeInfinity;
+            waitForRelease = false;
         }
 
         // Keyboard movement comes only from the player's key bindings, so a rebound key stops moving the player;

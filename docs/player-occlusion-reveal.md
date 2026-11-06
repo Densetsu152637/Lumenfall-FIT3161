@@ -14,7 +14,11 @@ clear and the edge fades smoothly in coverage. It is not alpha-blended glass.
 - Depth Padding: vegetation must be in front of the focus plane by this distance.
 - View Offset: camera-right / camera-up offset in world units. SampleScene uses
   (0, 0), centering the reveal on the Player plus Target Offset without a right/up shift.
-- SampleScene overrides Radius to 0.4 and Feather to 0.175 (2.5 times the original).
+- SampleScene overrides Radius to 0.34 and Feather to 0.16 (Center Opacity 0). This keeps the original
+  0.4/0.175 look, whose wide dithered fade suits the forest, but slightly smaller: playtesters found the
+  full-size hole made nearby trees vanish while they still blocked movement. Smaller holes (0.22–0.24) and
+  a partly opaque centre (0.35) were tried and rejected: the stipple hid the player in dense foliage and
+  lost the forest effect.
 - Disable the component to restore normal rendering. No gameplay state changes.
 
 ## Scope and limitations

@@ -28,16 +28,16 @@ The F04 glade is too small for the dais, so it stands in the deep forest area (`
 
 The dais is styled as a forest shrine so it fits the area. It has a moss floor inside a ring of old stone, ringed by small standing stones, moss tufts and red-capped mushrooms. The weathered discs carry lichen and a carved arrow rune that glows firefly-gold. The fixed notch each rune must point at is teal. The sockets are tree stumps topped with a glowing firefly orb, which brightens when the player is in range, and vines trace which discs each socket turns. A few fireflies drift above the dais. Solved runes and the floor turn leaf-green. All of it is built from primitives at runtime with a fixed seed, has no colliders and never blocks a tile.
 
-Cells below are in the deep forest.
+Cells below are in the deep forest. After playtesters found the sockets too close together to tell which one Rotara would hit, the dais was spread to twice its spacing around the same centre (each socket and disc twice as far out, the vines lengthened to match, the stone ring, moss floor and fireflies 1.6 times wider). The sockets now sit at least two tiles from every other socket, so standing beside one never also puts another in reach.
 
 | Object | Cell | Links or start | Spell target |
 | --- | --- | --- | --- |
-| `mechanism.orio.disc.northwest` | `(5,12)` | starts at 90 | No (`rotara-disc`, not spell-compatible) |
-| `mechanism.orio.disc.northeast` | `(9,12)` | starts at 180 | No |
-| `mechanism.orio.disc.south` | `(7,9)` | starts at 270 | No |
-| `mechanism.orio.socket.north` | `(7,12)` | northwest, northeast | Yes (`rotara`) |
-| `mechanism.orio.socket.west` | `(5,10)` | northwest, south | Yes |
-| `mechanism.orio.socket.east` | `(9,10)` | northeast, south | Yes |
+| `mechanism.orio.disc.northwest` | `(3,13)` | starts at 90 | No (`rotara-disc`, not spell-compatible) |
+| `mechanism.orio.disc.northeast` | `(11,13)` | starts at 180 | No |
+| `mechanism.orio.disc.south` | `(7,7)` | starts at 270 | No |
+| `mechanism.orio.socket.north` | `(7,13)` | northwest, northeast | Yes (`rotara`) |
+| `mechanism.orio.socket.west` | `(3,9)` | northwest, south | Yes |
+| `mechanism.orio.socket.east` | `(11,9)` | northeast, south | Yes |
 | `mechanism.orio.rotate` (centre) | `(7,11)` | all three discs | Yes |
 
 Every disc targets rotation 0, with its rune pointing north at a fixed teal notch. The authored starting angles make the intended answer north 3, centre 2, west 2 and east 1 presses. Other press orders also solve it, and four presses on one socket return its discs to where they started, which keeps trial and error recoverable without a reset control. Socket links apply only in the deep forest, so the same ids on any other map never turn the discs. Discs reject direct casts, so a disc can't be turned on its own.

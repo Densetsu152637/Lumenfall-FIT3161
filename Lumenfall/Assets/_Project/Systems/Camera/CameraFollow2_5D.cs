@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Accessibility;
+using Lumenfall.CameraEffects;
 using Lumenfall.Cutscenes;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
@@ -13,6 +14,7 @@ using Lumenfall.Startup;
 /// During a conversation it eases in to frame a requested focus point instead.
 /// Holding the left mouse button and dragging (or the gamepad right stick) swings the view a little around the
 /// target to peek past walls and through doorways; it eases back to the fixed angle on release.
+/// The options menu's Camera angle (<see cref="CameraAngleSetting"/>) turns the offset 45° to the original diagonal view.
 /// </summary>
 public class CameraFollow2_5D : MonoBehaviour
 {
@@ -21,8 +23,9 @@ public class CameraFollow2_5D : MonoBehaviour
     [SerializeField] private Transform target;
 
     [Header("Position")]
-    [Tooltip("The camera's world-space position relative to the target. Keeping x at 0 places the camera due south " +
-             "of the target, so the grid's axes line up with the screen and W/A/S/D move up/left/down/right on screen.")]
+    [Tooltip("The camera's world-space position relative to the target for the Straight camera angle. Keeping x at 0 " +
+             "places the camera due south of the target, so the grid's axes line up with the screen and W/A/S/D move " +
+             "up/left/down/right on screen. The Diagonal angle turns this offset 45° around the target.")]
     [SerializeField] private Vector3 offset =
         new Vector3(0f, 10f, -11.3f);
 
@@ -31,9 +34,10 @@ public class CameraFollow2_5D : MonoBehaviour
         new Vector3(0f, 1.5f, 0f);
 
     [Header("Smoothing")]
-    [Tooltip("The approximate time required for the camera to reach its target position.")]
+    [Tooltip("The approximate time required for the camera to reach its target position. Kept well under one walking " +
+             "step (0.15 s) so the view does not trail the player and then swing after them.")]
     [Min(0f)]
-    [SerializeField] private float smoothTime = 0.15f;
+    [SerializeField] private float smoothTime = 0.07f;
 
     [Tooltip("The approximate time taken to ease into and out of conversation framing.")]
     [Min(0f)]
@@ -84,8 +88,16 @@ public class CameraFollow2_5D : MonoBehaviour
         if (reducedMotion == value) return;
         reducedMotion = value;
         currentVelocity = Vector3.zero;
-        if (target != null) transform.position = target.position + offset;
+        if (target != null) transform.position = target.position + RestOffset;
     }
+
+    // The offset for the chosen camera angle, before any peek.
+    private Vector3 RestOffset => Quaternion.Euler(0f, CameraAngleSetting.Yaw, 0f) * offset;
+
+    // The current turn of the offset in degrees, eased toward the chosen camera angle so switching it swings the view
+    // round instead of cutting. NaN until the first frame, which starts at the chosen angle.
+    private float angleYaw = float.NaN;
+    private float angleYawVelocity;
 
     // How far the camera has eased into conversation framing, from 0 to 1.
     private float conversationBlend;
@@ -132,7 +144,7 @@ public class CameraFollow2_5D : MonoBehaviour
             return false;
         }
 
-        position = target.position + offset;
+        position = target.position + RestOffset;
         focusPoint = target.position + focusOffset;
         return true;
     }
@@ -168,11 +180,25 @@ public class CameraFollow2_5D : MonoBehaviour
         Vector3 anchor = Vector3.Lerp(target.position, conversationFocus, conversationBlend);
         float distanceScale = Mathf.Lerp(1f, conversationZoom, conversationBlend);
 
+        // Swing toward the chosen camera angle. Unscaled time lets the change show behind a paused settings menu.
+        float restYaw = CameraAngleSetting.Yaw;
+        if (float.IsNaN(angleYaw) || reducedMotion)
+        {
+            angleYaw = restYaw;
+            angleYawVelocity = 0f;
+        }
+        else
+        {
+            angleYaw = Mathf.SmoothDampAngle(angleYaw, restYaw, ref angleYawVelocity, conversationBlendTime,
+                Mathf.Infinity, Time.unscaledDeltaTime);
+        }
+        Vector3 viewOffset = Quaternion.Euler(0f, angleYaw, 0f) * offset;
+
         UpdatePeek();
 
         // Calculate the camera's desired position relative to the target, swung around it by any peek.
         Vector3 desiredPosition =
-            anchor + PeekRotation() * offset * distanceScale;
+            anchor + PeekRotation(viewOffset) * viewOffset * distanceScale;
 
         // Smoothly move the camera toward its desired position.
         transform.position = reducedMotion ? desiredPosition : Vector3.SmoothDamp(
@@ -241,10 +267,10 @@ public class CameraFollow2_5D : MonoBehaviour
     }
 
     // Yaw turns the offset around the world up axis; pitch tilts it around the horizontal axis across the view.
-    private Quaternion PeekRotation()
+    private Quaternion PeekRotation(Vector3 viewOffset)
     {
         if (peek == Vector2.zero) return Quaternion.identity;
-        Vector3 across = Vector3.Cross(offset, Vector3.up);
+        Vector3 across = Vector3.Cross(viewOffset, Vector3.up);
         Quaternion pitch = across.sqrMagnitude > 0.0001f ? Quaternion.AngleAxis(peek.y, across.normalized) : Quaternion.identity;
         return Quaternion.Euler(0f, peek.x, 0f) * pitch;
     }

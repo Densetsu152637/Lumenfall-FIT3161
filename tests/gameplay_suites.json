@@ -14,7 +14,7 @@
         "Lumenfall.Startup.Tests.KeyBindingsTests": 18,
         "Lumenfall.Tests.GameEvents.AmbientCastTests": 7,
         "Lumenfall.Tests.GameEvents.AudioFeedbackTests": 19,
-        "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 6,
+        "Lumenfall.Tests.GameEvents.AuthoredLayoutTests": 8,
         "Lumenfall.Tests.GameEvents.CinnaIceTrialTests": 5,
         "Lumenfall.Tests.GameEvents.CutsceneSequenceTests": 15,
         "Lumenfall.Tests.GameEvents.FirstLightIntegrationTests": 9,
@@ -24,7 +24,7 @@
         "Lumenfall.Tests.GameEvents.KatrinaBorrowedProgressionTests": 8,
         "Lumenfall.Tests.GameEvents.KatrinaBorrowedWorldTests": 8,
         "Lumenfall.Tests.GameEvents.LateToOrientationTests": 4,
-        "Lumenfall.Tests.GameEvents.LayOfTheLandTests": 6,
+        "Lumenfall.Tests.GameEvents.LayOfTheLandTests": 7,
         "Lumenfall.Tests.GameEvents.LostEchoesRevealEventTests": 8,
         "Lumenfall.Tests.GameEvents.MiscCollectiblesTests": 3,
         "Lumenfall.Tests.GameEvents.NpcIntroductionsTests": 7,
@@ -35,16 +35,20 @@
         "Lumenfall.Tests.GameEvents.ProductionUiPolicyTests": 4,
         "Lumenfall.Tests.GameEvents.QuestDialogueContentTests": 4,
         "Lumenfall.Tests.GameEvents.QuestDialogueLifecycleTests": 9,
-        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 10,
+        "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 13,
         "Lumenfall.Tests.GameEvents.RuntimePrimitiveTests": 2,
         "Lumenfall.Tests.GameEvents.SecretsTests": 17,
         "Lumenfall.Tests.GameEvents.SerializedAssetImportTests": 4,
         "Lumenfall.Tests.GameEvents.SettlingInTests": 11,
-        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 8,
+        "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 10,
         "Lumenfall.Tests.GameEvents.StringThemTogetherTests": 8,
         "Lumenfall.Tests.GameEvents.WeaveNetworkTests": 2,
         "Lumenfall.Tests.GameEvents.WorldEffectQueueTests": 1,
-        "Lumenfall.Startup.Tests.AudioPlaybackTests": 3
+        "Lumenfall.Startup.Tests.AudioPlaybackTests": 3,
+        "Lumenfall.Tests.GameEvents.CameraFollowTests": 4,
+        "Lumenfall.Tests.GameEvents.PlaytestFeedbackTests": 7,
+        "Lumenfall.Tests.GameEvents.ProceduralArtTests": 4,
+        "Lumenfall.Tests.GameEvents.WestForestExpansionTests": 2
       }
     },
     "playmode": {
@@ -56,7 +60,8 @@
         "Lumenfall.Tests.World.DialogueSettingsUiPlayModeTests": 1,
         "Lumenfall.Tests.World.ProductionUiLockPlayModeTests": 1,
         "Lumenfall.Tests.World.SpellWheelCastingPlayModeTests": 2,
-        "Lumenfall.Startup.Tests.AudioPlaybackPlayModeTests": 1
+        "Lumenfall.Startup.Tests.AudioPlaybackPlayModeTests": 1,
+        "Lumenfall.Tests.World.WallSlidePlayModeTests": 2
       }
     }
   },

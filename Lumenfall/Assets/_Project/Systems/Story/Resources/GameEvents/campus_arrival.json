@@ -53,42 +53,49 @@
         },
         {
           "id": "courtyard",
+          "metadata": [{"key": "cameraFocus", "value": "npc:prof_bann"}],
           "speaker": "Kit",
           "text": "Up ahead is the courtyard. The fountain sits right in the middle of it, so if you ever get lost, head back there.",
           "nextNodeId": "main_building"
         },
         {
           "id": "main_building",
+          "metadata": [{"key": "cameraFocus", "value": "area:B03.Ground"}],
           "speaker": "Kit",
-          "text": "The grand one above the fountain is the Main Academy Building. For new students, you'll spend most of your time there for the first year.",
+          "text": "That grand one over there is the Main Academy Building. For new students, you'll spend most of your time there for the first year.",
           "nextNodeId": "locked"
         },
         {
           "id": "locked",
+          "metadata": [{"key": "cameraFocus", "value": "area:B03.Ground"}],
           "speaker": "Kit",
           "text": "It's locked at the moment, but it will open once the sememster formally begins.",
           "nextNodeId": "library"
         },
         {
           "id": "library",
+          "metadata": [{"key": "cameraFocus", "value": "area:B04.Ground"}],
           "speaker": "Kit",
-          "text": "The second place you'll spend the second-longest amount of time in is the Library below it. Students often go there for studying. Or napping between the shelves. I won't tell.",
+          "text": "The second place you'll spend the second-longest amount of time in is the Library, over there. Students often go there for studying. Or napping between the shelves. I won't tell.",
           "nextNodeId": "workshop"
         },
         {
           "id": "workshop",
+          "metadata": [{"key": "cameraFocus", "value": "area:B02.Ground"}],
           "speaker": "Kit",
-          "text": "The Arcane Workshop above us is where the engineering lot tinker with relics and machines. Mind the sparks though. Speaking from experience: some only <wave>tickle</wave>, but some really <shake>hurt</shake>!",
+          "text": "That one is the Arcane Workshop, where the engineering lot tinker with relics and machines. Mind the sparks though. Speaking from experience: some only <wave>tickle</wave>, but some really <shake>hurt</shake>!",
           "nextNodeId": "dormitory"
         },
         {
           "id": "dormitory",
+          "metadata": [{"key": "cameraFocus", "value": "area:B01.Ground"}],
           "speaker": "Kit",
-          "text": "The Dormitory below is where students live. I recommend going there first, as a soft bed after day's study is what matters the most, right?",
+          "text": "And there is the Dormitory, where students live. I recommend going there first, as a soft bed after day's study is what matters the most, right?",
           "nextNodeId": "forest"
         },
         {
           "id": "forest",
+          "metadata": [{"key": "cameraFocus", "value": "area:westForest"}],
           "speaker": "Kit",
           "text": "And back through the gate is the forest. Lovely in the daytime. A bit dramatic after dark.",
           "nextNodeId": "signs"
@@ -113,6 +120,7 @@
         },
         {
           "id": "headmistress",
+          "metadata": [{"key": "cameraFocus", "value": "npc:prof_bann"}],
           "speaker": "Kit",
           "text": "But Professor Bann, the headmistress, is still by the fountain in the middle of the courtyard. Go and speak to her right away.",
           "nextNodeId": "now"

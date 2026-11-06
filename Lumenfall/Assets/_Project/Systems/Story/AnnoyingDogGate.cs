@@ -68,7 +68,6 @@ namespace Lumenfall.Story
         private readonly MenuSkin skin = new MenuSkin();
         private GridPortal portal;
         private GridMover lockedMover;
-        private bool moverWasLocked;
         private bool playing;
         private float startedAt;
         private float totalSeconds;
@@ -149,8 +148,7 @@ namespace Lumenfall.Story
             runtime.SetFlag(SeenFlag, true);
             portal = blockedPortal;
             lockedMover = mover;
-            moverWasLocked = mover != null && mover.IsMovementLocked;
-            if (mover != null) mover.SetMovementLocked(true);
+            if (mover != null) mover.SetMovementLocked(this, true);
             playing = true;
             startedAt = Time.unscaledTime;
             totalSeconds = DropSeconds + HoldEmptySeconds;
@@ -168,7 +166,7 @@ namespace Lumenfall.Story
         private void Finish(bool showNotice)
         {
             playing = false;
-            if (lockedMover != null && !moverWasLocked) lockedMover.SetMovementLocked(false);
+            if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
             lockedMover = null;
             if (showNotice && portal != null && portal.Content != null)
                 PortalBlockedPopup.Show(portal.Content.blockedMessage, portal.Content.blockedTitle);

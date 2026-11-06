@@ -52,7 +52,7 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void TheExpandedForestReachesEveryPortalAndKeepsItsTreesAsScenery()
+        public void TheExpandedForestReachesEveryPortalAndOpensTheGroundBetweenItsTrees()
         {
             GameObject forest = Load("West Forest.prefab");
             MapDefinition map = AssetDatabase.LoadAssetAtPath<WorldAreaAsset>("Assets/_Project/World/Areas/westForest.asset").definition;
@@ -90,9 +90,97 @@ namespace Lumenfall.Tests.GameEvents
                 orioBlocks |= Cells(obstacle).Contains(new Vector2Int(-12, 24));
             Assert.That(orioBlocks, Is.True, "Orio's blocker belongs to Orio, so it follows him if he moves.");
             Assert.That(reached, Has.Member(new Vector2Int(-11, 24)), "The cell east of Orio stays free for his dais portal.");
-            foreach (Vector2Int cell in reached)
-                Assert.That(cell.x > bounds.xMin && cell.y > bounds.yMin && cell.x < bounds.xMax - 1 && cell.y < bounds.yMax - 1, Is.True,
-                    "Blockers fence the paths in before the map's edge, so the trees cannot be walked through: " + cell);
+
+            // Playtesters found the open grass beside the trails fenced off by invisible tiles. The fences are switched off
+            // (kept, so the authoring tools can still find the trails), and only trees, rocks, water and walls block.
+            HashSet<Vector2Int> fences = new HashSet<Vector2Int>(), trails = new HashSet<Vector2Int> { spawn };
+            foreach (GridObstacle obstacle in forest.GetComponentsInChildren<GridObstacle>(true))
+            {
+                bool fence = obstacle.name.StartsWith("T_tile") || obstacle.name.StartsWith("T_ext");
+                if (fence) Assert.That(ActiveInPrefab(obstacle.transform), Is.False, "Trail fence " + obstacle.name + " is switched off.");
+                // The trails are what could be walked before: inside the fences and clear of every other blocker then.
+                if (fence || (obstacle.enabled && ActiveInPrefab(obstacle.transform) && !Under(obstacle.transform, "Open Forest Blockers")))
+                    fences.UnionWith(Cells(obstacle));
+            }
+            Queue<Vector2Int> along = new Queue<Vector2Int>(trails);
+            while (along.Count > 0)
+            {
+                Vector2Int cell = along.Dequeue();
+                foreach (Vector2Int next in new[] { cell + Vector2Int.up, cell + Vector2Int.down, cell + Vector2Int.left, cell + Vector2Int.right })
+                    if (bounds.Contains(next) && (!fences.Contains(next) || portals.Contains(next)) && trails.Add(next)) along.Enqueue(next);
+            }
+            Assert.That(reached.Count, Is.GreaterThan(trails.Count * 3), "The ground between the trees opens up well beyond the trails.");
+            foreach (Vector2Int cell in trails)
+                Assert.That(reached, Has.Member(cell), "Every trail cell is still walkable: " + cell);
+
+            HashSet<Vector2Int> leftOpen = new HashSet<Vector2Int>(trails);
+            leftOpen.UnionWith(portals);
+            foreach (NpcDefinition npc in AssetDatabase.LoadAssetAtPath<NpcCatalogAsset>("Assets/_Project/World/Areas/NpcCatalog.asset").npcs)
+                if (npc != null && npc.mapId == map.id) leftOpen.Add(new Vector2Int(npc.x, npc.y));
+            int trunks = 0;
+            foreach (Terrain terrain in forest.GetComponentsInChildren<Terrain>(true))
+            {
+                TerrainData data = terrain.terrainData;
+                foreach (TreeInstance tree in data.treeInstances)
+                {
+                    GameObject prototype = data.treePrototypes[tree.prototypeIndex].prefab;
+                    if (prototype != null && prototype.name.ToLowerInvariant().Contains("mushroom")) continue;
+                    Vector3 position = terrain.transform.position + Vector3.Scale(tree.position, data.size);
+                    Vector2Int trunk = new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.z));
+                    if (!bounds.Contains(trunk) || leftOpen.Contains(trunk)) continue;
+                    trunks++;
+                    Assert.That(blocked, Has.Member(trunk), "A painted tree or rock cannot be walked through: " + trunk);
+                }
+            }
+            Assert.That(trunks, Is.GreaterThan(100), "The forest's trees were all checked.");
+        }
+
+        [Test]
+        public void TheRuneDaisSocketsStandFarEnoughApartToTellWhichOneIsCast()
+        {
+            // Playtesters could not tell which close-set socket Rotara would turn, so the dais was spread out.
+            GameObject deepForest = Load("Deep Forest.prefab");
+            string[] sockets = Lumenfall.Quests.OrioRuneDiscPuzzle.SocketIds;
+            for (int i = 0; i < sockets.Length; i++)
+                for (int j = i + 1; j < sockets.Length; j++)
+                {
+                    Vector2Int a = Cell(Find(deepForest, sockets[i])), b = Cell(Find(deepForest, sockets[j]));
+                    Assert.That(Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y), Is.GreaterThanOrEqualTo(2),
+                        sockets[i] + " and " + sockets[j] + " are not side by side.");
+                }
+        }
+
+        [Test]
+        public void ThePlazaLampsBlockWhereTheyStandAndEveryCampusDoorStaysReachable()
+        {
+            // The plaza's hand-placed tiles sat beside some lamps, so players walked through the lamp and bumped into air.
+            GameObject campus = Load("campus.prefab");
+            HashSet<Vector2Int> blocked = BlockedCells(campus);
+            int lamps = 0;
+            foreach (Transform part in campus.GetComponentsInChildren<Transform>(true))
+            {
+                if (!part.name.StartsWith("Park-Lamp6") || PrefabUtility.GetNearestPrefabInstanceRoot(part.gameObject) != part.gameObject) continue;
+                lamps++;
+                Assert.That(blocked, Has.Member(Cell(part.gameObject)), part.name + " cannot be walked through.");
+            }
+            Assert.That(lamps, Is.GreaterThanOrEqualTo(8), "The fountain's ring of lamps was checked.");
+
+            HashSet<Vector2Int> doors = new HashSet<Vector2Int>();
+            foreach (GridPortal portal in campus.GetComponentsInChildren<GridPortal>(true))
+                if (portal.Content != null && !portal.Content.blocked && !portal.Content.disabled) doors.Add(Cell(portal.gameObject));
+            Vector2Int forestGate = Cell(Find(campus, "P.C00"));
+            HashSet<Vector2Int> reached = new HashSet<Vector2Int> { forestGate };
+            Queue<Vector2Int> queue = new Queue<Vector2Int>(reached);
+            RectInt bounds = new RectInt(0, 0, 54, 92);
+            while (queue.Count > 0)
+            {
+                Vector2Int cell = queue.Dequeue();
+                foreach (Vector2Int next in new[] { cell + Vector2Int.up, cell + Vector2Int.down, cell + Vector2Int.left, cell + Vector2Int.right })
+                    if (bounds.Contains(next) && (!blocked.Contains(next) || doors.Contains(next)) && reached.Add(next)) queue.Enqueue(next);
+            }
+            foreach (Vector2Int door in doors)
+                Assert.That(reached, Has.Member(door), "The open campus door at " + door + " can be walked to from the forest gate.");
+            Assert.That(reached, Has.Member(Cell(Find(campus, "P.C04"))), "The Library door in particular.");
         }
 
         [Test]
@@ -182,6 +270,13 @@ namespace Lumenfall.Tests.GameEvents
                 for (int y = 0; y < obstacle.FootprintSize.y; y++)
                     cells.Add(anchor + obstacle.FootprintOffset + new Vector2Int(x, y));
             return cells;
+        }
+
+        private static bool Under(Transform part, string ancestor)
+        {
+            for (Transform current = part; current != null; current = current.parent)
+                if (current.name == ancestor) return true;
+            return false;
         }
 
         // Prefab assets are not in a scene, so activeInHierarchy does not apply; walk the parents instead.

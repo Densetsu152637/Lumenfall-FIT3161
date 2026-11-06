@@ -73,7 +73,7 @@ namespace Lumenfall.GridMovement
         public bool IsMoving => isMoving;
         /// <summary>True while the current step starts or ends on ice; input is ignored until the slide stops.</summary>
         public bool IsSliding => isSliding;
-        public bool IsMovementLocked => movementLocked || movementLockOwners.Count > 0;
+        public bool IsMovementLocked => movementLocked || HasLiveLockOwner();
         public GridMovementMode MovementMode => movementMode;
         public float CurrentStepDuration => movementMode == GridMovementMode.Sprint
             ? sprintMoveDuration
@@ -196,6 +196,27 @@ namespace Lumenfall.GridMovement
         public void SetMovementLocked(bool locked)
         {
             movementLocked = locked;
+        }
+
+        /// <summary>
+        /// Drops every movement lock. Loading a save or starting a new game discards whatever held them, so a lock
+        /// left behind by an interrupted overlay or scene cannot carry over and leave the player unable to move.
+        /// Anything still running (a cutscene, a fall) reasserts its lock on its next frame.
+        /// </summary>
+        public void ClearMovementLocks()
+        {
+            movementLocked = false;
+            movementLockOwners.Clear();
+        }
+
+        // A destroyed owner can never release its lock, so it no longer counts.
+        private static readonly Predicate<object> IsDestroyedOwner = owner => owner is UnityEngine.Object unityOwner && unityOwner == null;
+
+        private bool HasLiveLockOwner()
+        {
+            if (movementLockOwners.Count == 0) return false;
+            movementLockOwners.RemoveWhere(IsDestroyedOwner);
+            return movementLockOwners.Count > 0;
         }
 
         /// <summary>Changes the speed used by the next complete tile step; sprint has no resource cost.</summary>

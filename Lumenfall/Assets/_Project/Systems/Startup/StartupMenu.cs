@@ -121,9 +121,12 @@ namespace Lumenfall.Startup
         private bool settingsFocusShown;
         private SaveRecoverySource[] recoveryCandidates = Array.Empty<SaveRecoverySource>();
         private readonly List<GridPlayerInput> disabledInputs = new List<GridPlayerInput>();
+        // Set once a save loads or a new game starts, so closing the menu hands the player full control back.
+        private bool resetPlayerControl;
         private readonly List<DialogueOverlay> disabledDialogueOverlays = new List<DialogueOverlay>();
         private readonly List<GameSaveOverlay> disabledSaveOverlays = new List<GameSaveOverlay>();
         private readonly Dictionary<string, Texture2D> buttonTextures = new Dictionary<string, Texture2D>();
+        private GUIStyle buttonLabelStyle;
         private readonly List<Texture2D> generatedTextures = new List<Texture2D>();
         private readonly string[] slotDetails = new string[Slots.Length];
         private readonly SaveSlotSummary.Info[] slotInfos = new SaveSlotSummary.Info[Slots.Length];
@@ -226,6 +229,14 @@ namespace Lumenfall.Startup
             openNextAsSavePicker = true;
             new GameObject("[StartupMenu]").AddComponent<StartupMenu>();
         }
+        /// <summary>
+        /// The time scale to bring back when the menu closes, given the one it found on opening. The time scale survives
+        /// between play sessions in the Editor, so a menu that was interrupted while paused (for example by a script
+        /// reload) leaves 0 behind. Restoring that would freeze the game, with the player unable to finish a single step,
+        /// so a stopped clock comes back running.
+        /// </summary>
+        internal static float TimeScaleToRestore(float found) => found > 0f ? found : 1f;
+
         private void OnEnable() { OverlayInputGate.Acquire(this); }
         private void OnDisable()
         {
@@ -242,7 +253,7 @@ namespace Lumenfall.Startup
             savePickerMode = openNextAsSavePicker;
             openNextAsSavePicker = false;
             DontDestroyOnLoad(gameObject);
-            previousTimeScale = Time.timeScale;
+            previousTimeScale = TimeScaleToRestore(Time.timeScale);
             Time.timeScale = 0f;
             questHintsEnabled = PlayerPrefs.GetInt(QuestHintsEnabledKey, 1) != 0;
             hintsKnob = questHintsEnabled ? 1f : 0f;
@@ -1524,7 +1535,34 @@ namespace Lumenfall.Startup
             SetColor(Color.white, 1f);
             float row = pressed ? 0.25f : lit ? 0.5f : 0.75f;
             GUI.DrawTextureWithTexCoords(drawRect, texture, new Rect(0f, row, 1f, 0.25f), true);
+            DrawButtonLabel(drawRect, fallbackLabel, lit, pressed);
             return GUI.Button(hitRect, GUIContent.none, GUIStyle.none);
+        }
+
+        // The label is centred on the plaque between its socket and its constellation, shrinking to fit long words such
+        // as SETTINGS, over a soft dark shadow. Drawn the same way in every event, so the button's control id is stable.
+        private void DrawButtonLabel(Rect plaque, string label, bool lit, bool pressed)
+        {
+            if (string.IsNullOrEmpty(label)) return;
+            if (buttonLabelStyle == null)
+            {
+                Font font = Resources.Load<Font>("Dialogue/Fredoka-SemiBold");
+                buttonLabelStyle = new GUIStyle(GUI.skin.label)
+                {
+                    font = font != null ? font : menuFont,
+                    alignment = TextAnchor.MiddleCenter,
+                    clipping = TextClipping.Overflow,
+                    wordWrap = false,
+                };
+            }
+            Rect area = new Rect(plaque.x + plaque.width * MenuButtonArt.LabelLeft, plaque.y + (pressed ? 1.5f : 0f),
+                plaque.width * (MenuButtonArt.LabelRight - MenuButtonArt.LabelLeft), plaque.height);
+            int size = Mathf.Max(10, Mathf.RoundToInt(plaque.height * 0.3f));
+            buttonLabelStyle.fontSize = size;
+            while (size > 10 && buttonLabelStyle.CalcSize(new GUIContent(label)).x > area.width)
+                buttonLabelStyle.fontSize = --size;
+            Label(new Rect(area.x + 1f, area.y + 1.5f, area.width, area.height), label, buttonLabelStyle, MenuArt.Ink, 0.8f);
+            Label(area, label, buttonLabelStyle, lit ? MenuArt.Cream : MenuArt.Gold);
         }
 
         private float Slider(Rect rect, float value)
@@ -1588,6 +1626,7 @@ namespace Lumenfall.Startup
                 PlayerProfile.Forget();
             }, resumeAutosave: true)) { message = saves.LastError; return; }
             ManualSaveSlot.Link(slot);
+            resetPlayerControl = true;
             SaveSlotSummary.BeginNewGame();
             GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
             GameAutosave.BeginNewRun();
@@ -1612,6 +1651,7 @@ namespace Lumenfall.Startup
             bool isManual = Array.IndexOf(GameSaveManager.ManualSlots, slot) >= 0;
             if (saves.Load(slot, !isManual))
             {
+                resetPlayerControl = true;
                 GameSaveOverlay.SetCurrentSlot(GameSaveManager.AutosaveSlot);
                 if (isManual)
                 {
@@ -1680,6 +1720,7 @@ namespace Lumenfall.Startup
                 for (int i = 0; i < disabledInputs.Count; i++)
                     if (disabledInputs[i] != null) disabledInputs[i].enabled = true;
                 disabledInputs.Clear();
+                if (resetPlayerControl) ResetPlayerControl();
                 for (int i = 0; i < disabledDialogueOverlays.Count; i++)
                     if (disabledDialogueOverlays[i] != null) disabledDialogueOverlays[i].enabled = true;
                 disabledDialogueOverlays.Clear();
@@ -1712,6 +1753,21 @@ namespace Lumenfall.Startup
                     overlay.enabled = false;
                     disabledSaveOverlays.Add(overlay);
                 }
+            }
+        }
+
+        /// <summary>
+        /// A loaded save or new game owes nothing to whatever held the player before it, such as a sign card or overlay
+        /// interrupted by leaving the game window, so drop any leftover movement lock and switch movement input back on.
+        /// </summary>
+        private void ResetPlayerControl()
+        {
+            resetPlayerControl = false;
+            foreach (GridPlayerInput input in FindObjectsByType<GridPlayerInput>())
+            {
+                if (input == null) continue;
+                input.GetComponent<GridMover>()?.ClearMovementLocks();
+                input.enabled = true;
             }
         }
 
@@ -1766,37 +1822,10 @@ namespace Lumenfall.Startup
             }
         }
 
+        // The astrolabe plaques are drawn in code (MenuButtonArt); Button draws each label on its plaque.
         private void LoadButtonTextures()
         {
-            foreach (string key in OptionKeys)
-            {
-                string fileName = key == "start" ? "btn_start_sheet4x" : key == "load" ? "btn_load_sheet4x" :
-                    key == "options" ? "btn_options_sheet4x" : "btn_exit_sheet4x";
-                Texture2D texture = Resources.Load<Texture2D>("StartupButtons/" + fileName);
-                if (texture == null) texture = LoadEditorTexture(fileName);
-                if (texture != null) buttonTextures[key] = texture;
-            }
-
-            Texture2D saveTexture = Resources.Load<Texture2D>("StartupButtons/btn_save_sheet4x");
-            if (saveTexture == null) saveTexture = LoadEditorTexture("btn_save_sheet4x");
-            if (saveTexture != null) buttonTextures["save"] = saveTexture;
-        }
-
-        private static Texture2D LoadEditorTexture(string fileName)
-        {
-            string path = Path.Combine(Application.dataPath, "2D", fileName + ".png");
-            if (!File.Exists(path)) return null;
-            try
-            {
-                Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "StartupButton_" + fileName };
-                texture.LoadImage(File.ReadAllBytes(path));
-                return texture;
-            }
-            catch (Exception exception)
-            {
-                Debug.LogWarning($"Could not load startup button '{path}': {exception.Message}");
-                return null;
-            }
+            foreach (string key in MenuButtonArt.Keys) buttonTextures[key] = MenuButtonArt.Sheet(key);
         }
 
         // ---- Drawing helpers. Every draw is multiplied by the current fade so whole layers can ease in and out. ----

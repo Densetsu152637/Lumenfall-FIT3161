@@ -48,7 +48,7 @@ namespace Lumenfall.Cutscenes
             }
 
             if (input != null) input.enabled = false;
-            mover.SetMovementLocked(false);
+            mover.SetMovementLocked(CutscenePlayer.MovementLockOwner, false);
             if (mover.IsMoving) return;
             if (mover.CurrentCell == target)
             {
@@ -123,7 +123,7 @@ namespace Lumenfall.Cutscenes
             if (mover == null) return;
             mover.SetMovementMode(GridMovementMode.Walk);
             // The cutscene is still playing, so the player stays locked until it hands control back.
-            mover.SetMovementLocked(true);
+            mover.SetMovementLocked(CutscenePlayer.MovementLockOwner, true);
         }
     }
 }

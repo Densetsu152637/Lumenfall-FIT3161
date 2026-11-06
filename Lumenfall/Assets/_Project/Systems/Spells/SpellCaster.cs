@@ -34,7 +34,6 @@ namespace Lumenfall.Spells
         private bool spellWheelOpen;
         private bool wheelMovementLockOwned;
         private GameEventRuntime subscribedRuntime;
-        private static readonly SpellId[] AllSpells = (SpellId[])Enum.GetValues(typeof(SpellId));
         // Wheel slot zero is the top orb. SpellWheelView advances positive indices clockwise in screen space.
         private static readonly SpellId[] SpellsByHotkey =
         {
@@ -261,8 +260,9 @@ namespace Lumenfall.Spells
             if (keyboard == null) return;
             if (keyboard.rKey.wasPressedThisFrame && IsNearAlignmentMarker()) ResetActiveAlignmentPuzzle();
             Vector2 move = KeyBindings.MoveVector(); Vector2Int inputDirection = new Vector2Int((int)move.x, (int)move.y); if (inputDirection != Vector2Int.zero) lastDirection = inputDirection;
-            foreach (SpellId spell in AllSpells)
-                if (KeyBindings.WasPressed(KeyActionFor(spell))) SelectSpell(spell);
+            SpellId[] spells = AvailableSpells;
+            for (int slot = 0; slot < spells.Length && slot < SpellSlotCount; slot++)
+                if (KeyBindings.WasPressed(KeyActionFor(slot))) SelectSpell(spells[slot]);
         }
 
         /// Casts the selected spell at the nearest compatible object. Lost Echoes searches the area around the player,
@@ -357,6 +357,9 @@ namespace Lumenfall.Spells
                 return changed;
             }
             if (selectedSpell == SpellId.Weave && CancelHeldThread()) return true;
+            // Something nearby takes spells, just not this one: say so, rather than claiming nothing is in reach.
+            string other = FindNearestTarget(anySpell: true);
+            if (!string.IsNullOrEmpty(other)) { ShowFeedback(WrongSpellFeedback(other)); return false; }
             ShowFeedback("No spell target within reach. Move closer to a relic and try again.");
             return false;
         }
@@ -492,9 +495,10 @@ namespace Lumenfall.Spells
             CastAttempted.Invoke(attempt);
             return attempt.Handled;
         }
-        public static string GetIconResourcePath(SpellId spell) { return "SpellIcons/" + spell; }
+        /// <summary>The spell's icon, drawn in code in the menus' plum-and-gold style (see <see cref="SpellIconArt"/>).</summary>
+        public static Texture2D GetIcon(SpellId spell) => SpellIconArt.Get(spell);
         private Texture2D LoadIcon(SpellId spell)
-        { if (!icons.TryGetValue(spell, out Texture2D icon)) icons[spell] = icon = Resources.Load<Texture2D>(GetIconResourcePath(spell)); return icon; }
+        { if (!icons.TryGetValue(spell, out Texture2D icon) || icon == null) icons[spell] = icon = GetIcon(spell); return icon; }
         public bool Cast(SpellId spell, string targetId, Vector2Int direction)
         {
             if (!IsSpellUnlocked(spell) || InputBlockedByOverlay) return false;
@@ -550,6 +554,17 @@ namespace Lumenfall.Spells
             }
             CastCompleted?.Invoke(spell, targetId, changed); return changed;
         }
+        // When the selected spell simply does not apply, name the learned spell the object does answer to.
+        private string WrongSpellFeedback(string targetId)
+        {
+            string selected = SpellWheelView.DisplayName(selectedSpell);
+            WorldStateService state = WorldStateService.Instance;
+            if (state != null && state.TryGetObject(targetId, out WorldObjectSnapshot target))
+                foreach (SpellId spell in AvailableSpells)
+                    if (spell != selectedSpell && spell != SpellId.LostEchoes && CanTarget(spell, target))
+                        return $"{selected} cannot change this object. Try {SpellWheelView.DisplayName(spell)} instead.";
+            return $"{selected} cannot change this object.";
+        }
         private void ShowFeedback(string message) { LastCastFeedback = message; feedbackUntil = Time.unscaledTime + 4f; feedbackVersion++; }
         private static bool HasTag(WorldObjectSnapshot item, string tag) => Array.Exists(item.tags ?? Array.Empty<string>(), value => string.Equals(value, tag, StringComparison.OrdinalIgnoreCase));
         public static bool CanTarget(SpellId spell, WorldObjectSnapshot target)
@@ -567,20 +582,15 @@ namespace Lumenfall.Spells
             }
         }
 
-        /// <summary>The rebindable spell slot assigned to each spell. Kept explicit so enum order cannot alter controls.</summary>
-        public static GameAction KeyActionFor(SpellId spell)
-        {
-            switch (spell)
-            {
-                case SpellId.Ampere: return GameAction.Spell1;
-                case SpellId.Weave: return GameAction.Spell2;
-                case SpellId.LostEchoes: return GameAction.Spell3;
-                case SpellId.Vis: return GameAction.Spell4;
-                case SpellId.Glaciate: return GameAction.Spell5;
-                case SpellId.Rotara: return GameAction.Spell6;
-                default: return GameAction.Spell7;
-            }
-        }
+        private const int SpellSlotCount = GameAction.Spell7 - GameAction.Spell1 + 1;
+
+        /// <summary>
+        /// The number key for a position on the wheel. The spells the player has, in wheel order, take slots 1, 2, 3 and
+        /// so on, so the keys never skip a number while a spell is still to be learned. Learning a spell can shift the
+        /// keys of the spells after it on the wheel by one.
+        /// </summary>
+        public static GameAction KeyActionFor(int slot) => GameAction.Spell1 + Mathf.Clamp(slot, 0, SpellSlotCount - 1);
+
         /// Circuit objects are wired by hand: the first cast holds a thread, each later cast ties it to the next
         /// object and keeps holding it there so a chain can be drawn relay by relay. Casting on a linked pair cuts it.
         private bool WeaveCircuit(WorldStateService state, string targetId)
@@ -822,8 +832,9 @@ namespace Lumenfall.Spells
         }
         private void SearchFeedback(string message)
         { LastSearchFeedback = message; ShowFeedback(message); feedbackUntil = Time.unscaledTime + 5f; SearchFeedbackChanged?.Invoke(message); }
-        private string FindNearestTarget()
-        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && CanTarget(selectedSpell, item)) { distance = d; best = item.id; } } return best; }
+        /// <param name="anySpell">Find the nearest object that takes any spell, not only the selected one.</param>
+        private string FindNearestTarget(bool anySpell = false)
+        { WorldStateService state = WorldStateService.Instance; GridMover player = GetComponent<GridMover>(); if (state == null || player == null) return null; string best = null; int distance = interactionRadius + 1; foreach (WorldObjectSnapshot item in state.SnapshotObjects()) { int d = Mathf.Abs(item.cell.x - player.CurrentCell.x) + Mathf.Abs(item.cell.y - player.CurrentCell.y); if (d <= interactionRadius && d < distance && (anySpell ? item.spellCompatible : CanTarget(selectedSpell, item))) { distance = d; best = item.id; } } return best; }
         /// <summary>The cardinal or diagonal direction the player last moved or is moving.</summary>
         public Vector2Int FacingDirection => DirectionFromPlayer();
         private Vector2Int DirectionFromPlayer() { GridMover player = GetComponent<GridMover>(); Vector2Int movement = player == null ? Vector2Int.zero : (player.DestinationCell - player.CurrentCell); return movement == Vector2Int.zero ? lastDirection : movement; }

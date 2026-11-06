@@ -110,9 +110,10 @@ namespace Lumenfall.DataDriven
 
             stretchFrame = new VisualElement { pickingMode = PickingMode.Ignore };
             stretchFrame.AddToClassList("dialogue-stretch-frame");
-            stretchLeft = StretchPiece("dialogue-stretch-frame__left", "Dialogue/Random NPC Left v4");
-            stretchMiddle = StretchPiece("dialogue-stretch-frame__middle", "Dialogue/Random NPC Middle v4");
-            stretchRight = StretchPiece("dialogue-stretch-frame__right", "Dialogue/Random NPC Right v4");
+            // The pieces are filled in for each speaker (SetStretchFrame); the frames are drawn in code (DialogueFrameArt).
+            stretchLeft = StretchPiece("dialogue-stretch-frame__left", null);
+            stretchMiddle = StretchPiece("dialogue-stretch-frame__middle", null);
+            stretchRight = StretchPiece("dialogue-stretch-frame__right", null);
             stretchFrame.Add(stretchLeft);
             stretchFrame.Add(stretchMiddle);
             stretchFrame.Add(stretchRight);
@@ -312,11 +313,10 @@ namespace Lumenfall.DataDriven
             fitPending = false;
         }
 
-        private static VisualElement StretchPiece(string className, string resource)
+        private static VisualElement StretchPiece(string className, Texture2D texture)
         {
             var piece = new VisualElement { pickingMode = PickingMode.Ignore };
             piece.AddToClassList(className);
-            Texture2D texture = Resources.Load<Texture2D>(resource);
             piece.style.backgroundImage = texture != null
                 ? new StyleBackground(texture)
                 : new StyleBackground(StyleKeyword.None);
@@ -325,10 +325,8 @@ namespace Lumenfall.DataDriven
 
         private bool SetStretchFrame(string frameName)
         {
-            Texture2D left = Resources.Load<Texture2D>($"Dialogue/{frameName} Left v4");
-            Texture2D middle = Resources.Load<Texture2D>($"Dialogue/{frameName} Middle v4");
-            Texture2D right = Resources.Load<Texture2D>($"Dialogue/{frameName} Right v4");
-            if (left == null || middle == null || right == null) return false;
+            // The frames are drawn in code (DialogueFrameArt); a frame texture is named after its frame.
+            if (!DialogueFrameArt.TryGetPieces(frameName, out Texture2D left, out Texture2D middle, out Texture2D right)) return false;
 
             stretchLeft.style.backgroundImage = new StyleBackground(left);
             stretchMiddle.style.backgroundImage = new StyleBackground(middle);

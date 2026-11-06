@@ -26,6 +26,18 @@ namespace Lumenfall.DataDriven
         private const float FastForwardAdvanceInterval = 0.12f;
         private const float ConversationNpcRange = 3f;
         private const float ConversationZoom = 0.72f;
+        // A line can turn the camera to a place it names, as Kit's tour does for each building: node metadata
+        // "cameraFocus" is "area:<map id>" (the door in this area that leads there) or "npc:<npc id>". The view eases
+        // over at the normal distance, holds while the line is shown, and eases back for the next line.
+        private const string CameraFocusKey = "cameraFocus";
+        private const float PointedZoom = 1f;
+        private const float FocusEaseSeconds = 0.55f;
+        private Vector3? easedFocus;
+        private Vector3 easedFocusVelocity;
+        private float easedZoom = ConversationZoom;
+        private float easedZoomVelocity;
+        private string pointedNodeId;
+        private Vector3? pointedFocus;
         // Roughly three lines in the full-size box; longer lines are split into pages.
         /// <summary>Visible characters per dialogue page at normal text size. Sentences longer than this are cut between words.</summary>
         public const int MaxPageCharacters = 130;
@@ -155,6 +167,9 @@ namespace Lumenfall.DataDriven
             session = null;
             nodeId = null;
             conversationNpc = null;
+            easedFocus = null;
+            pointedNodeId = null;
+            pointedFocus = null;
             view?.Show(false);
             portrait?.Hide();
             CameraFollow2_5D.ClearConversationFrame();
@@ -346,7 +361,63 @@ namespace Lumenfall.DataDriven
             Transform subject = portrait.Subject != null ? portrait.Subject : conversationNpc != null ? conversationNpc.transform : null;
             Vector3 player = lockedMover.transform.position;
             Vector3 focus = subject == null ? player : Vector3.Lerp(player, subject.position, 0.5f);
-            CameraFollow2_5D.FrameConversation(focus, ConversationZoom);
+            float zoom = ConversationZoom;
+            if (TryPointedFocus(out Vector3 pointed))
+            {
+                focus = pointed;
+                zoom = PointedZoom;
+            }
+            if (easedFocus == null)
+            {
+                easedFocus = focus;
+                easedZoom = zoom;
+                easedFocusVelocity = Vector3.zero;
+                easedZoomVelocity = 0f;
+            }
+            float deltaTime = Time.unscaledDeltaTime;
+            easedFocus = Vector3.SmoothDamp(easedFocus.Value, focus, ref easedFocusVelocity, FocusEaseSeconds, Mathf.Infinity, deltaTime);
+            easedZoom = Mathf.SmoothDamp(easedZoom, zoom, ref easedZoomVelocity, FocusEaseSeconds, Mathf.Infinity, deltaTime);
+            CameraFollow2_5D.FrameConversation(easedFocus.Value, easedZoom);
+        }
+
+        /// <summary>The place the current line names through its "cameraFocus" metadata, found once per line.</summary>
+        private bool TryPointedFocus(out Vector3 focus)
+        {
+            DialogueNodeDefinition node = session?.CurrentNode;
+            if (node == null) { focus = default; return false; }
+            if (pointedNodeId != node.id)
+            {
+                pointedNodeId = node.id;
+                pointedFocus = ResolveFocus(node.metadata.GetValue(CameraFocusKey));
+            }
+            focus = pointedFocus ?? default;
+            return pointedFocus.HasValue;
+        }
+
+        private Vector3? ResolveFocus(string target)
+        {
+            if (string.IsNullOrWhiteSpace(target) || lockedMover == null || lockedMover.World == null) return null;
+            int colon = target.IndexOf(':');
+            string kind = colon < 0 ? string.Empty : target.Substring(0, colon);
+            string id = colon < 0 ? target : target.Substring(colon + 1);
+            if (kind == "area")
+            {
+                foreach (GridPortal portal in FindObjectsByType<GridPortal>(FindObjectsInactive.Exclude))
+                    if (portal.World == lockedMover.World &&
+                        string.Equals(portal.Content?.destination?.area?.definition?.id, id, StringComparison.OrdinalIgnoreCase))
+                        return portal.transform.position;
+                return null;
+            }
+            if (kind == "npc")
+            {
+                foreach (DynamicNpc npc in DynamicNpc.Active)
+                    if (npc != null && npc.isActiveAndEnabled && npc.Id == id) return npc.transform.position;
+                NpcDefinition record = Array.Find(DataDrivenWorldLoader.Instance?.LoadedNpcs?.npcs ?? Array.Empty<NpcDefinition>(),
+                    candidate => candidate != null && candidate.id == id);
+                if (record != null && string.Equals(record.mapId, DataDrivenWorldLoader.Instance.LoadedMap?.id, StringComparison.OrdinalIgnoreCase))
+                    return lockedMover.World.CellToWorld(new Vector2Int(record.x, record.y));
+            }
+            return null;
         }
 
         private static bool Pressed(Key key)
@@ -393,15 +464,8 @@ namespace Lumenfall.DataDriven
             return conversationNpc != null ? conversationNpc.transform : null;
         }
 
-        private static Texture2D SpeakerFrame(string speaker)
-        {
-            if (string.Equals(speaker, "Stella", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Stella");
-            if (string.Equals(speaker, "Cinna Cirra", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/CinnaCirra");
-            if (string.Equals(speaker, "Orio", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Orio");
-            if (string.Equals(speaker, "Katrina", StringComparison.OrdinalIgnoreCase)) return Resources.Load<Texture2D>("Dialogue/Katrina");
-            // Students, the Narrator and any other speaker without a frame share the neutral parchment frame.
-            return Resources.Load<Texture2D>("Dialogue/Random NPC");
-        }
+        // Students, the Narrator and any other speaker without a frame of their own share the neutral frame.
+        private static Texture2D SpeakerFrame(string speaker) => DialogueFrameArt.Full(DialogueFrameArt.FrameFor(speaker));
 
         private static Color SpeakerColor(string speaker)
         {

@@ -23,6 +23,12 @@ under 45°. Peeking is off whenever the player cannot move (menus, dialogue, cut
 the journal), and Reduced Motion snaps it back instead of easing. The limits and speeds are on the
 component under **Peek**.
 
+**Options > Gameplay > Camera angle** switches between **Straight** (the default, above) and
+**Diagonal**, the original corner view from the south-east, where W moves up and to the right.
+`CameraAngleSetting` saves the choice in PlayerPrefs (`lumenfall.camera-angle`), outside story save
+slots. Diagonal turns the serialized offset 45° around the player, so tune the offset for Straight
+only. Switching swings the camera round over the conversation blend time, or snaps with Reduced Motion.
+
 General rendering configuration belongs in `_Project/Settings`; camera animation and
 visual assets belong in `_Project/Art`. If the system grows, separate runtime and tests
 with `Runtime` and `Tests/EditMode` or `Tests/PlayMode` subfolders and add assembly

@@ -177,7 +177,7 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Walk around this mysterious forest"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D").And.Contain("to sprint").And.Contain("speed up dialogue"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D").And.Contain("drag to look around").And.Contain("to sprint").And.Contain("speed up dialogue"));
 
             runtime.SetFlag(LateToOrientationScene.MetFlag, true);
             RefreshHint();
@@ -205,7 +205,7 @@ namespace Lumenfall.Tests.GameEvents
             runtime.CompleteQuest("stella_first_light");
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Go to Dormitory and check your room"));
-            Assert.That(ReadField<string>("hint"), Does.Contain("Dormitory is below Kit"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Follow the gold arrow to the Dormitory"));
 
             BeginMap(SettlingInScene.MapId);
             stateEnd();
@@ -268,7 +268,7 @@ namespace Lumenfall.Tests.GameEvents
             RefreshHint();
             Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
             Assert.That(ReadField<string>("hint"), Does.Contain("Cinna Cirra</b> now waits near the Ice Trial area")
-                .And.Contain("lower edge of campus"));
+                .And.Contain("east wall of campus"));
         }
 
         [Test]
@@ -356,7 +356,7 @@ namespace Lumenfall.Tests.GameEvents
             stateEnd();
             runtime.StartQuest("cinna_cold_feet_warm_idea");
             RefreshHint();
-            Assert.That(ReadField<string>("hint"), Does.Contain("Freezing Pond area").And.Not.Contain("47, 45"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("east edge of campus").And.Not.Contain("47, 45"));
 
             BeginMap(CinnaIceTrialRoom.MapId);
             RegisterTagged(CinnaIceTrialRoom.RelicId, new Vector2Int(3, 1), "glaciate", "anchored");
@@ -401,7 +401,7 @@ namespace Lumenfall.Tests.GameEvents
             BeginMap("campus");
             GameObject spellTarget = new GameObject("quest-hint-test-spell-target");
             created.Add(spellTarget);
-            world.RegisterObject("hint-test-relic", spellTarget, Vector2Int.one, Vector2Int.one, true, Array.Empty<string>());
+            world.RegisterObject("hint-test-relic", spellTarget, Vector2Int.one, Vector2Int.one, true, new[] { "ampere" });
             stateEnd();
             Assert.That(caster.Cast(SpellId.Ampere, "hint-test-relic", Vector2Int.right), Is.True);
             Assert.That(((WorldObjectSnapshot)ReadObject("hint-test-relic")).powered, Is.True);
@@ -469,6 +469,79 @@ namespace Lumenfall.Tests.GameEvents
                 assertions();
             }
             finally { transition.SetValue(locks, originalFrame); }
+        }
+
+        [Test]
+        public void TheArrowLeadsToPeopleAndDoorsButNeverToPuzzlePieces()
+        {
+            runtime.ResetState();
+            runtime.SetFlag(LateToOrientationScene.MetFlag, true);
+            BeginMap("campus");
+            stateEnd();
+            RefreshHint();
+            Assert.That(QuestHintOverlay.CurrentWaypoint?.NpcId, Is.EqualTo(LayOfTheLandScene.KitNpcId), "Arriving, the arrow leads to Kit.");
+
+            CompleteOnboarding();
+            runtime.StartQuest("cinna_out_of_alignment");
+            runtime.CompleteQuest("cinna_out_of_alignment");
+            runtime.StartQuest("cinna_cold_feet_warm_idea");
+            RefreshHint();
+            QuestWaypoint? toTrial = QuestHintOverlay.CurrentWaypoint;
+            Assert.That(toTrial?.AreaOnly == true && toTrial?.MapId == CinnaIceTrialRoom.MapId, Is.True,
+                "Away from the trial the arrow leads to the trial's door, not to a spot inside it.");
+
+            BeginMap(CinnaIceTrialRoom.MapId);
+            stateEnd();
+            RefreshHint();
+            Assert.That(QuestHintOverlay.CurrentWaypoint?.NpcId, Is.EqualTo("cinna_cirra_trial"), "Inside, it leads to Cinna, not to a switch.");
+
+            runtime.ResetState();
+            CompleteOnboarding();
+            BeginMap("B02.Ground");
+            RegisterFirstLightBoard();
+            stateEnd();
+            runtime.StartQuest("stella_first_light");
+            RefreshHint();
+            Assert.That(ReadField<string>("hint"), Does.Contain("select Ampere"), "The hint card still explains the puzzle.");
+            Assert.That(QuestHintOverlay.CurrentWaypoint, Is.Null, "Finding which relic to power is the puzzle, so no relic is marked.");
+        }
+
+        [Test]
+        public void OtherQuestsInProgressAreListedUnderTheTrackedOne()
+        {
+            BeginMap("campus");
+            stateEnd();
+            runtime.StartQuest("stella_first_light");
+            runtime.StartQuest("orio_patch_notes");
+            QuestHintOverlay.RecordQuestConversation(runtime, "orio");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Patch Notes"), "Taking on a new quest tracks it...");
+            Assert.That(ReadField<string>("giver"), Is.EqualTo("Helping Orio"));
+            List<QuestDefinition> others = ReadField<List<QuestDefinition>>("otherQuests");
+            Assert.That(others.ConvertAll(quest => quest.id), Is.EqualTo(new List<string> { "stella_first_light" }),
+                "...without hiding the one already under way.");
+
+            QuestHintOverlay.RecordQuestConversation(runtime, "stella");
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("First Light"), "Choosing the other quest tracks it instead.");
+            Assert.That(ReadField<List<QuestDefinition>>("otherQuests").ConvertAll(quest => quest.id), Is.EqualTo(new List<string> { "orio_patch_notes" }));
+        }
+
+        [Test]
+        public void TheExploreCardCountsTheFavoursStandingBetweenThePlayerAndTheirRoom()
+        {
+            BeginMap("campus");
+            stateEnd();
+            foreach (string id in new[] { "stella_first_light", "orio_patch_notes" })
+            {
+                runtime.StartQuest(id);
+                runtime.CompleteQuest(id);
+            }
+            RefreshHint();
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Explore the campus and find your Dormmates"));
+            Assert.That(ReadField<string>("tracker"), Does.StartWith("Room key: 2 of 6 favours done"));
+            Assert.That(ReadField<string>("hint"), Does.Contain("Katrina</b>, the student who lost three keepsakes"), "Katrina is introduced again.");
+            Assert.That(QuestHintOverlay.CurrentWaypoint?.NpcId, Is.EqualTo("stella"), "The arrow leads to the first person still waiting for help.");
         }
 
         private void BeginMap(string mapId)

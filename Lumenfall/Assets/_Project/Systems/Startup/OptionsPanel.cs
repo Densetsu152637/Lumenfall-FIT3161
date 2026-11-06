@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Lumenfall.Accessibility;
 using Lumenfall.Audio;
+using Lumenfall.CameraEffects;
 using Lumenfall.Controls;
 using Lumenfall.Quests;
 
@@ -10,7 +11,7 @@ namespace Lumenfall.Startup
 {
     /// <summary>
     /// In-game options in the startup menu's style, split into sections chosen from silk bookmark ribbons that hang from
-    /// a spellbook spine: Gameplay (quest hints, sprint input), Audio (the four volume buses), Display (fullscreen, VSync),
+    /// a spellbook spine: Gameplay (quest hints, sprint input, camera angle), Audio (the four volume buses), Display (fullscreen, VSync),
     /// Graphics (antialiasing, ambient occlusion, shading quality, the recommended preset), Controls (grouped key
     /// rebinding) and Accessibility (menu and camera motion, contrast, dialogue reveal, text size). Each section ends with
     /// a reset that returns only that section's settings to their defaults; Controls uses the rebinding list's own reset.
@@ -87,6 +88,7 @@ namespace Lumenfall.Startup
         private static readonly string[] AntialiasingLabels = { "Off", "FXAA", "SMAA" };
         private static readonly string[] ShadingLabels = { "Low", "Medium", "High" };
         private static readonly string[] SprintLabels = { "Hold", "Toggle" };
+        private static readonly string[] CameraAngleLabels = { "Straight", "Diagonal" };
         private static readonly string[] TextSizeLabels = { "100%", "125%", "150%", "175%" };
 
         private const float RibbonHeight = 36f;
@@ -158,6 +160,11 @@ namespace Lumenfall.Startup
                 ChoiceRow("Sprint", () => "Hold the sprint key, or press it once to toggle", SprintLabels,
                     () => AccessibilitySettings.Current.HoldToSprint ? 0 : 1,
                     choice => UpdateAccessibility(AccessibilityOption.HoldToSprint, choice == 0 ? 1f : 0f)),
+                ChoiceRow("Camera angle", () => CameraAngleSetting.Current == CameraAngle.Straight
+                        ? "From behind: W moves straight up the screen"
+                        : "The original corner view: W moves up and to the right",
+                    CameraAngleLabels, () => (int)CameraAngleSetting.Current,
+                    choice => CameraAngleSetting.Current = (CameraAngle)choice),
                 ResetRow("gameplay", ResetGameplay)
             };
             // Ambience only gets a slider once the game has ambience to play.
@@ -580,6 +587,7 @@ namespace Lumenfall.Startup
         {
             QuestHintOverlay.SetHintsEnabled(true);
             UpdateAccessibility(AccessibilityOption.HoldToSprint, AccessibilitySnapshot.Defaults.HoldToSprint ? 1f : 0f);
+            CameraAngleSetting.Current = CameraAngleSetting.Default;
         }
 
         private static void ResetAudio()
