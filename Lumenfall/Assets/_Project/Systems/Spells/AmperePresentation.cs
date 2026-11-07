@@ -24,6 +24,14 @@ namespace Lumenfall.Spells
         private static readonly Color CoreColor = new Color(1f, 1f, 0.92f);
         private static AmperePresentation instance;
 
+        /// <summary>The resonance chimes under Resources, for one, two, and three or more relics.</summary>
+        public static readonly string[] ResonanceClipPaths =
+        {
+            "Audio/Ampere/singlyAmphere",
+            "Audio/Ampere/doublyAmphere",
+            "Audio/Ampere/triplyAmphere"
+        };
+
         private sealed class Bolt
         {
             public LineRenderer glow;
@@ -42,6 +50,8 @@ namespace Lumenfall.Spells
         private Material material;
         private AudioSource resonanceAudio;
         private AudioClip[] resonanceClips;
+        private int litRelics;
+        private int darkenedRelics;
         private int clearedVersion = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -59,12 +69,7 @@ namespace Lumenfall.Spells
             resonanceAudio.playOnAwake = false;
             resonanceAudio.loop = false;
             resonanceAudio.spatialBlend = 0.2f;
-            resonanceClips = new[]
-            {
-                Resources.Load<AudioClip>("Audio/Ampere/Resonance1"),
-                Resources.Load<AudioClip>("Audio/Ampere/Resonance2"),
-                Resources.Load<AudioClip>("Audio/Ampere/Resonance3")
-            };
+            resonanceClips = Array.ConvertAll(ResonanceClipPaths, Resources.Load<AudioClip>);
         }
 
         private void OnDestroy()
@@ -83,6 +88,7 @@ namespace Lumenfall.Spells
             // Effects queued without a cast this frame (for example by a mechanism) still flash where they happened.
             foreach (string id in queuedTargets) PlayArc(null, id, 0f);
             queuedTargets.Clear();
+            litRelics = darkenedRelics = 0;
             Animate();
         }
 
@@ -121,7 +127,11 @@ namespace Lumenfall.Spells
             if (key.StartsWith(LightningPrefix, StringComparison.Ordinal))
                 id = key.Substring(LightningPrefix.Length, Math.Max(0, key.LastIndexOf(':') - LightningPrefix.Length));
             else if (key.StartsWith(StellaRelicPrefix, StringComparison.Ordinal))
+            {
                 id = StellaRelicIdPrefix + key.Substring(StellaRelicPrefix.Length).Split(':')[0];
+                if (key.EndsWith(":on", StringComparison.Ordinal)) litRelics++;
+                else if (key.EndsWith(":off", StringComparison.Ordinal)) darkenedRelics++;
+            }
             if (id == null) return;
             subscribedState?.AcknowledgeEffect(key);
             if (!queuedTargets.Contains(id)) queuedTargets.Add(id);
@@ -135,23 +145,32 @@ namespace Lumenfall.Spells
             if (!TryGetTop(targetId, out Vector3 target)) return;
             AddBolt(hand, target, 0f, 0.12f, true);
             float delay = ArcDelay;
-            int resonanceCount = 0;
             foreach (string id in queuedTargets)
             {
                 if (id == targetId) continue;
-                resonanceCount++;
                 PlayArc(target, id, delay);
                 delay += ArcDelay * 0.5f;
             }
             if (targetId.StartsWith(StellaRelicIdPrefix, StringComparison.Ordinal))
-                PlayResonance(resonanceCount, target);
+                PlayResonance(ResonanceClipIndex(litRelics, darkenedRelics, resonanceClips?.Length ?? 0), target);
             queuedTargets.Clear();
+            litRelics = darkenedRelics = 0;
         }
 
-        private void PlayResonance(int resonanceCount, Vector3 position)
+        /// <summary>
+        /// Which chime a cast on Stella's relics plays, or -1 for none: one clip per number of relics it lit (singly for
+        /// one, doubly for two, triply for three or more). A cast that only darkens relics picks by how many it turned off.
+        /// </summary>
+        public static int ResonanceClipIndex(int lit, int darkened, int clipCount)
         {
-            if (resonanceAudio == null || resonanceClips == null || resonanceCount < 1 || resonanceCount > resonanceClips.Length) return;
-            AudioClip clip = resonanceClips[resonanceCount - 1];
+            int count = lit > 0 ? lit : darkened;
+            return count < 1 || clipCount < 1 ? -1 : Mathf.Min(count, clipCount) - 1;
+        }
+
+        private void PlayResonance(int clipIndex, Vector3 position)
+        {
+            if (resonanceAudio == null || resonanceClips == null || clipIndex < 0 || clipIndex >= resonanceClips.Length) return;
+            AudioClip clip = resonanceClips[clipIndex];
             if (clip == null) return;
             resonanceAudio.transform.position = position;
             resonanceAudio.PlayOneShot(clip, 0.8f * AudioMixSettings.Sfx);

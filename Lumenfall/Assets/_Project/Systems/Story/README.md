@@ -46,7 +46,7 @@ The shout has no portrait, because Kepler is far away when it plays. Once the pl
 | Juno | `juno` | `Student_03` | Campus, `(43,42)` |
 | Moss | `moss` | `Student_05` | West forest, `(25,32)` |
 
-Cells were set by hand on 2026-10-14. Odette (`Student_06`) is kept back for later. The older baked forest student (`forest_student`, at around `(16,39)` in the West Forest prefab) is now called Grace, in the catalog, the prefab, `npcs.json`, the journal and their three forest conversations. Moss stands beyond the forest's gate-scene trigger row, so the player meets Moss on a return visit. Each cast member has a journal entry.
+Cells were set by hand on 2026-10-14. Odette (`Student_06`) is kept back for later. The older baked forest student (`forest_student`, at around `(16,39)` in the West Forest prefab) is now called Grace, in the catalog, the prefab, `npcs.json`, the journal and their three forest conversations. Moss stands beyond the forest's gate-scene trigger (the fork on the trail to campus), so the player meets Moss on a return visit. Each cast member has a journal entry.
 
 ### Dormitory
 
@@ -150,7 +150,7 @@ Deltarune-style secrets: odd actions, hinted at in dialogue, that lead somewhere
 
 ## Verification
 
-`LateToOrientationTests`, `LayOfTheLandTests` and `AmbientCastTests` (EditMode) check the cast's prefabs, maps and conversations, Kit's and Bann's catalog records, when Kit's scene plays, its step order and its conversations. `LateToOrientationTests` also check the trigger row, Kepler's catalog record, the scene's step order (call, walk beside Kepler, ask for a name, mark down, flag, walk onto the gate, enter it) and the three conversations. They compile but have not yet been run in Unity.
+`LateToOrientationTests`, `LayOfTheLandTests` and `AmbientCastTests` (EditMode) check the cast's prefabs, maps and conversations, Kit's and Bann's catalog records, when Kit's scene plays, its step order and its conversations. `LateToOrientationTests` also check the trigger (the fork on the trail to campus, not the western trails), Kepler's catalog record, the scene's step order (call, walk beside Kepler, ask for a name, mark down, flag, walk onto the gate, enter it) and the three conversations. They compile but have not yet been run in Unity.
 
 `SecretsTests` (EditMode) check the knock sequence, the constellation's shape against Luna's line, the dog's steps, the staff closet's three locks, when a puzzle breaks the story's order, each secret room's arrival, exit and return map, and that every secret gift is a curio offered again only until it is taken. They compile but have not yet been run in Unity, and the rooms' furniture placement, the black screen and the reset-to-opening have not been played.
 

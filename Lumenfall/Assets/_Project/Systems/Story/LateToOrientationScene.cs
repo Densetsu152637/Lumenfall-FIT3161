@@ -9,7 +9,7 @@ namespace Lumenfall.Story
 {
     /// <summary>
     /// The walk from the forest to the academy gate. Until it has played, Prof. Kepler waits by the west-forest gate
-    /// (spawned from their NPC catalog record). The first time the player reaches the trigger row, the cutscene
+    /// (spawned from their NPC catalog record). The first time the player reaches the fork on the trail to campus, the cutscene
     /// <see cref="CutsceneId"/> plays: Kepler calls from the gate, the player is walked up to them, gives their name and
     /// is walked through the gate onto campus. Its flag step sets <see cref="MetFlag"/>, after which this Kepler is
     /// removed for good; the character is meant to be reused elsewhere later with their own placement.
@@ -22,10 +22,19 @@ namespace Lumenfall.Story
         public const string MetFlag = "story.orientation.kepler_met";
 
         /// <summary>
-        /// The scene starts the first time the player stands on this row or beyond it (y 22, around (18,22)) in the
-        /// forest. The gate is further on, so the row cannot be walked around.
+        /// The scene starts the first time the player reaches the fork on the trail to campus: this row (y 22, around
+        /// (18,22)) or beyond it, from <see cref="TriggerMinX"/> eastwards. The West Forest expansion added trails west
+        /// of the fork on the same rows (the stone trail and the Waystone clearing), and walking those must not pull
+        /// the player to Kepler. East of the fork (the stream, Moss) still counts, as it did before.
         /// </summary>
         public static readonly Vector2Int TriggerCell = new Vector2Int(18, 22);
+        public const int TriggerMinX = 12;
+
+        /// <summary>
+        /// The ground between the trees is open, so the fork could be walked around. Anyone this close to the gate
+        /// (y 36 or beyond, anywhere across the map) is heading for campus, so the scene starts there too.
+        /// </summary>
+        public const int GateApproachRow = 36;
 
         private static LateToOrientationScene instance;
 
@@ -44,8 +53,9 @@ namespace Lumenfall.Story
             DontDestroyOnLoad(host);
         }
 
-        /// <summary>True once the player is on or past the trigger row.</summary>
-        public static bool HasReachedTrigger(Vector2Int cell) => cell.y >= TriggerCell.y;
+        /// <summary>True once the player is at or past the fork on the trail to campus, or nearing the gate.</summary>
+        public static bool HasReachedTrigger(Vector2Int cell) =>
+            cell.y >= GateApproachRow || (cell.y >= TriggerCell.y && cell.x >= TriggerMinX);
 
         private void Update()
         {

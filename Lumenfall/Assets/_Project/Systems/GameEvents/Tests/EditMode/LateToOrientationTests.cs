@@ -33,12 +33,17 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
-        public void SceneStartsOnTheTriggerRow()
+        public void SceneStartsAtTheForkOnTheTrailToCampus()
         {
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(21, 5)), Is.False, "Not at the opening spawn.");
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(18, 21)), Is.False);
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(18, 22)), Is.True);
             Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(15, 30)), Is.True);
+            Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(-12, 26)), Is.False, "Not in the Waystone clearing.");
+            Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(0, 24)), Is.False, "Not on the stone trail west.");
+            Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(-12, 36)), Is.True, "Walking round the fork still meets Kepler before the gate.");
+            Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(17, 47)), Is.True, "At the gate.");
+            Assert.That(LateToOrientationScene.HasReachedTrigger(new Vector2Int(25, 31)), Is.True, "Moss is still met on a return visit.");
             // The scene checks the cell the player is stepping into as well, so it starts mid-step rather than when they stop.
         }
 

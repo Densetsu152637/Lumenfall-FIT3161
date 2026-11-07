@@ -57,6 +57,14 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(AudioContextPolicy.CanPlayGameplay(true, false), Is.False);
             Assert.That(AudioContextPolicy.CanPlayGameplay(false, false), Is.True);
         }
+        [Test] public void AnOpeningQueuedBehindTheOpenMenuKeepsTheMenuMusic()
+        {
+            // A sequence-break reset file queues the opening as the menu loads it as its backdrop.
+            Assert.That(AudioContextPolicy.OpeningSilencesMusic(true, true, false), Is.False, "The title keeps its music.");
+            Assert.That(AudioContextPolicy.OpeningSilencesMusic(true, true, true), Is.True, "Closing into the opening quiets it.");
+            Assert.That(AudioContextPolicy.OpeningSilencesMusic(true, false, false), Is.True, "The opening itself is quiet.");
+            Assert.That(AudioContextPolicy.OpeningSilencesMusic(false, true, true), Is.False, "Closing into ordinary play is not.");
+        }
         [Test] public void DialogueAndSleepDuckWithoutMultiplyingMasterTwice()
         {
             Assert.That(AudioContextPolicy.MusicGain(true, false), Is.EqualTo(0.4f));

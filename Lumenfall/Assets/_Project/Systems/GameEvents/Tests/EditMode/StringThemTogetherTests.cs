@@ -303,6 +303,21 @@ namespace Lumenfall.Tests.GameEvents
             EditModeLifecycle.Call(monitor, "OnDisable");
         }
 
+        [Test]
+        public void ResonanceChimeMatchesHowManyRelicsTheCastLitOrDarkened()
+        {
+            foreach (string path in AmperePresentation.ResonanceClipPaths)
+                Assert.That(Resources.Load<AudioClip>(path), Is.Not.Null, "Missing chime " + path);
+            int clips = AmperePresentation.ResonanceClipPaths.Length;
+            Assert.That(clips, Is.EqualTo(3));
+            Assert.That(AmperePresentation.ResonanceClipIndex(1, 0, clips), Is.EqualTo(0), "One lit plays singly.");
+            Assert.That(AmperePresentation.ResonanceClipIndex(2, 1, clips), Is.EqualTo(1), "Two lit plays doubly, whatever went dark.");
+            Assert.That(AmperePresentation.ResonanceClipIndex(3, 0, clips), Is.EqualTo(2), "Three lit plays triply.");
+            Assert.That(AmperePresentation.ResonanceClipIndex(4, 0, clips), Is.EqualTo(2), "Four lit still plays triply.");
+            Assert.That(AmperePresentation.ResonanceClipIndex(0, 2, clips), Is.EqualTo(1), "Turning two off plays doubly.");
+            Assert.That(AmperePresentation.ResonanceClipIndex(0, 0, clips), Is.EqualTo(-1), "Nothing changed, no chime.");
+        }
+
         private bool Powered(string id) => state.TryGetObject(id, out WorldObjectSnapshot item) && item.powered;
         private static string[] BoardIds() => new[] { "stella.string-together.relic.1", "stella.string-together.relic.2", "stella.string-together.relic.3", "stella.string-together.relic.4", "stella.string-together.relic.5" };
         private GameObject Host(string name) { GameObject go = new GameObject(name); hosts.Add(go); return go; }

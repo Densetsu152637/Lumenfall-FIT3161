@@ -199,7 +199,7 @@ namespace Lumenfall.Audio
         {
             RefreshDependencies(); BindCaster();
             bool menu = StartupMenu.IsMainMenu;
-            if (CutscenePlayer.OpeningInProgress) openingQuietUntil = Time.unscaledTime + OpeningMusicDelay;
+            if (AudioContextPolicy.OpeningSilencesMusic(CutscenePlayer.OpeningInProgress, StartupMenu.IsOpen, StartupMenu.IsClosing)) openingQuietUntil = Time.unscaledTime + OpeningMusicDelay;
             bool opening = Time.unscaledTime < openingQuietUntil;
             if (menu != menuMusic || opening != openingSilence) { menuMusic = menu; openingSilence = opening; RefreshPlayback(); }
             bool paused = Time.timeScale <= 0f;

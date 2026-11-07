@@ -188,6 +188,8 @@ namespace Lumenfall.Startup
         public static bool IsOpen => current != null && current.isActiveAndEnabled;
         /// True while the title menu is open; the in-game save picker reuses this screen but is not the main menu.
         public static bool IsMainMenu => IsOpen && !current.savePickerMode;
+        /// True while the menu is dissolving into play (after Start, Load or Escape), until it is destroyed.
+        public static bool IsClosing => IsOpen && current.phase == Phase.Closing;
 
         private int SelectedOption => keyboardMode ? keyboardOption : hoverOption;
 

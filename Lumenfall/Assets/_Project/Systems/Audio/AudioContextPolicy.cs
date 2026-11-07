@@ -36,5 +36,12 @@ namespace Lumenfall.Audio
         public static bool ShouldPauseVoice(bool ownsActiveCue, bool ui, bool gamePaused, bool applicationPaused)
             => ownsActiveCue && (applicationPaused || (gamePaused && !ui));
         public static bool CanPlayGameplay(bool gamePaused, bool applicationPaused) => !gamePaused && !applicationPaused;
+        /// <summary>
+        /// Whether the New Game opening holds the music silent: while it plays, and once the title menu is closing into
+        /// it. An opening only queued behind a menu that is still open (a sequence-break reset file, loaded as the menu's
+        /// backdrop, queues one for whenever the menu closes) leaves the menu music playing.
+        /// </summary>
+        public static bool OpeningSilencesMusic(bool openingQueuedOrPlaying, bool menuOpen, bool menuClosing)
+            => openingQueuedOrPlaying && (!menuOpen || menuClosing);
     }
 }

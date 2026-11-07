@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 402 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 404 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -32,12 +32,12 @@ The integrated suite contains 402 EditMode, twenty-four batch PlayMode and five 
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
 | Quest hint visibility, dialogue input gating, waypoints, side quests and room-key progress | QuestHintOverlayTests | 13 |
 | Spell state, rejected-input feedback, gap-free spell keys and world save round trips | SpellWorldStateTests | 10 |
-| Weave quest prerequisites, authored board and completion | StringThemTogetherTests | 8 |
+| Weave quest prerequisites, authored board, completion and the Ampere resonance chime | StringThemTogetherTests | 9 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
 | Pending effect deduplication, acknowledgment and requeue | WorldEffectQueueTests | 1 |
 | Accessibility preferences and localization | AccessibilityPreferencesTests | 16 |
 | Test audio suppression and cleanup | AudioPlaybackTests | 3 |
-| Audio buses and feedback | AudioFeedbackTests | 19 |
+| Audio buses and feedback, and menu music behind a queued opening | AudioFeedbackTests | 20 |
 | Transactional save recovery and rollback | GameSaveRecoveryTests | 19 |
 | Overlay ownership and focus policy | ProductionUiPolicyTests | 4 |
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
@@ -62,7 +62,7 @@ The integrated suite contains 402 EditMode, twenty-four batch PlayMode and five 
 | Follow camera alignment, follow lag and peeking | CameraFollowTests | 4 |
 | Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
 | Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
-| **Gameplay rules / EditMode** | | **402** |
+| **Gameplay rules / EditMode** | | **404** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |
