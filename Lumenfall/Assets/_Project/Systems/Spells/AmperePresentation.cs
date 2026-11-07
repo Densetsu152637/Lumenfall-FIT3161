@@ -42,6 +42,7 @@ namespace Lumenfall.Spells
             public float startsAt;
             public float width;
         }
+        
 
         private readonly List<Bolt> bolts = new List<Bolt>();
         private readonly List<string> queuedTargets = new List<string>();
