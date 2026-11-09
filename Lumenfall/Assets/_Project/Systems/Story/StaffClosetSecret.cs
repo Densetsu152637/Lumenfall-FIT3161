@@ -88,6 +88,7 @@ namespace Lumenfall.Story
             {
                 if (runtime.GetFlag(item.Flag) || !item.Answers(cast.Spell, cast.MapId, cast.Cell)) continue;
                 runtime.SetFlag(item.Flag, true);
+                if (item.Spell == SpellId.Rotara) SpellSounds.Play(SpellSounds.RotaraPath);
                 string click = AllUnlocked(runtime) ? "Somewhere, a third lock clicks. Then a door creaks." : "Somewhere, a lock clicks.";
                 PortalBlockedPopup.Show(item.Message + " " + click, "...?", 5f);
                 cast.Handled = true;

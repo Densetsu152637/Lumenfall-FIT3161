@@ -28,6 +28,15 @@ namespace Lumenfall.Spells
         private static readonly Color CoreColor = new Color(1f, 0.95f, 0.78f);
         private static WorldPickupInteraction instance;
 
+        /// <summary>
+        /// Whether a pickup, concealed or not, is in reach, so the talk key picks it up instead of checking a nearby sign
+        /// or door.
+        /// </summary>
+        public static bool HasTargetInReach => instance != null && instance.promptTarget != null;
+
+        /// <summary>Whether the pickup in reach shows its own prompt (it is visible or revealed).</summary>
+        public static bool HasVisibleTarget => HasTargetInReach && instance.promptVisible;
+
         private readonly Dictionary<string, GameObject> markers = new Dictionary<string, GameObject>();
         private readonly List<string> staleMarkers = new List<string>();
         private Material markerMaterial;
@@ -91,7 +100,9 @@ namespace Lumenfall.Spells
             WorldObjectSnapshot[] objects = cachedObjects;
             UpdateMarkers(objects, state.CurrentMapId, world, player);
 
+            // A sign or door card that is open, or was opened or closed by this same key press, keeps the talk key.
             bool blocked = Time.timeScale <= 0f || InventoryUiState.IsOpen || DialogueOverlay.IsNpcInteractionBlocked || CutscenePlayer.BlocksInput ||
+                BuildingSignInteraction.IsEInteractionBlocked ||
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null ||
                 IsNpcInTalkRange(player.transform.position);
             if (blocked) return;

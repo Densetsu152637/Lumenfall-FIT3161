@@ -246,6 +246,14 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheDogDoorSoundAndTheSpellSoundsAreWhereTheCodeLoadsThem()
+        {
+            // The dog gate plays its sound as the bar falls; Rotara and Vis play theirs as they turn, lift and set down.
+            foreach (string path in new[] { AnnoyingDogGate.DogDoorSoundPath, SpellSounds.RotaraPath, SpellSounds.VisUpPath, SpellSounds.VisDownPath })
+                Assert.That(Resources.Load<AudioClip>(path), Is.Not.Null, path + " is in a Resources folder.");
+        }
+
+        [Test]
         public void TheVoicesMusicStartsWithTheBlackAndTheBreakSoundIsNeverCutShort()
         {
             AudioClip music = Resources.Load<AudioClip>(SequenceBreakEnding.VoiceMusicPath);

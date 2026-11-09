@@ -60,6 +60,37 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void AfterHerQuestKatrinaHintsLostEchoesFindsMoreThanHerAnchors()
+        {
+            GameEventRuntime runtime = AuthoredRuntime();
+            runtime.StartQuest(Quest);
+            runtime.SetFlag(Item, true);
+            DialogueSession session = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(session.SelectChoice("report"), Is.True);
+            Assert.That(NodesUntilEnd(session), Does.Contain("versatile"), "Handing the anchors back ends on the hint.");
+
+            // A player who finished before the hint was added still hears it from her follow-up chat.
+            session = runtime.StartDialogue(Quest + "_dialogue");
+            Assert.That(session.SelectChoice("done"), Is.True);
+            Assert.That(NodesUntilEnd(session), Does.Contain("versatile"));
+
+            Assert.That(runtime.Catalog.TryGetDialogueNode(Quest + "_dialogue", "versatile", out DialogueNodeDefinition hint), Is.True);
+            Assert.That(hint.speaker, Is.EqualTo("Katrina"));
+            Assert.That(hint.text, Does.Contain("hidden or lost"), "Players learn the spell finds more than the quest's items.");
+        }
+
+        private static string[] NodesUntilEnd(DialogueSession session)
+        {
+            var visited = new System.Collections.Generic.List<string>();
+            for (int guard = 0; session.IsActive && session.CurrentNode != null && guard < 20; guard++)
+            {
+                visited.Add(session.CurrentNode.id);
+                if (!session.Continue()) break;
+            }
+            return visited.ToArray();
+        }
+
+        [Test]
         public void CompletionAwardsItemWithoutUiExactlyOnceAndRoundTrips()
         {
             GameEventRuntime runtime = AuthoredRuntime();

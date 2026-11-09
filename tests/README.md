@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 417 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 419 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -25,7 +25,7 @@ The integrated suite contains 417 EditMode, twenty-four batch PlayMode and five 
 | Dialogue reveal and rich text | DialogueTextRevealTests | 8 |
 | Event dispatch, dialogue and quest runtime | GameEventRuntimeTests | 7 |
 | Save slot selection policy | GameSaveSlotPolicyTests | 3 |
-| Borrowed Light progression and spell rewards | KatrinaBorrowedProgressionTests | 8 |
+| Borrowed Light progression, spell rewards and Katrina's Lost Echoes hint | KatrinaBorrowedProgressionTests | 9 |
 | Borrowed Light world state and restoration | KatrinaBorrowedWorldTests | 8 |
 | Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
 | Authored quest dialogue references | QuestDialogueContentTests | 4 |
@@ -55,14 +55,14 @@ The integrated suite contains 417 EditMode, twenty-four batch PlayMode and five 
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Runtime primitive behavior | RuntimePrimitiveTests | 2 |
 | Game code writes no routine console lines | RuntimeLoggingTests | 1 |
-| Hidden interactions, collectible secrets, the sequence break's lines, music, crushing hand and its flashes, and Miki's bargain | SecretsTests | 24 |
+| Hidden interactions, collectible secrets, the sequence break's lines, music, crushing hand and its flashes, Miki's bargain, and the dog door, Rotara and Vis sounds | SecretsTests | 25 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, the key hunt and glitch ending, Rowan staging and restored blockers | SettlingInTests | 14 |
 | Movement locks, the menu's and project's time scale, wayfinding routes, quest banners and tips | PlaytestFeedbackTests | 7 |
 | Follow camera alignment, follow lag, peeking and reduced-motion cuts | CameraFollowTests | 5 |
 | Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
 | Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
-| **Gameplay rules / EditMode** | | **417** |
+| **Gameplay rules / EditMode** | | **419** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

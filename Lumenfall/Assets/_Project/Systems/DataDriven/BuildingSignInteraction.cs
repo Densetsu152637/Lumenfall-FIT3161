@@ -7,6 +7,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Inventory;
 using Lumenfall.Quests;
+using Lumenfall.Spells;
 using Lumenfall.Cutscenes;
 using Lumenfall.Startup;
 
@@ -62,7 +63,8 @@ namespace Lumenfall.DataDriven
                 return;
             }
 
-            if (!KeyBindings.WasPressed(GameAction.Talk) || !IsNearestInteractionTarget(player)) return;
+            // An item in reach, even a hidden one, takes the key instead; picking it up opens its own dialogue.
+            if (!KeyBindings.WasPressed(GameAction.Talk) || WorldPickupInteraction.HasTargetInReach || !IsNearestInteractionTarget(player)) return;
             Open(player);
         }
 
@@ -84,7 +86,8 @@ namespace Lumenfall.DataDriven
                 GridPortal.IsPlayerAtInteractivePortal || GameEventManager.Instance?.Runtime?.ActiveDialogue != null || Camera.main == null) return;
 
             GridMover player = GridMover.FindActive();
-            if (player == null || !IsNearestInteractionTarget(player)) return;
+            // A revealed item shows its own prompt instead. A hidden one leaves this prompt up, so nothing gives it away.
+            if (player == null || WorldPickupInteraction.HasVisibleTarget || !IsNearestInteractionTarget(player)) return;
             HudSkin.PromptAbove(transform.position + Vector3.up * 1.6f, KeyBindings.GetKeyLabel(GameAction.Talk),
                 string.IsNullOrWhiteSpace(promptLabel) ? "Read" : promptLabel);
         }

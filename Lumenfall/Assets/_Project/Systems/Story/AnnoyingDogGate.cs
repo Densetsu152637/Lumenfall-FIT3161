@@ -64,12 +64,17 @@ namespace Lumenfall.Story
         private const float DropSeconds = 0.45f;
         private const float HoldEmptySeconds = 0.9f;
         private const float FadeSeconds = 0.25f;
+        /// <summary>Played as the dog empties the bar.</summary>
+        internal const string DogDoorSoundPath = "Audio/Dog/Dog Door";
 
         private readonly MenuSkin skin = new MenuSkin();
         private GridPortal portal;
         private GridMover lockedMover;
+        private AudioSource dropSound;
         private bool playing;
+        private bool dropSoundPlayed;
         private float startedAt;
+        private float loadSeconds;
         private float totalSeconds;
 
         private void OnDestroy() => skin.Dispose();
@@ -118,12 +123,14 @@ namespace Lumenfall.Story
             if (cast.Spell == SpellId.Vis && !runtime.GetFlag(LiftedFlag))
             {
                 runtime.SetFlag(LiftedFlag, true);
+                SpellSounds.Play(SpellSounds.VisUpPath);
                 PortalBlockedPopup.Show("You lift the dog with Vis. It stays asleep, and it stays in the way. Perhaps it could be turned aside.", "Vis", 4f);
                 cast.Handled = true;
             }
             else if (cast.Spell == SpellId.Rotara && runtime.GetFlag(LiftedFlag) && !runtime.GetFlag(MovedFlag))
             {
                 runtime.SetFlag(MovedFlag, true);
+                SpellSounds.Play(SpellSounds.RotaraPath);
                 PortalBlockedPopup.Show("The dog spins gently in the air, still asleep, and drifts out of the way.", "Rotara", 4f);
                 cast.Handled = true;
             }
@@ -150,9 +157,11 @@ namespace Lumenfall.Story
             lockedMover = mover;
             if (mover != null) mover.SetMovementLocked(this, true);
             playing = true;
+            dropSoundPlayed = false;
             startedAt = Time.unscaledTime;
-            totalSeconds = DropSeconds + HoldEmptySeconds;
-            foreach ((string _, float _, float seconds) in Steps) totalSeconds += seconds;
+            loadSeconds = 0f;
+            foreach ((string _, float _, float seconds) in Steps) loadSeconds += seconds;
+            totalSeconds = loadSeconds + DropSeconds + HoldEmptySeconds;
             return true;
         }
 
@@ -160,7 +169,25 @@ namespace Lumenfall.Story
         {
             if (!playing) return;
             skin.Tick(Time.unscaledDeltaTime);
-            if (Time.unscaledTime - startedAt >= totalSeconds) Finish(true);
+            float elapsed = Time.unscaledTime - startedAt;
+            if (!dropSoundPlayed && elapsed >= loadSeconds) PlayDropSound();
+            if (elapsed >= totalSeconds) Finish(true);
+        }
+
+        // The moment the bar starts falling back to zero.
+        private void PlayDropSound()
+        {
+            dropSoundPlayed = true;
+            AudioClip clip = Resources.Load<AudioClip>(DogDoorSoundPath);
+            if (clip == null) return;
+            if (dropSound == null)
+            {
+                dropSound = gameObject.AddComponent<AudioSource>();
+                dropSound.playOnAwake = false;
+                dropSound.loop = false;
+                dropSound.spatialBlend = 0f;
+            }
+            dropSound.PlayOneShot(clip, 0.8f * Lumenfall.Audio.AudioMixSettings.Sfx);
         }
 
         private void Finish(bool showNotice)

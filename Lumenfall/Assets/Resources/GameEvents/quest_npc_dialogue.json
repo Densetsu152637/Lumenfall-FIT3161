@@ -78,9 +78,10 @@
       {"id":"active_why","speaker":"Katrina","text":"Text remembers what was written, gardens remember who lingered, and water remembers only motion. I needed all three kinds of echo.","nextNodeId":""},
       {"id":"report","speaker":"Katrina","text":"The bookmark, the ribbon, and the chime. You found the entire trail my spell erased.","nextNodeId":"report_truth"},
       {"id":"report_truth","speaker":"Katrina","text":"I called them calibration anchors. Truthfully, I chose things I would miss enough to search for properly.","nextNodeId":"report_reward"},
-      {"id":"report_reward","speaker":"Katrina","text":"You have a real feel for Lost Echoes. Honestly, better than I had when I began the experiment.","nextNodeId":""},
+      {"id":"report_reward","speaker":"Katrina","text":"You have a real feel for Lost Echoes. Honestly, better than I had when I began the experiment.","nextNodeId":"versatile"},
       {"id":"done","speaker":"Katrina","text":"Next time I test memory magic, I am writing the locations down first.","nextNodeId":"done_thanks"},
-      {"id":"done_thanks","speaker":"Katrina","text":"On paper. With a duplicate copy kept very far from the spell.","nextNodeId":""}
+      {"id":"done_thanks","speaker":"Katrina","text":"On paper. With a duplicate copy kept very far from the spell.","nextNodeId":"versatile"},
+      {"id":"versatile","speaker":"Katrina","text":"And keep casting it. Lost Echoes isn't picky. It finds anything hidden or lost, not just my anchors. This campus is full of things people dropped and forgot. Cast it anywhere that seems a little too quiet.","nextNodeId":""}
     ]},
     {"id":"ambient_courtyard_student","startNodeId":"greeting","metadata":[{"key":"ambient","value":"courtyard"}],"nodes":[
       {"id":"greeting","speaker":"Kit","text":"Hey, {player}! Settling in all right?","choices":[{"id":"new","text":"Can you remind me of the campus buildings and areas?","nextNodeId":"welcome"},{"id":"familiar","text":"Bye!","nextNodeId":"familiar"}]},
