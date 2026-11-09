@@ -239,6 +239,19 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheCrushingHandHasEveryBoneTheEndingPoses()
+        {
+            SecretRoomArt art = SecretRoomArt.Load();
+            Assert.That(art, Is.Not.Null);
+            Assert.That(art.crushingHand, Is.Not.Null, "SecretRoomArt references PolyOne's hands; without them the screen shatters instead.");
+            string[] bones = art.crushingHand.GetComponentsInChildren<Transform>(true).Select(bone => bone.name).ToArray();
+            Assert.That(bones, Is.SupersetOf(ScreenCrush.RequiredBones));
+            Assert.That(ScreenCrush.RequiredBones, Has.Length.EqualTo(32), "Both hands: the wrist and three joints for each finger and the thumb.");
+            Assert.That(ScreenCrush.Squeeze(0f), Is.Zero, "The screen starts untouched.");
+            Assert.That(ScreenCrush.Squeeze(ScreenCrush.BreakAt), Is.EqualTo(1f).Within(1e-4f), "The hands meet as it breaks.");
+        }
+
+        [Test]
         public void HandLinesFallBackToWingdingsOwnSymbols()
         {
             Assert.That(WingdingsText.AsSymbols("AEIOU"), Is.EqualTo("✌☜✋⚐🕆"));

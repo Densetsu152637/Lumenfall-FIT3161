@@ -32,6 +32,12 @@ namespace Lumenfall.Story
         /// <c>Lumenfall/Secrets/Bake Forgotten Man</c>. When it is missing the room dresses a model at runtime instead.
         /// </summary>
         public GameObject forgottenMan;
+        /// <summary>
+        /// PolyOne Studio's rigged VR hands (CC BY 4.0, <c>Assets/ThirdParty/PolyOne</c>). In the sequence break's ending
+        /// both hands press the game from either side until it breaks between them (<see cref="ScreenCrush"/>); when
+        /// this is missing, the ending shatters the screen instead.
+        /// </summary>
+        public GameObject crushingHand;
 
         private static SecretRoomArt loaded;
 

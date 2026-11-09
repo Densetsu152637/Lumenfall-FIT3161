@@ -5,13 +5,14 @@ using UnityEngine;
 namespace Lumenfall.Story
 {
     /// <summary>
-    /// The end of the sequence break (<see cref="SequenceBreakEnding"/>): a still of the game, taken the moment the
+    /// The fallback end of the sequence break (<see cref="SequenceBreakEnding"/>), used when the crushing hand
+    /// (<see cref="ScreenCrush"/>) cannot be set up: a still of the game, taken the moment the
     /// glitching voice fell silent, comes back for a breath, cracks twice from one point with a sharp snap, then falls
     /// apart into shards that tumble away into black. The picture is cut into a web of rings and rays around the impact,
     /// so the cracks are the shards' own edges. Drawn in screen pixels with GL from <c>OnGUI</c>; sounds play through
     /// paused audio.
     /// </summary>
-    internal sealed class ScreenShatter : IDisposable
+    internal sealed class ScreenShatter : IEndingEffect
     {
         /// <summary>Seconds from the still appearing to nothing but black.</summary>
         public const float Duration = 6f;
@@ -135,7 +136,7 @@ namespace Lumenfall.Story
             float[] volumes = { 0.75f, 1f, 0.55f };
             while (snapsPlayed < moments.Length && t >= moments[snapsPlayed])
             {
-                sound.PlayOneShot(snap, volumes[snapsPlayed]);
+                Audio.AudioPlayback.PlayOneShot(sound, snap, volumes[snapsPlayed]);
                 snapsPlayed++;
             }
         }
@@ -284,7 +285,9 @@ namespace Lumenfall.Story
         }
 
         // Glass giving way: a hard click, a burst of noise, and a scatter of bright ringing chips.
-        private static AudioClip CreateSnap()
+        float IEndingEffect.Duration => Duration;
+
+        internal static AudioClip CreateSnap()
         {
             const int rate = 44100;
             const float seconds = 0.9f;

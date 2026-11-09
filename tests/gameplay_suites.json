@@ -38,7 +38,7 @@
         "Lumenfall.Tests.GameEvents.QuestHintOverlayTests": 13,
         "Lumenfall.Tests.GameEvents.RuntimeLoggingTests": 1,
         "Lumenfall.Tests.GameEvents.RuntimePrimitiveTests": 2,
-        "Lumenfall.Tests.GameEvents.SecretsTests": 20,
+        "Lumenfall.Tests.GameEvents.SecretsTests": 21,
         "Lumenfall.Tests.GameEvents.SerializedAssetImportTests": 4,
         "Lumenfall.Tests.GameEvents.SettlingInTests": 11,
         "Lumenfall.Tests.GameEvents.SpellWorldStateTests": 10,

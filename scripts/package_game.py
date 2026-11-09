@@ -13,6 +13,14 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
+# Third-party art whose licence requires credit wherever the game is distributed. Keep in step with the Credits section
+# of the repository README.
+CREDITS = (
+    "Credits\n"
+    '"Free Pack - VR Hands (Rigged)" (https://skfb.ly/pMPEH) by PolyOne Studio is licensed under\n'
+    "Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).\n"
+)
+
 
 def package_game(build: Path, output: Path, version: str, commit: str) -> Path:
     build = build.resolve()
@@ -55,7 +63,8 @@ def package_game(build: Path, output: Path, version: str, commit: str) -> Path:
         "Extract the entire ZIP into a folder, then run Lumenfall.exe.\n"
         "Keep Lumenfall_Data, UnityPlayer.dll, MonoBleedingEdge, and all other\n"
         "included files beside the executable. Unity Editor is not required.\n\n"
-        f"Build commit: {commit}\nUnity version: {unity_version}\n"
+        f"Build commit: {commit}\nUnity version: {unity_version}\n\n"
+        f"{CREDITS}"
     )
 
     output.mkdir(parents=True, exist_ok=True)

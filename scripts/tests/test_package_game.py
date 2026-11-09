@@ -48,7 +48,11 @@ class GameBundleTests(unittest.TestCase):
         self.assertEqual("v1.2.3", metadata["version"])
         self.assertEqual("a" * 40, metadata["commit"])
         self.assertEqual("windows-x64", metadata["platform"])
-        self.assertIn("run Lumenfall.exe", (extracted / "README.txt").read_text())
+        readme = (extracted / "README.txt").read_text()
+        self.assertIn("run Lumenfall.exe", readme)
+        # CC BY art must be credited in the download itself, not only in the repository.
+        self.assertIn('"Free Pack - VR Hands (Rigged)" (https://skfb.ly/pMPEH) by PolyOne Studio', readme)
+        self.assertIn("http://creativecommons.org/licenses/by/4.0/", readme)
         self.assertTrue((extracted / "LICENSE").is_file())
         checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
         self.assertEqual(

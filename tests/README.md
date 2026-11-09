@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 404 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 405 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -55,14 +55,14 @@ The integrated suite contains 404 EditMode, twenty-four batch PlayMode and five 
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Runtime primitive behavior | RuntimePrimitiveTests | 2 |
 | Game code writes no routine console lines | RuntimeLoggingTests | 1 |
-| Hidden interactions, collectible secrets, the sequence break's lines and Miki's bargain | SecretsTests | 20 |
+| Hidden interactions, collectible secrets, the sequence break's lines, crushing hand and Miki's bargain | SecretsTests | 21 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, Rowan staging and restored blockers | SettlingInTests | 11 |
 | Movement locks, the menu's and project's time scale, wayfinding routes, quest banners and tips | PlaytestFeedbackTests | 7 |
 | Follow camera alignment, follow lag and peeking | CameraFollowTests | 4 |
 | Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
 | Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
-| **Gameplay rules / EditMode** | | **404** |
+| **Gameplay rules / EditMode** | | **405** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

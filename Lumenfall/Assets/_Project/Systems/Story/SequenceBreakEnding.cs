@@ -19,7 +19,9 @@ namespace Lumenfall.Story
     /// (<see cref="SolvedEverythingFirst"/>). Solving one puzzle early is fine. Once nothing else is on screen, a glitching
     /// voice notices. A still of the game is taken, then the screen cuts to black and silence and a voice that speaks in
     /// hands (the real Wingdings font, <see cref="WingdingsText"/>) has its say, ending in English. The still comes back,
-    /// cracks and shatters (<see cref="ScreenShatter"/>), and the game closes.
+    /// is pressed between two pale hands reaching in from either side; it cracks as they squeeze, and as they meet its glass
+    /// bursts out from between the palms and falls away in pieces before the game closes (<see cref="ScreenCrush"/>; without the hand model it cracks and
+    /// shatters instead, <see cref="ScreenShatter"/>).
     /// The moment the screen goes black, the run is reset to a new game and written over the autosave and the run's linked
     /// manual slot, and the game is locked out (<see cref="SequenceBreakLockout"/>), so closing it
     /// early escapes nothing. Every launch after that opens on an empty screen until Miki lets the player back in. Loading
@@ -68,7 +70,6 @@ namespace Lumenfall.Story
         internal const float LastLineFadesAt = 39.1f;
         /// <summary>When the still of the game comes back and breaks.</summary>
         internal const float ShatterAt = 39.5f;
-        private const float EndsAt = ShatterAt + ScreenShatter.Duration;
 
         /// <summary>Letters per second for each style (Hands lines appear whole).</summary>
         internal static float RevealRate(LineStyle style) => style switch
@@ -90,7 +91,7 @@ namespace Lumenfall.Story
         private float blackSince;
         private GridMover lockedMover;
         private Texture2D still;
-        private ScreenShatter shatter;
+        private IEndingEffect shatter;
         private GUIStyle lineStyle;
         private GUIStyle handsStyle;
         private Font handsFont;
@@ -239,10 +240,11 @@ namespace Lumenfall.Story
                 float elapsed = Time.unscaledTime - blackSince;
                 if (elapsed >= ShatterAt && still != null)
                 {
-                    if (shatter == null) shatter = new ScreenShatter(still);
+                    if (shatter == null) shatter = (IEndingEffect)ScreenCrush.TryCreate(still) ?? new ScreenShatter(still);
                     shatter.Tick(elapsed - ShatterAt);
                 }
-                if (elapsed >= EndsAt) Finish();
+                // The game closes when the effect is done: for the hands, the instant the game breaks between them.
+                if (elapsed >= ShatterAt + (shatter != null ? shatter.Duration : ScreenShatter.Duration)) Finish();
                 return;
             }
             if (capturing) return;
@@ -264,7 +266,7 @@ namespace Lumenfall.Story
             StartCoroutine(CaptureThenGoBlack());
         }
 
-        // The game as it was the moment the voice fell silent: the picture that shatters at the end.
+        // The game as it was the moment the voice fell silent: the picture crushed at the end.
         private IEnumerator CaptureThenGoBlack()
         {
             yield return new WaitForEndOfFrame();
