@@ -10,7 +10,8 @@ namespace Lumenfall.Cutscenes
         bool StartDialogue(string dialogueId);
         bool IsDialogueActive { get; }
         void EndDialogue();
-        void FocusCamera(Vector3 offset, float zoom);
+        /// <summary>Holds the camera on the player plus <paramref name="offset"/>, easing there over <paramref name="seconds"/>.</summary>
+        void FocusCamera(Vector3 offset, float zoom, float seconds);
         void ReleaseCamera();
         void StartStar(float seconds);
         /// <summary>Hides the player and gathers light onto them; returns false if there is nothing to wait for.</summary>
@@ -28,9 +29,19 @@ namespace Lumenfall.Cutscenes
         bool IsWalking { get; }
         /// <summary>Takes the player through the portal at a cell, moving them onto it first if needed.</summary>
         bool EnterPortal(Vector2Int cell);
+        /// <summary>Sets the glitch aura on an NPC in this area to a level named in <see cref="CutsceneStep.AuraLevels"/>.</summary>
+        void SetAura(string npcId, string level);
+        /// <summary>Turns the player to look straight into the camera over <paramref name="seconds"/>, and holds it.</summary>
+        void StartStare(float seconds);
+        /// <summary>Lets the player face where they were facing before the stare, at once.</summary>
+        void StopStare();
+        /// <summary>Plays a full-screen glitch in a style named in <see cref="CutsceneStep.GlitchStyles"/>.</summary>
+        void StartGlitch(string style, float seconds);
+        /// <summary>Hushes the music and ambience, or brings them back.</summary>
+        void SetMusicHushed(bool hushed);
         /// <summary>
         /// Ends the star and the arrival at once, leaving the player visible, accepts an open name prompt, and finishes a
-        /// walk by placing the player at its destination.
+        /// walk by placing the player at its destination. Also ends a stare, a glitch, a hush and any aura the cutscene set.
         /// </summary>
         void StopEffects();
     }
@@ -219,7 +230,8 @@ namespace Lumenfall.Cutscenes
                     waitRemaining = wait;
                     break;
                 case CutsceneStepKind.Camera:
-                    host.FocusCamera(step.Offset, step.CameraZoom);
+                    host.FocusCamera(step.Offset, step.CameraZoom, seconds);
+                    waitRemaining = wait;
                     break;
                 case CutsceneStepKind.CameraRelease:
                     host.ReleaseCamera();
@@ -238,6 +250,24 @@ namespace Lumenfall.Cutscenes
                     break;
                 case CutsceneStepKind.Flag:
                     if (!string.IsNullOrWhiteSpace(step.key)) host.SetFlag(step.key.Trim(), step.value);
+                    break;
+                case CutsceneStepKind.Aura:
+                    if (!string.IsNullOrWhiteSpace(step.key)) host.SetAura(step.key.Trim(), (step.text ?? string.Empty).Trim().ToLowerInvariant());
+                    break;
+                case CutsceneStepKind.Stare:
+                    if (step.value)
+                    {
+                        host.StartStare(seconds);
+                        waitRemaining = wait;
+                    }
+                    else host.StopStare();
+                    break;
+                case CutsceneStepKind.Glitch:
+                    host.StartGlitch(string.IsNullOrWhiteSpace(step.text) ? "tear" : step.text.Trim().ToLowerInvariant(), seconds);
+                    waitRemaining = wait;
+                    break;
+                case CutsceneStepKind.Music:
+                    host.SetMusicHushed(!step.value);
                     break;
             }
         }

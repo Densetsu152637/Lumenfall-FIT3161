@@ -12,13 +12,17 @@ using UnityEngine;
 namespace Lumenfall.Story
 {
     /// <summary>
-    /// The end of Chapter 1. After Prof. Bann sends the player to the dormitory, the receptionist Marigold tells them their
-    /// room is not ready (<see cref="NotReadyDialogueId"/>): get to know the campus and meet the other students. Bann
-    /// then chats like anyone else. Once every Chapter 1 puzzle (<see cref="ChapterQuestIds"/>) is solved, the player
-    /// thinks their room should be ready by now (<see cref="ThoughtCutsceneId"/>) and walks back themselves. Marigold
-    /// then hands over the key, the player walks to their door, "End of Chapter 1" plays over a fade
-    /// (<see cref="EndingCutsceneId"/>), and the game saves and returns to the main menu. Loading that save puts the
-    /// player back at their door, with no further story.
+    /// The end of Chapter 1, a wild goose chase for the room key. After Prof. Bann sends the player to the dormitory, the
+    /// receptionist Marigold says she has already handed their key to one of their four dormmates
+    /// (<see cref="NotReadyDialogueId"/>). Bann then chats like anyone else. Once a dormmate's last favour is done, the
+    /// player asks them about the key (<see cref="KeyAskDialogueId"/>), straight after that favour's wrap-up, or the next
+    /// time they talk; each says they do not have it and someone else must. Once all four have been asked, the player
+    /// thinks they will have to ask the receptionist (<see cref="ThoughtCutsceneId"/>) and walks back themselves. At the
+    /// desk the story glitches (<see cref="EndingCutsceneId"/>): Marigold's aura breaks through, she asks why they did
+    /// not ask for it, the player turns slowly to stare into the camera, and the screen tears. It rewinds, and Marigold
+    /// hands over the key as if nothing happened. The player walks to their door, "End of Chapter 1" plays over a fade,
+    /// and the game saves and returns to the main menu. Loading that save puts the player back at their door, with no
+    /// further story.
     /// </summary>
     public sealed class SettlingInScene : MonoBehaviour
     {
@@ -56,7 +60,29 @@ namespace Lumenfall.Story
         /// <summary>The room door the ending walks to.</summary>
         public const string RoomDoorName = "Room Door 3";
 
-        /// <summary>The Chapter 1 puzzles; the last of them to be solved brings the room-ready thought.</summary>
+        /// <summary>
+        /// The four dormmates who might have the key, each with the favour that has to be done before they are asked.
+        /// </summary>
+        public static readonly (string person, string lastQuest)[] Dormmates =
+        {
+            ("stella", "stella_string_them_together"), ("cinna_cirra", "cinna_cold_feet_warm_idea"),
+            ("orio", "orio_patch_notes"), ("katrina", "katrina_something_borrowed")
+        };
+
+        public const string KeyAskedFlagPrefix = "story.key.asked.";
+        public const string KeyAskDialoguePrefix = "key_ask_";
+
+        // Speaker names in dialogue that belong to each dormmate.
+        private static readonly (string person, string speaker)[] DormmateSpeakers =
+        {
+            ("stella", "Stella"), ("cinna_cirra", "Cinna Cirra"), ("orio", "Orio"), ("katrina", "Katrina")
+        };
+
+        public static string KeyAskedFlag(string person) => KeyAskedFlagPrefix + person;
+
+        public static string KeyAskDialogueId(string person) => KeyAskDialoguePrefix + person;
+
+        /// <summary>The Chapter 1 puzzles; every one of them is solved by the time the last dormmate is asked.</summary>
         public static readonly string[] ChapterQuestIds =
         {
             "stella_first_light", "stella_string_them_together", "cinna_out_of_alignment",
@@ -66,6 +92,8 @@ namespace Lumenfall.Story
         private static SettlingInScene instance;
         private bool endingWasPlaying;
         private bool thoughtFailed;
+        private GameEventRuntime keyRuntime;
+        private string pendingKeyAsk;
         private GameObject rowanPlacedIn;
         private GameEventRuntime rowanPlacedRuntime;
         private bool rowanPlacedHomeless;
@@ -99,6 +127,12 @@ namespace Lumenfall.Story
             }
             // The headmistress keeps her orientation lines and the reminder to visit the dorm until the player has.
             if (person == HeadmistressNpcId) return !runtime.GetFlag(NotReadyFlag);
+            // A dormmate whose last favour is done and thanked is asked about the key before anything else.
+            if (ShouldAskAboutKey(runtime, person) && runtime.GetFlag(NpcIntroductions.QuestThankedFlag(LastQuestOf(person))))
+            {
+                dialogueId = KeyAskDialogueId(person);
+                return true;
+            }
             // Rowan never did get a room.
             if (person == RowanNpcId && runtime.GetFlag(ThoughtFlag)) { dialogueId = RowanHomelessDialogueId; return true; }
             if (person == ThistleNpcId && runtime.GetFlag(ThoughtFlag)) { dialogueId = ThistleLaughingDialogueId; return true; }
@@ -115,19 +149,79 @@ namespace Lumenfall.Story
             return true;
         }
 
-        /// <summary>True once the player has been to the dorm and every Chapter 1 puzzle is solved.</summary>
+        /// <summary>The favour a dormmate needs done before they are asked about the key, or null for anyone else.</summary>
+        public static string LastQuestOf(string person)
+        {
+            foreach ((string dormmate, string quest) in Dormmates) if (dormmate == person) return quest;
+            return null;
+        }
+
+        /// <summary>
+        /// True when the player is hunting for the key (Marigold has sent them, and the hunt is not over), this dormmate's
+        /// last favour is done, and they have not been asked yet.
+        /// </summary>
+        public static bool ShouldAskAboutKey(GameEventRuntime runtime, string person)
+        {
+            string quest = LastQuestOf(person);
+            return quest != null && runtime != null && runtime.GetFlag(NotReadyFlag) && !runtime.GetFlag(ThoughtFlag) &&
+                   !runtime.GetFlag(KeyAskedFlag(person)) && runtime.GetQuestStatus(quest) == QuestStatus.Completed;
+        }
+
+        /// <summary>How many of the four dormmates have been asked about the key.</summary>
+        public static int DormmatesAsked(GameEventRuntime runtime)
+        {
+            int asked = 0;
+            if (runtime != null)
+                foreach ((string person, _) in Dormmates) if (runtime.GetFlag(KeyAskedFlag(person))) asked++;
+            return asked;
+        }
+
+        /// <summary>
+        /// True once the player has been to the dorm, every Chapter 1 puzzle is solved and all four dormmates have been
+        /// asked about the key.
+        /// </summary>
         public static bool ShouldThinkRoomIsReady(GameEventRuntime runtime)
         {
             if (runtime == null || !runtime.GetFlag(NotReadyFlag) || runtime.GetFlag(ThoughtFlag)) return false;
             foreach (string quest in ChapterQuestIds)
                 if (runtime.GetQuestStatus(quest) != QuestStatus.Completed) return false;
-            return true;
+            return DormmatesAsked(runtime) == Dormmates.Length;
+        }
+
+        /// <summary>
+        /// The dormmate to ask about the key once <paramref name="session"/> has ended, or null: a dormmate who spoke in it
+        /// (or whose conversation it was) and should now be asked. This is how the question follows straight on from
+        /// the end of their last favour, including Cinna Cirra's, which ends in the ice trial rather than in a conversation.
+        /// </summary>
+        public static string KeyAskAfter(GameEventRuntime runtime, DialogueSession session)
+        {
+            DialogueDefinition dialogue = session?.Definition;
+            if (runtime == null || dialogue == null || !session.IsCompleted) return null;
+            if (dialogue.id != null && dialogue.id.StartsWith(KeyAskDialoguePrefix, StringComparison.Ordinal)) return null;
+            string owner = NpcIntroductions.PersonId(dialogue.metadata.GetValue("npcId"));
+            foreach ((string person, string speaker) in DormmateSpeakers)
+            {
+                if (!ShouldAskAboutKey(runtime, person)) continue;
+                if (owner == person) return person;
+                foreach (DialogueNodeDefinition node in dialogue.nodes ?? Array.Empty<DialogueNodeDefinition>())
+                    if (node != null && string.Equals(node.speaker, speaker, StringComparison.OrdinalIgnoreCase)) return person;
+            }
+            return null;
         }
 
         private void Update()
         {
             GameEventRuntime runtime = GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null;
+            WatchKeyHunt(runtime);
             if (runtime == null) return;
+
+            // A dormmate's wrap-up has just ended: ask them about the key, unless something else has the screen.
+            if (pendingKeyAsk != null && IsQuiet(runtime))
+            {
+                string person = pendingKeyAsk;
+                pendingKeyAsk = null;
+                if (ShouldAskAboutKey(runtime, person)) runtime.StartDialogue(KeyAskDialogueId(person));
+            }
 
             // The ending has finished: save at the door and go back to the menu.
             bool endingPlaying = CutscenePlayer.IsPlaying && CutscenePlayer.CurrentId == EndingCutsceneId;
@@ -150,6 +244,27 @@ namespace Lumenfall.Story
                     rowanPlacedHomeless = homeless;
                 }
             }
+        }
+
+        private void OnDestroy() => WatchKeyHunt(null);
+
+        // New Game and loading rebuild the runtime, so the watch moves to each new one.
+        private void WatchKeyHunt(GameEventRuntime runtime)
+        {
+            if (runtime == keyRuntime) return;
+            if (keyRuntime != null) keyRuntime.DialogueEnded -= OnDialogueEnded;
+            keyRuntime = runtime;
+            pendingKeyAsk = null;
+            if (keyRuntime != null) keyRuntime.DialogueEnded += OnDialogueEnded;
+        }
+
+        // Straight on in the same dialogue box when nothing else has started; otherwise once the screen is quiet.
+        private void OnDialogueEnded(DialogueSession session)
+        {
+            string person = KeyAskAfter(keyRuntime, session);
+            if (person == null) return;
+            if (keyRuntime.ActiveDialogue == null && !CutscenePlayer.IsPlaying && keyRuntime.StartDialogue(KeyAskDialogueId(person)) != null) return;
+            pendingKeyAsk = person;
         }
 
         /// <summary>

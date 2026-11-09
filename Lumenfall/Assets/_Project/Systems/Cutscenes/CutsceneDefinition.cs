@@ -101,6 +101,14 @@ namespace Lumenfall.Cutscenes
                     case CutsceneStepKind.Star:
                         if (step.seconds <= 0f) problems.Add($"{label} is a star with no duration.");
                         break;
+                    case CutsceneStepKind.Aura:
+                        if (string.IsNullOrWhiteSpace(step.key)) problems.Add($"{label} needs the NPC id the aura is on.");
+                        if (!CutsceneStep.IsAuraLevel(step.text)) problems.Add($"{label} has an unknown aura level '{step.text}'.");
+                        break;
+                    case CutsceneStepKind.Glitch:
+                        if (step.seconds <= 0f) problems.Add($"{label} is a glitch with no duration.");
+                        if (!CutsceneStep.IsGlitchStyle(step.text)) problems.Add($"{label} has an unknown glitch style '{step.text}'.");
+                        break;
                     case CutsceneStepKind.Walk:
                     case CutsceneStepKind.Enter:
                         // A walk to an NPC takes an offset, which may be negative.
@@ -112,7 +120,7 @@ namespace Lumenfall.Cutscenes
         }
     }
 
-    public enum CutsceneStepKind { Unknown, Wait, Fade, Caption, Star, Arrive, Reveal, Shake, Camera, CameraRelease, Dialogue, Name, Walk, Enter, Flag }
+    public enum CutsceneStepKind { Unknown, Wait, Fade, Caption, Star, Arrive, Reveal, Shake, Camera, CameraRelease, Dialogue, Name, Walk, Enter, Flag, Aura, Stare, Glitch, Music }
 
     /// <summary>
     /// One cutscene step. Fields a step type does not use are ignored:
@@ -125,7 +133,8 @@ namespace Lumenfall.Cutscenes
     /// the cutscene follows New Game); waits until it has gathered.</item>
     /// <item><c>reveal</c>: show the hidden player with a burst of light; usually just after a flash.</item>
     /// <item><c>shake</c>: shake the camera by <c>amplitude</c>, dying away over <c>seconds</c>.</item>
-    /// <item><c>camera</c>: hold the camera on the player plus <c>x</c>, <c>y</c>, <c>z</c> at <c>zoom</c>.</item>
+    /// <item><c>camera</c>: hold the camera on the player plus <c>x</c>, <c>y</c>, <c>z</c> at <c>zoom</c>; with
+    /// <c>seconds</c>, ease there over that long.</item>
     /// <item><c>cameraRelease</c>: hand the camera back to normal following.</item>
     /// <item><c>dialogue</c>: open dialogue <c>key</c> and wait until it ends.</item>
     /// <item><c>name</c>: ask the player for their name (blank gives the default) and wait for the answer.</item>
@@ -134,8 +143,15 @@ namespace Lumenfall.Cutscenes
     /// offset from wherever that NPC stands, such as 0, -2 for two cells in front of them.</item>
     /// <item><c>enter</c>: take the player through the portal at cell <c>x</c>, <c>y</c>.</item>
     /// <item><c>flag</c>: set GameEvents flag <c>key</c> to <c>value</c>. Skipping still applies it.</item>
+    /// <item><c>aura</c>: set the glitch aura on NPC <c>key</c> to level <c>text</c> (off, hint, lingering or full).</item>
+    /// <item><c>stare</c>: with <c>value</c> true, the player turns to look straight into the camera over
+    /// <c>seconds</c> and holds it; with <c>value</c> false, they face where they were facing again at once.</item>
+    /// <item><c>glitch</c>: a full-screen glitch for <c>seconds</c>: <c>text</c> "tear" freezes and tears the picture,
+    /// "rewind" rolls tracking lines over it.</item>
+    /// <item><c>music</c>: <c>value</c> false hushes the music and ambience, true brings them back.</item>
     /// </list>
-    /// <c>background</c> lets a timed step (wait, fade, caption, star, shake) run on while the next steps start.
+    /// <c>background</c> lets a timed step (wait, fade, caption, star, shake, camera, stare, glitch) run on while the next
+    /// steps start.
     /// </summary>
     [Serializable]
     public sealed class CutsceneStep
@@ -166,6 +182,18 @@ namespace Lumenfall.Cutscenes
 
         public static bool IsKnownType(string type) => KindOf(type) != CutsceneStepKind.Unknown;
 
+        /// <summary>The aura levels an <c>aura</c> step can name, as GlitchAuraLevel names.</summary>
+        public static readonly string[] AuraLevels = { "off", "hint", "lingering", "full" };
+
+        /// <summary>The styles a <c>glitch</c> step can name; empty means "tear".</summary>
+        public static readonly string[] GlitchStyles = { "tear", "rewind" };
+
+        public static bool IsAuraLevel(string level) =>
+            Array.IndexOf(AuraLevels, (level ?? string.Empty).Trim().ToLowerInvariant()) >= 0;
+
+        public static bool IsGlitchStyle(string style) =>
+            string.IsNullOrWhiteSpace(style) || Array.IndexOf(GlitchStyles, style.Trim().ToLowerInvariant()) >= 0;
+
         public static CutsceneStepKind KindOf(string type)
         {
             switch ((type ?? string.Empty).Trim().ToLowerInvariant())
@@ -184,6 +212,10 @@ namespace Lumenfall.Cutscenes
                 case "walk": return CutsceneStepKind.Walk;
                 case "enter": return CutsceneStepKind.Enter;
                 case "flag": return CutsceneStepKind.Flag;
+                case "aura": return CutsceneStepKind.Aura;
+                case "stare": return CutsceneStepKind.Stare;
+                case "glitch": return CutsceneStepKind.Glitch;
+                case "music": return CutsceneStepKind.Music;
                 default: return CutsceneStepKind.Unknown;
             }
         }

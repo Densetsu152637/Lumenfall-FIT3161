@@ -10,11 +10,11 @@
         {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
       ],
       "nodes": [
-        {"id": "sent", "speaker": "Marigold", "text": "Professor Bann sent word you'd be coming. Let me just check the list...", "nextNodeId": "not_ready"},
-        {"id": "not_ready", "speaker": "Marigold", "text": "Oh dear. I'm afraid your room isn't ready yet. Today's arrivals all came at once, and we're still sorting the keys.", "onEnterActions": [{"type": "SetFlag", "key": "story.dorm.room_not_ready", "boolValue": true}], "nextNodeId": "explore"},
-        {"id": "explore", "speaker": "Marigold", "text": "Why not go and get familiar with the campus in the meantime? Meet your fellow dormmates. Most of them are out and about today.", "nextNodeId": "later"},
-        {"id": "later", "speaker": "Marigold", "text": "Come back once you've had a good look around, and I'll have your key waiting.", "nextNodeId": "exploring"},
-        {"id": "exploring", "speaker": "{player}", "text": "<i>No room yet? Guess exploring it is, then.</i>", "nextNodeId": ""}
+        {"id": "sent", "speaker": "Marigold", "text": "Professor Bann sent word you'd be coming. Let me just check the list...", "nextNodeId": "handed"},
+        {"id": "handed", "speaker": "Marigold", "text": "Ah, there you are. Your room's all sorted, but I've already handed your key to one of your dormmates.", "onEnterActions": [{"type": "SetFlag", "key": "story.dorm.room_not_ready", "boolValue": true}], "nextNodeId": "four"},
+        {"id": "four", "speaker": "Marigold", "text": "There are four of them sharing your room. One of them should have it.", "nextNodeId": "explore"},
+        {"id": "explore", "speaker": "Marigold", "text": "They're all out and about today, so have a look around campus and find them. I'm sure they'll be glad to meet you.", "nextNodeId": "exploring"},
+        {"id": "exploring", "speaker": "{player}", "text": "<i>Four dormmates and one key. Guess I'm going looking, then.</i>", "nextNodeId": ""}
       ]
     },
     {
@@ -24,8 +24,80 @@
         {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
       ],
       "nodes": [
-        {"id": "done", "speaker": "{player}", "text": "<i>That's a lot of new faces and a lot of strange puzzles for one day.</i>", "nextNodeId": "ready"},
-        {"id": "ready", "speaker": "{player}", "text": "<i>My dorm room should be ready by now. I should head back to the dormitory.</i>", "nextNodeId": ""}
+        {"id": "done", "speaker": "{player}", "text": "<i>That's all four of my dormmates, and none of them has my key.</i>", "nextNodeId": "ready"},
+        {"id": "ready", "speaker": "{player}", "text": "<i>I'll have to ask the receptionist.</i>", "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "key_ask_stella",
+      "startNodeId": "more",
+      "metadata": [
+        {"key": "npcId", "value": "stella"},
+        {"key": "placeholder", "value": "Chapter 1 key hunt, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "more", "speaker": "Stella", "text": "Was there something else? I'm meant to be asleep by now.", "choices": [{"id": "ask", "text": "Do you have my dorm key? Marigold said one of my dormmates has it.", "nextNodeId": "no"}]},
+        {"id": "no", "speaker": "Stella", "text": "Your key? No. If Marigold had given it to me, I'd have filed it somewhere sensible. Someone else must have it.", "onEnterActions": [{"type": "SetFlag", "key": "story.key.asked.stella", "boolValue": true}], "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "key_ask_cinna_cirra",
+      "startNodeId": "more",
+      "metadata": [
+        {"key": "npcId", "value": "cinna_cirra"},
+        {"key": "placeholder", "value": "Chapter 1 key hunt, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "more", "speaker": "Cinna Cirra", "text": "Oh! Did you need something else?", "choices": [{"id": "ask", "text": "Do you have my dorm key? Marigold said one of my dormmates has it.", "nextNodeId": "no"}]},
+        {"id": "no", "speaker": "Cinna Cirra", "text": "Your key? No, sorry! All anyone handed me today was relics. Someone else should have it.", "onEnterActions": [{"type": "SetFlag", "key": "story.key.asked.cinna_cirra", "boolValue": true}], "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "key_ask_orio",
+      "startNodeId": "more",
+      "metadata": [
+        {"key": "npcId", "value": "orio"},
+        {"key": "placeholder", "value": "Chapter 1 key hunt, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "more", "speaker": "Orio", "text": "Something else? Ask away.", "choices": [{"id": "ask", "text": "Do you have my dorm key? Marigold said one of my dormmates has it.", "nextNodeId": "no"}]},
+        {"id": "no", "speaker": "Orio", "text": "Your key? Nope. I'd remember that. Probably. Someone else has it, most likely.", "onEnterActions": [{"type": "SetFlag", "key": "story.key.asked.orio", "boolValue": true}], "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "key_ask_katrina",
+      "startNodeId": "more",
+      "metadata": [
+        {"key": "npcId", "value": "katrina"},
+        {"key": "placeholder", "value": "Chapter 1 key hunt, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "more", "speaker": "Katrina", "text": "Need anything else? I owe you one.", "choices": [{"id": "ask", "text": "Do you have my dorm key? Marigold said one of my dormmates has it.", "nextNodeId": "no"}]},
+        {"id": "no", "speaker": "Katrina", "text": "Your dorm key? Not on me. Believe me, I've checked every pocket I own today. Someone else must have it.", "onEnterActions": [{"type": "SetFlag", "key": "story.key.asked.katrina", "boolValue": true}], "nextNodeId": ""}
+      ]
+    },
+    {
+      "id": "dorm_key_glitch_ask",
+      "startNodeId": "luck",
+      "metadata": [
+        {"key": "npcId", "value": "marigold"},
+        {"key": "placeholder", "value": "Chapter 1 key glitch, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "luck", "speaker": "Marigold", "text": "{player}! Any luck finding your key?", "choices": [{"id": "none", "text": "None of my dormmates have it.", "nextNodeId": ""}]}
+      ]
+    },
+    {
+      "id": "dorm_key_glitch",
+      "startNodeId": "oh",
+      "metadata": [
+        {"key": "npcId", "value": "marigold"},
+        {"key": "placeholder", "value": "Chapter 1 key glitch, to be rewritten."}
+      ],
+      "nodes": [
+        {"id": "oh", "speaker": "Marigold", "text": "Oh.", "nextNodeId": "here"},
+        {"id": "here", "speaker": "Marigold", "text": "It was here the whole time.", "nextNodeId": "why"},
+        {"id": "why", "speaker": "Marigold", "text": "<shake>Why didn't you ask for it?</shake>", "metadata": [{"key": "speakerGlitch", "value": "true"}], "onEnterActions": [{"type": "setaura", "key": "marigold", "value": "full"}], "nextNodeId": ""}
       ]
     },
     {
@@ -36,7 +108,7 @@
         {"key": "placeholder", "value": "Chapter 1 story beat, to be rewritten."}
       ],
       "nodes": [
-        {"id": "ready", "speaker": "Marigold", "text": "{player}! Perfect timing. Your room is ready at last.", "nextNodeId": "key"},
+        {"id": "ready", "speaker": "Marigold", "text": "{player}! There you are. I've been holding on to this for you.", "nextNodeId": "key"},
         {"id": "key", "speaker": "Marigold", "text": "Here's your key. Third door along the hall, right in the middle. You can't miss it.", "nextNodeId": "own_room"},
         {"id": "own_room", "speaker": "{player}", "text": "<i>I really hope it's big enough for the five of us. Then again, this is a magical academy, so I feel like I don't need to worry about that.</i>", "nextNodeId": "rest"},
         {"id": "rest", "speaker": "Marigold", "text": "Get some rest. Tomorrow your student guide will show you everything you missed.", "nextNodeId": ""}

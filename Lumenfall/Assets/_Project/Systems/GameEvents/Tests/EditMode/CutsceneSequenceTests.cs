@@ -22,7 +22,7 @@ namespace Lumenfall.Tests.GameEvents
             public bool StartDialogue(string dialogueId) { Calls.Add("dialogue:" + dialogueId); DialogueActive = HoldOpen; return true; }
             public bool IsDialogueActive => DialogueActive;
             public void EndDialogue() { Calls.Add("endDialogue"); DialogueActive = false; }
-            public void FocusCamera(Vector3 offset, float zoom) => Calls.Add($"camera:{offset.x},{offset.z}@{zoom}");
+            public void FocusCamera(Vector3 offset, float zoom, float seconds) => Calls.Add($"camera:{offset.x},{offset.z}@{zoom}");
             public void ReleaseCamera() => Calls.Add("cameraRelease");
             public void StartStar(float seconds) { StarSeconds = seconds; Calls.Add("star"); }
             public bool StartArrival() { Calls.Add("arrive"); return true; }
@@ -36,6 +36,11 @@ namespace Lumenfall.Tests.GameEvents
             public bool IsWalking => Walking;
             public bool EnterPortal(Vector2Int cell) { Calls.Add($"enter:{cell.x},{cell.y}"); return true; }
             public void StopEffects() => Calls.Add("stopEffects");
+            public void SetAura(string npcId, string level) => Calls.Add($"aura:{npcId}={level}");
+            public void StartStare(float seconds) => Calls.Add($"stare:{seconds}");
+            public void StopStare() => Calls.Add("stareEnd");
+            public void StartGlitch(string style, float seconds) => Calls.Add($"glitch:{style}:{seconds}");
+            public void SetMusicHushed(bool hushed) => Calls.Add(hushed ? "hush" : "music");
         }
 
         private static CutsceneDefinition Define(params CutsceneStep[] steps) =>
@@ -290,6 +295,43 @@ namespace Lumenfall.Tests.GameEvents
             CutsceneSequence sequence = new CutsceneSequence(Define(new CutsceneStep { type = "walk", key = "kit", y = -2 }), host);
             sequence.Advance(0.1f);
             Assert.That(host.Calls, Does.Contain("walk:kit0,-2"));
+        }
+
+        [Test]
+        public void GlitchStepsReachTheHostAndHoldForTheirSeconds()
+        {
+            FakeHost host = new FakeHost();
+            CutsceneSequence sequence = new CutsceneSequence(Define(
+                new CutsceneStep { type = "music", value = false },
+                new CutsceneStep { type = "aura", key = "marigold", text = "Full" },
+                new CutsceneStep { type = "camera", y = 1f, zoom = 0.5f, seconds = 3f, background = true },
+                new CutsceneStep { type = "stare", value = true, seconds = 2f },
+                new CutsceneStep { type = "glitch", seconds = 1f },
+                new CutsceneStep { type = "stare" },
+                new CutsceneStep { type = "aura", key = "marigold", text = "off" },
+                new CutsceneStep { type = "music", value = true }), host);
+
+            sequence.Advance(0.1f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "hush", "aura:marigold=full", "camera:0,0@0.5", "stare:2" }),
+                "The camera eases in the background, so the stare starts with it and holds the sequence.");
+            sequence.Advance(2f);
+            Assert.That(host.Calls.Last(), Is.EqualTo("glitch:tear:1"), "A glitch with no style tears.");
+            sequence.Advance(1f);
+            Assert.That(host.Calls.Skip(5), Is.EqualTo(new[] { "stareEnd", "aura:marigold=off", "music" }));
+            Assert.That(sequence.IsFinished, Is.True);
+        }
+
+        [Test]
+        public void ParseChecksAuraLevelsAndGlitchStyles()
+        {
+            List<string> problems = new List<string>();
+            Assert.That(CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"aura\",\"key\":\"marigold\",\"text\":\"lingering\"},{\"type\":\"glitch\",\"text\":\"rewind\",\"seconds\":1}]}", problems), Is.Not.Null);
+            Assert.That(problems, Is.Empty);
+            Assert.That(CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"aura\",\"text\":\"loud\"}]}", problems), Is.Null);
+            Assert.That(problems, Has.Some.Contains("NPC id").And.Some.Contains("unknown aura level 'loud'"));
+            problems.Clear();
+            Assert.That(CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"glitch\",\"text\":\"melt\"}]}", problems), Is.Null);
+            Assert.That(problems, Has.Some.Contains("no duration").And.Some.Contains("unknown glitch style 'melt'"));
         }
 
         [Test]

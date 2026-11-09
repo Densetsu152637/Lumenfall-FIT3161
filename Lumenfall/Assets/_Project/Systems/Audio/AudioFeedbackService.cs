@@ -204,9 +204,13 @@ namespace Lumenfall.Audio
             if (menu != menuMusic || opening != openingSilence) { menuMusic = menu; openingSilence = opening; RefreshPlayback(); }
             bool paused = Time.timeScale <= 0f;
             if (paused != gameplayPaused) { gameplayPaused = paused; ApplyPause(); }
-            Advance(music, AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping));
-            Advance(ambience, AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping));
+            // A cutscene can hush the music and ambience for a moment (the dormitory key glitch); they ease out and back.
+            cutsceneHush = Mathf.MoveTowards(cutsceneHush, CutscenePlayer.MusicHushed ? 0f : 1f, Time.unscaledDeltaTime / CutsceneHushSeconds);
+            Advance(music, cutsceneHush * AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping));
+            Advance(ambience, cutsceneHush * AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping));
         }
+        private const float CutsceneHushSeconds = 0.5f;
+        private float cutsceneHush = 1f;
         private static void Advance(LoopChannel[] channels, float bus)
         {
             foreach (LoopChannel channel in channels)
@@ -220,8 +224,8 @@ namespace Lumenfall.Audio
         private void ApplyVolumes()
         {
             AudioListener.volume = AudioMixSettings.Master;
-            foreach (LoopChannel channel in music) if (channel != null) channel.Source.volume = channel.Gain * AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping);
-            foreach (LoopChannel channel in ambience) if (channel != null) channel.Source.volume = channel.Gain * AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping);
+            foreach (LoopChannel channel in music) if (channel != null) channel.Source.volume = cutsceneHush * channel.Gain * AudioMixSettings.Music * AudioContextPolicy.MusicGain(signals.DialogueActive, signals.Sleeping);
+            foreach (LoopChannel channel in ambience) if (channel != null) channel.Source.volume = cutsceneHush * channel.Gain * AudioMixSettings.Ambience * AudioContextPolicy.AmbienceGain(signals.DialogueActive, signals.Sleeping);
             foreach (Voice voice in voices) if (voice != null) voice.Source.volume = voice.Gain * AudioMixSettings.Sfx;
         }
         private void OnApplicationPause(bool paused) { applicationPaused = paused; ApplyPause(); }

@@ -46,6 +46,10 @@ namespace Lumenfall.DataDriven
         private readonly VisualElement portrait;
         private readonly VisualElement ribbon;
         private readonly Label nameLabel;
+        private FontDefinition headingFont;
+        private FontDefinition? wingdingsFont;
+        private string speakerName = string.Empty;
+        private bool speakerGlitched;
         private readonly ScrollView content;
         private readonly Label text;
         private readonly VisualElement choices;
@@ -128,6 +132,7 @@ namespace Lumenfall.DataDriven
             nameLabel = new Label { pickingMode = PickingMode.Ignore };
             nameLabel.AddToClassList("dialogue-name");
             nameLabel.style.unityFontDefinition = heading;
+            headingFont = heading;
             ribbon.Add(nameLabel);
             box.Add(ribbon);
 
@@ -177,6 +182,9 @@ namespace Lumenfall.DataDriven
         {
             accent = colour;
             speakerFrame = frame;
+            speakerName = speaker ?? string.Empty;
+            speakerGlitched = false;
+            nameLabel.style.unityFontDefinition = headingFont;
             nameLabel.text = speaker;
             ribbon.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
             ribbon.style.backgroundColor = accessibility?.HighContrast == true ? Color.black : colour;
@@ -428,6 +436,32 @@ namespace Lumenfall.DataDriven
         /// Builds a signed-distance-field font asset from a TTF so text stays sharp at every resolution. A plain Font
         /// is rasterised into a small bitmap atlas and scaled up, which pixelates at 1080p and above.
         /// </summary>
+        /// <summary>
+        /// Shows the speaker's name in Wingdings (<see cref="Lumenfall.Story.WingdingsText"/>) or as normal, for a line
+        /// whose speaker is glitching. Without Wingdings installed the name stays as it is.
+        /// </summary>
+        public void SetSpeakerGlitch(bool glitched)
+        {
+            if (glitched == speakerGlitched) return;
+            Font wingdings = Lumenfall.Story.WingdingsText.Font;
+            if (glitched && wingdings == null) return;
+            speakerGlitched = glitched;
+            if (!glitched)
+            {
+                nameLabel.style.unityFontDefinition = headingFont;
+                nameLabel.text = speakerName;
+                return;
+            }
+            if (wingdingsFont == null)
+            {
+                FontAsset asset = FontAsset.CreateFontAsset(wingdings, 90, 9, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic, true);
+                if (asset != null) fontAssets.Add(asset);
+                wingdingsFont = asset != null ? FontDefinition.FromSDFFont(asset) : FontDefinition.FromFont(wingdings);
+            }
+            nameLabel.style.unityFontDefinition = wingdingsFont.Value;
+            nameLabel.text = Lumenfall.Story.WingdingsText.ForFont(wingdings, speakerName);
+        }
+
         private FontDefinition SdfFont(string resource)
         {
             Font font = Resources.Load<Font>(resource);

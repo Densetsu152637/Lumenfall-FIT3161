@@ -376,21 +376,30 @@ namespace Lumenfall.Quests
             foreach (string id in SettlingInScene.ChapterQuestIds)
                 if (runtime.GetQuestStatus(id) == QuestStatus.Completed) done++;
             // Testers did not realise every favour below stands between them and their room, so say so with the count.
-            tracker = $"Room key: {done} of {SettlingInScene.ChapterQuestIds.Length} favours done. Your room is ready once everyone below has been helped.";
+            int asked = SettlingInScene.DormmatesAsked(runtime);
+            tracker = $"Room key: {done} of {SettlingInScene.ChapterQuestIds.Length} favours done, {asked} of {SettlingInScene.Dormmates.Length} dormmates asked. One of them should have your key.";
             List<string> people = new List<string>();
-            // The arrow leads to the first person in the list who still needs help.
+            // The arrow leads to the first dormmate in the list who has not been asked about the key yet.
             foreach (string questId in new[] { "stella_string_them_together", "cinna_cold_feet_warm_idea", "katrina_something_borrowed", "orio_patch_notes" })
-                if (waypoint == null && runtime.GetQuestStatus(questId) != QuestStatus.Completed) PointAtPerson(GiverNpcId(questId, runtime));
+                if (waypoint == null && !Asked(runtime, questId)) PointAtPerson(GiverNpcId(questId, runtime));
             if (runtime.GetQuestStatus("stella_string_them_together") != QuestStatus.Completed)
                 people.Add("<b>Stella</b> is majoring Arcane Artifact Design.\n    Arcane Workshop is on top of the forest entrance.");
+            else if (!Asked(runtime, "stella_string_them_together"))
+                people.Add(AskAboutKey("Stella"));
             if (runtime.GetQuestStatus("cinna_cold_feet_warm_idea") != QuestStatus.Completed)
                 people.Add(runtime.GetQuestStatus("cinna_out_of_alignment") == QuestStatus.Completed
                     ? "<b>Cinna Cirra</b> now waits near the Ice Trial area.\n    It is through the door in the east wall of campus."
                     : "<b>Cinna Cirra</b> is responsible for orientation day.\n    He awaits near the fountain.");
+            else if (!Asked(runtime, "cinna_cold_feet_warm_idea"))
+                people.Add(AskAboutKey("Cinna Cirra"));
             if (runtime.GetQuestStatus("katrina_something_borrowed") != QuestStatus.Completed)
                 people.Add("<b>Katrina</b>, the student who lost three keepsakes, is searching near the Library.\n    She is on the road beyond the fountain.");
+            else if (!Asked(runtime, "katrina_something_borrowed"))
+                people.Add(AskAboutKey("Katrina"));
             if (runtime.GetQuestStatus("orio_patch_notes") != QuestStatus.Completed)
                 people.Add("<b>Orio</b> is studying a Rune dais in the forest.\n    Go back to the forest to find him.");
+            else if (!Asked(runtime, "orio_patch_notes"))
+                people.Add(AskAboutKey("Orio"));
             if (people.Count == 0)
             {
                 title = "Talk with the Receptionist";
@@ -400,6 +409,12 @@ namespace Lumenfall.Quests
             }
             hint = string.Join("\n\n", people);
         }
+
+        // Whether the dormmate who gives this favour has been asked about the key.
+        private static bool Asked(GameEventRuntime runtime, string questId) =>
+            runtime.GetFlag(SettlingInScene.KeyAskedFlag(QuestPerson(questId)));
+
+        private static string AskAboutKey(string name) => $"<b>{name}</b> might have your key.\n    Talk to them and ask.";
 
         private static QuestPuzzleTarget MergeCurrentMapTarget(QuestPuzzleTarget questTarget, WorldStateService world)
         {

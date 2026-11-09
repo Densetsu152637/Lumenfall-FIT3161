@@ -30,6 +30,10 @@ namespace Lumenfall.DataDriven
         // "cameraFocus" is "area:<map id>" (the door in this area that leads there) or "npc:<npc id>". The view eases
         // over at the normal distance, holds while the line is shown, and eases back for the next line.
         private const string CameraFocusKey = "cameraFocus";
+        // "speakerGlitch": "true" makes the speaker's name flicker into Wingdings on that line (steady with reduced motion).
+        private const string SpeakerGlitchKey = "speakerGlitch";
+        private float nextSpeakerFlicker;
+        private bool speakerFlickered;
         private const float PointedZoom = 1f;
         private const float FocusEaseSeconds = 0.55f;
         private Vector3? easedFocus;
@@ -185,6 +189,7 @@ namespace Lumenfall.DataDriven
             // Input may have ended the dialogue or moved to another node.
             if (session == null || !session.IsActive || session.CurrentNode == null) return;
             EnsureNode();
+            UpdateSpeakerGlitch();
             RefreshText();
             RefreshChoices();
             view.SetWaiting(Revealed && (!OnLastPage || session.AvailableChoices.Count == 0));
@@ -378,6 +383,30 @@ namespace Lumenfall.DataDriven
             easedFocus = Vector3.SmoothDamp(easedFocus.Value, focus, ref easedFocusVelocity, FocusEaseSeconds, Mathf.Infinity, deltaTime);
             easedZoom = Mathf.SmoothDamp(easedZoom, zoom, ref easedZoomVelocity, FocusEaseSeconds, Mathf.Infinity, deltaTime);
             CameraFollow2_5D.FrameConversation(easedFocus.Value, easedZoom);
+        }
+
+        private void UpdateSpeakerGlitch()
+        {
+            DialogueNodeDefinition node = session?.CurrentNode;
+            bool glitching = node != null && string.Equals(node.metadata.GetValue(SpeakerGlitchKey), "true", StringComparison.OrdinalIgnoreCase);
+            if (!glitching)
+            {
+                speakerFlickered = false;
+                view.SetSpeakerGlitch(false);
+                return;
+            }
+            if (appliedSettings.ReducedMotion || GameSettingsPanel.ReduceMotion)
+            {
+                view.SetSpeakerGlitch(true);
+                return;
+            }
+            if (Time.unscaledTime >= nextSpeakerFlicker)
+            {
+                speakerFlickered = !speakerFlickered;
+                // Mostly the real name, broken by short bursts of Wingdings.
+                nextSpeakerFlicker = Time.unscaledTime + (speakerFlickered ? UnityEngine.Random.Range(0.06f, 0.3f) : UnityEngine.Random.Range(0.15f, 0.9f));
+            }
+            view.SetSpeakerGlitch(speakerFlickered);
         }
 
         /// <summary>The place the current line names through its "cameraFocus" metadata, found once per line.</summary>

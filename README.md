@@ -27,6 +27,7 @@ Arrive at a magical academy, befriend the students of the Sirius dormitory, and 
 - [Chapter 1 route](#chapter-1-route)
 - [Controls](#controls)
 - [For developers](#for-developers)
+- [Credits](#credits)
 
 ## Play it
 
@@ -192,6 +193,14 @@ powershell -ExecutionPolicy Bypass -File scripts/compile_editmode_tests.ps1
 ```
 
 The [gameplay test suites](tests/README.md) run every EditMode and PlayMode regression case against the current project in a single Unity CI job. See [CI and release instructions](.github/CI.md) for the workflows.
+
+## Credits
+
+Third-party art that requires credit:
+
+- "Free Pack - VR Hands (Rigged)" (https://skfb.ly/pMPEH) by PolyOne Studio is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/). It is the hand in the sequence break's ending, and the same credit is written into the `README.txt` of every release download. Files: [`Lumenfall/Assets/ThirdParty/PolyOne`](Lumenfall/Assets/ThirdParty/PolyOne/README.md).
+
+The other third-party assets need no credit: [Kenney](https://www.kenney.nl)'s Furniture Kit, the [Poly Pizza](https://poly.pizza) models and the [ambientCG](https://ambientcg.com) textures are CC0, and the remaining packs come from the Unity Asset Store under its standard licence. Each pack's folder under `Lumenfall/Assets/ThirdParty` records its source and licence.
 
 ## License
 

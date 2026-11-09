@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Lumenfall.Controls;
@@ -6,6 +8,7 @@ using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Player;
 using Lumenfall.Startup;
+using Lumenfall.Story;
 
 namespace Lumenfall.Cutscenes
 {
@@ -24,6 +27,12 @@ namespace Lumenfall.Cutscenes
     {
         public const string OpeningCutsceneId = "opening_arrival";
         public const string PlayActionType = "playcutscene";
+        /// <summary>
+        /// A GameEvents action that sets an NPC's glitch aura: <c>{"type": "setaura", "key": "&lt;npc id&gt;", "value":
+        /// "full"}</c>, so a line of dialogue can bring it on as it appears. Like the <c>aura</c> step, an aura set during
+        /// a cutscene is turned off when the cutscene ends.
+        /// </summary>
+        public const string AuraActionType = "setaura";
         private const float SkipConfirmSeconds = 2.5f;
         private static readonly Color Cream = new Color(1f, 0.96f, 0.88f);
 
@@ -37,8 +46,12 @@ namespace Lumenfall.Cutscenes
         private PlayerArrivalEffect arrival;
         private CutsceneWalk walk;
         private bool cameraHeld;
-        private Vector3 cameraOffset;
-        private float cameraZoom = 1f;
+        private Vector3 cameraOffset, cameraFromOffset, cameraToOffset;
+        private float cameraZoom = 1f, cameraFromZoom = 1f, cameraToZoom = 1f;
+        private float cameraEaseSeconds, cameraEaseElapsed;
+        private GridMoverPresentation staring;
+        private ScreenGlitchEffect glitch;
+        private readonly List<GlitchAura> auras = new List<GlitchAura>();
         private float skipArmedUntil = float.NegativeInfinity;
         private GUIStyle captionStyle, hintStyle;
         private int styledHeight;
@@ -61,12 +74,16 @@ namespace Lumenfall.Cutscenes
         /// </summary>
         public static bool OpeningInProgress => queuedId == OpeningCutsceneId || CurrentId == OpeningCutsceneId;
 
+        /// <summary>True while a cutscene's <c>music</c> step has hushed the music and ambience.</summary>
+        public static bool MusicHushed { get; private set; }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             instance = null;
             queuedId = null;
             endedFrame = -1;
+            MusicHushed = false;
             DeclareActionType();
         }
 
@@ -74,7 +91,11 @@ namespace Lumenfall.Cutscenes
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #endif
-        private static void DeclareActionType() => GameEventCatalog.DeclareCustomActionType(PlayActionType);
+        private static void DeclareActionType()
+        {
+            GameEventCatalog.DeclareCustomActionType(PlayActionType);
+            GameEventCatalog.DeclareCustomActionType(AuraActionType);
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -160,6 +181,7 @@ namespace Lumenfall.Cutscenes
             HandleSkipInput();
             if (sequence == null) return;
             sequence.Advance(Time.unscaledDeltaTime);
+            cameraEaseElapsed += Time.unscaledDeltaTime;
             HoldCamera();
             Shake();
             if (sequence.IsFinished) Finish();
@@ -190,6 +212,7 @@ namespace Lumenfall.Cutscenes
             // A finished arrival keeps its rising motes going on its own; it only has to have shown the player.
             if (arrival != null && !arrival.IsRevealed) arrival.Reveal();
             arrival = null;
+            EndGlitchEffects();
             ReleaseCamera();
             CameraFollow2_5D.SetShake(Vector3.zero);
             LockPlayer(false);
@@ -202,6 +225,7 @@ namespace Lumenfall.Cutscenes
             if (runtime == null || runtime == subscribedRuntime) return;
             subscribedRuntime = runtime;
             runtime.RegisterActionHandler(PlayActionType, (action, _) => PlayNow(action.key));
+            runtime.RegisterActionHandler(AuraActionType, (action, _) => SetAura(action.key, action.value));
         }
 
         private static GameEventRuntime Runtime => GameEventManager.Instance?.Runtime;
@@ -222,10 +246,16 @@ namespace Lumenfall.Cutscenes
             if (player != null) player.SetMovementLocked(MovementLockOwner, locked);
         }
 
-        // An open dialogue frames its own speakers; the cutscene's framing resumes once it closes.
+        // An open dialogue frames its own speakers; the cutscene's framing resumes once it closes. A camera step with
+        // seconds eases from where the cutscene's framing was (or the normal view) to its own, with smoothstep easing.
         private void HoldCamera()
         {
-            if (!cameraHeld || Runtime?.ActiveDialogue != null) return;
+            if (!cameraHeld) return;
+            float t = cameraEaseSeconds <= 0f ? 1f : Mathf.Clamp01(cameraEaseElapsed / cameraEaseSeconds);
+            float eased = t * t * (3f - 2f * t);
+            cameraOffset = Vector3.Lerp(cameraFromOffset, cameraToOffset, eased);
+            cameraZoom = Mathf.Lerp(cameraFromZoom, cameraToZoom, eased);
+            if (Runtime?.ActiveDialogue != null) return;
             GridMover player = Player();
             if (player != null) CameraFollow2_5D.FrameConversation(player.transform.position + cameraOffset, cameraZoom);
         }
@@ -255,11 +285,15 @@ namespace Lumenfall.Cutscenes
 
         public void EndDialogue() => Runtime?.ActiveDialogue?.End();
 
-        public void FocusCamera(Vector3 offset, float zoom)
+        public void FocusCamera(Vector3 offset, float zoom, float seconds)
         {
+            cameraFromOffset = cameraHeld ? cameraOffset : Vector3.zero;
+            cameraFromZoom = cameraHeld ? cameraZoom : 1f;
+            cameraToOffset = offset;
+            cameraToZoom = zoom;
+            cameraEaseSeconds = Mathf.Max(0f, seconds);
+            cameraEaseElapsed = 0f;
             cameraHeld = true;
-            cameraOffset = offset;
-            cameraZoom = zoom;
             HoldCamera();
         }
 
@@ -357,6 +391,63 @@ namespace Lumenfall.Cutscenes
             StopStar();
             if (arrival != null) arrival.Stop();
             arrival = null;
+            EndGlitchEffects();
+        }
+
+        public void SetAura(string npcId, string level)
+        {
+            DynamicNpc npc = FindNpc(npcId);
+            if (npc == null)
+            {
+                Debug.LogWarning($"Cutscene '{CurrentId}' cannot set the aura on NPC '{npcId}': they are not in this area.");
+                return;
+            }
+            if (!Enum.TryParse(level, true, out GlitchAuraLevel parsed)) return;
+            GlitchAura aura = npc.GetComponent<GlitchAura>();
+            if (aura == null)
+            {
+                if (parsed == GlitchAuraLevel.Off) return;
+                aura = npc.gameObject.AddComponent<GlitchAura>();
+            }
+            aura.Level = parsed;
+            if (parsed == GlitchAuraLevel.Off) auras.Remove(aura);
+            else if (!auras.Contains(aura)) auras.Add(aura);
+        }
+
+        public void StartStare(float seconds)
+        {
+            StopStare();
+            GridMover player = Player();
+            Camera view = Camera.main;
+            GridMoverPresentation presentation = player != null ? player.GetComponent<GridMoverPresentation>() : null;
+            if (presentation == null || view == null) return;
+            presentation.HoldFacing(view.transform, seconds);
+            staring = presentation;
+        }
+
+        public void StopStare()
+        {
+            if (staring != null) staring.ReleaseFacing();
+            staring = null;
+        }
+
+        public void StartGlitch(string style, float seconds)
+        {
+            if (glitch == null) glitch = gameObject.AddComponent<ScreenGlitchEffect>();
+            glitch.Begin(style, seconds);
+        }
+
+        public void SetMusicHushed(bool hushed) => MusicHushed = hushed;
+
+        // Whatever happens to the cutscene, the player looks ahead again, the screen is whole, the music returns and no
+        // aura it set is left behind.
+        private void EndGlitchEffects()
+        {
+            StopStare();
+            if (glitch != null) glitch.Stop();
+            MusicHushed = false;
+            foreach (GlitchAura aura in auras) if (aura != null) aura.Level = GlitchAuraLevel.Off;
+            auras.Clear();
         }
 
         private void StopStar()

@@ -43,6 +43,11 @@ namespace Lumenfall.Tests.GameEvents
             }
         }
 
+        private static void AskEveryDormmate(GameEventRuntime runtime)
+        {
+            foreach ((string person, _) in SettlingInScene.Dormmates) runtime.SetFlag(SettlingInScene.KeyAskedFlag(person), true);
+        }
+
         private static (bool turn, string dialogue, string cutscene) Turn(GameEventRuntime runtime, string person)
         {
             bool turn = SettlingInScene.TryGetStoryTurn(runtime, person, out string dialogue, out string cutscene);
@@ -153,6 +158,8 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(SettlingInScene.ShouldThinkRoomIsReady(runtime), Is.False);
 
             CompleteChapterPuzzles(runtime);
+            Assert.That(SettlingInScene.ShouldThinkRoomIsReady(runtime), Is.False, "Every dormmate has to be asked about the key first.");
+            AskEveryDormmate(runtime);
             Assert.That(SettlingInScene.ShouldThinkRoomIsReady(runtime), Is.True);
 
             runtime.SetFlag(SettlingInScene.ThoughtFlag, true);
@@ -219,7 +226,76 @@ namespace Lumenfall.Tests.GameEvents
                 runtime.StartQuest(quest);
                 runtime.CompleteQuest(quest);
             }
+            AskEveryDormmate(runtime);
             Assert.That(SettlingInScene.ShouldThinkRoomIsReady(runtime), Is.False, "One puzzle is still unsolved.");
+        }
+
+        [Test]
+        public void EachDormmateIsAskedAboutTheKeyOnceTheirLastFavourIsDone()
+        {
+            GameEventRuntime runtime = new GameEventRuntime(Events());
+            const string stella = "stella";
+            string last = SettlingInScene.LastQuestOf(stella);
+            runtime.StartQuest("stella_first_light");
+            runtime.CompleteQuest("stella_first_light");
+            runtime.StartQuest(last);
+            runtime.CompleteQuest(last);
+            Assert.That(SettlingInScene.ShouldAskAboutKey(runtime, stella), Is.False, "Before Marigold sends them, there is no key to ask about.");
+
+            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
+            Assert.That(SettlingInScene.ShouldAskAboutKey(runtime, stella), Is.True);
+            Assert.That(SettlingInScene.ShouldAskAboutKey(runtime, "orio"), Is.False, "Orio's favour is not done yet.");
+            Assert.That(SettlingInScene.ShouldAskAboutKey(runtime, SettlingInScene.RowanNpcId), Is.False, "Rowan is not a dormmate.");
+            Assert.That(Turn(runtime, stella).turn, Is.False, "Her thanks for the favour comes before the question.");
+
+            runtime.SetFlag(NpcIntroductions.QuestThankedFlag(last), true);
+            Assert.That(Turn(runtime, stella), Is.EqualTo((true, SettlingInScene.KeyAskDialogueId(stella), (string)null)));
+
+            // Her answer marks her as asked, and she goes back to her usual conversation.
+            DialogueSession ask = runtime.StartDialogue(SettlingInScene.KeyAskDialogueId(stella));
+            Assert.That(ask, Is.Not.Null);
+            Assert.That(ask.SelectChoice("ask"), Is.True);
+            Assert.That(runtime.GetFlag(SettlingInScene.KeyAskedFlag(stella)), Is.True);
+            Assert.That(SettlingInScene.DormmatesAsked(runtime), Is.EqualTo(1));
+            Assert.That(Turn(runtime, stella).turn, Is.False);
+        }
+
+        [Test]
+        public void TheQuestionFollowsStraightOnFromADormmatesWrapUp()
+        {
+            GameEventRuntime runtime = new GameEventRuntime(Events());
+            runtime.SetFlag(SettlingInScene.NotReadyFlag, true);
+            CompleteChapterPuzzles(runtime);
+
+            // Cinna Cirra's last favour ends in the ice trial with a line of theirs, not in a conversation with them.
+            DialogueSession solved = runtime.StartDialogue("cinna_ice_trial_solved");
+            Assert.That(solved, Is.Not.Null);
+            solved.Continue();
+            Assert.That(solved.IsCompleted, Is.True);
+            Assert.That(SettlingInScene.KeyAskAfter(runtime, solved), Is.EqualTo("cinna_cirra"));
+
+            runtime.SetFlag(SettlingInScene.KeyAskedFlag("cinna_cirra"), true);
+            Assert.That(SettlingInScene.KeyAskAfter(runtime, solved), Is.Null, "Once asked, never again.");
+        }
+
+        [Test]
+        public void EveryDormmateHasAKeyQuestionThatSetsTheirFlag()
+        {
+            GameEventCatalog events = Events();
+            foreach ((string person, string quest) in SettlingInScene.Dormmates)
+            {
+                Assert.That(events.TryGetQuest(quest, out _), Is.True, quest);
+                Assert.That(SettlingInScene.ChapterQuestIds, Has.Member(quest));
+                Assert.That(events.TryGetDialogue(SettlingInScene.KeyAskDialogueId(person), out DialogueDefinition ask), Is.True, person);
+                Assert.That(ask.nodes.SelectMany(node => node.onEnterActions).Any(action =>
+                    action.key == SettlingInScene.KeyAskedFlag(person) && action.boolValue), Is.True, person);
+                Assert.That(ask.nodes.Any(node => node.text.Contains("Someone else")), Is.True, person + " sends the player on to someone else.");
+            }
+            // Marigold says there are four of them, without naming any.
+            events.TryGetDialogue(SettlingInScene.NotReadyDialogueId, out DialogueDefinition notReady);
+            string said = string.Join(" ", notReady.nodes.Where(node => node.speaker == "Marigold").Select(node => node.text));
+            Assert.That(said, Does.Contain("four"));
+            Assert.That(said, Does.Not.Contain("Stella").And.Not.Contain("Cinna").And.Not.Contain("Orio").And.Not.Contain("Katrina"));
         }
 
         [Test]
@@ -234,7 +310,8 @@ namespace Lumenfall.Tests.GameEvents
         public void TheStoryDialoguesExistAndThePlayerOnlyThinks()
         {
             GameEventCatalog events = Events();
-            foreach (string id in new[] { SettlingInScene.NotReadyDialogueId, "room_ready_thought", "dorm_room_ready", "chat_prof_bann" })
+            foreach (string id in new[] { SettlingInScene.NotReadyDialogueId, "room_ready_thought", "dorm_room_ready", "chat_prof_bann",
+                "dorm_key_glitch_ask", "dorm_key_glitch" })
             {
                 Assert.That(events.TryGetDialogue(id, out DialogueDefinition dialogue), Is.True, id);
                 foreach (DialogueNodeDefinition node in dialogue.nodes)
@@ -259,9 +336,30 @@ namespace Lumenfall.Tests.GameEvents
             }).Where(step => step != "wait").ToList();
             Assert.That(steps, Is.EqualTo(new[]
             {
+                "dialogue:dorm_key_glitch_ask", "music", "dialogue:dorm_key_glitch", "camera", "stare", "glitch", "fade",
+                "aura", "stare", "camerarelease", "music", "glitch", "fade",
                 "dialogue:dorm_room_ready", "flag:" + SettlingInScene.KeyFlag, "walk", "fade", "caption:End of Chapter 1",
                 "flag:" + SettlingInScene.CompleteFlag, "fade"
             }));
+            // The aura is Marigold's and first shows on her last line, "Why didn't you ask for it?", together with her
+            // name glitching; it is gone before the reset.
+            Assert.That(Events().TryGetDialogue("dorm_key_glitch", out DialogueDefinition glitch), Is.True);
+            DialogueNodeDefinition why = glitch.nodes.Last();
+            Assert.That(why.text, Does.Contain("Why didn't you ask for it?"));
+            foreach (DialogueNodeDefinition node in glitch.nodes)
+            {
+                bool last = node == why;
+                Assert.That(node.onEnterActions.Any(action => action.type == CutscenePlayer.AuraActionType), Is.EqualTo(last), node.id);
+                Assert.That(node.metadata.GetValue("speakerGlitch") == "true", Is.EqualTo(last), node.id);
+            }
+            GameActionDefinition aura = why.onEnterActions.Single(action => action.type == CutscenePlayer.AuraActionType);
+            Assert.That((aura.key, aura.value), Is.EqualTo((SettlingInScene.ReceptionistNpcId, "full")));
+            CutsceneStep off = ending.steps.Single(step => step.Kind == CutsceneStepKind.Aura);
+            Assert.That((off.key, off.text), Is.EqualTo((SettlingInScene.ReceptionistNpcId, "off")));
+            Assert.That(ending.steps.Where(step => step.Kind == CutsceneStepKind.Glitch).Select(step => step.text),
+                Is.EqualTo(new[] { "tear", "rewind" }));
+            Assert.That(ending.steps.Single(step => step.Kind == CutsceneStepKind.Stare && step.value).seconds, Is.GreaterThanOrEqualTo(4f),
+                "The stare is slow.");
 
             // The walk ends in front of the room door whose sign then says it is the player's.
             CutsceneStep walk = ending.steps.Single(step => step.Kind == CutsceneStepKind.Walk);

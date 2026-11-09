@@ -30,6 +30,18 @@ namespace Lumenfall.GridMovement
         private float turnSpeed;
         private const float TurnStepFraction = 0.5f;
         private float targetAnimationSpeed;
+        // A facing held by a cutscene (the stare into the camera), turned to at its own pace, over the step facing.
+        private bool facingHeld;
+        private Quaternion heldRotation;
+        private float heldTurnSpeed;
+        private Transform heldTarget;
+        // The head turns up to the target as the body comes round, after the animator has posed it each frame.
+        private const float MaxHeadAngle = 60f;
+        private Transform head;
+        private bool headSearched;
+        private float headWeight, headWeightSpeed;
+        private Quaternion headBase, headApplied;
+        private bool headPosed;
         private int speedParameterHash;
         private int groundedParameterHash;
         private int fallingParameterHash;
@@ -89,9 +101,97 @@ namespace Lumenfall.GridMovement
             }
         }
 
+        /// <summary>
+        /// Turns the model to face <paramref name="target"/> over <paramref name="seconds"/> at an even pace, following it
+        /// if it moves, and lifts the head to look straight at it, until <see cref="ReleaseFacing"/>, whatever steps are
+        /// attempted meanwhile. Used for the player staring into the camera.
+        /// </summary>
+        public void HoldFacing(Transform target, float seconds)
+        {
+            if (facingRoot == null || target == null) return;
+            Vector3 direction = target.position - facingRoot.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= Mathf.Epsilon) return;
+            heldTarget = target;
+            heldRotation = Quaternion.LookRotation(direction, Vector3.up);
+            float angle = Quaternion.Angle(facingRoot.rotation, heldRotation);
+            heldTurnSpeed = seconds > 0f ? angle / seconds : float.PositiveInfinity;
+            headWeight = 0f;
+            headWeightSpeed = seconds > 0f ? 1f / seconds : float.PositiveInfinity;
+            facingHeld = true;
+        }
+
+        /// <summary>Ends <see cref="HoldFacing"/>: the model faces its last step direction again at once, head and all.</summary>
+        public void ReleaseFacing()
+        {
+            if (!facingHeld) return;
+            facingHeld = false;
+            heldTarget = null;
+            headWeight = 0f;
+            RestoreHead();
+            if (facingRoot != null) facingRoot.rotation = targetRotation;
+        }
+
+        private void LateUpdate()
+        {
+            if (!facingHeld || heldTarget == null || facingRoot == null) return;
+            Transform bone = FindHead();
+            if (bone == null) return;
+            // Without an animator posing the head each frame, start again from its own pose rather than adding up turns.
+            if (headPosed && bone.localRotation == headApplied) bone.localRotation = headBase;
+            headBase = bone.localRotation;
+            headWeight = Mathf.MoveTowards(headWeight, 1f, headWeightSpeed * Time.unscaledDeltaTime);
+            Vector3 toTarget = heldTarget.position - bone.position;
+            if (toTarget.sqrMagnitude <= Mathf.Epsilon) return;
+            // The turn that takes the body's facing onto the target, applied to the head: mostly a lift towards the camera.
+            Quaternion turn = Quaternion.FromToRotation(facingRoot.forward, toTarget.normalized);
+            turn.ToAngleAxis(out float angle, out Vector3 axis);
+            if (angle > 180f) angle -= 360f;
+            angle = Mathf.Clamp(angle, -MaxHeadAngle, MaxHeadAngle) * headWeight;
+            bone.rotation = Quaternion.AngleAxis(angle, axis) * bone.rotation;
+            headApplied = bone.localRotation;
+            headPosed = true;
+        }
+
+        private void RestoreHead()
+        {
+            if (head != null && headPosed && head.localRotation == headApplied) head.localRotation = headBase;
+            headPosed = false;
+        }
+
+        // The head bone: the humanoid one if the rig has it, otherwise the first bone named "Head".
+        private Transform FindHead()
+        {
+            if (headSearched) return head;
+            headSearched = true;
+            if (animator != null && animator.isHuman) head = animator.GetBoneTransform(HumanBodyBones.Head);
+            if (head != null) return head;
+            Transform root = animator != null ? animator.transform : facingRoot;
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+            {
+                string name = child.name.ToLowerInvariant();
+                if (name == "head" || name.EndsWith(":head") || name.EndsWith("_head") || name.EndsWith(" head") || name == "bip001 head")
+                {
+                    head = child;
+                    break;
+                }
+            }
+            return head;
+        }
+
         private void Update()
         {
-            if (facingRoot != null && rotationSpeed > 0f)
+            if (facingRoot != null && facingHeld)
+            {
+                if (heldTarget != null)
+                {
+                    Vector3 direction = heldTarget.position - facingRoot.position;
+                    direction.y = 0f;
+                    if (direction.sqrMagnitude > Mathf.Epsilon) heldRotation = Quaternion.LookRotation(direction, Vector3.up);
+                }
+                facingRoot.rotation = Quaternion.RotateTowards(facingRoot.rotation, heldRotation, heldTurnSpeed * Time.unscaledDeltaTime);
+            }
+            else if (facingRoot != null && rotationSpeed > 0f)
             {
                 facingRoot.rotation = Quaternion.RotateTowards(
                     facingRoot.rotation,
