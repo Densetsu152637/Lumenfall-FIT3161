@@ -239,6 +239,34 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheSequenceBreaksMusicAndSoundsAreWhereTheCodeLoadsThem()
+        {
+            foreach (string path in new[] { SequenceBreakEnding.VoiceMusicPath, SequenceBreakEnding.BreakSoundPath, SequenceBreakLockout.TitleMusicPath })
+                Assert.That(Resources.Load<AudioClip>(path), Is.Not.Null, path + " is in a Resources folder.");
+        }
+
+        [Test]
+        public void TheVoicesMusicStartsWithTheBlackAndTheBreakSoundIsNeverCutShort()
+        {
+            AudioClip music = Resources.Load<AudioClip>(SequenceBreakEnding.VoiceMusicPath);
+            Assume.That(music, Is.Not.Null);
+            Assert.That(SequenceBreakEnding.VoiceMusicStartsAt, Is.Zero, "It starts the moment the screen goes black.");
+            Assert.That(SequenceBreakEnding.VoiceMusicStartsAt, Is.LessThan(SequenceBreakEnding.Lines.First().at), "Before the first line appears.");
+            Assert.That(SequenceBreakEnding.VoiceMusicStartsAt + music.length, Is.LessThanOrEqualTo(SequenceBreakEnding.ShatterAt),
+                "It has finished before the still comes back, so the break sound plays alone.");
+
+            // The game closes when the effect and the break sound are both done.
+            Assert.That(SequenceBreakEnding.CloseAfter(6.2f, 6.8f), Is.EqualTo(6.8f));
+            Assert.That(SequenceBreakEnding.CloseAfter(6.2f, 0f), Is.EqualTo(6.2f), "Without the sound, the effect alone decides.");
+
+            // After the break the title opens for as long as its own music before the screen goes black.
+            AudioClip title = Resources.Load<AudioClip>(SequenceBreakLockout.TitleMusicPath);
+            Assume.That(title, Is.Not.Null);
+            Assert.That(SequenceBreakLockout.TitleSeconds(title), Is.EqualTo(title.length));
+            Assert.That(SequenceBreakLockout.TitleSeconds(null), Is.EqualTo(SequenceBreakLockout.FallbackTitleSeconds));
+        }
+
+        [Test]
         public void TheCrushingHandHasEveryBoneTheEndingPoses()
         {
             SecretRoomArt art = SecretRoomArt.Load();
@@ -249,6 +277,20 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(ScreenCrush.RequiredBones, Has.Length.EqualTo(32), "Both hands: the wrist and three joints for each finger and the thumb.");
             Assert.That(ScreenCrush.Squeeze(0f), Is.Zero, "The screen starts untouched.");
             Assert.That(ScreenCrush.Squeeze(ScreenCrush.BreakAt), Is.EqualTo(1f).Within(1e-4f), "The hands meet as it breaks.");
+        }
+
+        [Test]
+        public void TheCrushFlashesWhiteWithEachCrackAndBrightestAsItBreaks()
+        {
+            Assert.That(ScreenCrush.Flash(ScreenCrush.ArriveTo - 0.01f), Is.Zero, "No flash before the palms first crack the screen.");
+            float[] cracks = new[] { ScreenCrush.ArriveTo }.Concat(ScreenCrush.Shoves).ToArray();
+            foreach (float crack in cracks)
+            {
+                Assert.That(ScreenCrush.Flash(crack), Is.EqualTo(0.55f).Within(1e-4f), $"A flash as it cracks at {crack}s, as the old shatter's blows had.");
+                Assert.That(ScreenCrush.Flash(crack + 0.3f), Is.LessThan(0.01f), "Each is an impact frame, gone before the next.");
+            }
+            Assert.That(ScreenCrush.Flash(ScreenCrush.BreakAt), Is.EqualTo(0.8f).Within(1e-4f), "The brightest as it breaks between the hands.");
+            Assert.That(ScreenCrush.Flash(ScreenCrush.BreakAt + 0.3f), Is.LessThan(0.01f));
         }
 
         [Test]

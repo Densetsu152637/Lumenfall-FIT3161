@@ -40,6 +40,85 @@ namespace Lumenfall.CameraEffects
         private static readonly int Settings = Shader.PropertyToID("_LFRevealSettings");
         private static readonly int Pixels = Shader.PropertyToID("_LFRevealPixels");
 
+        // A reveal zone, such as a puzzle: while the target stands in it, the see-through circle widens and moves to
+        // cover the whole area, and reaches back to its far edge. It blends in by where the target stands rather than
+        // over time, so it widens as smoothly as the player walks.
+        private const int ZoneSamples = 24;
+        private const float ZoneScreenMargin = 0.03f;
+        private static bool zoneActive;
+        private static Bounds zoneArea;
+        private static float zoneFalloff = 1f;
+        private static readonly Vector2[] ZoneDeltas = new Vector2[ZoneSamples];
+
+        /// <summary>
+        /// While the target is inside <paramref name="area"/> (on x and z), widens the reveal to cover the ellipse
+        /// that fills it, easing back to the normal circle over <paramref name="falloff"/> world units outside it.
+        /// Holds until <see cref="ClearRevealZone"/>.
+        /// </summary>
+        public static void SetRevealZone(Bounds area, float falloff)
+        {
+            zoneActive = true;
+            zoneArea = area;
+            zoneFalloff = Mathf.Max(0.01f, falloff);
+        }
+
+        /// <summary>Removes the reveal zone.</summary>
+        public static void ClearRevealZone() => zoneActive = false;
+
+        /// <summary>How fully the zone applies for a target at <paramref name="position"/>: 1 inside, 0 well clear.</summary>
+        public static float RevealZoneWeight(Vector3 position)
+        {
+            if (!zoneActive) return 0f;
+            float outsideX = Mathf.Max(0f, Mathf.Abs(position.x - zoneArea.center.x) - zoneArea.extents.x);
+            float outsideZ = Mathf.Max(0f, Mathf.Abs(position.z - zoneArea.center.z) - zoneArea.extents.z);
+            float weight = 1f - Mathf.Clamp01(Mathf.Sqrt(outsideX * outsideX + outsideZ * outsideZ) / zoneFalloff);
+            return weight * weight * (3f - 2f * weight);
+        }
+
+        /// <summary>
+        /// Blends a player-centred reveal toward one that clears every point of the zone, with <paramref name="feather"/>
+        /// left outside it. <paramref name="focus"/> is the reveal's centre, <paramref name="radius"/> its vertical radius
+        /// as a fraction of the view's height, <paramref name="stretch"/> the factor on across distances that turns the
+        /// circle into an ellipse matching the zone on screen (1 for a circle, below 1 for wider than tall), and
+        /// <paramref name="padding"/> how far in front of the focus vegetation must stand to be cleared.
+        /// </summary>
+        public static void ApplyRevealZone(Camera view, Vector3 targetPosition, float feather,
+            ref Vector3 focus, ref float radius, ref float stretch, ref float padding)
+        {
+            float weight = RevealZoneWeight(targetPosition);
+            if (weight <= 0f || view == null) return;
+            Vector3 centre = new Vector3(zoneArea.center.x, zoneArea.center.y + (focus.y - targetPosition.y), zoneArea.center.z);
+            Vector3 centreView = view.WorldToViewportPoint(centre);
+            if (centreView.z <= view.nearClipPlane) return;
+            Vector3 forward = view.transform.forward;
+            Vector2[] deltas = ZoneDeltas;
+            float across = 0f, upDown = 0f, farthest = 0f;
+            for (int i = 0; i < ZoneSamples; i++)
+            {
+                float angle = i * Mathf.PI * 2f / ZoneSamples;
+                Vector3 edge = new Vector3(zoneArea.center.x + Mathf.Cos(angle) * zoneArea.extents.x, zoneArea.center.y,
+                    zoneArea.center.z + Mathf.Sin(angle) * zoneArea.extents.z);
+                farthest = Mathf.Max(farthest, Vector3.Dot(edge - centre, forward));
+                Vector3 edgeView = view.WorldToViewportPoint(edge);
+                deltas[i] = Vector2.zero;
+                if (edgeView.z <= 0f) continue;
+                // In units of the view's height, as the shader measures.
+                deltas[i] = new Vector2((edgeView.x - centreView.x) * view.aspect, edgeView.y - centreView.y);
+                across = Mathf.Max(across, Mathf.Abs(deltas[i].x));
+                upDown = Mathf.Max(upDown, Mathf.Abs(deltas[i].y));
+            }
+            if (across <= 0f || upDown <= 0f) return;
+            // An ellipse of the zone's on-screen proportions, just large enough to hold every edge point.
+            float zoneStretch = upDown / across, zoneRadius = 0f;
+            foreach (Vector2 delta in deltas)
+                zoneRadius = Mathf.Max(zoneRadius, new Vector2(delta.x * zoneStretch, delta.y).magnitude);
+            focus = Vector3.Lerp(focus, centre, weight);
+            radius = Mathf.Lerp(radius, zoneRadius + feather + ZoneScreenMargin, weight);
+            stretch = Mathf.Lerp(stretch, zoneStretch, weight);
+            // Reach back to the zone's far edge, so trees standing anywhere in front of it are cleared.
+            padding = Mathf.Lerp(padding, -farthest, weight);
+        }
+
         private void OnEnable()
         {
             view = GetComponent<Camera>();
@@ -333,12 +412,15 @@ namespace Lumenfall.CameraEffects
             if (target == null || PlayerVisibility.IsHidden) return;
             Vector3 focus = target.position + targetOffset
                 + view.transform.right * viewOffset.x + view.transform.up * viewOffset.y;
+            float revealRadius = radius, stretch = 1f, padding = depthPadding;
+            ApplyRevealZone(view, target.position, feather, ref focus, ref revealRadius, ref stretch, ref padding);
             if (view.WorldToViewportPoint(focus).z <= view.nearClipPlane) return;
             Shader.SetGlobalMatrix(Matrix, view.projectionMatrix * view.worldToCameraMatrix);
             Shader.SetGlobalVector(Focus, new Vector4(focus.x, focus.y, focus.z, 1f));
             Vector3 forward = view.transform.forward;
-            Shader.SetGlobalVector(Forward, new Vector4(forward.x, forward.y, forward.z, depthPadding));
-            Shader.SetGlobalVector(Settings, new Vector4(radius, Mathf.Min(feather, radius), centerOpacity, view.aspect));
+            Shader.SetGlobalVector(Forward, new Vector4(forward.x, forward.y, forward.z, padding));
+            // The shader scales the across distance by this before measuring, so a stretch below 1 widens the circle.
+            Shader.SetGlobalVector(Settings, new Vector4(revealRadius, Mathf.Min(feather, revealRadius), centerOpacity, view.aspect * stretch));
             Shader.SetGlobalVector(Pixels, new Vector4(view.pixelWidth, view.pixelHeight, 0f, 0f));
             Shader.SetGlobalFloat(Enabled, 1f);
         }

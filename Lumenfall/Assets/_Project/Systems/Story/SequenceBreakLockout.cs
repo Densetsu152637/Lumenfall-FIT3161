@@ -9,13 +9,15 @@ namespace Lumenfall.Story
 {
     /// <summary>
     /// What is left after the sequence break (<see cref="SequenceBreakEnding"/>) shatters the screen and closes the game.
-    /// Every launch after that opens on nothing: no title, no music, only black and silence. After
+    /// Every launch after that seems ordinary at first: the title opens, but to its own music (<see cref="TitleMusicPath"/>)
+    /// and without answering any key. When that music ends the screen cuts to black and silence. After
     /// <see cref="SilenceSeconds"/> a light flickers on and Miki, one of the developers, is standing in it. He offers to
     /// let the player play again. Refusing closes the game, and the next launch is the same black screen. Accepting
     /// comes at a price, something given in return, never named. Refusing that also closes the game; agreeing lets Miki
     /// keep it and opens the title as normal, and every launch from then on is an ordinary one.
     /// The lockout is kept in PlayerPrefs (<see cref="LockedOutKey"/>), outside every save slot, so neither loading a
-    /// file nor starting over clears it. While it is set the startup menu does not open by itself.
+    /// file nor starting over clears it. While it is set the startup menu does not open by itself: this opens it, and
+    /// it ignores every key and click until the player is let back in.
     /// </summary>
     public sealed class SequenceBreakLockout : MonoBehaviour
     {
@@ -25,6 +27,12 @@ namespace Lumenfall.Story
         public const string GivenKey = "secret.sequence_break.given";
         /// <summary>How long the empty screen holds before Miki appears.</summary>
         public const float SilenceSeconds = 30f;
+        /// <summary>The music the title opens to while the game is locked out; the screen goes black when it ends.</summary>
+        internal const string TitleMusicPath = "Audio/Music/lumen_MMMMMMMMMMMMMMMMMMMM";
+        /// <summary>How long the title stays up if its music cannot be loaded.</summary>
+        internal const float FallbackTitleSeconds = 5f;
+        /// <summary>The longest to wait for the title to appear before going black anyway.</summary>
+        internal const float TitleAppearTimeout = 8f;
 
         /// <summary>Where a line leads when it closes the game, and when it lets the player play.</summary>
         public const string QuitStep = "<quit>";
@@ -62,7 +70,7 @@ namespace Lumenfall.Story
         private static readonly Color Gold = new Color(1f, 0.84f, 0.45f);
         private static readonly Color MikiColour = new Color(0.62f, 0.68f, 0.98f);
 
-        private enum Phase { Silence, Appearing, Talking, Leaving }
+        private enum Phase { Title, Silence, Appearing, Talking, Leaving }
 
         private static SequenceBreakLockout instance;
         private Phase phase;
@@ -78,6 +86,9 @@ namespace Lumenfall.Story
         private Light spot;
         private Camera stageCamera;
         private RenderTexture view;
+        private AudioSource titleMusic;
+        private bool titleMusicStarted;
+        private float titleMusicAt;
         private GUIStyle textStyle, speakerStyle, choiceStyle;
         private readonly Rect[] choiceRects = new Rect[2];
 
@@ -86,6 +97,9 @@ namespace Lumenfall.Story
 
         /// <summary>True while the locked-out screen is up.</summary>
         public static bool InProgress => instance != null;
+
+        /// <summary>True once the title has gone black: from then on nothing of the title is drawn until the player is let back in.</summary>
+        public static bool HidesTitle => instance != null && instance.phase != Phase.Title;
 
         /// <summary>Locks the game out from the next launch on.</summary>
         public static void Arm()
@@ -137,18 +151,55 @@ namespace Lumenfall.Story
         private void Awake()
         {
             useGUILayout = false;
-            phase = Phase.Silence;
-            phaseAt = Time.unscaledTime;
             OverlayInputGate.Acquire(this);
-            Hold();
+            BeginTitle(Time.unscaledTime);
         }
 
-        // Everything stays stopped behind the black: the world, its sounds and the pointer.
+        // The game seems to open as usual: the title comes up (frozen by StartupMenu while this exists), with its music.
+        private void BeginTitle(float now)
+        {
+            SetPhase(Phase.Title, now);
+            titleMusicStarted = false;
+            Hold();
+            StartupMenu.Open();
+            // The title holds the world still while it is open, as it does on any launch.
+            if (StartupMenu.IsOpen) Time.timeScale = 0f;
+        }
+
+        // Everything stays stopped behind the black: the world, its sounds and the pointer. While the title is up only its
+        // usual music is held back, so the locked-out track plays alone.
         private void Hold()
         {
-            Time.timeScale = 0f;
             AudioListener.pause = true;
+            if (phase == Phase.Title) return;
+            Time.timeScale = 0f;
             Cursor.visible = phase == Phase.Talking;
+        }
+
+        /// <summary>How long the locked-out title stays up: as long as its music, or a moment without it.</summary>
+        internal static float TitleSeconds(AudioClip music) => music != null && music.length > 0f ? music.length : FallbackTitleSeconds;
+
+        private void UpdateTitle(float now)
+        {
+            if (!titleMusicStarted)
+            {
+                // Its music starts once the title is on screen, so the two arrive together.
+                if (!StartupMenu.IsVisible && now - phaseAt < TitleAppearTimeout) return;
+                titleMusicStarted = true;
+                titleMusicAt = now;
+                if (titleMusic == null) titleMusic = SequenceBreakEnding.CreatePauseProofSource(gameObject, Resources.Load<AudioClip>(TitleMusicPath));
+                if (titleMusic.clip != null)
+                {
+                    titleMusic.volume = Lumenfall.Audio.AudioMixSettings.Music;
+                    Lumenfall.Audio.AudioPlayback.Play(titleMusic);
+                }
+                return;
+            }
+            if (now - titleMusicAt < TitleSeconds(titleMusic != null ? titleMusic.clip : null)) return;
+            // Suddenly black, and silent.
+            if (titleMusic != null) titleMusic.Stop();
+            SetPhase(Phase.Silence, now);
+            Hold();
         }
 
         private void OnDestroy()
@@ -166,6 +217,9 @@ namespace Lumenfall.Story
             float since = now - phaseAt;
             switch (phase)
             {
+                case Phase.Title:
+                    UpdateTitle(now);
+                    break;
                 case Phase.Silence:
                     if (since < SilenceSeconds) break;
                     BuildStage();
@@ -197,7 +251,8 @@ namespace Lumenfall.Story
             stageCamera = null;
             line = -1;
             leavingTo = null;
-            SetPhase(Phase.Silence, now);
+            // As if the game had been opened again.
+            BeginTitle(now);
         }
 
         private void SetPhase(Phase next, float now)
@@ -295,11 +350,17 @@ namespace Lumenfall.Story
             PlayerPrefs.DeleteKey(LockedOutKey);
             PlayerPrefs.SetInt(GivenKey, 1);
             PlayerPrefs.Save();
-            Time.timeScale = 1f;
             AudioListener.pause = false;
             Cursor.visible = true;
             Destroy(gameObject);
-            StartupMenu.Open();
+            // The title has been open under the black all along; it now answers again, with its usual music, and
+            // keeps the world still until it closes. Should it have gone, it opens afresh.
+            if (StartupMenu.IsOpen) Time.timeScale = 0f;
+            else
+            {
+                Time.timeScale = 1f;
+                StartupMenu.Open();
+            }
         }
 
         // ---- Miki's stage: his model in a spotlight, far below the world, seen only by its own camera ----
@@ -419,6 +480,12 @@ namespace Lumenfall.Story
             GUI.depth = -3100;
             Color previous = GUI.color;
             float width = UiScale.Width, height = UiScale.Height;
+            // The title shows through until its music ends.
+            if (phase == Phase.Title)
+            {
+                GUI.depth = previousDepth;
+                return;
+            }
             GUI.color = Color.black;
             GUI.DrawTexture(new Rect(0f, 0f, width, height), Texture2D.whiteTexture);
             float now = Time.unscaledTime;

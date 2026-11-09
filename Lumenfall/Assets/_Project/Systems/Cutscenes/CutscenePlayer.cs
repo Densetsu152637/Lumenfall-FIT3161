@@ -251,7 +251,9 @@ namespace Lumenfall.Cutscenes
         private void HoldCamera()
         {
             if (!cameraHeld) return;
-            float t = cameraEaseSeconds <= 0f ? 1f : Mathf.Clamp01(cameraEaseElapsed / cameraEaseSeconds);
+            // With Reduced Motion the camera cuts straight to the step's framing instead of panning there.
+            bool cut = cameraEaseSeconds <= 0f || Lumenfall.Accessibility.AccessibilitySettings.Current.ReducedMotion;
+            float t = cut ? 1f : Mathf.Clamp01(cameraEaseElapsed / cameraEaseSeconds);
             float eased = t * t * (3f - 2f * t);
             cameraOffset = Vector3.Lerp(cameraFromOffset, cameraToOffset, eased);
             cameraZoom = Mathf.Lerp(cameraFromZoom, cameraToZoom, eased);

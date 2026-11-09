@@ -27,6 +27,7 @@ namespace Lumenfall.Tests.GameEvents
         [TearDown]
         public void TearDown()
         {
+            CameraFollow2_5D.ClearConversationFrame();
             Object.DestroyImmediate(host);
             Object.DestroyImmediate(player);
         }
@@ -80,6 +81,28 @@ namespace Lumenfall.Tests.GameEvents
             typeof(CameraFollow2_5D).GetMethod("UpdatePeek", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(follow, null);
             Assert.That(Get<Vector2>("peek"), Is.EqualTo(Vector2.zero), "With nothing held, Reduced Motion snaps straight back instead of easing.");
         }
+
+        [Test]
+        public void ReducedMotionCutsToAPointedPlaceInsteadOfIgnoringIt()
+        {
+            // With Reduced Motion on, Kit's tour never turned to the buildings he named: conversation framing was dropped.
+            follow.SetReducedMotion(true);
+            Vector3 rest = (Vector3)typeof(CameraFollow2_5D)
+                .GetProperty("RestOffset", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(follow);
+            Vector3 building = new Vector3(20f, 0f, 30f);
+            CameraFollow2_5D.FrameConversation(building, 1f);
+            LateUpdate();
+            Assert.That(Vector3.Distance(host.transform.position, building + rest), Is.LessThan(1e-3f),
+                "The camera cuts straight to the named place in one frame, with no pan.");
+
+            CameraFollow2_5D.ClearConversationFrame();
+            LateUpdate();
+            Assert.That(Vector3.Distance(host.transform.position, player.transform.position + rest), Is.LessThan(1e-3f),
+                "And cuts straight back to the player afterwards.");
+        }
+
+        private void LateUpdate() =>
+            typeof(CameraFollow2_5D).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(follow, null);
 
         private Quaternion PeekRotation(Vector3 offset) => (Quaternion)typeof(CameraFollow2_5D)
             .GetMethod("PeekRotation", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(follow, new object[] { offset });

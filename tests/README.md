@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 410 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 417 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -30,7 +30,7 @@ The integrated suite contains 410 EditMode, twenty-four batch PlayMode and five 
 | Rotara alignment, normalization, retry and save migration | OrioPatchNotesTests | 25 |
 | Authored quest dialogue references | QuestDialogueContentTests | 4 |
 | Quest monitor lifecycle and completion requirements | QuestDialogueLifecycleTests | 9 |
-| Quest hint visibility, dialogue input gating, waypoints, side quests and room-key progress | QuestHintOverlayTests | 13 |
+| Quest hint visibility, dialogue input gating, waypoints (hidden with the hints, unnamed for strangers), side quests and room-key progress | QuestHintOverlayTests | 15 |
 | Spell state, rejected-input feedback, gap-free spell keys and world save round trips | SpellWorldStateTests | 10 |
 | Weave quest prerequisites, authored board, completion and the Ampere resonance chime | StringThemTogetherTests | 9 |
 | Live cable weakening/recovery and minimum-power save restoration | WeaveNetworkTests | 2 |
@@ -43,7 +43,7 @@ The integrated suite contains 410 EditMode, twenty-four batch PlayMode and five 
 | Graphics preference persistence | GraphicsPreferencesTests | 13 |
 | Hardware recommendation thresholds | GraphicsRecommendationsTests | 17 |
 | Graphics shader stripping configuration | GraphicsShaderStrippingTests | 3 |
-| Authored world layout, open forest ground, rune dais spacing and plaza collision | AuthoredLayoutTests | 8 |
+| Authored world layout, open forest ground, rune dais spacing and tree reveal, and plaza collision | AuthoredLayoutTests | 9 |
 | Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
 | Cutscene sequencing and blocking, and the glitch steps (aura, stare, glitch, music) | CutsceneSequenceTests | 17 |
@@ -55,14 +55,14 @@ The integrated suite contains 410 EditMode, twenty-four batch PlayMode and five 
 | Player rendering visibility | PlayerVisibilityTests | 4 |
 | Runtime primitive behavior | RuntimePrimitiveTests | 2 |
 | Game code writes no routine console lines | RuntimeLoggingTests | 1 |
-| Hidden interactions, collectible secrets, the sequence break's lines, crushing hand and Miki's bargain | SecretsTests | 21 |
+| Hidden interactions, collectible secrets, the sequence break's lines, music, crushing hand and its flashes, and Miki's bargain | SecretsTests | 24 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, the key hunt and glitch ending, Rowan staging and restored blockers | SettlingInTests | 14 |
 | Movement locks, the menu's and project's time scale, wayfinding routes, quest banners and tips | PlaytestFeedbackTests | 7 |
-| Follow camera alignment, follow lag and peeking | CameraFollowTests | 4 |
+| Follow camera alignment, follow lag, peeking and reduced-motion cuts | CameraFollowTests | 5 |
 | Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
 | Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
-| **Gameplay rules / EditMode** | | **410** |
+| **Gameplay rules / EditMode** | | **417** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

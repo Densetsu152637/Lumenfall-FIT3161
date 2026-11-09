@@ -18,10 +18,12 @@ namespace Lumenfall.Story
     /// before would know to), or solving all six Chapter 1 puzzles before ever setting foot in the dormitory
     /// (<see cref="SolvedEverythingFirst"/>). Solving one puzzle early is fine. Once nothing else is on screen, a glitching
     /// voice notices. A still of the game is taken, then the screen cuts to black and silence and a voice that speaks in
-    /// hands (the real Wingdings font, <see cref="WingdingsText"/>) has its say, ending in English. The still comes back,
+    /// hands (the real Wingdings font, <see cref="WingdingsText"/>) has its say, ending in English, over its own music
+    /// (<see cref="VoiceMusicPath"/>, from the moment the screen goes black). The still comes back,
     /// is pressed between two pale hands reaching in from either side; it cracks as they squeeze, and as they meet its glass
     /// bursts out from between the palms and falls away in pieces before the game closes (<see cref="ScreenCrush"/>; without the hand model it cracks and
-    /// shatters instead, <see cref="ScreenShatter"/>).
+    /// shatters instead, <see cref="ScreenShatter"/>), to a recorded break (<see cref="BreakSoundPath"/>) in place of the
+    /// effects' own snaps.
     /// The moment the screen goes black, the run is reset to a new game and written over the autosave and the run's linked
     /// manual slot, and the game is locked out (<see cref="SequenceBreakLockout"/>), so closing it
     /// early escapes nothing. Every launch after that opens on an empty screen until Miki lets the player back in. Loading
@@ -71,6 +73,35 @@ namespace Lumenfall.Story
         /// <summary>When the still of the game comes back and breaks.</summary>
         internal const float ShatterAt = 39.5f;
 
+        /// <summary>The music under the voice on the black screen.</summary>
+        internal const string VoiceMusicPath = "Audio/Music/sequence_break";
+        /// <summary>The sound of the screen breaking, played once as the screen first cracks.</summary>
+        internal const string BreakSoundPath = "Audio/SoundEffects/lumen_break";
+
+        /// <summary>
+        /// Seconds into the black screen the voice's music starts: the moment the screen goes black, as the first line
+        /// begins. Anything still playing when the still comes back is cut off for the break sound.
+        /// </summary>
+        internal const float VoiceMusicStartsAt = 0f;
+
+        /// <summary>
+        /// Seconds from the still coming back to the game closing: when the effect is done or the break sound has finished,
+        /// whichever is later, so closing the game never cuts the sound short.
+        /// </summary>
+        internal static float CloseAfter(float effectSeconds, float breakSoundSeconds) => Mathf.Max(effectSeconds, breakSoundSeconds);
+
+        /// <summary>A source that keeps playing while every other sound is paused (<see cref="AudioListener.pause"/>).</summary>
+        internal static AudioSource CreatePauseProofSource(GameObject host, AudioClip clip)
+        {
+            AudioSource source = host.AddComponent<AudioSource>();
+            source.ignoreListenerPause = true;
+            source.spatialBlend = 0f;
+            source.playOnAwake = false;
+            source.loop = false;
+            source.clip = clip;
+            return source;
+        }
+
         /// <summary>Letters per second for each style (Hands lines appear whole).</summary>
         internal static float RevealRate(LineStyle style) => style switch
         {
@@ -96,6 +127,9 @@ namespace Lumenfall.Story
         private GUIStyle handsStyle;
         private Font handsFont;
         private bool queuedOpening;
+        private GameObject soundHost;
+        private AudioSource voiceMusic, breakSound;
+        private bool voiceMusicStarted, breakSoundPlayed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => instance = null;
@@ -238,13 +272,22 @@ namespace Lumenfall.Story
                 // reset. Everything here runs on unscaled time.
                 Time.timeScale = 0f;
                 float elapsed = Time.unscaledTime - blackSince;
+                UpdateVoiceMusic(elapsed);
                 if (elapsed >= ShatterAt && still != null)
                 {
-                    if (shatter == null) shatter = (IEndingEffect)ScreenCrush.TryCreate(still) ?? new ScreenShatter(still);
-                    shatter.Tick(elapsed - ShatterAt);
+                    if (shatter == null)
+                    {
+                        shatter = (IEndingEffect)ScreenCrush.TryCreate(still) ?? new ScreenShatter(still);
+                        // The recorded break replaces the effect's own snaps; without it the snaps play as before.
+                        shatter.Muted = HasBreakSound;
+                    }
+                    float t = elapsed - ShatterAt;
+                    if (!breakSoundPlayed && t >= shatter.FirstCrackAt) PlayBreakSound();
+                    if (t < shatter.Duration) shatter.Tick(t);
                 }
-                // The game closes when the effect is done: for the hands, the instant the game breaks between them.
-                if (elapsed >= ShatterAt + (shatter != null ? shatter.Duration : ScreenShatter.Duration)) Finish();
+                // The game closes when the effect is done (for the hands, the instant the game breaks between them) and
+                // the break sound, which starts with the first crack, has finished.
+                if (elapsed >= ShatterAt + CloseAfter(EffectSeconds, BreakSoundEndsAt)) Finish();
                 return;
             }
             if (capturing) return;
@@ -275,8 +318,62 @@ namespace Lumenfall.Story
             capturing = false;
             blackScreen = true;
             blackSince = Time.unscaledTime;
-            // Silence: every sound stops at once.
+            // Silence: every sound stops at once. Only the sequence break's own sounds play from here.
             AudioListener.pause = true;
+            PrepareSounds();
+        }
+
+        private float EffectSeconds => shatter != null ? shatter.Duration : ScreenShatter.Duration;
+
+        private float BreakSoundSeconds => breakSound != null && breakSound.clip != null ? breakSound.clip.length : 0f;
+
+        private void PrepareSounds()
+        {
+            ReleaseSounds();
+            soundHost = new GameObject("[Sequence Break Sound]");
+            soundHost.transform.SetParent(transform, false);
+            voiceMusic = CreatePauseProofSource(soundHost, Resources.Load<AudioClip>(VoiceMusicPath));
+            breakSound = CreatePauseProofSource(soundHost, Resources.Load<AudioClip>(BreakSoundPath));
+            voiceMusicStarted = false;
+        }
+
+        // The voice's music runs under the black screen and stops as the still comes back.
+        private void UpdateVoiceMusic(float elapsed)
+        {
+            if (voiceMusic == null || voiceMusic.clip == null) return;
+            if (elapsed >= ShatterAt)
+            {
+                if (voiceMusic.isPlaying) voiceMusic.Stop();
+                return;
+            }
+            if (voiceMusicStarted || elapsed < VoiceMusicStartsAt) return;
+            voiceMusicStarted = true;
+            voiceMusic.volume = Lumenfall.Audio.AudioMixSettings.Music;
+            Lumenfall.Audio.AudioPlayback.Play(voiceMusic);
+        }
+
+        private bool HasBreakSound => breakSound != null && breakSound.clip != null;
+
+        // When the break sound ends, in seconds from the still coming back: it starts as the screen first cracks.
+        private float BreakSoundEndsAt => HasBreakSound ? (shatter != null ? shatter.FirstCrackAt : 0f) + BreakSoundSeconds : 0f;
+
+        // Played once, the moment the screen first cracks.
+        private void PlayBreakSound()
+        {
+            breakSoundPlayed = true;
+            if (!HasBreakSound) return;
+            breakSound.volume = Lumenfall.Audio.AudioMixSettings.Sfx;
+            Lumenfall.Audio.AudioPlayback.Play(breakSound);
+        }
+
+        private void ReleaseSounds()
+        {
+            if (soundHost != null) Destroy(soundHost);
+            soundHost = null;
+            voiceMusic = null;
+            breakSound = null;
+            voiceMusicStarted = false;
+            breakSoundPlayed = false;
         }
 
         private void Finish()
@@ -288,6 +385,7 @@ namespace Lumenfall.Story
             cause = Cause.None;
             shatter?.Dispose();
             shatter = null;
+            ReleaseSounds();
             if (still != null) Destroy(still);
             still = null;
             if (lockedMover != null) lockedMover.SetMovementLocked(this, false);
@@ -354,7 +452,8 @@ namespace Lumenfall.Story
             GUI.depth = -3000;
             Color previous = GUI.color;
             float elapsed = Time.unscaledTime - blackSince;
-            if (elapsed >= ShatterAt && shatter != null)
+            // Once the effect is done the screen stays black while the break sound finishes.
+            if (elapsed >= ShatterAt && shatter != null && elapsed - ShatterAt < shatter.Duration)
             {
                 if (Event.current.type == EventType.Repaint) shatter.Draw(elapsed - ShatterAt);
                 GUI.depth = previousDepth;

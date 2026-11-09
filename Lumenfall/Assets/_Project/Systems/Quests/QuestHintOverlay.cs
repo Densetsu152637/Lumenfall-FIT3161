@@ -42,8 +42,11 @@ namespace Lumenfall.Quests
         // switches, stands) are never marked, so finding them stays part of the puzzle.
         private QuestWaypoint? waypoint;
 
-        /// <summary>The place the current hint leads to, or null. Follows the "Show quest hints" setting.</summary>
-        public static QuestWaypoint? CurrentWaypoint => instance != null && HintsEnabled ? instance.waypoint : null;
+        /// <summary>
+        /// The place the current hint leads to, or null. Follows the "Show quest hints" setting, and the gold arrow is part
+        /// of the hints the player chooses to show: hiding them (H, or the card's toggle) hides it too.
+        /// </summary>
+        public static QuestWaypoint? CurrentWaypoint => instance != null && HintsEnabled && !instance.hintsCollapsed ? instance.waypoint : null;
         private float refreshAt;
         private bool settingsOpen;
         private bool hintsCollapsed;
@@ -379,9 +382,17 @@ namespace Lumenfall.Quests
             int asked = SettlingInScene.DormmatesAsked(runtime);
             tracker = $"Room key: {done} of {SettlingInScene.ChapterQuestIds.Length} favours done, {asked} of {SettlingInScene.Dormmates.Length} dormmates asked. One of them should have your key.";
             List<string> people = new List<string>();
-            // The arrow leads to the first dormmate in the list who has not been asked about the key yet.
+            // The arrow leads to a dormmate who has not been asked about the key yet: the nearest one in this area, so it
+            // follows the player in whatever order they choose; failing that, the first in the list. Someone not met yet
+            // is shown without a name and only roughly (QuestGuidanceHud).
+            List<string> toVisit = new List<string>();
             foreach (string questId in new[] { "stella_string_them_together", "cinna_cold_feet_warm_idea", "katrina_something_borrowed", "orio_patch_notes" })
-                if (waypoint == null && !Asked(runtime, questId)) PointAtPerson(GiverNpcId(questId, runtime));
+                if (!Asked(runtime, questId)) toVisit.Add(GiverNpcId(questId, runtime));
+            DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
+            GridPlayerInput input = FindAnyObjectByType<GridPlayerInput>();
+            GridMover mover = input != null ? input.GetComponent<GridMover>() : null;
+            PointAtPerson(NearestPerson(toVisit, loader?.LoadedMap?.id, mover != null ? mover.CurrentCell : default,
+                loader?.LoadedNpcs?.npcs));
             if (runtime.GetQuestStatus("stella_string_them_together") != QuestStatus.Completed)
                 people.Add("<b>Stella</b> is majoring Arcane Artifact Design.\n    Arcane Workshop is on top of the forest entrance.");
             else if (!Asked(runtime, "stella_string_them_together"))
@@ -408,6 +419,25 @@ namespace Lumenfall.Quests
                 return;
             }
             hint = string.Join("\n\n", people);
+        }
+
+        /// <summary>
+        /// Of <paramref name="npcIds"/>, the one standing nearest <paramref name="playerCell"/> in <paramref name="mapId"/>;
+        /// when none of them is in that area, the first of them. Null for an empty list.
+        /// </summary>
+        internal static string NearestPerson(IList<string> npcIds, string mapId, Vector2Int playerCell, NpcDefinition[] records)
+        {
+            if (npcIds == null || npcIds.Count == 0) return null;
+            string nearest = null;
+            float best = float.PositiveInfinity;
+            foreach (string id in npcIds)
+            {
+                NpcDefinition record = Array.Find(records ?? Array.Empty<NpcDefinition>(), npc => npc != null && npc.id == id);
+                if (record == null || !string.Equals(record.mapId, mapId, StringComparison.OrdinalIgnoreCase)) continue;
+                float distance = (new Vector2Int(record.x, record.y) - playerCell).sqrMagnitude;
+                if (distance < best) { best = distance; nearest = id; }
+            }
+            return nearest ?? npcIds[0];
         }
 
         // Whether the dormmate who gives this favour has been asked about the key.
@@ -660,7 +690,7 @@ namespace Lumenfall.Quests
                     skin.Label(new Rect(card.x + 30f, contentY, indentedWidth, trackerHeight), tracker, questTrackerStyle, MenuArt.Cream);
                     contentY += trackerHeight + 3f;
                 }
-                string toggle = hintsCollapsed ? "Click to show hints (H)" : "Click to hide hints (H)";
+                string toggle = hintsCollapsed ? "Click to show hints and the arrow (H)" : "Click to hide hints and the arrow (H)";
                 // Indent the hide/show action by roughly two characters.
                 Rect toggleRect = new Rect(card.x + 30f, contentY, indentedWidth, 20f);
                 bool hoverToggle = toggleRect.Contains(Event.current.mousePosition);

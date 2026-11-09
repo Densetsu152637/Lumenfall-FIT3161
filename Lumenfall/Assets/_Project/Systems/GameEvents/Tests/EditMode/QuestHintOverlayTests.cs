@@ -544,6 +544,49 @@ namespace Lumenfall.Tests.GameEvents
             Assert.That(QuestHintOverlay.CurrentWaypoint?.NpcId, Is.EqualTo("stella"), "The arrow leads to the first person still waiting for help.");
         }
 
+        [Test]
+        public void TheGoldArrowIsPartOfTheHintsThePlayerChoosesToShow()
+        {
+            runtime.ResetState();
+            runtime.SetFlag(LateToOrientationScene.MetFlag, true);
+            BeginMap("campus");
+            stateEnd();
+            RefreshHint();
+            Assert.That(QuestHintOverlay.CurrentWaypoint, Is.Not.Null, "Hints shown: the arrow leads on.");
+            FieldInfo collapsed = typeof(QuestHintOverlay).GetField("hintsCollapsed", BindingFlags.Instance | BindingFlags.NonPublic);
+            try
+            {
+                collapsed.SetValue(overlay, true);
+                Assert.That(QuestHintOverlay.CurrentWaypoint, Is.Null, "Hiding the hints (H) hides the arrow with them.");
+                collapsed.SetValue(overlay, false);
+                Assert.That(QuestHintOverlay.CurrentWaypoint, Is.Not.Null, "Showing them again brings it back.");
+            }
+            finally { collapsed.SetValue(overlay, false); }
+        }
+
+        [Test]
+        public void TheExploreArrowFollowsTheNearestDormmateInThisAreaWithoutNamingStrangers()
+        {
+            NpcDefinition[] records =
+            {
+                new NpcDefinition { id = "stella", mapId = "B02.Ground", x = 10, y = 10 },
+                new NpcDefinition { id = "cinna_cirra_orientation", mapId = "campus", x = 30, y = 40 },
+                new NpcDefinition { id = "katrina", mapId = "campus", x = 12, y = 60 },
+            };
+            string[] toVisit = { "stella", "cinna_cirra_orientation", "katrina" };
+            Assert.That(QuestHintOverlay.NearestPerson(toVisit, "campus", new Vector2Int(14, 58), records), Is.EqualTo("katrina"),
+                "Near Katrina, the arrow leads to her, whatever order the list is in.");
+            Assert.That(QuestHintOverlay.NearestPerson(toVisit, "campus", new Vector2Int(28, 38), records), Is.EqualTo("cinna_cirra_orientation"),
+                "Walking elsewhere switches it to whoever is nearest now.");
+            Assert.That(QuestHintOverlay.NearestPerson(toVisit, "westForest", Vector2Int.zero, records), Is.EqualTo("stella"),
+                "With nobody in this area, it falls back to the first still to visit.");
+            Assert.That(QuestHintOverlay.NearestPerson(Array.Empty<string>(), "campus", Vector2Int.zero, records), Is.Null);
+
+            // Someone not met yet is never named, and the arrow leaves them to the player once they are close.
+            Assert.That(QuestGuidanceHud.UnmetNearbyTiles, Is.GreaterThan(1), "The arrow goes before it could stand over them.");
+            Assert.That(QuestGuidanceHud.UnmetLabel, Does.Not.Contain("Stella").And.Not.Contain("Cinna").And.Not.Contain("Katrina").And.Not.Contain("Orio"));
+        }
+
         private void BeginMap(string mapId)
         {
             world.ResetAllState();

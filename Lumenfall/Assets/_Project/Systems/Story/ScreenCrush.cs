@@ -17,15 +17,23 @@ namespace Lumenfall.Story
 
         /// <summary>Draws the moment <paramref name="t"/> seconds in, from <c>OnGUI</c> on Repaint.</summary>
         void Draw(float t);
+
+        /// <summary>Stops the effect's own snaps, for when a recorded sound plays over it instead.</summary>
+        bool Muted { get; set; }
+
+        /// <summary>Seconds from the still coming back to the screen's first crack.</summary>
+        float FirstCrackAt { get; }
     }
 
     /// <summary>
     /// The end of the sequence break (<see cref="SequenceBreakEnding"/>): the still of the game comes back, and a pale hand
     /// reaches in from each side and presses against its edges. Three hard shoves squeeze it narrower, bowing it toward the
-    /// player, and cracks spread from both palms with a snap each time. Then the hands rush together, and the moment they
-    /// meet in the middle the screen breaks between them in a white flash: its glass bursts out from between the palms in
-    /// pieces cut like the old shatter's (<see cref="ScreenShatter"/>), each with its bright edge, and they tumble down
-    /// into the dark while the hands draw apart and away. The game closes once the last piece has fallen. The hands are PolyOne Studio's rigged pair (<see cref="SecretRoomArt.crushingHand"/>), each its own
+    /// player, and cracks spread from both palms with a snap and a white impact flash each time, as the old shatter's
+    /// blows had. Then the hands rush together, and the moment they meet in the middle the screen breaks between them in
+    /// the brightest flash: its glass bursts out from between the palms in pieces cut like the old shatter's
+    /// (<see cref="ScreenShatter"/>), each with its bright edge, and they tumble down into the dark while the hands draw
+    /// apart and away. The game closes once the last piece has fallen. The hands are PolyOne Studio's rigged pair
+    /// (<see cref="SecretRoomArt.crushingHand"/>), each its own
     /// copy of the model with the other hand collapsed, drawn in a flat pale glow and posed from their own bones (so the
     /// model's authored orientation does not matter). They and the screen stand on their own stage far below the world,
     /// seen only by their own camera, like Miki's in <see cref="SequenceBreakLockout"/>.
@@ -41,8 +49,9 @@ namespace Lumenfall.Story
         internal static readonly string[] RequiredBones = BuildRequiredBones();
 
         // The timeline, in seconds from the still coming back.
-        private const float ArriveFrom = 0.3f, ArriveTo = 1.4f;
-        private static readonly float[] Shoves = { 1.7f, 2.4f, 3.1f };
+        private const float ArriveFrom = 0.3f;
+        internal const float ArriveTo = 1.4f;
+        internal static readonly float[] Shoves = { 1.7f, 2.4f, 3.1f };
         private static readonly float[] ShoveSqueeze = { 0.22f, 0.42f, 0.6f };
         private const float ShoveSeconds = 0.3f;
         private const float RushFrom = 3.6f;
@@ -453,8 +462,17 @@ namespace Lumenfall.Story
             // A snap at contact, with each shove, and as the game breaks; then fainter ones as the glass falls.
             float[] at = { ArriveTo, Shoves[0], Shoves[1], Shoves[2], BreakAt, BreakAt + 0.25f, BreakAt + 0.6f };
             float[] loud = { 0.5f, 0.7f, 0.8f, 0.9f, 1f, 0.35f, 0.22f };
-            while (snapsPlayed < at.Length && t >= at[snapsPlayed]) Audio.AudioPlayback.PlayOneShot(sound, snap, loud[snapsPlayed++]);
+            while (snapsPlayed < at.Length && t >= at[snapsPlayed])
+            {
+                if (!Muted) Audio.AudioPlayback.PlayOneShot(sound, snap, loud[snapsPlayed]);
+                snapsPlayed++;
+            }
         }
+
+        public bool Muted { get; set; }
+
+        /// <summary>The screen first cracks as the palms touch it.</summary>
+        public float FirstCrackAt => ArriveTo;
 
         /// <summary>How far the screen has been squeezed at <paramref name="t"/>: 0 untouched, 1 when the hands meet.</summary>
         internal static float Squeeze(float t)
@@ -745,10 +763,21 @@ namespace Lumenfall.Story
             GL.LoadPixelMatrix(0f, w, 0f, h);
             Quad(plainMaterial, w, h, Color.black);
             Quad(viewMaterial, w, h, Color.white);
-            // The instant it breaks: a white flash as the glass bursts out.
-            if (t >= BreakAt) Quad(plainMaterial, w, h, new Color(1f, 1f, 1f, 0.6f * Mathf.Exp(-(t - BreakAt) * 14f)));
+            // An impact frame with each crack, as the old shatter had: a white flash as the palms first press, at each
+            // shove, and the brightest as it breaks and the glass bursts out.
+            float flash = Flash(t);
+            if (flash > 0.01f) Quad(plainMaterial, w, h, new Color(1f, 1f, 1f, flash));
             GL.PopMatrix();
         }
+
+        internal static float Flash(float t)
+        {
+            float flash = 0.55f * Blink(t, ArriveTo);
+            foreach (float shove in Shoves) flash = Mathf.Max(flash, 0.55f * Blink(t, shove));
+            return Mathf.Max(flash, 0.8f * Blink(t, BreakAt));
+        }
+
+        private static float Blink(float t, float at) => t < at ? 0f : Mathf.Exp(-(t - at) * 16f);
 
         /// <summary>Renders the stage as it is now into a PNG (the editor's frame preview).</summary>
         internal void RenderTo(string path)

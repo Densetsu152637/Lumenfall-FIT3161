@@ -362,7 +362,16 @@ namespace Lumenfall.DataDriven
 
         private void FrameCamera()
         {
-            if (lockedMover == null || appliedSettings.ReducedMotion) return;
+            if (lockedMover == null) return;
+            if (appliedSettings.ReducedMotion)
+            {
+                // No easing and no zoom on the speakers, but a line that names a place (Kit's tour) still shows it:
+                // the camera cuts to the place for that line and cuts back to the player afterwards.
+                easedFocus = null;
+                if (TryPointedFocus(out Vector3 place)) CameraFollow2_5D.FrameConversation(place, PointedZoom);
+                else CameraFollow2_5D.ClearConversationFrame();
+                return;
+            }
             Transform subject = portrait.Subject != null ? portrait.Subject : conversationNpc != null ? conversationNpc.transform : null;
             Vector3 player = lockedMover.transform.position;
             Vector3 focus = subject == null ? player : Vector3.Lerp(player, subject.position, 0.5f);

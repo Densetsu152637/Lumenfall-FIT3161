@@ -18,7 +18,8 @@ namespace Lumenfall.Quests
     /// Wayfinding and quest feedback drawn over the world, following the quest hint (<see cref="QuestHintOverlay.CurrentWaypoint"/>):
     /// <list type="bullet">
     /// <item>A gold marker bobs over the person to talk to when they are on screen; otherwise an arrow at the screen edge
-    /// points to them. A person or quest area elsewhere points at the door that leads there, found through the areas'
+    /// points to them. Someone the player has not met yet is never named or pinpointed: the arrow, labelled
+    /// <see cref="UnmetLabel"/>, leads toward them from afar and fades once the player is near, with no marker over them. A person or quest area elsewhere points at the door that leads there, found through the areas'
     /// portal links. Puzzle pieces are never marked (see <see cref="QuestHintOverlay.CurrentWaypoint"/>).</item>
     /// <item>A north-up minimap in the bottom-right corner, with the objective, doors and the player. M opens the whole
     /// area as a labelled map, so a building that has been mentioned can be found without knowing the campus yet.</item>
@@ -26,7 +27,8 @@ namespace Lumenfall.Quests
     /// <item>One-time tips at the moments they help: the first time the arrow appears, the first quest taken on and the
     /// first spell learned. Each is shown once per playthrough (a saved <c>tip.seen.*</c> flag).</item>
     /// </list>
-    /// The arrow and markers follow the "Show quest hints" setting; the minimap and map are always available.
+    /// The arrow and markers follow the "Show quest hints" setting and show only while the hints are shown (H); the
+    /// minimap and map are always available.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class QuestGuidanceHud : MonoBehaviour
@@ -37,6 +39,10 @@ namespace Lumenfall.Quests
         private const int MiniMapCells = 30;
         private const float MiniMapSize = 168f;
         private const float MapRebuildSeconds = 2f;
+        /// <summary>What the arrow calls someone the player has not met yet.</summary>
+        internal const string UnmetLabel = "Someone to meet";
+        /// <summary>Within this many tiles of someone not met yet the arrow goes: they are somewhere about.</summary>
+        internal const int UnmetNearbyTiles = 6;
         private static readonly Color WalkableColour = new Color(0.42f, 0.38f, 0.55f, 0.92f);
         private static readonly Color BlockedColour = new Color(0.1f, 0.08f, 0.17f, 0.92f);
         private static readonly Color DoorColour = new Color(0.96f, 0.80f, 0.45f, 1f);
@@ -52,6 +58,8 @@ namespace Lumenfall.Quests
         private Vector2Int targetCell;
         private string targetLabel;
         private string targetVia;
+        // True when the objective is someone not met yet in this area: no name, distance or marker, and no arrow up close.
+        private bool targetVague;
         private float resolveAt;
 
         // The current area's walkable shape, one pixel per cell with a clear one-cell border.
@@ -133,7 +141,8 @@ namespace Lumenfall.Quests
                 Resolve();
                 RefreshMapTexture();
                 if (hasTarget && !Hidden)
-                    QueueTip("first-arrow", "Follow the gold arrow to find who to talk to next. Press M at any time for a map of the area.");
+                    QueueTip("first-arrow", "Follow the gold arrow to find who to talk to next. Press H to hide or show it with the hints, " +
+                        "and M at any time for a map of the area.");
             }
         }
 
@@ -222,6 +231,7 @@ namespace Lumenfall.Quests
         private void Resolve()
         {
             hasTarget = false;
+            targetVague = false;
             QuestWaypoint? current = QuestHintOverlay.CurrentWaypoint;
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
             GridMover player = Player();
@@ -239,6 +249,8 @@ namespace Lumenfall.Quests
                 cell = new Vector2Int(record.x, record.y);
                 label = string.IsNullOrWhiteSpace(record.displayName) ? QuestHintOverlay.CharacterFor(waypoint.NpcId) : record.displayName;
             }
+            bool unmet = !string.IsNullOrEmpty(waypoint.NpcId) && !NpcIntroductions.IsKnown(waypoint.NpcId);
+            if (unmet) label = UnmetLabel;
             if (string.IsNullOrEmpty(mapId)) return;
 
             if (SameMap(mapId, here))
@@ -246,11 +258,14 @@ namespace Lumenfall.Quests
                 if (waypoint.AreaOnly) return;
                 targetCell = cell;
                 targetPosition = player.World.CellToWorld(cell);
+                // The arrow aims at the person themselves, so it never leads past them; someone not met yet just gets no
+                // name, no marker overhead and no arrow once the player is close (targetVague).
                 if (!string.IsNullOrEmpty(waypoint.NpcId) && TryFindLiveNpc(waypoint.NpcId, out Transform npc))
                 {
                     targetPosition = npc.position;
                     targetCell = player.World.WorldToCell(npc.position);
                 }
+                targetVague = unmet;
                 targetLabel = label;
                 targetVia = null;
                 hasTarget = true;
@@ -267,6 +282,7 @@ namespace Lumenfall.Quests
         }
 
         private static bool SameMap(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
 
         private static bool TryFindLiveNpc(string npcId, out Transform npc)
         {
@@ -424,17 +440,21 @@ namespace Lumenfall.Quests
             // Close enough that the interaction prompt takes over.
             int tiles = Mathf.Max(Mathf.Abs(targetCell.x - player.CurrentCell.x), Mathf.Abs(targetCell.y - player.CurrentCell.y));
             if (tiles <= 1) return;
+            // Someone not met yet is somewhere about here: the arrow has done its job, and finding them is up to the player.
+            if (targetVague && tiles <= UnmetNearbyTiles) return;
 
             Vector3 screen = view.WorldToScreenPoint(targetPosition + Vector3.up * 2.3f);
             Vector2 point = UiScale.FromScreenPoint(screen);
             // Keep clear of the hint card (top left), the settings button and minimap (right) and the spell chip (bottom).
             Rect safe = new Rect(56f, 72f, UiScale.Width - 56f - MiniMapSize - 48f, UiScale.Height - 72f - 120f);
             string distance = tiles + (tiles == 1 ? " tile" : " tiles");
-            string caption = string.IsNullOrEmpty(targetLabel) ? distance : targetLabel + "  " + distance;
+            string caption = targetVague ? targetLabel : string.IsNullOrEmpty(targetLabel) ? distance : targetLabel + "  " + distance;
             float now = Time.unscaledTime;
 
             if (screen.z > 0f && safe.Contains(point))
             {
+                // No marker over the place where someone unmet might be: it would point them out.
+                if (targetVague) return;
                 float bob = Mathf.Sin(now * 3f) * 5f * skin.Motion;
                 Rect marker = new Rect(point.x - 15f, point.y - 30f + bob, 30f, 30f);
                 DrawArrow(marker, 180f, 1f);
@@ -507,6 +527,8 @@ namespace Lumenfall.Quests
                 point.x = Mathf.Clamp(point.x, frame.xMin + 8f, frame.xMax - 8f);
                 point.y = Mathf.Clamp(point.y, frame.yMin + 8f, frame.yMax - 8f);
                 if (outside) DrawArrow(new Rect(point.x - 8f, point.y - 8f, 16f, 16f), Mathf.Atan2(-offset.y, offset.x) * Mathf.Rad2Deg + 90f, 1f);
+                // Someone unmet shows as a soft glow over the area they could be in, not a star on them.
+                else if (targetVague) skin.Draw(new Rect(point.x - 22f, point.y - 22f, 44f, 44f), skin.Glow, MenuArt.Gold, 0.6f);
                 else skin.Draw(new Rect(point.x - 9f, point.y - 9f, 18f, 18f), skin.Sparkle, MenuArt.Gold, 1f);
             }
             skin.Draw(new Rect(frame.center.x - 5f, frame.center.y - 5f, 10f, 10f), dotTexture, MenuArt.Cream, 1f);
@@ -547,7 +569,12 @@ namespace Lumenfall.Quests
             {
                 Vector2 target = MapPoint(mapRect, targetCell);
                 float pulse = 1f + 0.2f * Mathf.Sin(now * 4f) * skin.Motion;
-                skin.Draw(new Rect(target.x - 13f * pulse, target.y - 13f * pulse, 26f * pulse, 26f * pulse), skin.Sparkle, MenuArt.Gold, 1f);
+                if (targetVague)
+                {
+                    float spread = mapRect.width / (mapBounds.width + 2f) * UnmetNearbyTiles * pulse;
+                    skin.Draw(new Rect(target.x - spread, target.y - spread, spread * 2f, spread * 2f), skin.Glow, MenuArt.Gold, 0.55f);
+                }
+                else skin.Draw(new Rect(target.x - 13f * pulse, target.y - 13f * pulse, 26f * pulse, 26f * pulse), skin.Sparkle, MenuArt.Gold, 1f);
                 DrawCaption(target + new Vector2(0f, 26f), targetLabel ?? "Objective", targetVia);
             }
             Vector2 you = MapPoint(mapRect, player.CurrentCell);

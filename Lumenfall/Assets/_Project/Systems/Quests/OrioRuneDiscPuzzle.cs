@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Lumenfall.CameraEffects;
 using Lumenfall.GameEvents;
 using Lumenfall.GridMovement;
 using Lumenfall.Spells;
@@ -34,6 +35,10 @@ namespace Lumenfall.Quests
         private const float SolvedGlowMax = 4.2f;
         private const float DiscAnimationStepDegrees = 1.8f;
         private const float DiscAnimationStepSeconds = 0.01f;
+        // The see-through area over the dais: how far past the standing stones it reaches, so the stones and discs sit
+        // well inside it, and over how many cells off the dais it shrinks back to the usual circle around the player.
+        public const float DaisRevealMargin = 1f;
+        public const float DaisRevealFalloff = 3f;
 
         public static readonly string[] DiscIds = { "mechanism.orio.disc.northwest", "mechanism.orio.disc.northeast", "mechanism.orio.disc.south" };
         // Chosen so the intended solution is north 3, centre 2, west 2, east 1 presses; other press orders also solve it.
@@ -148,6 +153,7 @@ namespace Lumenfall.Quests
         {
             RegisterQuestConditions(GameEventManager.Instance?.Runtime);
             WorldStateService state = WorldStateService.Instance;
+            PlayerOcclusionReveal.ClearRevealZone();
             if (!string.Equals(mapId, PuzzleMapId, StringComparison.OrdinalIgnoreCase) || world == null || state == null)
             {
                 if (instance != null) instance.SetPresentationVisible(false);
@@ -168,6 +174,7 @@ namespace Lumenfall.Quests
             }
             instance.BindAuthored(authored.transform);
             instance.SetPresentationVisible(true);
+            instance.RevealDais();
             instance.RegisterBoundPuzzleObjects(state, world);
             for (int i = 0; i < instance.lastSocketRotations.Length; i++) instance.lastSocketRotations[i] = float.NaN;
         }
@@ -180,7 +187,45 @@ namespace Lumenfall.Quests
 
         private void OnDestroy()
         {
-            if (instance == this) instance = null;
+            if (instance != this) return;
+            instance = null;
+            PlayerOcclusionReveal.ClearRevealZone();
+        }
+
+        /// <summary>
+        /// The forest stands close around the dais, and the usual see-through circle around the player only cleared the
+        /// trees over part of it. While the player is on the dais, the trees in front of all of it are cleared instead.
+        /// </summary>
+        private void RevealDais()
+        {
+            if (presentationRoot == null || !TryGetDaisRevealArea(presentationRoot, out Bounds area)) return;
+            PlayerOcclusionReveal.SetRevealZone(area, DaisRevealFalloff);
+        }
+
+        /// <summary>The area kept clear of trees while the player is on the dais: its pieces and a margin around them.</summary>
+        public static bool TryGetDaisRevealArea(Transform root, out Bounds area)
+        {
+            if (!TryGetDaisBounds(root, out area)) return false;
+            area.Expand(new Vector3(DaisRevealMargin * 2f, 0f, DaisRevealMargin * 2f));
+            return true;
+        }
+
+        /// <summary>The world-space box around the authored dais's discs, sockets and ring of standing stones.</summary>
+        public static bool TryGetDaisBounds(Transform root, out Bounds dais)
+        {
+            dais = default;
+            bool any = false;
+            if (root == null) return false;
+            foreach (Transform part in root.GetComponentsInChildren<Transform>(true))
+            {
+                string name = part.name;
+                bool piece = Array.IndexOf(DiscIds, name) >= 0 || Array.IndexOf(SocketIds, name) >= 0 ||
+                    name.StartsWith("Standing Stone ", StringComparison.Ordinal);
+                if (!piece) continue;
+                if (!any) { dais = new Bounds(part.position, Vector3.zero); any = true; }
+                else dais.Encapsulate(part.position);
+            }
+            return any;
         }
 
         private void Update()

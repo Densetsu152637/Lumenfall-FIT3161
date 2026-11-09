@@ -136,10 +136,14 @@ namespace Lumenfall.Story
             float[] volumes = { 0.75f, 1f, 0.55f };
             while (snapsPlayed < moments.Length && t >= moments[snapsPlayed])
             {
-                Audio.AudioPlayback.PlayOneShot(sound, snap, volumes[snapsPlayed]);
+                if (!Muted) Audio.AudioPlayback.PlayOneShot(sound, snap, volumes[snapsPlayed]);
                 snapsPlayed++;
             }
         }
+
+        public bool Muted { get; set; }
+
+        float IEndingEffect.FirstCrackAt => FirstCrackAt;
 
         /// <summary>Draws the moment <paramref name="t"/> seconds in. Call on Repaint only.</summary>
         public void Draw(float t)

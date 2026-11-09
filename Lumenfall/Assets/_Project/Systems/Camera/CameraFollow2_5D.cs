@@ -11,7 +11,7 @@ using Lumenfall.Startup;
 /// <summary>
 /// Makes the attached camera follow a target from a fixed 2.5D viewing angle.
 /// The camera moves smoothly while continuously looking at the target.
-/// During a conversation it eases in to frame a requested focus point instead.
+/// During a conversation it eases in to frame a requested focus point instead (with Reduced Motion it cuts there).
 /// Holding the left mouse button and dragging (or the gamepad right stick) swings the view a little around the
 /// target to peek past walls and through doorways; it eases back to the fixed angle on release.
 /// The options menu's Camera angle (<see cref="CameraAngleSetting"/>) turns the offset 45° to the original diagonal view.
@@ -166,10 +166,11 @@ public class CameraFollow2_5D : MonoBehaviour
             return;
         }
 
-        // Remove the previous shake before smoothing. Reduced motion also disables conversation zoom.
+        // Remove the previous shake before smoothing. Reduced motion cuts to and from conversation framing instead of
+        // easing, so a line that points at a building still shows it.
         transform.position -= appliedShake;
         if (reducedMotion) conversationBlendVelocity = 0f;
-        conversationBlend = reducedMotion ? 0f : Mathf.SmoothDamp(
+        conversationBlend = reducedMotion ? (conversationActive ? 1f : 0f) : Mathf.SmoothDamp(
             conversationBlend,
             conversationActive ? 1f : 0f,
             ref conversationBlendVelocity,

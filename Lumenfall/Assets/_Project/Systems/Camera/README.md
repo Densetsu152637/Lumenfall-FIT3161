@@ -23,6 +23,16 @@ under 45°. Peeking is off whenever the player cannot move (menus, dialogue, cut
 the journal), and Reduced Motion snaps it back instead of easing. The limits and speeds are on the
 component under **Peek**.
 
+`PlayerOcclusionReveal.SetRevealZone` widens the see-through cutout over an area. While the player
+stands in it, the cutout becomes an ellipse centred on the area, sized to hold all of it on screen,
+and reaching back to its far edge. It shrinks back to the usual circle over a falloff just outside.
+The blend follows the player's position rather than time. The Deep Forest rune dais
+(`OrioRuneDiscPuzzle.RevealDais`) uses it so trees never hide part of the puzzle.
+
+With **Reduce camera motion** on, conversation framing cuts instead of easing. A dialogue line with
+`cameraFocus` metadata (Kit's tour) cuts to that place and back, and cutscene camera steps jump
+straight to their framing. The usual zoom onto the speakers stays off.
+
 **Options > Gameplay > Camera angle** switches between **Straight** (the default, above) and
 **Diagonal**, the original corner view from the south-east, where W moves up and to the right.
 `CameraAngleSetting` saves the choice in PlayerPrefs (`lumenfall.camera-angle`), outside story save

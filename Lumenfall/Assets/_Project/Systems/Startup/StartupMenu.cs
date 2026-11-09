@@ -205,8 +205,8 @@ namespace Lumenfall.Startup
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            // After the sequence break the game opens on an empty screen instead; it opens the menu itself if the
-            // player is let back in (see SequenceBreakLockout).
+            // After the sequence break the lockout opens the title itself, for a moment, before the screen goes black
+            // (see SequenceBreakLockout).
             if (Lumenfall.Story.SequenceBreakLockout.IsLockedOut) return;
             Open();
         }
@@ -361,8 +361,11 @@ namespace Lumenfall.Startup
             settings.Tick();
             if (!ready) return;
 
-            if (phase == Phase.Intro) UpdateIntro(now);
-            else if (phase == Phase.Menu) UpdateMenuKeys(wasRebinding);
+            // Locked out after the sequence break, the title is only for show: it opens as usual, then the screen goes
+            // black over it, and nothing pressed meanwhile (Miki's conversation included) reaches it.
+            bool frozen = Lumenfall.Story.SequenceBreakLockout.InProgress;
+            if (phase == Phase.Intro) { if (!frozen) UpdateIntro(now); }
+            else if (phase == Phase.Menu) { if (!frozen) UpdateMenuKeys(wasRebinding); }
             else if (now - phaseStartedAt >= CloseSeconds)
             {
                 CloseMenu();
@@ -628,6 +631,12 @@ namespace Lumenfall.Startup
         private void OnGUI()
         {
             if (!ready) return;
+            // Not drawn at all once the sequence-break lockout has gone black over it, so no title, sparkles or stars
+            // show through the empty screen or around Miki.
+            if (Lumenfall.Story.SequenceBreakLockout.HidesTitle) return;
+            // Drawn but not clickable while the sequence-break lockout holds the title (see Update).
+            if (Lumenfall.Story.SequenceBreakLockout.InProgress &&
+                Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout) return;
             EnsureStyles();
 
             float now = Time.unscaledTime;

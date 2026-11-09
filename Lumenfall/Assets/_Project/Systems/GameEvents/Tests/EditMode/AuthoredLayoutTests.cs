@@ -151,6 +151,65 @@ namespace Lumenfall.Tests.GameEvents
         }
 
         [Test]
+        public void TheTreesInFrontOfTheWholeRuneDaisAreClearedFromBesideEverySocket()
+        {
+            // The deep forest stands close around the dais, and the see-through circle around the player only cleared the
+            // trees over part of it, so players missed the discs and sockets hidden behind the rest.
+            GameObject deepForest = Load("Deep Forest.prefab");
+            Transform dais = deepForest.GetComponentInChildren<Lumenfall.Quests.OrioRuneDiscAuthoring>(true).transform;
+            Assert.That(Lumenfall.Quests.OrioRuneDiscPuzzle.TryGetDaisRevealArea(dais, out Bounds area), Is.True);
+            List<Vector3> pieces = new List<Vector3>();
+            foreach (Transform part in dais.GetComponentsInChildren<Transform>(true))
+                if (part.name.StartsWith("mechanism.orio.") || part.name.StartsWith("Standing Stone ")) pieces.Add(part.position);
+
+            // SampleScene's gameplay camera and its reveal: offset (0, 10, -11.3) looking 1.5 above the player with a
+            // 60 degree view; the reveal is centred 0.8 above the player, radius 0.34, feather 0.16, padding 0.15.
+            Vector3 offset = new Vector3(0f, 10f, -11.3f), lookOffset = new Vector3(0f, 1.5f, 0f), revealOffset = new Vector3(0f, 0.8f, 0f);
+            const float feather = 0.16f;
+            GameObject viewObject = new GameObject("dais-view-test");
+            Camera view = viewObject.AddComponent<Camera>();
+            view.fieldOfView = 60f;
+            view.aspect = 16f / 9f;
+            int checkedPieces = 0;
+            try
+            {
+                Lumenfall.CameraEffects.PlayerOcclusionReveal.SetRevealZone(area, Lumenfall.Quests.OrioRuneDiscPuzzle.DaisRevealFalloff);
+                foreach (float yaw in new[] { 0f, -45f }) // Straight and Diagonal camera angles.
+                foreach (string socket in Lumenfall.Quests.OrioRuneDiscPuzzle.SocketIds)
+                foreach (Vector3 step in new[] { Vector3.zero, Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+                {
+                    Vector3 standing = Find(deepForest, socket).transform.position + step;
+                    view.transform.position = standing + Quaternion.Euler(0f, yaw, 0f) * offset;
+                    view.transform.LookAt(standing + lookOffset);
+                    Vector3 focus = standing + revealOffset;
+                    float radius = 0.34f, stretch = 1f, padding = 0.15f;
+                    Lumenfall.CameraEffects.PlayerOcclusionReveal.ApplyRevealZone(view, standing, feather,
+                        ref focus, ref radius, ref stretch, ref padding);
+                    Vector3 focusView = view.WorldToViewportPoint(focus);
+                    foreach (Vector3 piece in pieces)
+                    {
+                        Vector3 point = view.WorldToViewportPoint(piece);
+                        if (point.x < 0f || point.x > 1f || point.y < 0f || point.y > 1f) continue;
+                        checkedPieces++;
+                        string where = $"{socket}{step} at {yaw} degrees: piece at {piece}";
+                        // Measured as the reveal shader measures it: in view heights, with the across distance stretched.
+                        Vector2 delta = new Vector2((point.x - focusView.x) * view.aspect * stretch, point.y - focusView.y);
+                        Assert.That(delta.magnitude, Is.LessThanOrEqualTo(radius - feather), where + " sits in the fully clear part.");
+                        // Anything in front of the piece is nearer the camera still, so it is cleared too.
+                        Assert.That(Vector3.Dot(piece - focus, view.transform.forward), Is.LessThan(-padding + 1e-3f),
+                            where + " is no farther back than the cleared depth.");
+                    }
+                }
+                Assert.That(checkedPieces, Is.GreaterThan(0));
+            }
+            finally
+            {
+                Lumenfall.CameraEffects.PlayerOcclusionReveal.ClearRevealZone();
+                Object.DestroyImmediate(viewObject);
+            }
+        }
+
+        [Test]
         public void ThePlazaLampsBlockWhereTheyStandAndEveryCampusDoorStaysReachable()
         {
             // The plaza's hand-placed tiles sat beside some lamps, so players walked through the lamp and bumped into air.
