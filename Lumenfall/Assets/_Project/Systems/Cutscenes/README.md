@@ -2,12 +2,12 @@
 
 A cutscene is a JSON file of steps in `Resources/Cutscenes/<id>.json`; the file name must match its `id`. `CutscenePlayer` plays one at a time over the live world. Nothing in a cutscene is saved: it is presentation, plus any GameEvents flags its steps set.
 
-## Opening: arriving out of the menu's light
+## Opening: the prologue, then arriving out of the star's light
 
 New Game queues `opening_arrival` (`CutscenePlayer.QueueAfterMenu`). Loading a save never plays it.
 
-1. When START dissolves the menu panel, the opening takes over the dissolve (`TakeOverMenuDissolve`). The player is hidden, and `PlayerArrivalEffect` starts its own 170 sparks across the panel with the menu dissolve's colours, textures, spread, drag and lift, in place of the menu's sparks.
-2. While the menu fades and the camera eases back to the player, the sparks curl and stream onto the player's spawn. All of them have landed 2.6 seconds after START. Each landing feeds a gold glow, a spinning spark and a column of light at the spawn, and a point light warms the trees around it. A soft chord swells with small twinkles over it.
+1. It opens on black with the `prologue` step: the 3D prologue (`Story/PrologueScene`, see [the Story README](../Story/README.md)) plays over everything for about 48 seconds, until the star hits and the white fades through ink to black. Because the prologue comes before the arrival, the cutscene starts as soon as the menu begins to close rather than once it has closed, and it does not take over the menu's dissolve (`ArrivesAfterPrologue`). Esc twice skips the prologue; the rest of the opening is unskippable.
+2. The black fades out over the dark forest (`ForestNight`, in the Story README) while the arrival's sparks, the star's light, start across the middle of the screen and curl onto the player's spawn. All of them land within about 2.6 seconds. Each landing feeds a gold glow, a spinning spark and a column of light at the spawn, and a point light warms the trees around it. A soft chord swells with small twinkles over it.
 3. Once every spark has landed, the glow pulses for half a second. The camera is held a little closer meanwhile.
 4. A cream flash, and the player appears behind it with a chime. A ring of sparks bursts outward, the column flares and fades, and the player grows from 90% to full size as the camera eases back out.
 5. Motes rise around the player for about two seconds.
@@ -24,6 +24,10 @@ The earlier falling-star opening is kept as `falling_star`, which nothing plays 
 - **Skipping:** Escape twice. The first press shows "Press Esc again to skip" for 2.5 seconds. A faint "Esc twice to skip" hint sits in the bottom-right corner throughout. Set `"unskippable": true` to turn skipping off. Skipping still sets the flags from steps that had not run yet, so the game ends up in the same state as watching.
 
 While a cutscene plays (`CutscenePlayer.IsPlaying`), the player's movement is locked every frame, and these all wait for it: spell input, NPC talk, portals, pickups, building signs, the journal, the Escape pause pop-out and autosave. The quest hint card and Settings button are hidden. `CutscenePlayer.BlocksInput` also stays true for the frame a cutscene ends, so the Escape press that skips it does not also open the pause pop-out.
+
+## NPCs in cutscenes
+
+NPCs have no movement of their own, so `CutsceneActors` moves them for the `npc*` steps. A walk glides the NPC from cell to cell along a `GridPathfinder` path at the player's pace (3.2 cells a second, or 6.5 running), playing the animator's Walk or Run state and turning to face the way it goes; its blocker is lifted while it walks and put back where it stops. A cell off the map, or one with no path, is walked to in a straight line, for walking out of sight past the edge of a map. Poses are animator states played by name (the NPC controller has Tripping, Sad, Angry, Yelling, Pointing Forward and more). While a cutscene has an NPC, their idle gestures and turning to the player are off; when it ends they stand where they were left and take that as their resting place. Ending or skipping the cutscene places every walker at its destination and finishes every leave. The letter is a small envelope with a red seal that flutters on the wind in a loose, swinging arc; caught by the player, it is held up in front of them until it is handed on or the cutscene ends.
 
 ## Step reference
 
@@ -49,8 +53,16 @@ Each step has a `type`. Timed steps hold the sequence for their `seconds` unless
 | `stare` | `value`, `seconds` | With `value` true, the player turns at an even pace over `seconds` to face the camera, following it as it moves, while their head lifts to look straight into it, and holds it (`GridMoverPresentation.HoldFacing`). With `value` false, they face their last step direction again at once. Ending the cutscene ends the stare. |
 | `glitch` | `text`, `seconds` | A full-screen glitch (`ScreenGlitchEffect`) drawn just in front of the overlay. `tear` (the default) freezes the picture on a still and tears it: sliding bands, a red and blue split, blocks and scanlines, over stuttering static. `rewind` rolls tracking lines up the screen with a tape whirr. Reduce motion makes the tear a slow fade into deep violet and draws nothing for the rewind. |
 | `music` | `value` | `false` hushes the music and ambience (they ease out over half a second), `true` brings them back. Ending the cutscene always brings them back. |
+| `prologue` | | Play the 3D prologue over everything and wait until it ends or the player skips it (Esc twice). Put a black fade before it. |
+| `npcWalk` | `key`, `x`, `y`, `value` | NPC `key` walks to that cell (`value` true runs) and the cutscene waits until they arrive, unless `background`. The cell may be off the map. |
+| `npcPose` | `key`, `text` | NPC `key` plays animator state `text`; empty goes back to Idle. |
+| `npcTurn` | `key`, `x`, `y`, `seconds` | NPC `key` turns to face grid direction `x`, `y`, or the player when both are 0, over `seconds`. |
+| `npcLeave` | `key`, `seconds` | NPC `key` shrinks away over `seconds` and is gone for the rest of the cutscene. |
+| `say` | `key`, `text`, `seconds`, `value` | NPC `key` says `text` in a speech bubble over their head for `seconds`, with no dialogue box and no click, and the cutscene waits that long unless `background`. With `value` true the bubble also goes the moment they stop walking, so they only speak on the move. A new line replaces the last. |
+| `sound` | `key`, `amplitude` | Play the clip at Resources path `key` once as a sound effect, at `amplitude` volume (0 or missing is full), and move straight on. |
+| `letter` | `key`, `value`, `seconds` | A letter flutters from NPC `key` into the player's hands (`value` true), or from the player's hands to NPC `key` (false), over `seconds`, and the cutscene waits for it unless `background`. |
 
-`CutsceneDefinition.Parse` rejects a cutscene with no id, no steps, an unknown step type, negative seconds, a fade alpha outside 0–1, an unreadable colour, a caption without text, a dialogue or flag without a key, a star without a duration, an aura without an NPC or with an unknown level, or a glitch without a duration or with an unknown style. `Load` logs why and the cutscene does not play.
+`CutsceneDefinition.Parse` rejects a cutscene with no id, no steps, an unknown step type, negative seconds, a fade alpha outside 0–1, an unreadable colour, a caption without text, a dialogue or flag without a key, a star without a duration, an aura without an NPC or with an unknown level, or a glitch without a duration or with an unknown style, an NPC step without the NPC it acts on, a sound without its path, or a speech bubble without its NPC or text. `Load` logs why and the cutscene does not play.
 
 ## Runtime pieces
 

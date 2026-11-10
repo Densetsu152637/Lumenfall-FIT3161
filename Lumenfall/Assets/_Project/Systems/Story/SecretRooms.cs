@@ -32,6 +32,27 @@ namespace Lumenfall.Story
         private const string ExitName = "Secret Exit Ring";
         private const string SleeperName = "Zzz Anchor";
 
+        // Found by name by SecretRoomMood, which brings the two quiet rooms to life.
+        internal const string PendantPrefix = "Pendant ";
+        internal const string DoorwayLightName = "Doorway Light";
+        internal const string ForgottenManGroupName = "Forgotten Man";
+        internal const string EggName = "Egg";
+        internal const string EggLookName = "Egg Look";
+        internal const string PhotoName = "Photograph";
+        internal const string SleepingDogName = "Sleeping Dog";
+        internal const string LoadingSpinnerName = "Loading Spinner";
+        /// <summary>Which of the forgotten room's lamps (counting from the door) is failing; the first is dead.</summary>
+        internal const int FailingPendant = 1;
+        /// <summary>Lost Echoes from this row of the forgotten room or beyond reaches the photograph behind the man.</summary>
+        internal const int PhotoRow = 11;
+
+        /// <summary>The things in the rooms worth a closer look, and the narrated dialogue each plays.</summary>
+        internal static readonly string[] InspectDialogues =
+        {
+            "inspect_forgotten_frames", "inspect_forgotten_coat_rack", "inspect_forgotten_chair", "secret_forgotten_egg",
+            "inspect_dog_loading_bar", "inspect_dog_hole", "inspect_dog_bowl",
+        };
+
         /// <summary>A secret room: its size, where the player arrives and leaves, and where leaving takes them.</summary>
         public sealed class Room
         {
@@ -56,7 +77,7 @@ namespace Lumenfall.Story
             },
             [DogRoomId] = new Room
             {
-                Id = DogRoomId, Name = "A very white room", Width = 7, Height = 6, Arrival = new Vector2Int(3, 1), Exit = new Vector2Int(3, 0),
+                Id = DogRoomId, Name = "A very white room", Width = 9, Height = 7, Arrival = new Vector2Int(4, 1), Exit = new Vector2Int(4, 0),
                 // Just south of the campus north gate.
                 ReturnMapId = "campus", ReturnCell = new Vector2Int(26, 87), Build = BuildDogRoom
             },
@@ -68,7 +89,7 @@ namespace Lumenfall.Story
             },
             [ForgottenRoomId] = new Room
             {
-                Id = ForgottenRoomId, Name = "A forgotten room", Width = 5, Height = 9, Arrival = new Vector2Int(2, 1), Exit = new Vector2Int(2, 0),
+                Id = ForgottenRoomId, Name = "A forgotten room", Width = 5, Height = 15, Arrival = new Vector2Int(2, 1), Exit = new Vector2Int(2, 0),
                 // Just south of the campus north gate, where the white dog's trail ends.
                 ReturnMapId = "campus", ReturnCell = new Vector2Int(26, 87), Build = BuildForgottenRoom
             },
@@ -167,6 +188,7 @@ namespace Lumenfall.Story
                     foreach (DevChibis.Look look in DevChibis.Dressed)
                         if (npc.Definition != null && npc.Definition.id == look.Id) DevChibis.Dress(npc.gameObject, look);
             StaffClosetSecret.RegisterForMap(mapId, areaRoot);
+            SecretRoomMood.OnMapLoaded(mapId, areaRoot);
             WhiteDogTrailSecret.OnMapLoaded(GameEventManager.Instance != null ? GameEventManager.Instance.Runtime : null, mapId);
             LanternBearerSecret.RegisterForMap(mapId, world, areaRoot);
         }
@@ -269,36 +291,117 @@ namespace Lumenfall.Story
             Blocker(root, new Vector2Int(6, 2), Vector2Int.one);
         }
 
+        // A room that has not been finished, or perhaps never started: white with no edges (SecretRoomMood washes the
+        // walls out into white fog and a white sky), and in the middle of it the dog, asleep on a pile of scrolls under a
+        // loading spinner. Around it, what it has been up to: the chewed-up loading bar from the north gate, a bowl, and
+        // a hole in the floor where the world's texture has not loaded, which is how it got in.
         private static void BuildDogRoom(Transform root, SecretRoomArt art)
         {
             Room room = Rooms[DogRoomId];
-            Shell(root, room, new Color(0.96f, 0.96f, 0.96f), new Color(0.99f, 0.99f, 0.99f), 1.4f);
-            Vector2Int bed = new Vector2Int(3, 4);
-            // A pile of scrolls, and the dog asleep on top of it.
-            for (int i = 0; i < 7; i++)
-            {
-                float angle = i * 51f;
-                Vector3 offset = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad) * 0.32f, 0.07f + (i % 3) * 0.08f, Mathf.Sin(angle * Mathf.Deg2Rad) * 0.28f);
-                Part(PrimitiveType.Cylinder, "Scroll", root, new Vector3(bed.x, 0f, bed.y) + offset, new Vector3(0.12f, 0.32f, 0.12f), new Color(0.93f, 0.87f, 0.7f), 0.05f, Quaternion.Euler(0f, angle, 90f));
-            }
-            GameObject dog = new GameObject("Sleeping Dog");
-            dog.transform.SetParent(root, false);
-            dog.transform.localPosition = new Vector3(bed.x, 0.28f, bed.y);
+            Shell(root, room, new Color(0.97f, 0.97f, 0.98f), Color.white, 2.2f, 0.32f, 0.55f);
+            Vector2Int bed = SecretRoomMood.DogBedCell;
             Color white = new Color(0.98f, 0.98f, 0.98f);
             Color ink = new Color(0.1f, 0.1f, 0.1f);
-            Part(PrimitiveType.Cube, "Body", dog.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.55f, 0.3f, 0.32f), white, 0.05f);
-            Part(PrimitiveType.Cube, "Head", dog.transform, new Vector3(0.36f, 0.22f, 0f), new Vector3(0.26f, 0.24f, 0.26f), white, 0.05f);
-            Part(PrimitiveType.Cube, "Ear", dog.transform, new Vector3(0.33f, 0.24f, 0.15f), new Vector3(0.1f, 0.18f, 0.04f), ink, 0f);
-            Part(PrimitiveType.Cube, "Ear", dog.transform, new Vector3(0.33f, 0.24f, -0.15f), new Vector3(0.1f, 0.18f, 0.04f), ink, 0f);
-            Part(PrimitiveType.Cube, "Closed Eye", dog.transform, new Vector3(0.49f, 0.25f, 0.06f), new Vector3(0.01f, 0.02f, 0.06f), ink, 0f);
-            Part(PrimitiveType.Cube, "Closed Eye", dog.transform, new Vector3(0.49f, 0.25f, -0.06f), new Vector3(0.01f, 0.02f, 0.06f), ink, 0f);
-            Part(PrimitiveType.Cube, "Tail", dog.transform, new Vector3(-0.32f, 0.22f, 0f), new Vector3(0.14f, 0.05f, 0.05f), white, 0.05f, Quaternion.Euler(0f, 0f, 30f));
+            // Its only shadow, soft and grey.
+            Part(PrimitiveType.Cylinder, "Dog Shadow", root, new Vector3(bed.x, 0.003f, bed.y), new Vector3(1.35f, 0.002f, 1.05f), new Color(0.8f, 0.8f, 0.85f), 0.18f);
+            // A pile of scrolls, and the dog asleep on top of it.
+            for (int i = 0; i < 9; i++)
+            {
+                float angle = i * 47f;
+                float reach = i < 6 ? 0.34f : 0.16f;
+                Vector3 offset = new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad) * reach, 0.07f + (i % 3) * 0.08f, Mathf.Sin(angle * Mathf.Deg2Rad) * reach * 0.85f);
+                Part(PrimitiveType.Cylinder, "Scroll", root, new Vector3(bed.x, 0f, bed.y) + offset, new Vector3(0.12f, 0.32f, 0.12f), new Color(0.93f, 0.87f, 0.7f), 0.08f, Quaternion.Euler(0f, angle, 90f));
+            }
+            BuildDog(root, new Vector3(bed.x, 0.28f, bed.y), white, ink);
+            Blocker(root, bed, Vector2Int.one);
+
+            // A loading spinner over it, forever nearly done.
+            GameObject spinner = new GameObject(LoadingSpinnerName);
+            spinner.transform.SetParent(root, false);
+            spinner.transform.localPosition = new Vector3(bed.x, 1.45f, bed.y);
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * 45f * Mathf.Deg2Rad;
+                float size = Mathf.Lerp(0.085f, 0.03f, i / 7f);
+                Part(PrimitiveType.Cube, "Spinner Dot", spinner.transform, new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f) * 0.17f, Vector3.one * size,
+                    new Color(0.96f, 0.8f, 0.45f), Mathf.Lerp(1.4f, 0.3f, i / 7f));
+            }
+
+            // The loading bar from the north gate, thoroughly chewed: its dark track snapped in two, gold bits everywhere.
+            Vector2Int bar = new Vector2Int(2, 3);
+            Color track = new Color(0.2f, 0.18f, 0.26f);
+            Color gold = new Color(0.96f, 0.8f, 0.45f);
+            Part(PrimitiveType.Cube, "Chewed Bar", root, new Vector3(bar.x - 0.22f, 0.04f, bar.y - 0.05f), new Vector3(0.7f, 0.08f, 0.13f), track, 0.05f, Quaternion.Euler(0f, 14f, 0f));
+            Part(PrimitiveType.Cube, "Chewed Bar", root, new Vector3(bar.x + 0.36f, 0.04f, bar.y + 0.16f), new Vector3(0.42f, 0.08f, 0.13f), track, 0.05f, Quaternion.Euler(0f, -38f, 4f));
+            Part(PrimitiveType.Cube, "Bar Fill", root, new Vector3(bar.x - 0.3f, 0.085f, bar.y - 0.07f), new Vector3(0.46f, 0.02f, 0.07f), gold, 0.8f, Quaternion.Euler(0f, 14f, 0f));
+            (float x, float z, float yaw)[] bits = { (0.3f, -0.3f, 20f), (-0.4f, 0.32f, 70f), (0.05f, 0.38f, -15f), (0.45f, -0.05f, 40f), (-0.15f, -0.38f, 85f), (-0.48f, -0.2f, 10f) };
+            foreach ((float x, float z, float yaw) in bits)
+                Part(PrimitiveType.Cube, "Bar Bit", root, new Vector3(bar.x + x, 0.02f, bar.y + z), new Vector3(0.1f, 0.04f, 0.06f), gold, 0.8f, Quaternion.Euler(0f, yaw, 0f));
+            Look(root, bar, "inspect_dog_loading_bar", true);
+
+            // Where the floor has not loaded: a pink-and-black checkerboard, sunk a little, with loose pixels about it.
+            Vector2Int hole = SecretRoomMood.HoleCell;
+            GameObject missing = Part(PrimitiveType.Cube, "Missing Texture", root, new Vector3(hole.x, 0.004f, hole.y), new Vector3(0.92f, 0.01f, 0.92f), Color.white, 0f);
+            Material checker = missing.GetComponent<Renderer>().sharedMaterial;
+            Texture2D pattern = MissingTexture();
+            checker.mainTexture = pattern;
+            checker.SetTexture("_BaseMap", pattern);
+            checker.SetTexture("_EmissionMap", pattern);
+            checker.SetColor("_EmissionColor", Color.white * 0.7f);
+            (float x, float z, float y, bool pink)[] pixels = { (-0.62f, 0.2f, 0.05f, true), (0.1f, -0.6f, 0.03f, false), (-0.5f, -0.45f, 0.12f, false), (0.55f, 0.5f, 0.2f, true) };
+            foreach ((float x, float z, float y, bool pink) in pixels)
+                Part(PrimitiveType.Cube, "Loose Pixel", root, new Vector3(hole.x + x, y, hole.y + z), Vector3.one * 0.08f,
+                    pink ? new Color(1f, 0f, 0.86f) : new Color(0.03f, 0.03f, 0.03f), pink ? 0.9f : 0f, Quaternion.Euler(0f, x * 90f, 0f));
+            Look(root, hole, "inspect_dog_hole", true);
+
+            // Its bowl.
+            Vector2Int bowl = new Vector2Int(6, 2);
+            Part(PrimitiveType.Cylinder, "Bowl", root, new Vector3(bowl.x, 0.055f, bowl.y), new Vector3(0.38f, 0.055f, 0.38f), white, 0.2f);
+            Part(PrimitiveType.Cylinder, "Bowl Band", root, new Vector3(bowl.x, 0.06f, bowl.y), new Vector3(0.39f, 0.018f, 0.39f), new Color(0.86f, 0.22f, 0.22f), 0.15f);
+            Part(PrimitiveType.Sphere, "Kibble", root, new Vector3(bowl.x, 0.12f, bowl.y), Vector3.one * 0.06f, new Color(0.55f, 0.36f, 0.2f), 0.05f);
+            Look(root, bowl, "inspect_dog_bowl", true);
+        }
+
+        // The dog, rounder than before, curled on its side with its floppy dark ears down. SecretRoomMood breathes its
+        // Body, bobs its Head, twitches an Ear and thumps its Tail, so those keep their names.
+        private static void BuildDog(Transform root, Vector3 position, Color white, Color ink)
+        {
+            GameObject dog = new GameObject(SleepingDogName);
+            dog.transform.SetParent(root, false);
+            dog.transform.localPosition = position;
+            Part(PrimitiveType.Sphere, "Body", dog.transform, new Vector3(0f, 0.16f, 0f), new Vector3(0.62f, 0.34f, 0.4f), white, 0.15f);
+            Part(PrimitiveType.Sphere, "Head", dog.transform, new Vector3(0.36f, 0.24f, 0f), new Vector3(0.34f, 0.3f, 0.32f), white, 0.15f);
+            Transform head = dog.transform.Find("Head");
+            Part(PrimitiveType.Sphere, "Snout", head, new Vector3(0.42f, -0.12f, 0f), new Vector3(0.48f, 0.4f, 0.44f), white, 0.15f);
+            Part(PrimitiveType.Sphere, "Nose", head, new Vector3(0.66f, -0.06f, 0f), new Vector3(0.14f, 0.14f, 0.16f), ink, 0f);
+            // Just proud of the head's surface, so they show. (The head's scale applies to everything on it.)
+            Part(PrimitiveType.Cube, "Closed Eye", head, new Vector3(0.44f, 0.14f, 0.24f), new Vector3(0.04f, 0.05f, 0.18f), ink, 0f, Quaternion.Euler(0f, -20f, 0f));
+            Part(PrimitiveType.Cube, "Closed Eye", head, new Vector3(0.44f, 0.14f, -0.24f), new Vector3(0.04f, 0.05f, 0.18f), ink, 0f, Quaternion.Euler(0f, 20f, 0f));
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Part(PrimitiveType.Cube, "Ear", dog.transform, new Vector3(0.3f, 0.3f, side * 0.16f), new Vector3(0.11f, 0.2f, 0.05f), ink, 0f, Quaternion.Euler(side * 18f, 0f, -24f));
+                Part(PrimitiveType.Sphere, "Paw", dog.transform, new Vector3(0.24f, 0.03f, side * 0.1f), new Vector3(0.12f, 0.07f, 0.09f), white, 0.15f);
+            }
+            Part(PrimitiveType.Sphere, "Tail", dog.transform, new Vector3(-0.34f, 0.22f, 0f), new Vector3(0.17f, 0.07f, 0.07f), white, 0.15f, Quaternion.Euler(0f, 0f, 25f));
             Anchor(dog.transform, SleeperName, new Vector3(0.3f, 0.75f, 0f));
             // An empty spot on the dog is the one to talk to, so the sleeping dog never turns to face anyone.
             GameObject spot = new GameObject("Dog Talk Spot");
             spot.transform.SetParent(dog.transform, false);
             Talker(spot, "secret_dog", "Dog", "secret_dog");
-            Blocker(root, bed, Vector2Int.one);
+        }
+
+        private static Texture2D missingTexture;
+
+        // The checkerboard a game shows where a texture is missing.
+        private static Texture2D MissingTexture()
+        {
+            if (missingTexture != null) return missingTexture;
+            missingTexture = new Texture2D(8, 8, TextureFormat.RGBA32, false) { name = "Missing Texture", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Repeat, hideFlags = HideFlags.DontSave };
+            for (int y = 0; y < 8; y++)
+                for (int x = 0; x < 8; x++)
+                    missingTexture.SetPixel(x, y, ((x / 2) + (y / 2)) % 2 == 0 ? new Color(1f, 0f, 0.86f) : new Color(0.02f, 0.02f, 0.02f));
+            missingTexture.Apply();
+            return missingTexture;
         }
 
         private static void BuildCloset(Transform root, SecretRoomArt art)
@@ -317,55 +420,162 @@ namespace Lumenfall.Story
             Person(root, art, "secret_janitor", "Janitor", "secret_janitor", new Vector2Int(2, 3), 180f);
         }
 
-        // A long, dim, empty room at the end of the white dog's trail. At the far end a man stands facing the door, beside a small
-        // stand with an egg on it, under one cold lamp. A photograph frame hangs on the wall behind him, empty.
+        // A long, dark corridor at the end of the white dog's trail, the kind of place nobody has walked down in years. A
+        // worn runner leads from the door to the far end, under pendant lamps that leave pools of light with dark between
+        // (the first is dead, the second failing). Empty frames line the walls, an armchair sits facing the far wall, and
+        // a dog's lead hangs alone on the coat rack by the door. At the very end a man stands facing the door, beside a
+        // small stand with an egg on it, under one cold lamp, with a photograph too faded to see behind him.
+        // SecretRoomMood darkens it, hums, ticks, flickers and, once he has spoken, takes him away.
         private static void BuildForgottenRoom(Transform root, SecretRoomArt art)
         {
             Room room = Rooms[ForgottenRoomId];
-            Shell(root, room, new Color(0.16f, 0.16f, 0.19f), new Color(0.24f, 0.24f, 0.28f), 2.2f);
-            Vector2Int man = new Vector2Int(2, 7);
+            const float wallHeight = 2.6f;
+            Shell(root, room, new Color(0.11f, 0.095f, 0.085f), new Color(0.2f, 0.2f, 0.235f), wallHeight, 0.02f, 0.03f);
+            float middleX = (room.Width - 1) * 0.5f, middleZ = (room.Height - 1) * 0.5f;
+            float west = -0.5f, east = room.Width - 0.5f, north = room.Height - 0.5f;
+
+            // Dark panelling to the height of a rail, all the way round.
+            Color panel = new Color(0.12f, 0.11f, 0.14f), rail = new Color(0.27f, 0.23f, 0.19f);
+            Part(PrimitiveType.Cube, "Wainscot", root, new Vector3(west + 0.03f, 0.45f, middleZ), new Vector3(0.06f, 0.9f, room.Height), panel, 0.02f);
+            Part(PrimitiveType.Cube, "Wainscot", root, new Vector3(east - 0.03f, 0.45f, middleZ), new Vector3(0.06f, 0.9f, room.Height), panel, 0.02f);
+            Part(PrimitiveType.Cube, "Wainscot", root, new Vector3(middleX, 0.45f, north - 0.03f), new Vector3(room.Width, 0.9f, 0.06f), panel, 0.02f);
+            Part(PrimitiveType.Cube, "Rail", root, new Vector3(west + 0.05f, 0.92f, middleZ), new Vector3(0.1f, 0.05f, room.Height), rail, 0.02f);
+            Part(PrimitiveType.Cube, "Rail", root, new Vector3(east - 0.05f, 0.92f, middleZ), new Vector3(0.1f, 0.05f, room.Height), rail, 0.02f);
+            Part(PrimitiveType.Cube, "Rail", root, new Vector3(middleX, 0.92f, north - 0.05f), new Vector3(room.Width, 0.05f, 0.1f), rail, 0.02f);
+
+            // The worn runner from the door to the man, with a faded border.
+            const float runnerFrom = 1.3f, runnerTo = 12.6f;
+            float runnerMiddle = (runnerFrom + runnerTo) * 0.5f, runnerLength = runnerTo - runnerFrom;
+            Part(PrimitiveType.Cube, "Runner", root, new Vector3(middleX, 0.004f, runnerMiddle), new Vector3(1.3f, 0.008f, runnerLength), new Color(0.23f, 0.08f, 0.09f), 0.02f);
+            foreach (float side in new[] { -1f, 1f })
+                Part(PrimitiveType.Cube, "Runner Border", root, new Vector3(middleX + side * 0.58f, 0.006f, runnerMiddle), new Vector3(0.06f, 0.01f, runnerLength), new Color(0.34f, 0.27f, 0.15f), 0.02f);
+
+            // Pendant lamps down the middle: dead, failing, dim, and the cold one over the man.
+            (float z, Color colour, float intensity, float range)[] pendants =
+            {
+                (3.5f, new Color(1f, 0.8f, 0.55f), 0f, 3.4f),
+                (6.5f, new Color(1f, 0.78f, 0.5f), 0.95f, 3.4f),
+                (9.5f, new Color(1f, 0.8f, 0.55f), 0.6f, 3.2f),
+                (12.4f, new Color(0.75f, 0.82f, 1f), 1.35f, 4.6f),
+            };
+            for (int i = 0; i < pendants.Length; i++) Pendant(root, i, new Vector3(middleX, 1.95f, pendants[i].z), wallHeight, pendants[i].colour, pendants[i].intensity, pendants[i].range);
+            Glow(root, DoorwayLightName, new Vector3(middleX, 1.2f, 1.2f), new Color(0.75f, 0.8f, 0.95f), 2.5f, 0.45f);
+
+            // Empty frames down both walls, each with the pale patch of a picture long gone; two hang crooked.
+            (float z, bool onWest, float tilt)[] frames = { (2.6f, false, 0f), (4.6f, true, 0f), (7.4f, false, 7f), (8.6f, true, 0f), (10.4f, false, 0f), (11.2f, true, -6f) };
+            foreach ((float z, bool onWest, float tilt) in frames)
+            {
+                float x = onWest ? west + 0.03f : east - 0.03f;
+                float inward = onWest ? 1f : -1f;
+                Quaternion hang = Quaternion.Euler(tilt, 0f, 0f);
+                Part(PrimitiveType.Cube, "Frame", root, new Vector3(x + inward * 0.02f, 1.6f, z), new Vector3(0.04f, 0.46f, 0.6f), new Color(0.36f, 0.28f, 0.2f), 0f, hang);
+                Part(PrimitiveType.Cube, "Faded Patch", root, new Vector3(x + inward * 0.045f, 1.6f, z), new Vector3(0.01f, 0.34f, 0.48f), new Color(0.46f, 0.46f, 0.5f), 0.04f, hang);
+                Look(root, new Vector2Int(onWest ? 0 : room.Width - 1, Mathf.RoundToInt(z)), "inspect_forgotten_frames", false, new Vector3(onWest ? -0.35f : 0.35f, 0f, z - Mathf.RoundToInt(z)));
+            }
+
+            // By the door, a coat rack with nothing on it but a small dog's lead.
+            Vector2Int rack = new Vector2Int(0, 2);
+            GameObject coatRack = Model(root, art != null ? art.coatRack : null, "Coat Rack", rack, 90f, 0.5f, Vector2Int.one);
+            float rackTop = coatRack != null ? MeshBounds(coatRack).max.y : 1.7f;
+            if (coatRack == null)
+            {
+                Part(PrimitiveType.Cylinder, "Coat Rack", root, new Vector3(rack.x, 0.85f, rack.y), new Vector3(0.05f, 0.85f, 0.05f), new Color(0.3f, 0.22f, 0.15f), 0f);
+                Blocker(root, rack, Vector2Int.one);
+            }
+            Color lead = new Color(0.62f, 0.14f, 0.14f);
+            Part(PrimitiveType.Cylinder, "Dog Lead", root, new Vector3(rack.x + 0.12f, rackTop - 0.45f, rack.y), new Vector3(0.018f, 0.3f, 0.018f), lead, 0.05f, Quaternion.Euler(0f, 0f, 6f));
+            Part(PrimitiveType.Cylinder, "Lead Loop", root, new Vector3(rack.x + 0.14f, rackTop - 0.12f, rack.y), new Vector3(0.1f, 0.01f, 0.1f), lead, 0.05f, Quaternion.Euler(90f, 0f, 0f));
+            Part(PrimitiveType.Cylinder, "Small Collar", root, new Vector3(rack.x + 0.09f, rackTop - 0.8f, rack.y), new Vector3(0.12f, 0.015f, 0.12f), lead, 0.05f, Quaternion.Euler(80f, 0f, 0f));
+            Look(root, rack, "inspect_forgotten_coat_rack", false);
+
+            // An armchair halfway down, turned to face the far wall.
+            Vector2Int chair = new Vector2Int(room.Width - 1, 7);
+            if (Model(root, art != null ? art.armchair : null, "Armchair", chair, 0f, 0.85f, Vector2Int.one) == null)
+            {
+                Part(PrimitiveType.Cube, "Armchair", root, new Vector3(chair.x, 0.3f, chair.y), new Vector3(0.7f, 0.6f, 0.7f), new Color(0.3f, 0.2f, 0.2f), 0f);
+                Blocker(root, chair, Vector2Int.one);
+            }
+            Look(root, chair, "inspect_forgotten_chair", false);
+
             // An old man: white hair and beard, spectacles and a faded coat (DevChibis.OldMan), leaning on a stick. The
             // baked prefab is used as it is; without it, a model is recoloured here and dressed when the room is placed.
+            // He and his stick share one parent, so he can leave with it.
+            Vector2Int man = new Vector2Int(2, room.Height - 2);
+            GameObject group = new GameObject(ForgottenManGroupName);
+            group.transform.SetParent(root, false);
             GameObject oldMan = null;
             if (art != null && art.forgottenMan != null)
             {
-                oldMan = Instantiate(art.forgottenMan, root);
+                oldMan = Instantiate(art.forgottenMan, group.transform);
                 oldMan.name = DevChibis.OldMan.Name;
             }
-            if (oldMan == null) oldMan = DevChibis.Create(art != null ? art.devGlasses : null, DevChibis.OldMan, root);
+            if (oldMan == null) oldMan = DevChibis.Create(art != null ? art.devGlasses : null, DevChibis.OldMan, group.transform);
             if (oldMan == null)
-                oldMan = Part(PrimitiveType.Capsule, DevChibis.OldMan.Name, root, new Vector3(0f, 0.8f, 0f), new Vector3(0.6f, 0.8f, 0.6f), DevChibis.OldMan.Outfit, 0.05f);
+                oldMan = Part(PrimitiveType.Capsule, DevChibis.OldMan.Name, group.transform, new Vector3(0f, 0.8f, 0f), new Vector3(0.6f, 0.8f, 0.6f), DevChibis.OldMan.Outfit, 0.05f);
             oldMan.transform.localPosition = new Vector3(man.x, oldMan.transform.localPosition.y, man.y);
             oldMan.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             Talker(oldMan, DevChibis.OldMan.Id, DevChibis.OldMan.Name, DevChibis.OldMan.DialogueId);
             Blocker(root, man, Vector2Int.one);
-            Part(PrimitiveType.Cylinder, "Walking Stick", root, new Vector3(man.x - 0.42f, 0.5f, man.y - 0.12f), new Vector3(0.05f, 0.5f, 0.05f),
+            Part(PrimitiveType.Cylinder, "Walking Stick", group.transform, new Vector3(man.x - 0.42f, 0.5f, man.y - 0.12f), new Vector3(0.05f, 0.5f, 0.05f),
                 new Color(0.4f, 0.28f, 0.18f), 0f, Quaternion.Euler(0f, 0f, -8f));
-            Part(PrimitiveType.Sphere, "Stick Handle", root, new Vector3(man.x - 0.49f, 1.0f, man.y - 0.12f), new Vector3(0.1f, 0.08f, 0.1f),
+            Part(PrimitiveType.Sphere, "Stick Handle", group.transform, new Vector3(man.x - 0.49f, 1.0f, man.y - 0.12f), new Vector3(0.1f, 0.08f, 0.1f),
                 new Color(0.4f, 0.28f, 0.18f), 0f);
-            // The egg on its stand, beside him.
-            Part(PrimitiveType.Cylinder, "Egg Stand", root, new Vector3(3f, 0.35f, 7f), new Vector3(0.35f, 0.35f, 0.35f), new Color(0.3f, 0.28f, 0.3f), 0.02f);
-            Part(PrimitiveType.Sphere, "Egg", root, new Vector3(3f, 0.82f, 7f), new Vector3(0.2f, 0.26f, 0.2f), new Color(0.96f, 0.93f, 0.86f), 0.25f);
-            Blocker(root, new Vector2Int(3, 7), Vector2Int.one);
-            // An empty frame where a photograph used to be.
-            Part(PrimitiveType.Cube, "Empty Frame", root, new Vector3(2f, 1.5f, 8.36f), new Vector3(0.7f, 0.5f, 0.05f), new Color(0.42f, 0.33f, 0.24f), 0f);
-            Part(PrimitiveType.Cube, "Faded Patch", root, new Vector3(2f, 1.5f, 8.33f), new Vector3(0.56f, 0.38f, 0.02f), new Color(0.62f, 0.62f, 0.66f), 0.05f);
-            Glow(root, "Cold Lamp", new Vector3(2f, 1.9f, 6.6f), new Color(0.75f, 0.82f, 1f), 4.5f, 1.1f);
-            Glow(root, "Doorway Light", new Vector3(2f, 1.2f, 1.2f), new Color(0.75f, 0.8f, 0.95f), 2.5f, 0.45f);
+
+            // The egg on its stand, beside him. If he goes without giving it away, it can still be taken.
+            Vector2Int stand = new Vector2Int(man.x + 1, man.y);
+            Part(PrimitiveType.Cylinder, "Egg Stand", root, new Vector3(stand.x, 0.35f, stand.y), new Vector3(0.35f, 0.35f, 0.35f), new Color(0.3f, 0.28f, 0.3f), 0.02f);
+            Part(PrimitiveType.Sphere, EggName, root, new Vector3(stand.x, 0.82f, stand.y), new Vector3(0.2f, 0.26f, 0.2f), new Color(0.96f, 0.93f, 0.86f), 0.25f);
+            Blocker(root, stand, Vector2Int.one);
+            Look(root, stand, "secret_forgotten_egg", false, Vector3.zero, EggLookName).enabled = false;
+
+            // Behind him, a photograph too faded to make out (Lost Echoes brings it back for a moment).
+            Part(PrimitiveType.Cube, "Photograph Frame", root, new Vector3(1.1f, 1.8f, north - 0.04f), new Vector3(0.78f, 0.6f, 0.05f), new Color(0.42f, 0.33f, 0.24f), 0f);
+            Part(PrimitiveType.Cube, PhotoName, root, new Vector3(1.1f, 1.8f, north - 0.07f), new Vector3(0.62f, 0.46f, 0.02f), new Color(0.58f, 0.58f, 0.62f), 0.04f);
+        }
+
+        // A lamp hung from the ceiling on a cord: SecretRoomMood dims and flickers its light and its bulb.
+        private static void Pendant(Transform root, int index, Vector3 position, float ceiling, Color colour, float intensity, float range)
+        {
+            GameObject pendant = new GameObject(PendantPrefix + index);
+            pendant.transform.SetParent(root, false);
+            pendant.transform.localPosition = position;
+            float cord = ceiling - position.y;
+            Part(PrimitiveType.Cylinder, "Cord", pendant.transform, new Vector3(0f, cord * 0.5f, 0f), new Vector3(0.015f, cord * 0.5f, 0.015f), new Color(0.05f, 0.05f, 0.05f), 0f);
+            Part(PrimitiveType.Cylinder, "Shade", pendant.transform, new Vector3(0f, 0.05f, 0f), new Vector3(0.4f, 0.07f, 0.4f), new Color(0.16f, 0.15f, 0.13f), 0.02f);
+            Part(PrimitiveType.Sphere, "Bulb", pendant.transform, new Vector3(0f, -0.04f, 0f), Vector3.one * 0.11f,
+                intensity > 0f ? colour : new Color(0.3f, 0.3f, 0.3f), intensity > 0f ? 2.2f : 0f);
+            Light light = pendant.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = colour;
+            light.range = range;
+            light.intensity = intensity;
+            light.shadows = LightShadows.None;
+        }
+
+        // Something to look at on a cell: blocks it (when asked) and plays a narrated dialogue (RoomInspectable).
+        private static RoomInspectable Look(Transform root, Vector2Int cell, string dialogueId, bool block, Vector3 offset = default, string name = null)
+        {
+            GameObject spot = new GameObject(name ?? "Look " + dialogueId);
+            spot.transform.SetParent(root, false);
+            spot.transform.localPosition = new Vector3(cell.x, 0f, cell.y) + offset;
+            RoomInspectable look = spot.AddComponent<RoomInspectable>();
+            look.Configure(dialogueId);
+            if (block) Blocker(root, cell, Vector2Int.one);
+            return look;
         }
 
         // ---- Parts ----
 
-        private static void Shell(Transform root, Room room, Color floor, Color wall, float wallHeight)
+        private static void Shell(Transform root, Room room, Color floor, Color wall, float wallHeight, float floorEmission = 0.05f, float wallEmission = 0.08f)
         {
             Vector3 centre = new Vector3((room.Width - 1) * 0.5f, 0f, (room.Height - 1) * 0.5f);
-            Part(PrimitiveType.Cube, "Floor", root, centre + new Vector3(0f, -0.05f, 0f), new Vector3(room.Width, 0.1f, room.Height), floor, 0.05f);
+            Part(PrimitiveType.Cube, "Floor", root, centre + new Vector3(0f, -0.05f, 0f), new Vector3(room.Width, 0.1f, room.Height), floor, floorEmission);
             const float thickness = 0.3f;
-            Part(PrimitiveType.Cube, "Wall North", root, new Vector3(centre.x, wallHeight * 0.5f, room.Height - 0.5f + thickness * 0.5f), new Vector3(room.Width + thickness * 2f, wallHeight, thickness), wall, 0.08f);
-            Part(PrimitiveType.Cube, "Wall West", root, new Vector3(-0.5f - thickness * 0.5f, wallHeight * 0.5f, centre.z), new Vector3(thickness, wallHeight, room.Height), wall, 0.08f);
-            Part(PrimitiveType.Cube, "Wall East", root, new Vector3(room.Width - 0.5f + thickness * 0.5f, wallHeight * 0.5f, centre.z), new Vector3(thickness, wallHeight, room.Height), wall, 0.08f);
+            Part(PrimitiveType.Cube, "Wall North", root, new Vector3(centre.x, wallHeight * 0.5f, room.Height - 0.5f + thickness * 0.5f), new Vector3(room.Width + thickness * 2f, wallHeight, thickness), wall, wallEmission);
+            Part(PrimitiveType.Cube, "Wall West", root, new Vector3(-0.5f - thickness * 0.5f, wallHeight * 0.5f, centre.z), new Vector3(thickness, wallHeight, room.Height), wall, wallEmission);
+            Part(PrimitiveType.Cube, "Wall East", root, new Vector3(room.Width - 0.5f + thickness * 0.5f, wallHeight * 0.5f, centre.z), new Vector3(thickness, wallHeight, room.Height), wall, wallEmission);
             // The camera looks in from the south, so that wall stays low.
-            Part(PrimitiveType.Cube, "Wall South", root, new Vector3(centre.x, 0.15f, -0.5f - thickness * 0.5f), new Vector3(room.Width + thickness * 2f, 0.3f, thickness), wall, 0.08f);
+            Part(PrimitiveType.Cube, "Wall South", root, new Vector3(centre.x, 0.15f, -0.5f - thickness * 0.5f), new Vector3(room.Width + thickness * 2f, 0.3f, thickness), wall, wallEmission);
         }
 
         private static void Ring(Transform root, Vector2Int cell)

@@ -109,6 +109,20 @@ namespace Lumenfall.Cutscenes
                         if (step.seconds <= 0f) problems.Add($"{label} is a glitch with no duration.");
                         if (!CutsceneStep.IsGlitchStyle(step.text)) problems.Add($"{label} has an unknown glitch style '{step.text}'.");
                         break;
+                    case CutsceneStepKind.NpcWalk:
+                    case CutsceneStepKind.NpcPose:
+                    case CutsceneStepKind.NpcTurn:
+                    case CutsceneStepKind.NpcLeave:
+                    case CutsceneStepKind.Letter:
+                        if (string.IsNullOrWhiteSpace(step.key)) problems.Add($"{label} needs the NPC id it acts on.");
+                        break;
+                    case CutsceneStepKind.Say:
+                        if (string.IsNullOrWhiteSpace(step.key)) problems.Add($"{label} needs the NPC id it acts on.");
+                        if (string.IsNullOrWhiteSpace(step.text)) problems.Add($"{label} is a speech bubble with no text.");
+                        break;
+                    case CutsceneStepKind.Sound:
+                        if (string.IsNullOrWhiteSpace(step.key)) problems.Add($"{label} needs the Resources path of the sound.");
+                        break;
                     case CutsceneStepKind.Walk:
                     case CutsceneStepKind.Enter:
                         // A walk to an NPC takes an offset, which may be negative.
@@ -120,7 +134,7 @@ namespace Lumenfall.Cutscenes
         }
     }
 
-    public enum CutsceneStepKind { Unknown, Wait, Fade, Caption, Star, Arrive, Reveal, Shake, Camera, CameraRelease, Dialogue, Name, Walk, Enter, Flag, Aura, Stare, Glitch, Music }
+    public enum CutsceneStepKind { Unknown, Wait, Fade, Caption, Star, Arrive, Reveal, Shake, Camera, CameraRelease, Dialogue, Name, Walk, Enter, Flag, Aura, Stare, Glitch, Music, Prologue, NpcWalk, NpcPose, NpcTurn, NpcLeave, Letter, Sound, Say }
 
     /// <summary>
     /// One cutscene step. Fields a step type does not use are ignored:
@@ -149,8 +163,26 @@ namespace Lumenfall.Cutscenes
     /// <item><c>glitch</c>: a full-screen glitch for <c>seconds</c>: <c>text</c> "tear" freezes and tears the picture,
     /// "rewind" rolls tracking lines over it.</item>
     /// <item><c>music</c>: <c>value</c> false hushes the music and ambience, true brings them back.</item>
+    /// <item><c>prologue</c>: plays the 3D prologue (<c>Story/PrologueScene</c>) over everything and waits until it ends
+    /// or the player skips it.</item>
+    /// <item><c>npcWalk</c>: NPC <c>key</c> walks to cell <c>x</c>, <c>y</c> (<c>value</c> true runs) and the cutscene waits
+    /// until they arrive. The cell may be off the map, to walk out of sight through a gate.</item>
+    /// <item><c>npcPose</c>: NPC <c>key</c> plays animator state <c>text</c> (such as "Tripping" or "Sad"); empty goes back
+    /// to standing.</item>
+    /// <item><c>npcTurn</c>: NPC <c>key</c> turns to face direction <c>x</c>, <c>y</c> on the grid, or the player when both
+    /// are 0, over <c>seconds</c>.</item>
+    /// <item><c>npcLeave</c>: NPC <c>key</c> shrinks away over <c>seconds</c> and is gone for the rest of the cutscene.</item>
+    /// <item><c>letter</c>: a letter flutters from NPC <c>key</c> into the player's hands (<c>value</c> true) or from the
+    /// player's hands to the NPC (false) over <c>seconds</c>. A letter the player catches stays in their hands until
+    /// they give it away or the cutscene ends.</item>
+    /// <item><c>say</c>: NPC <c>key</c> says <c>text</c> in a speech bubble over their head for <c>seconds</c>, without
+    /// a dialogue box or a click; with <c>value</c> true the bubble also goes the moment they stop walking, so they only
+    /// speak on the move.</item>
+    /// <item><c>sound</c>: plays the clip at Resources path <c>key</c> once, as a sound effect, at <c>amplitude</c> volume
+    /// (0 or missing is full), and moves straight on.</item>
     /// </list>
-    /// <c>background</c> lets a timed step (wait, fade, caption, star, shake, camera, stare, glitch) run on while the next
+    /// <c>background</c> lets a timed step (wait, fade, caption, star, shake, camera, stare, glitch, npcWalk, npcTurn, npcLeave,
+    /// letter, say) run on while the next
     /// steps start.
     /// </summary>
     [Serializable]
@@ -216,6 +248,14 @@ namespace Lumenfall.Cutscenes
                 case "stare": return CutsceneStepKind.Stare;
                 case "glitch": return CutsceneStepKind.Glitch;
                 case "music": return CutsceneStepKind.Music;
+                case "prologue": return CutsceneStepKind.Prologue;
+                case "npcwalk": return CutsceneStepKind.NpcWalk;
+                case "npcpose": return CutsceneStepKind.NpcPose;
+                case "npcturn": return CutsceneStepKind.NpcTurn;
+                case "npcleave": return CutsceneStepKind.NpcLeave;
+                case "letter": return CutsceneStepKind.Letter;
+                case "sound": return CutsceneStepKind.Sound;
+                case "say": return CutsceneStepKind.Say;
                 default: return CutsceneStepKind.Unknown;
             }
         }

@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7669826ee9724c32a8d07d18bd183120, type: 3}
+  m_Name: GateCast
+  m_EditorClassIdentifier: Lumenfall.Runtime::Lumenfall.Story.GateCast
+  lateStudent: {fileID: 5484321260581051487, guid: 8e3d78812a03d2144b618590b3f173ab, type: 3}

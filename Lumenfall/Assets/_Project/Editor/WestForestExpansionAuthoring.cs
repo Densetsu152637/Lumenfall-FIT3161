@@ -99,8 +99,7 @@ namespace Lumenfall.EditorTools
             new Trail(Surface.Stone, 1.2f, 1.05f, true, V(-16f, 24.2f), V(-21f, 24f), V(-24f, 24f)),
             // Past the portal the stone trail carries on into the trees, unwalkable, towards the deep forest.
             new Trail(Surface.Stone, 0f, 0.95f, false, V(-24f, 24f), V(-31f, 24.4f), V(-41f, 25f)),
-            // North of the gate the cobbles continue towards the campus.
-            new Trail(Surface.Stone, 0f, 1.5f, false, V(17f, 48.5f), V(17f, 63f)),
+            // Nothing runs on past the academy gate: behind it the forest closes in like everywhere else around the map.
         };
 
         private static readonly Clearing[] Clearings =
@@ -120,9 +119,6 @@ namespace Lumenfall.EditorTools
 
         // The academy wall continues along z 47.75 past both ends of the original run.
         private static readonly float[] WallExtensionX = { -3.25f, -7f, -10.75f, 35.75f, 39.5f, 43.25f };
-
-        // The north lawn behind the gate stays open ground.
-        private static readonly Rect NorthLawn = new Rect(9f, 49f, 17f, 20f);
 
         // Detail coverage probability per detail layer (grass v1, grass v2, poppy, river rocks, small poppy, high grass),
         // measured on the original terrain by surface (dirt, grass, stone) and distance to walkable ground
@@ -747,7 +743,7 @@ namespace Lumenfall.EditorTools
 
             bool Allowed(Vector2 p, float pathClearance)
             {
-                if (OriginalFootprint.Contains(p) || NorthLawn.Contains(p)) return false;
+                if (OriginalFootprint.Contains(p)) return false;
                 if (p.x < SurroundOrigin.x + 0.5f || p.y < SurroundOrigin.y + 0.5f ||
                     p.x > SurroundOrigin.x + SurroundSize - 0.5f || p.y > SurroundOrigin.y + SurroundSize - 0.5f) return false;
                 if (Clearance(p) < pathClearance) return false;

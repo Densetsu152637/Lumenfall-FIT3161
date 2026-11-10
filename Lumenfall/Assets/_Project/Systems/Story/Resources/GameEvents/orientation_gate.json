@@ -41,26 +41,38 @@
         {
           "id": "there_you_are",
           "speaker": "Prof. Kepler",
-          "text": "<wave>There</wave> you are！Do you have any idea what time it is?",
+          "text": "<wave>There</wave> you are! Do you have any idea what time it is?",
           "nextNodeId": "late"
         },
         {
           "id": "late",
           "speaker": "Prof. Kepler",
-          "text": "I'm Professor Kepler, and you are already late to orientation. On your very first day, no less.",
+          "text": "I'm Professor Kepler, and you've already missed orientation. On your very first day, no less.",
           "onEnterActions": [ { "type": "SetFlag", "key": "npc.met.prof_kepler", "boolValue": true } ],
           "nextNodeId": "enrolled"
         },
         {
           "id": "enrolled",
           "speaker": "{player}",
-          "text": "<i>Late? If I'm dead, I don't think there should be any rush.</i>",
-          "nextNodeId": "name"
+          "text": "<i>Missed it? If I'm dead, I don't think there should be any rush.</i>",
+          "nextNodeId": "letter"
         },
         {
-          "id": "name",
+          "id": "letter",
           "speaker": "Prof. Kepler",
-          "text": "No time for excuses. Your name, quickly, so I can mark you down.",
+          "text": "No time for excuses. Your letter of admission, please. Quickly.",
+          "nextNodeId": "uh"
+        },
+        {
+          "id": "uh",
+          "speaker": "{player}",
+          "text": "<i>Uhhhhhhhh.</i>",
+          "nextNodeId": "trespassing"
+        },
+        {
+          "id": "trespassing",
+          "speaker": "Prof. Kepler",
+          "text": "No letter? Then I'm afraid you're trespassing.",
           "nextNodeId": ""
         }
       ]
@@ -73,19 +85,82 @@
         {
           "id": "marked",
           "speaker": "Prof. Kepler",
-          "text": "{player}. There, you're on the list.",
+          "text": "{player}. There, you're on the list. Enjoy the next few years!",
           "nextNodeId": "get_in"
         },
         {
           "id": "get_in",
           "speaker": "Prof. Kepler",
-          "text": "Now in you get, quickly! Straight through the gate, and don't dawdle.",
+          "text": "Now in you get, quickly! Head straight down and you'll find what's left of orientation.",
           "nextNodeId": "through"
         },
         {
           "id": "through",
           "speaker": "{player}",
-          "text": "<i>Well, it's better than standing in a forest.</i>",
+          "text": "<i>From one school straight into another. If you're taking me to a new world, at least make it a cool one.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "kepler_letter_caught",
+      "startNodeId": "caught",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "caught",
+          "speaker": "{player}",
+          "text": "<i>...A letter. In my hands. Blown here by the wind, from some poor stranger. Sure. Why not.</i>",
+          "nextNodeId": "earlier"
+        },
+        {
+          "id": "earlier",
+          "speaker": "Prof. Kepler",
+          "text": "Well? Why didn't you show me that earlier? Let's have a look.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "kepler_cant_read",
+      "startNodeId": "smudged",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "smudged",
+          "speaker": "Prof. Kepler",
+          "text": "...The ink's run. I can't read a word of this.",
+          "nextNodeId": "name"
+        },
+        {
+          "id": "name",
+          "speaker": "Prof. Kepler",
+          "text": "Your name, quickly, so I can mark you down.",
+          "nextNodeId": ""
+        }
+      ]
+    },
+    {
+      "id": "gate_late_student_after",
+      "startNodeId": "n1",
+      "metadata": [ { "key": "placement", "value": "F03" } ],
+      "nodes": [
+        {
+          "id": "n1",
+          "speaker": "Late Student",
+          "text": "I HAD a letter. It was right here. In my hand.",
+          "nextNodeId": "n2"
+        },
+        {
+          "id": "n2",
+          "speaker": "Late Student",
+          "text": "And then the wind just... took it. Straight to some stranger. Who does that happen to?",
+          "nextNodeId": "n3"
+        },
+        {
+          "id": "n3",
+          "speaker": "{player}",
+          "text": "<i>...I should probably not mention that.</i>",
           "nextNodeId": ""
         }
       ]

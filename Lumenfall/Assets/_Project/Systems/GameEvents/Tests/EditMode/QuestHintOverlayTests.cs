@@ -176,7 +176,7 @@ namespace Lumenfall.Tests.GameEvents
             BeginMap(LateToOrientationScene.MapId);
             stateEnd();
             RefreshHint();
-            Assert.That(ReadField<string>("title"), Is.EqualTo("Walk around this mysterious forest"));
+            Assert.That(ReadField<string>("title"), Is.EqualTo("Follow the light through the dark forest"));
             Assert.That(ReadField<string>("hint"), Does.Contain("W, A, S, D").And.Contain("drag to look around").And.Contain("to sprint").And.Contain("speed up dialogue"));
 
             runtime.SetFlag(LateToOrientationScene.MetFlag, true);

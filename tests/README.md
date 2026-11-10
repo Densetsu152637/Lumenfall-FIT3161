@@ -12,7 +12,7 @@ not source revisions or individual method names. The Python harness compares thi
 inventory with the current test sources, including parameterized cases. Intentional
 test additions or removals must update the inventory in the same change.
 
-The integrated suite contains 419 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
+The integrated suite contains 435 EditMode, twenty-four batch PlayMode and five graphical PlayMode cases:
 
 | Behavior | Fixture | Cases |
 | --- | --- | ---: |
@@ -46,15 +46,18 @@ The integrated suite contains 419 EditMode, twenty-four batch PlayMode and five 
 | Authored world layout, open forest ground, rune dais spacing and tree reveal, and plaza collision | AuthoredLayoutTests | 9 |
 | Keyboard binding eligibility and rejected rebinding | KeyBindingsTests | 18 |
 | Ambient casts and single-frame input | AmbientCastTests | 7 |
-| Cutscene sequencing and blocking, and the glitch steps (aura, stare, glitch, music) | CutsceneSequenceTests | 17 |
-| Opening forest story | LateToOrientationTests | 4 |
+| Cutscene sequencing and blocking, the glitch steps (aura, stare, glitch, music), the prologue opening, the NPC steps (walk, pose, turn, leave, letter, say) and the sound step | CutsceneSequenceTests | 20 |
+| The academy gate: trigger, Kepler, missed orientation and no letter, the late student's letter straight after, the name and the hurry through | LateToOrientationTests | 5 |
+| The dark forest, the wisp's goal, the orange tree beside the way and the waking thoughts | ForestNightTests | 4 |
 | Campus introduction and the tour's camera turning to each place | LayOfTheLandTests | 7 |
 | Collectible discovery | MiscCollectiblesTests | 3 |
 | NPC introductions | NpcIntroductionsTests | 7 |
 | Player name and dialogue substitution | PlayerProfileTests | 5 |
 | Player rendering visibility | PlayerVisibilityTests | 4 |
+| Prologue preview timeline: the drive, the story beats, notifications and lines | PrologueScriptTests | 3 |
 | Runtime primitive behavior | RuntimePrimitiveTests | 2 |
 | Game code writes no routine console lines | RuntimeLoggingTests | 1 |
+| The forgotten room and the dog's room: no music, narrated things to look at, the blackout and failing lamp, the dog's breathing, where the man vanishes | SecretRoomMoodTests | 5 |
 | Hidden interactions, collectible secrets, the sequence break's lines, music, crushing hand and its flashes, Miki's bargain, and the dog door, Rotara and Vis sounds | SecretsTests | 25 |
 | Terrain, Elara prefab, and decorative cubemap compatibility | SerializedAssetImportTests | 4 |
 | Dormitory onboarding, the key hunt and glitch ending, Rowan staging and restored blockers | SettlingInTests | 14 |
@@ -62,7 +65,7 @@ The integrated suite contains 419 EditMode, twenty-four batch PlayMode and five 
 | Follow camera alignment, follow lag, peeking and reduced-motion cuts | CameraFollowTests | 5 |
 | Forest expansion: negative-cell saves and Orio's clearing | WestForestExpansionTests | 2 |
 | Code-drawn shapes, dialogue frames, spell icons and menu buttons | ProceduralArtTests | 4 |
-| **Gameplay rules / EditMode** | | **419** |
+| **Gameplay rules / EditMode** | | **435** |
 | Scene boot/references, saved-state refresh, portals, immediate anchor credit, live gyroscope motion and cached Rowan restoration | AuthoredWorldPlayModeTests | 11 |
 | Sibling and legacy movement locks | ProductionUiLockPlayModeTests | 1 |
 | Graphics bootstrap, VSync, shading/AO, later-camera AA | GraphicsOptionsPlayModeTests | 4 |

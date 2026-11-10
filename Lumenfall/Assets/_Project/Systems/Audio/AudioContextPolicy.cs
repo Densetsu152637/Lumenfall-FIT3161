@@ -19,14 +19,19 @@ namespace Lumenfall.Audio
             return string.Equals(mapId, "campus", StringComparison.OrdinalIgnoreCase) ? AudioContext.Campus : AudioContext.Interior;
         }
         /// <summary>The track a map plays: forest maps and Orio's dais room share the forest theme, the dormitory has
-        /// its own, and campus, every other building and the trial rooms share the campus theme.</summary>
+        /// its own, and campus, every other building and the trial rooms share the campus theme. The two quiet secret
+        /// rooms (the forgotten room and the dog's room) play none: they have their own sounds (Story/SecretRoomMood).</summary>
         public static string MapMusicCue(string mapId)
         {
-            if (string.IsNullOrWhiteSpace(mapId)) return null;
+            if (string.IsNullOrWhiteSpace(mapId) || IsQuietRoom(mapId)) return null;
             if (IsForest(mapId) || string.Equals(mapId, "orioDaisRoom", StringComparison.OrdinalIgnoreCase)) return "music.forest";
             if (mapId.StartsWith("B01.", StringComparison.OrdinalIgnoreCase)) return "music.dormitory";
             return "music.campus";
         }
+        // Story.SecretRooms.ForgottenRoomId and DogRoomId (this policy stays free of the story's types).
+        private static bool IsQuietRoom(string mapId) =>
+            string.Equals(mapId, "secret.forgottenRoom", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(mapId, "secret.dogRoom", StringComparison.OrdinalIgnoreCase);
         private static bool IsForest(string mapId) =>
             string.Equals(mapId, "westForest", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(mapId, "deepForest", StringComparison.OrdinalIgnoreCase) ||

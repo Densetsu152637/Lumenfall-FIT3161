@@ -302,7 +302,7 @@ namespace Lumenfall.Quests
             if (!runtime.GetFlag(SettlingInScene.BannMetFlag) && SelectActiveQuest(runtime) != null) return false;
             if (!runtime.GetFlag(LateToOrientationScene.MetFlag))
             {
-                title = "Walk around this mysterious forest";
+                title = "Follow the light through the dark forest";
                 // Read from the current bindings each time the hint refreshes, so a rebound key shows straight away.
                 string sprint = KeyBindings.GetKeyLabel(GameAction.Sprint);
                 hint = "Press " + KeyBindings.GetKeyLabel(GameAction.MoveUp) + ", " + KeyBindings.GetKeyLabel(GameAction.MoveLeft) + ", " +

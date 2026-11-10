@@ -56,6 +56,9 @@ namespace Lumenfall.DataDriven
             ScheduleGesture();
         }
 
+        /// <summary>Takes where the NPC stands facing now as where it turns back to (after a cutscene has moved it).</summary>
+        public void Rest() => restEuler = transform.eulerAngles;
+
         private void Update()
         {
             if (Time.deltaTime <= 0f) return;

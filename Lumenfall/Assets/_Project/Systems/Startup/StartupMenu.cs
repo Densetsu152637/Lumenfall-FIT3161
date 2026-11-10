@@ -138,6 +138,8 @@ namespace Lumenfall.Startup
         private float openedAt;
         private float phaseStartedAt;
         private float menuShownAt;
+        // Set while the prologue preview plays over the title (Story/PrologueScene).
+        private bool heldForPrologue;
         private bool cameFromIntro;
         private bool introBurstDone;
         private float worldAlpha = 1f;
@@ -360,6 +362,19 @@ namespace Lumenfall.Startup
             bool wasRebinding = settings.IsRebinding;
             settings.Tick();
             if (!ready) return;
+
+            // The prologue preview covers the title: it waits, unseen and untouched, then fades in and plays its opening
+            // from the start once the preview ends, as if just opened.
+            if (phase != Phase.Closing && Lumenfall.Story.PrologueScene.IsPlaying)
+            {
+                heldForPrologue = true;
+                return;
+            }
+            if (heldForPrologue)
+            {
+                heldForPrologue = false;
+                openedAt = phaseStartedAt = menuShownAt = Time.unscaledTime;
+            }
 
             // Locked out after the sequence break, the title is only for show: it opens as usual, then the screen goes
             // black over it, and nothing pressed meanwhile (Miki's conversation included) reaches it.
@@ -631,6 +646,8 @@ namespace Lumenfall.Startup
         private void OnGUI()
         {
             if (!ready) return;
+            // Not drawn behind the prologue preview, so its opening title cannot show over the prologue (see Update).
+            if (heldForPrologue || (phase != Phase.Closing && Lumenfall.Story.PrologueScene.IsPlaying)) return;
             // Not drawn at all once the sequence-break lockout has gone black over it, so no title, sparkles or stars
             // show through the empty screen or around Miki.
             if (Lumenfall.Story.SequenceBreakLockout.HidesTitle) return;

@@ -45,6 +45,8 @@ namespace Lumenfall.Cutscenes
         private FallingStarEffect star;
         private PlayerArrivalEffect arrival;
         private CutsceneWalk walk;
+        private readonly CutsceneActors actors = new CutsceneActors();
+        private bool prologueStarted;
         private bool cameraHeld;
         private Vector3 cameraOffset, cameraFromOffset, cameraToOffset;
         private float cameraZoom = 1f, cameraFromZoom = 1f, cameraToZoom = 1f;
@@ -53,7 +55,7 @@ namespace Lumenfall.Cutscenes
         private ScreenGlitchEffect glitch;
         private readonly List<GlitchAura> auras = new List<GlitchAura>();
         private float skipArmedUntil = float.NegativeInfinity;
-        private GUIStyle captionStyle, hintStyle;
+        private GUIStyle captionStyle, hintStyle, bubbleStyle;
         private int styledHeight;
 
         /// <summary>True while a cutscene is playing; gameplay input, the journal, the pause menu and autosave wait for it.</summary>
@@ -74,8 +76,11 @@ namespace Lumenfall.Cutscenes
         /// </summary>
         public static bool OpeningInProgress => queuedId == OpeningCutsceneId || CurrentId == OpeningCutsceneId;
 
-        /// <summary>True while a cutscene's <c>music</c> step has hushed the music and ambience.</summary>
-        public static bool MusicHushed { get; private set; }
+        /// <summary>
+        /// True while a cutscene's <c>music</c> step has hushed the music and ambience. The prologue preview
+        /// (<c>Story/PrologueScene</c>) also sets it while it plays over the title menu.
+        /// </summary>
+        public static bool MusicHushed { get; internal set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -125,10 +130,34 @@ namespace Lumenfall.Cutscenes
             if (instance == null || queuedId == null || instance.arrival != null) return false;
             CutsceneDefinition definition = CutsceneDefinition.Load(queuedId);
             if (definition == null || !System.Array.Exists(definition.steps, step => step.Kind == CutsceneStepKind.Arrive)) return false;
+            // The prologue plays first, so the light gathers later, out of the star, not out of the menu.
+            if (ArrivesAfterPrologue(definition)) return false;
             GridMover player = Player();
             if (player == null) return false;
             instance.arrival = PlayerArrivalEffect.Begin(player.transform, panel);
             return instance.arrival != null;
+        }
+
+        /// <summary>True when a prologue step comes before the cutscene's first arrive step.</summary>
+        internal static bool ArrivesAfterPrologue(CutsceneDefinition definition)
+        {
+            int prologue = System.Array.FindIndex(definition.steps, step => step.Kind == CutsceneStepKind.Prologue);
+            int arrive = System.Array.FindIndex(definition.steps, step => step.Kind == CutsceneStepKind.Arrive);
+            return prologue >= 0 && (arrive < 0 || prologue < arrive);
+        }
+
+        private static string checkedForPrologue;
+        private static bool startsWithPrologue;
+
+        private static bool StartsWithPrologue(string cutsceneId)
+        {
+            if (cutsceneId != checkedForPrologue)
+            {
+                checkedForPrologue = cutsceneId;
+                CutsceneDefinition definition = CutsceneDefinition.Load(cutsceneId);
+                startsWithPrologue = definition != null && ArrivesAfterPrologue(definition);
+            }
+            return startsWithPrologue;
         }
 
         private void Awake()
@@ -167,7 +196,10 @@ namespace Lumenfall.Cutscenes
         private void Update()
         {
             Subscribe();
-            if (sequence == null && queuedId != null && !StartupMenu.IsOpen && Player() != null)
+            // A queued opening that starts with the prologue starts as soon as the menu begins to close, so START goes
+            // straight to it rather than first showing the forest through the dissolve.
+            if (sequence == null && queuedId != null && (!StartupMenu.IsOpen || (StartupMenu.IsClosing && StartsWithPrologue(queuedId))) &&
+                Player() != null)
             {
                 string id = queuedId;
                 queuedId = null;
@@ -178,6 +210,7 @@ namespace Lumenfall.Cutscenes
             // A walk moves the player itself; otherwise they are held still.
             if (walk != null && !walk.IsFinished) walk.Tick();
             else LockPlayer(true);
+            actors.Tick(Time.unscaledDeltaTime);
             HandleSkipInput();
             if (sequence == null) return;
             sequence.Advance(Time.unscaledDeltaTime);
@@ -209,6 +242,8 @@ namespace Lumenfall.Cutscenes
             StopStar();
             walk?.Arrive();
             walk = null;
+            actors.Finish();
+            StopPrologue();
             // A finished arrival keeps its rising motes going on its own; it only has to have shown the player.
             if (arrival != null && !arrival.IsRevealed) arrival.Reveal();
             arrival = null;
@@ -390,6 +425,8 @@ namespace Lumenfall.Cutscenes
             if (PlayerNamePrompt.IsOpen) PlayerNamePrompt.Close();
             walk?.Arrive();
             walk = null;
+            actors.Finish();
+            StopPrologue();
             StopStar();
             if (arrival != null) arrival.Stop();
             arrival = null;
@@ -441,6 +478,56 @@ namespace Lumenfall.Cutscenes
 
         public void SetMusicHushed(bool hushed) => MusicHushed = hushed;
 
+        public bool StartPrologue()
+        {
+            prologueStarted = PrologueScene.Play(false);
+            return prologueStarted;
+        }
+
+        public bool IsPrologueRunning => prologueStarted && PrologueScene.IsPlaying;
+
+        private void StopPrologue()
+        {
+            if (prologueStarted && PrologueScene.IsPlaying) PrologueScene.Stop();
+            prologueStarted = false;
+        }
+
+        public bool StartNpcWalk(string npcId, Vector2Int cell, bool hurry) => actors.Walk(npcId, cell, hurry);
+
+        public bool IsNpcWalking(string npcId) => actors.IsWalking(npcId);
+
+        public void PoseNpc(string npcId, string state) => actors.Pose(npcId, state);
+
+        public void TurnNpc(string npcId, Vector2Int direction, float seconds) => actors.Turn(npcId, direction, seconds);
+
+        public void NpcLeave(string npcId, float seconds) => actors.Leave(npcId, seconds);
+
+        public bool StartLetter(string npcId, bool toPlayer, float seconds) => actors.StartLetter(npcId, toPlayer, seconds);
+
+        public bool IsLetterFlying => actors.IsLetterFlying;
+
+        private AudioSource effects;
+
+        public void Say(string npcId, string text, float seconds, bool whileWalking) => actors.Say(npcId, text, seconds, whileWalking);
+
+        public void PlaySound(string resourcePath, float volume)
+        {
+            AudioClip clip = Resources.Load<AudioClip>(resourcePath);
+            if (clip == null)
+            {
+                Debug.LogWarning($"Cutscene '{CurrentId}' has no sound at Resources/{resourcePath}.");
+                return;
+            }
+            if (effects == null)
+            {
+                effects = gameObject.AddComponent<AudioSource>();
+                effects.playOnAwake = false;
+                effects.loop = false;
+                effects.spatialBlend = 0f;
+            }
+            effects.PlayOneShot(clip, volume * Lumenfall.Audio.AudioMixSettings.Sfx);
+        }
+
         // Whatever happens to the cutscene, the player looks ahead again, the screen is whole, the music returns and no
         // aura it set is left behind.
         private void EndGlitchEffects()
@@ -467,6 +554,9 @@ namespace Lumenfall.Cutscenes
             GUI.depth = -1000;
             Color previous = GUI.color;
             EnsureStyles();
+
+            // Under the overlay, so a fade covers them.
+            actors.DrawBubbles(bubbleStyle);
 
             if (sequence.OverlayAlpha > 0f)
             {
@@ -514,10 +604,21 @@ namespace Lumenfall.Cutscenes
                 fontSize = Mathf.Max(12, Mathf.RoundToInt(18f * scale))
             };
             hintStyle.normal.textColor = Cream;
+            bubbleStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+                fontSize = Mathf.Max(14, Mathf.RoundToInt(26f * scale)),
+                fontStyle = FontStyle.Bold,
+                border = new RectOffset(20, 20, 20, 20),
+                padding = new RectOffset(Mathf.RoundToInt(22f * scale), Mathf.RoundToInt(22f * scale), Mathf.RoundToInt(12f * scale), Mathf.RoundToInt(12f * scale))
+            };
+            bubbleStyle.normal.textColor = new Color(0.22f, 0.16f, 0.12f);
             if (font != null)
             {
                 captionStyle.font = font;
                 hintStyle.font = font;
+                bubbleStyle.font = font;
             }
         }
     }

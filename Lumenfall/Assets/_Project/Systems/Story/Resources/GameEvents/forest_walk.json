@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "quests": [],
+  "dialogues": [
+    {
+      "id": "forest_orange_tree",
+      "startNodeId": "spot",
+      "metadata": [ { "key": "placement", "value": "F03" }, { "key": "voice", "value": "inner" } ],
+      "nodes": [
+        {
+          "id": "spot",
+          "speaker": "{player}",
+          "text": "<i>Oh! An orange tree. And I am STARVING.</i>",
+          "choices": [
+            { "id": "pick", "text": "Pick one", "nextNodeId": "bite" },
+            { "id": "leave", "text": "Leave it", "nextNodeId": "later" }
+          ]
+        },
+        {
+          "id": "bite",
+          "speaker": "{player}",
+          "text": "<i>...</i>",
+          "nextNodeId": "apple"
+        },
+        {
+          "id": "apple",
+          "speaker": "{player}",
+          "text": "<i>It's an apple. It is orange, and it is round, and it is an apple.</i>",
+          "nextNodeId": "broken"
+        },
+        {
+          "id": "broken",
+          "speaker": "{player}",
+          "text": "<i>Wait. Do I even need to eat if I'm dead? This place is so confusing.</i>",
+          "nextNodeId": ""
+        },
+        {
+          "id": "later",
+          "speaker": "{player}",
+          "text": "<i>No. Following the mysterious light first. Snacks later.</i>",
+          "nextNodeId": ""
+        }
+      ]
+    }
+  ],
+  "events": []
+}

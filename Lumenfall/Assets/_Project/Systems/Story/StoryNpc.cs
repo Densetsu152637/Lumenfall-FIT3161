@@ -10,7 +10,8 @@ namespace Lumenfall.Story
     /// A character who only exists for part of the story, spawned at runtime from their NPC catalog record (prefab, map
     /// and cell) rather than baked into an area prefab, in the way the ice trial spawns its Cinna. The scene that owns
     /// them calls <see cref="Keep"/> every frame with whether the story wants them present. If their cell turns out to be
-    /// blocked (a tree, a wall, a fountain) or is a doorway, they stand on the nearest free cell instead.
+    /// blocked (a tree, a wall, a fountain) or is a doorway, they stand on the nearest free cell instead. A story extra
+    /// who is not a catalog character (the people at the academy gate) is given a record made in code instead.
     /// </summary>
     internal sealed class StoryNpc
     {
@@ -19,6 +20,7 @@ namespace Lumenfall.Story
 
         private readonly string npcId;
         private readonly Quaternion facing;
+        private readonly NpcDefinition fixedRecord;
         private GameObject instance;
         private GameObject area;
         private bool warnedMissingRecord;
@@ -28,6 +30,9 @@ namespace Lumenfall.Story
             this.npcId = npcId;
             facing = Quaternion.Euler(0f, facingDegrees, 0f);
         }
+
+        /// <summary>A story extra, from a record made in code rather than the NPC catalog.</summary>
+        public StoryNpc(NpcDefinition record, float facingDegrees = 180f) : this(record?.id, facingDegrees) => fixedRecord = record;
 
         public GameObject Instance => instance;
         public bool IsPresent => instance != null;
@@ -40,8 +45,8 @@ namespace Lumenfall.Story
         public void Keep(bool wanted)
         {
             DataDrivenWorldLoader loader = DataDrivenWorldLoader.Instance;
-            NpcDefinition record = loader == null ? null : Array.Find(loader.LoadedNpcs?.npcs ?? Array.Empty<NpcDefinition>(),
-                npc => npc != null && npc.id == npcId);
+            NpcDefinition record = fixedRecord ?? (loader == null ? null : Array.Find(loader.LoadedNpcs?.npcs ?? Array.Empty<NpcDefinition>(),
+                npc => npc != null && npc.id == npcId));
             bool onTheirMap = record != null && loader.LoadedMap != null &&
                 string.Equals(loader.LoadedMap.id, record.mapId, StringComparison.OrdinalIgnoreCase);
             if (!wanted || StartupMenu.IsOpen || !onTheirMap)

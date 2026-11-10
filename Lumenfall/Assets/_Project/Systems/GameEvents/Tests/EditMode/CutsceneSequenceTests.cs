@@ -41,6 +41,25 @@ namespace Lumenfall.Tests.GameEvents
             public void StopStare() => Calls.Add("stareEnd");
             public void StartGlitch(string style, float seconds) => Calls.Add($"glitch:{style}:{seconds}");
             public void SetMusicHushed(bool hushed) => Calls.Add(hushed ? "hush" : "music");
+            public bool PrologueRunning;
+            public bool StartPrologue() { Calls.Add("prologue"); return true; }
+            public bool IsPrologueRunning => PrologueRunning;
+            public readonly HashSet<string> WalkingNpcs = new HashSet<string>();
+            public bool StartNpcWalk(string npcId, Vector2Int cell, bool hurry)
+            {
+                Calls.Add($"npcWalk:{npcId}:{cell.x},{cell.y}{(hurry ? "!" : "")}");
+                if (HoldOpen) WalkingNpcs.Add(npcId);
+                return true;
+            }
+            public bool IsNpcWalking(string npcId) => WalkingNpcs.Contains(npcId);
+            public void PoseNpc(string npcId, string state) => Calls.Add($"npcPose:{npcId}={state}");
+            public void TurnNpc(string npcId, Vector2Int direction, float seconds) => Calls.Add($"npcTurn:{npcId}:{direction.x},{direction.y}");
+            public void NpcLeave(string npcId, float seconds) => Calls.Add($"npcLeave:{npcId}");
+            public bool LetterFlying;
+            public bool StartLetter(string npcId, bool toPlayer, float seconds) { Calls.Add($"letter:{npcId}:{(toPlayer ? "in" : "out")}"); LetterFlying = HoldOpen; return true; }
+            public bool IsLetterFlying => LetterFlying;
+            public void PlaySound(string resourcePath, float volume) => Calls.Add($"sound:{resourcePath}@{volume}");
+            public void Say(string npcId, string text, float seconds, bool whileWalking) => Calls.Add($"say:{npcId}:{text}{(whileWalking ? "~" : "")}");
         }
 
         private static CutsceneDefinition Define(params CutsceneStep[] steps) =>
@@ -133,6 +152,99 @@ namespace Lumenfall.Tests.GameEvents
             int reveal = host.Calls.IndexOf("reveal");
             int dialogue = host.Calls.IndexOf("dialogue:opening_awakening");
             Assert.That(dialogue, Is.GreaterThan(reveal), "The player's first thoughts come once they have appeared.");
+        }
+
+        [Test]
+        public void OpeningPlaysThePrologueFirstSoTheLightComesOutOfTheStar()
+        {
+            CutsceneDefinition definition = CutsceneDefinition.Parse(
+                Resources.Load<TextAsset>("Cutscenes/" + CutscenePlayer.OpeningCutsceneId).text, new List<string>());
+            Assert.That(CutscenePlayer.ArrivesAfterPrologue(definition), Is.True,
+                "The prologue comes before the arrival, so START does not hand the menu's dissolve to it.");
+
+            FakeHost host = new FakeHost { PrologueRunning = true };
+            CutsceneSequence sequence = new CutsceneSequence(definition, host);
+            sequence.Advance(0.05f);
+            sequence.Advance(30f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "prologue" }), "Nothing else starts while the prologue plays.");
+            Assert.That(sequence.OverlayAlpha, Is.EqualTo(1f).Within(1e-4f), "Black behind it, so the forest never shows through.");
+
+            host.PrologueRunning = false;
+            for (int frame = 0; frame < 100 && !host.Calls.Contains("arrive"); frame++) sequence.Advance(0.05f);
+            Assert.That(host.Calls, Does.Contain("arrive"));
+        }
+
+        [Test]
+        public void NpcStepsReachTheHostAndAWalkOrALetterHoldsUntilItIsDone()
+        {
+            FakeHost host = new FakeHost { HoldOpen = true };
+            CutsceneSequence sequence = new CutsceneSequence(Define(
+                new CutsceneStep { type = "npcWalk", key = "runner", x = 3, y = 9, value = true, background = true },
+                new CutsceneStep { type = "npcWalk", key = "guard", x = 2, y = 5 },
+                new CutsceneStep { type = "npcPose", key = "guard", text = "Angry" },
+                new CutsceneStep { type = "npcTurn", key = "guard", x = -1, y = 0 },
+                new CutsceneStep { type = "letter", key = "runner", value = true, seconds = 1f },
+                new CutsceneStep { type = "npcLeave", key = "guard" },
+                new CutsceneStep { type = "flag", key = "done", value = true }), host);
+
+            sequence.Advance(0.1f);
+            sequence.Advance(5f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "npcWalk:runner:3,9!", "npcWalk:guard:2,5" }),
+                "A background walk lets the next step start; an ordinary one holds the cutscene.");
+
+            host.WalkingNpcs.Remove("runner");
+            sequence.Advance(0.1f);
+            Assert.That(host.Calls.Count, Is.EqualTo(2), "Still waiting for the guard, not the runner.");
+
+            host.WalkingNpcs.Remove("guard");
+            sequence.Advance(0.1f);
+            Assert.That(host.Calls.Skip(2), Is.EqualTo(new[] { "npcPose:guard=Angry", "npcTurn:guard:-1,0", "letter:runner:in" }));
+            sequence.Advance(5f);
+            Assert.That(host.Flags.ContainsKey("done"), Is.False, "The letter holds the cutscene until it lands.");
+
+            host.LetterFlying = false;
+            sequence.Advance(0.1f);
+            Assert.That(host.Calls.Last(), Is.EqualTo("flag:done"));
+            Assert.That(host.Calls, Does.Contain("npcLeave:guard"));
+            Assert.That(sequence.IsFinished, Is.True);
+        }
+
+        [Test]
+        public void NpcStepsNeedTheNpcTheyActOn()
+        {
+            foreach (string type in new[] { "npcWalk", "npcPose", "npcTurn", "npcLeave", "letter" })
+            {
+                List<string> problems = new List<string>();
+                CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"" + type + "\"}]}", problems);
+                Assert.That(problems, Has.Some.Contains("NPC"), type);
+            }
+            List<string> soundProblems = new List<string>();
+            CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"sound\"}]}", soundProblems);
+            Assert.That(soundProblems, Has.Some.Contains("sound"));
+
+            FakeHost host = new FakeHost();
+            CutsceneSequence sequence = new CutsceneSequence(Define(
+                new CutsceneStep { type = "sound", key = "Audio/Dog/Dog Door" },
+                new CutsceneStep { type = "sound", key = "Audio/Vis/Vis Up", amplitude = 0.5f }), host);
+            sequence.Advance(0.01f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "sound:Audio/Dog/Dog Door@1", "sound:Audio/Vis/Vis Up@0.5" }),
+                "A sound plays at full volume unless given one, and does not hold the cutscene.");
+            Assert.That(sequence.IsFinished, Is.True);
+            Assert.That(CutsceneStep.KindOf("prologue"), Is.EqualTo(CutsceneStepKind.Prologue));
+
+            host = new FakeHost();
+            sequence = new CutsceneSequence(Define(
+                new CutsceneStep { type = "say", key = "runner", text = "Wait!", seconds = 1f },
+                new CutsceneStep { type = "say", key = "runner", text = "I'm late!", seconds = 2f, value = true, background = true },
+                new CutsceneStep { type = "flag", key = "done", value = true }), host);
+            sequence.Advance(0.5f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "say:runner:Wait!" }), "A bubble holds the cutscene for its seconds, without a click.");
+            sequence.Advance(0.6f);
+            Assert.That(host.Calls, Is.EqualTo(new[] { "say:runner:Wait!", "say:runner:I'm late!~", "flag:done" }),
+                "A background bubble lets the cutscene run on, and can last only while the speaker walks.");
+            List<string> sayProblems = new List<string>();
+            CutsceneDefinition.Parse("{\"id\":\"x\",\"steps\":[{\"type\":\"say\",\"key\":\"a\"}]}", sayProblems);
+            Assert.That(sayProblems, Has.Some.Contains("no text"));
         }
 
         [Test]

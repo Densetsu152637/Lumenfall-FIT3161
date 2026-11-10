@@ -483,8 +483,9 @@ namespace Lumenfall.DataDriven
         }
 
         /// <summary>
-        /// The speaking NPC for the portrait: a nearby NPC whose name matches the speaker, otherwise the NPC the player
-        /// is talking to (generic speakers such as "Student"). The Narrator has no portrait.
+        /// The speaking NPC for the portrait: the nearest NPC whose name matches the speaker, preferring one close by,
+        /// otherwise the NPC the player is talking to (generic speakers such as "Student"). A named speaker further off
+        /// still gets their own portrait rather than whoever happens to stand nearer. The Narrator has no portrait.
         /// </summary>
         private Transform SpeakerTransform(string name)
         {
@@ -496,7 +497,7 @@ namespace Lumenfall.DataDriven
                     .Where(n => string.Equals(n.DisplayName, name, StringComparison.OrdinalIgnoreCase))
                     .OrderBy(n => Vector3.Distance(n.transform.position, player))
                     .FirstOrDefault();
-                if (named != null && Vector3.Distance(named.transform.position, player) <= 8f) return named.transform;
+                if (named != null) return named.transform;
             }
 
             return conversationNpc != null ? conversationNpc.transform : null;

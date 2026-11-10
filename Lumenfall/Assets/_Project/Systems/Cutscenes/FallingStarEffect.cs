@@ -258,8 +258,9 @@ namespace Lumenfall.Cutscenes
             return inverse * inverse * a + 2f * inverse * t * b + t * t * c;
         }
 
-        // A shimmering tone that rises and swells as the star dives, after a faint chime for the twinkle.
-        private static AudioClip FallClip(float diveSeconds, float delaySeconds)
+        // A shimmering tone that rises and swells as the star dives, after a faint chime for the twinkle. The prologue's
+        // star (Story/PrologueScene) uses it too, so both stars sound alike.
+        internal static AudioClip FallClip(float diveSeconds, float delaySeconds)
         {
             float total = Mathf.Max(0.5f, delaySeconds + diveSeconds);
             int count = Mathf.CeilToInt(total * CutsceneArt.SampleRate);
@@ -283,7 +284,7 @@ namespace Lumenfall.Cutscenes
         }
 
         // A soft thump, a hiss of sparks and a two-note chime.
-        private static AudioClip ImpactClip()
+        internal static AudioClip ImpactClip()
         {
             int count = Mathf.CeilToInt(1.8f * CutsceneArt.SampleRate);
             float[] samples = new float[count];

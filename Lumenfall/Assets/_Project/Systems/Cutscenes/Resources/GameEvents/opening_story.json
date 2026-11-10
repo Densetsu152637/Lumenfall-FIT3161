@@ -45,13 +45,25 @@
         {
           "id": "look",
           "speaker": "{player}",
-          "text": "<i>Trees. Grass. A sky that's way too pretty for the afterlife.</i>",
+          "text": "<i>Trees. Grass. And dark. Very, very dark.</i>",
+          "nextNodeId": "light"
+        },
+        {
+          "id": "light",
+          "speaker": "{player}",
+          "text": "<i>...Okay, there's a light. And it looks like it wants me to go that way.</i>",
+          "nextNodeId": "horror"
+        },
+        {
+          "id": "horror",
+          "speaker": "{player}",
+          "text": "<i>Following a strange light into a dark forest. Isn't this how people die in horror movies?</i>",
           "nextNodeId": "get_up"
         },
         {
           "id": "get_up",
           "speaker": "{player}",
-          "text": "<i>Well, standing here won't explain anything. Let me get up and have a look around.</i>",
+          "text": "<i>Then again, it beats finishing my homework. What's the worst that could happen?</i>",
           "nextNodeId": ""
         }
       ]

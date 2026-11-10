@@ -3,7 +3,11 @@
   "once": true,
   "unskippable": true,
   "steps": [
+    { "type": "fade", "color": "#000000", "alpha": 1, "seconds": 0 },
+    { "type": "prologue" },
+    { "type": "wait", "seconds": 0.6 },
     { "type": "camera", "zoom": 0.85 },
+    { "type": "fade", "alpha": 0, "seconds": 1.4, "background": true },
     { "type": "arrive" },
     { "type": "fade", "color": "#FFF4DC", "alpha": 0.85, "seconds": 0.08 },
     { "type": "reveal" },

@@ -39,9 +39,35 @@ namespace Lumenfall.Cutscenes
         void StartGlitch(string style, float seconds);
         /// <summary>Hushes the music and ambience, or brings them back.</summary>
         void SetMusicHushed(bool hushed);
+        /// <summary>Plays the 3D prologue; returns false if it could not start, so the cutscene does not wait for it.</summary>
+        bool StartPrologue();
+        bool IsPrologueRunning { get; }
+        /// <summary>Walks an NPC in this area to a cell; returns false if there is no such NPC.</summary>
+        bool StartNpcWalk(string npcId, Vector2Int cell, bool hurry);
+        bool IsNpcWalking(string npcId);
+        /// <summary>Plays an animator state on an NPC; an empty state puts them back to standing.</summary>
+        void PoseNpc(string npcId, string state);
+        /// <summary>Turns an NPC to face a grid direction, or the player when it is zero.</summary>
+        void TurnNpc(string npcId, Vector2Int direction, float seconds);
+        /// <summary>Shrinks an NPC away over <paramref name="seconds"/>; they are gone for the rest of the cutscene.</summary>
+        void NpcLeave(string npcId, float seconds);
+        /// <summary>
+        /// Flutters a letter from an NPC into the player's hands, or from the player's hands to the NPC; returns false if
+        /// there is no such NPC.
+        /// </summary>
+        bool StartLetter(string npcId, bool toPlayer, float seconds);
+        bool IsLetterFlying { get; }
+        /// <summary>
+        /// Shows a speech bubble over an NPC for <paramref name="seconds"/>; with <paramref name="whileWalking"/> it also
+        /// goes as soon as they stop walking.
+        /// </summary>
+        void Say(string npcId, string text, float seconds, bool whileWalking);
+        /// <summary>Plays a sound effect once, from a Resources path, at a volume from 0 to 1.</summary>
+        void PlaySound(string resourcePath, float volume);
         /// <summary>
         /// Ends the star and the arrival at once, leaving the player visible, accepts an open name prompt, and finishes a
-        /// walk by placing the player at its destination. Also ends a stare, a glitch, a hush and any aura the cutscene set.
+        /// walk by placing the player at its destination. Also ends a stare, a glitch, a hush and any aura the cutscene set,
+        /// the prologue, NPC walks (each NPC is placed where it was going) and the letter.
         /// </summary>
         void StopEffects();
     }
@@ -64,6 +90,9 @@ namespace Lumenfall.Cutscenes
         private bool waitingForArrival;
         private bool waitingForName;
         private bool waitingForWalk;
+        private bool waitingForPrologue;
+        private bool waitingForLetter;
+        private string waitingForNpc;
 
         private Color fadeFromColor, fadeToColor;
         private float fadeFromAlpha, fadeToAlpha, fadeSeconds, fadeElapsed;
@@ -131,6 +160,24 @@ namespace Lumenfall.Cutscenes
                     waitingForWalk = false;
                 }
 
+                if (waitingForPrologue)
+                {
+                    if (host.IsPrologueRunning) return;
+                    waitingForPrologue = false;
+                }
+
+                if (waitingForNpc != null)
+                {
+                    if (host.IsNpcWalking(waitingForNpc)) return;
+                    waitingForNpc = null;
+                }
+
+                if (waitingForLetter)
+                {
+                    if (host.IsLetterFlying) return;
+                    waitingForLetter = false;
+                }
+
                 if (waitRemaining > 0f)
                 {
                     if (remaining < waitRemaining)
@@ -171,6 +218,9 @@ namespace Lumenfall.Cutscenes
             waitingForArrival = false;
             waitingForName = false;
             waitingForWalk = false;
+            waitingForPrologue = false;
+            waitingForNpc = null;
+            waitingForLetter = false;
             waitRemaining = 0f;
             host.StopEffects();
             host.ReleaseCamera();
@@ -268,6 +318,33 @@ namespace Lumenfall.Cutscenes
                     break;
                 case CutsceneStepKind.Music:
                     host.SetMusicHushed(!step.value);
+                    break;
+                case CutsceneStepKind.Prologue:
+                    waitingForPrologue = host.StartPrologue() && !step.background;
+                    break;
+                case CutsceneStepKind.NpcWalk:
+                    if (host.StartNpcWalk(step.key.Trim(), step.Cell, step.value) && !step.background) waitingForNpc = step.key.Trim();
+                    break;
+                case CutsceneStepKind.NpcPose:
+                    host.PoseNpc(step.key.Trim(), (step.text ?? string.Empty).Trim());
+                    break;
+                case CutsceneStepKind.NpcTurn:
+                    host.TurnNpc(step.key.Trim(), step.Cell, seconds);
+                    waitRemaining = wait;
+                    break;
+                case CutsceneStepKind.NpcLeave:
+                    host.NpcLeave(step.key.Trim(), seconds);
+                    waitRemaining = wait;
+                    break;
+                case CutsceneStepKind.Letter:
+                    waitingForLetter = host.StartLetter(step.key.Trim(), step.value, seconds) && !step.background;
+                    break;
+                case CutsceneStepKind.Say:
+                    host.Say(step.key.Trim(), step.text, seconds, step.value);
+                    waitRemaining = wait;
+                    break;
+                case CutsceneStepKind.Sound:
+                    host.PlaySound(step.key.Trim(), step.amplitude > 0f ? Mathf.Clamp01(step.amplitude) : 1f);
                     break;
             }
         }

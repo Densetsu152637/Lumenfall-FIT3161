@@ -17,7 +17,7 @@ namespace Lumenfall.Story
     /// talk to Kit, Kit gives them the lay of the land (<see cref="TourCutsceneId"/>) instead of Kit's usual chat: they
     /// missed the orientation ceremony and should see the headmistress, Prof. Bann, by the fountain straight away. After
     /// that, talking to Kit opens Kit's usual choice-based conversation again. Bann waits there from the moment the
-    /// player reaches campus; she is spawned from her NPC catalog record, like Kepler.
+    /// player reaches campus; she is spawned from her NPC catalog record through StoryNpc.
     /// </summary>
     // Runs before NPC input, so the talk key starts the tour before the same press could open Kit's usual chat.
     [DefaultExecutionOrder(-400)]
